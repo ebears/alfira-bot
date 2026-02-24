@@ -1,0 +1,33 @@
+version: '3.8'
+
+# ---------------------------------------------------------------------------
+# Development docker-compose — PostgreSQL only.
+#
+# This runs the database in Docker while the API and bot run locally via
+# ts-node, which gives you hot-reloadable code and easy debugging.
+#
+# The full app deployment (bot + API + web all containerised) is Phase 9.
+#
+# Usage:
+#   docker compose up -d       — start PostgreSQL in the background
+#   docker compose down        — stop and remove the container
+#   docker compose down -v     — stop and wipe all data (clean slate)
+# ---------------------------------------------------------------------------
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: botuser
+      POSTGRES_PASSWORD: botpass
+      POSTGRES_DB: musicbot
+    ports:
+      # Exposes PostgreSQL on localhost:5432 so Prisma can connect from the
+      # host machine. Change the left-hand port if 5432 is already in use.
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

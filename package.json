@@ -1,0 +1,14 @@
+{
+  "name": "discord-music-bot",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run -w packages/api dev",
+    "bot:deploy": "npm run -w packages/bot deploy",
+    "db:migrate": "npm run -w packages/api db:migrate",
+    "db:generate": "npm run -w packages/api db:generate",
+    "db:studio": "npm run -w packages/api db:studio"
+  }
+}

@@ -1,0 +1,44 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Song {
+  id            String         @id @default(cuid())
+  title         String
+  youtubeUrl    String         @unique
+  youtubeId     String         @unique
+  duration      Int            // seconds
+  thumbnailUrl  String
+  addedBy       String         // Discord user ID (or 'system' before Phase 5)
+  createdAt     DateTime       @default(now())
+  playlistSongs PlaylistSong[]
+}
+
+model Playlist {
+  id        String         @id @default(cuid())
+  name      String
+  createdBy String         // Discord user ID (or 'system' before Phase 5)
+  createdAt DateTime       @default(now())
+  songs     PlaylistSong[]
+}
+
+model PlaylistSong {
+  id         String   @id @default(cuid())
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  playlistId String
+  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  songId     String
+  position   Int
+
+  // A song can only appear once per playlist.
+  @@unique([playlistId, songId])
+  // Index on (playlistId, position) makes ordered playlist queries fast.
+  @@index([playlistId, position])
+}
