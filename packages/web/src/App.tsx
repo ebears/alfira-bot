@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { PlayerProvider } from './context/PlayerContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
@@ -17,7 +18,11 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Layout />
+              {/* PlayerProvider lives inside ProtectedRoute so it only
+                  polls while a user is authenticated. */}
+              <PlayerProvider>
+                <Layout />
+              </PlayerProvider>
             </ProtectedRoute>
           }
         >

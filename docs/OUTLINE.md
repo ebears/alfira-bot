@@ -122,7 +122,7 @@ discord-music-bot/
     │       └── utils/
     │           └── ytdlp.ts
     │
-    └── web/                                 ← ✅ Complete (Phase 6)
+    └── web/                                 ← ✅ Complete (Phases 6, 7)
         ├── package.json                     ← Vite + React + Tailwind + Axios
         ├── tsconfig.json
         ├── vite.config.ts                   ← Proxies /api and /auth to :3001
@@ -131,17 +131,24 @@ discord-music-bot/
         ├── index.html                       ← Bebas Neue, Karla, JetBrains Mono from Google Fonts
         └── src/
             ├── main.tsx
-            ├── App.tsx                      ← Route definitions
+            ├── App.tsx                      ← Route definitions; PlayerProvider wraps Layout
             ├── index.css                    ← Tailwind directives + global component classes
             ├── api/
             │   ├── client.ts                ← Axios instance; 401 → redirect to /login
             │   ├── types.ts                 ← Frontend-local mirrors of shared types
             │   └── api.ts                   ← Typed wrappers for all API endpoints
             ├── context/
-            │   └── AuthContext.tsx          ← Fetches /auth/me on load; exposes user + logout
+            │   ├── AuthContext.tsx          ← Fetches /auth/me on load; exposes user + logout
+            │   └── PlayerContext.tsx        ← Polls /api/player/queue every 3s; exposes
+            │                                   state, elapsed, skip, stop, setLoop, shuffle,
+            │                                   refetch. Client-side elapsed counter resets on
+            │                                   song change. Phase 8 will replace polling with
+            │                                   Socket.io events.
             └── components/
             │   ├── ProtectedRoute.tsx       ← Redirects unauthenticated users to /login
-            │   └── Layout.tsx               ← Sidebar nav, main content area, Now Playing bar stub
+            │   └── Layout.tsx               ← Sidebar nav, main content area, wired Now
+            │                                   Playing bar: thumbnail, title, elapsed/total
+            │                                   time, live progress bar, Skip + Stop for admins
             └── pages/
                 ├── LoginPage.tsx            ← Centered card; "Login with Discord" → /auth/login
                 ├── SongsPage.tsx            ← Searchable grid, add-song modal, delete confirm,
@@ -149,7 +156,11 @@ discord-music-bot/
                 ├── PlaylistsPage.tsx        ← List with song counts, create/delete (admin only)
                 ├── PlaylistDetailPage.tsx   ← Ordered track list, click-to-rename, add songs modal,
                 │                               remove-from-playlist, Play modal with mode/loop
-                └── PlayerPage.tsx           ← Stub — implemented in Phase 7
+                └── PlayerPage.tsx           ← Now Playing card (blurred banner, thumbnail,
+                                                progress bar), idle state, admin controls
+                                                (Skip, Stop, Shuffle, Loop mode selector),
+                                                queue list, Load Playlist modal. Members see
+                                                full state read-only; controls hidden.
 ```
 
 ### Environment variable added in Phase 6
@@ -415,7 +426,7 @@ JetBrains Mono for metadata and labels. Defined as Tailwind theme tokens.
 
 ### Layout
 
-A persistent sidebar for navigation and a fixed **Now Playing bar** at the bottom of every page, visible to all users. The bar shows the current song's thumbnail, title, and duration. Admins also see Skip and Stop buttons in the bar.
+A persistent sidebar for navigation and a fixed **Now Playing bar** at the bottom of every page, visible to all users. The bar shows the current song's thumbnail, title, elapsed/total time, and a live progress bar. Admins also see Skip and Stop buttons in the bar (only when something is playing).
 
 ```
 ┌─────────────────────────────────────┐
@@ -429,7 +440,8 @@ A persistent sidebar for navigation and a fixed **Now Playing bar** at the botto
 │  Player  │                          │
 │          │                          │
 ├──────────┴──────────────────────────┤
-│  [Thumbnail] Song Title   ⏭ ⏹      │  ← Admins only see controls
+│▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░│  ← progress bar (1px, full width)
+│  [Thumb] Song Title  1:23/3:33 ⏭ ⏹ │  ← controls visible to admins only
 └─────────────────────────────────────┘
 ```
 
@@ -462,13 +474,29 @@ cookie and redirects to the web UI root; `AuthContext` then fetches `/auth/me` a
 - **Admins only:** A "Play" button opens a modal with sequential/random order and off/song/queue loop selectors, wired to `POST /api/player/play`.
 - **Admins only:** A "Delete" button to remove the playlist entirely.
 
-### Player (`/player`)
+### Player (`/player`) ✅
 
-- **Now Playing card:** Large thumbnail, title, and a progress bar (updated via Socket.io).
-- **Queue list:** Ordered list of upcoming songs.
-- **Admins only:** Full playback controls — Play, Skip, Stop, Loop mode selector, Shuffle.
-- **Admins only:** A "Load Playlist" section to select and queue a playlist.
-- **Members:** The page is fully visible but all controls are hidden. They see exactly what's playing and what's coming up, in real time.
+- **Now Playing card:** Blurred banner background with centred thumbnail, title, requester name,
+  and a live progress bar with elapsed/total times. A lime indicator dot shows playing state.
+- **Idle state:** Shown when nothing is playing, with a prompt to use `/join` in Discord.
+- **Queue list:** Ordered list of upcoming songs with position number, thumbnail, title,
+  requester name, and duration.
+- **Admins only:** Full playback controls — Skip, Stop, Shuffle (with live queue count), and a
+  loop mode selector (off / song / queue). All controls show busy states while API calls are
+  in-flight and are disabled when not applicable (e.g. Skip disabled when nothing is playing).
+- **Admins only:** A "Load Playlist" button opens a modal to select a playlist, order
+  (sequential/random), and loop mode, then calls `POST /api/player/play`.
+- **Members:** The page is fully visible but all controls are hidden. They see exactly what's
+  playing and what's coming up, updated every 3 seconds via polling (replaced by Socket.io in
+  Phase 8).
+
+### PlayerContext (`src/context/PlayerContext.tsx`) ✅
+
+Shared state layer that powers both the Now Playing bar and the Player page without double-fetching.
+Polls `GET /api/player/queue` every 3 seconds. Runs a client-side elapsed-time counter that
+resets whenever the current song ID changes, giving a smooth progress bar without a server-side
+position field. Phase 8 will replace the `setInterval` poll with a Socket.io `player:update`
+listener.
 
 ---
 
@@ -585,15 +613,25 @@ Full OAuth2 flow implemented in `auth.ts`. Bot token used to fetch guild member 
 **Phase 6 — Web UI: Songs and Playlists ✅ COMPLETE**
 `packages/web` created as a new Vite + React + Tailwind workspace. Dark music-poster aesthetic with near-black backgrounds and lime accent. `AuthContext` fetches `/auth/me` on load and gates all protected routes via `ProtectedRoute`. `Layout` provides the persistent sidebar and a Now Playing bar stub. Login page redirects to `/auth/login`. Song Library page has searchable grid, add-song modal, delete confirm, and add-to-playlist popover. Playlists page lists all playlists with create/delete. Playlist detail has ordered track list, inline rename, add-songs modal, remove-from-playlist, and a Play modal wired to the player API. Axios interceptor globally handles 401 → redirect to `/login`. Run with `npm run web:dev`.
 
-**Phase 7 — Web UI: Player page** ← *next*
-Build the Player page with full playback controls wired to the API. The Now Playing bar in
-`Layout.tsx` is already stubbed and ready to be wired up. Fetch initial queue state via
-`GET /api/player/queue` on mount. Display current song (large thumbnail, title, duration
-progress), the upcoming queue list, and admin controls: Skip, Stop, loop mode selector,
-Shuffle, and a Load Playlist section.
+**Phase 7 — Web UI: Player page ✅ COMPLETE**
+`PlayerContext` added as a shared state layer — polls `GET /api/player/queue` every 3 seconds
+and exposes `state`, `elapsed`, `skip`, `stop`, `setLoop`, `shuffle`, and `refetch` to all
+consumers. A client-side elapsed-time counter resets on song change to drive progress bars
+without a server-side position field. `App.tsx` updated to wrap the protected layout in
+`PlayerProvider`. `Layout.tsx` Now Playing bar fully wired: live thumbnail, title,
+elapsed/total time, 1px progress bar, and Skip/Stop admin controls. `PlayerPage.tsx` built
+with a Now Playing card (blurred banner, centred thumbnail, progress bar), idle state, admin
+controls (Skip, Stop, Shuffle with queue count, loop mode selector), queue list, and a Load
+Playlist modal.
 
-**Phase 8 — Real-time sync**
-Add Socket.io to the API. Wire `GuildPlayer` to call `broadcastQueueUpdate()` after every state change. Implement `player:update`, `songs:added`, `songs:deleted`, and `playlists:updated` events. Replace the `TODO (Phase 8)` comments in all route handlers. Update the web UI to consume events via a `useSocket` hook. Test by controlling playback from both Discord slash commands and the web UI simultaneously.
+**Phase 8 — Real-time sync** ← *next*
+Add Socket.io to the API. Wire `GuildPlayer` to call `broadcastQueueUpdate()` after every state
+change. Implement `player:update`, `songs:added`, `songs:deleted`, and `playlists:updated`
+events. Replace the `TODO (Phase 8)` comments in all route handlers. Update `PlayerContext` to
+replace its `setInterval` poll with a `socket.on('player:update', ...)` listener; keep the
+initial REST fetch on connect for users who open the UI mid-song. Add a `useSocket` hook that
+manages the Socket.io connection lifecycle. Install `socket.io` on the server and
+`socket.io-client` in the web package.
 
 **Phase 9 — Polish**
 Add loading states, error messages, toast notifications, and empty states throughout the UI. Test edge cases from the error handling table above.
