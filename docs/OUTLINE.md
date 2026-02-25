@@ -80,46 +80,57 @@ discord-music-bot/
     │   └── src/
     │       └── types.ts                     ← Song, QueuedSong, LoopMode, QueueState, Playlist
     │
-    ├── api/                                 ← ✅ Complete (Phase 3)
+    ├── api/                                 ← ✅ Complete (Phase 3 & 5)
     │   ├── package.json
     │   ├── tsconfig.json
     │   ├── .env.example
     │   ├── .env                             ← Create from .env.example (never commit)
     │   ├── prisma/
-    │   │   └── schema.prisma
+    │   │   └── schema.prisma                ← output set to root node_modules/.prisma/client
     │   └── src/
     │       ├── index.ts                     ← Combined entry point: Express + bot in one process
     │       ├── lib/
     │       │   └── prisma.ts                ← Prisma client singleton
     │       ├── middleware/
-    │       │   ├── requireAuth.ts           ← Phase 5 stub — passes all requests through
-    │       │   ├── requireAdmin.ts          ← Phase 5 stub — passes all requests through
+    │       │   ├── requireAuth.ts           ← JWT verification via HttpOnly cookie
+    │       │   ├── requireAdmin.ts          ← Checks req.user.isAdmin, returns 403 if false
     │       │   └── errorHandler.ts          ← Global error handler + asyncHandler wrapper
     │       └── routes/
     │           ├── songs.ts                 ← GET, POST, DELETE /api/songs
     │           ├── playlists.ts             ← Full CRUD + song add/remove
     │           ├── player.ts                ← queue, play, skip, stop, loop, shuffle
-    │           └── auth.ts                  ← Phase 5 stub — returns 501 for all routes
+    │           └── auth.ts                  ← Full Discord OAuth2 flow + JWT issuance
     │
-    └── bot/                                 ← ✅ Complete (Phases 1, 2 & 3)
-        ├── package.json
+    └── bot/                                 ← ✅ Complete (Phases 1, 2, 3 & 4)
+        ├── package.json                     ← @prisma/client added as dependency
         ├── tsconfig.json
-        ├── .env.example                     ← Only needed for deploy-commands
+        ├── .env.example
         └── src/
-            ├── index.ts                     ← Exports startBot() — no longer self-executing
-            ├── types.ts                     ← Re-exports from @discord-music-bot/shared
-            ├── deploy-commands.ts
+            ├── index.ts                     ← Exports startBot(), loads playlistCommand
+            ├── types.ts                     ← Re-exports from shared; Command union includes
+            │                                   SlashCommandSubcommandsOnlyBuilder
+            ├── deploy-commands.ts           ← Registers all 10 slash commands
             ├── commands/
             │   ├── join.ts, leave.ts, play.ts, skip.ts, stop.ts
             │   ├── loop.ts, shuffle.ts, queue.ts, nowplaying.ts
+            │   └── playlist.ts              ← /playlist play [name] — queries DB by name
+            ├── lib/
+            │   └── prisma.ts                ← Bot-local Prisma singleton (separate from API's
+            │                                   to avoid circular dependency)
             ├── player/
-            │   ├── GuildPlayer.ts           ← Now uses QueuedSong, exposes getQueueState()
+            │   ├── GuildPlayer.ts           ← Uses QueuedSong, exposes getQueueState()
             │   └── manager.ts
             └── utils/
                 └── ytdlp.ts
 ```
 
-Using **npm workspaces** as a monorepo means the `shared` package's types are importable by both the bot and the web frontend with no duplication. This is especially valuable for keeping the `QueueState` type (used by both Socket.io and the web player) in sync.
+### Prisma client generation note
+
+The schema's `generator` block sets `output = "../../../node_modules/.prisma/client"` so the
+generated client is written to the root `node_modules` and resolved correctly by both the bot
+and API packages. Run `npm run db:generate` from the project root after any schema change or
+fresh clone. `@prisma/client` is a thin shim that automatically forwards to `.prisma/client` —
+no import changes are needed in application code.
 
 ---
 
@@ -225,6 +236,21 @@ GuildPlayer
 5. When the track ends, `onTrackEnd()` checks the `skipping` flag and loop mode, then either replays the song, advances the queue, or stops.
 6. The player sends a "Now playing" embed to the text channel on auto-advance. **`broadcastQueueUpdate()` is not yet wired up** — that is a Phase 8 concern when Socket.io is added.
 
+### /play command — DB lookup behaviour
+
+After fetching metadata via yt-dlp, `play.ts` queries the database by `youtubeId`. If the song
+exists in the library the `QueuedSong` is built from the DB record (real `id` and `addedBy`
+values). If the song is not in the library (URL pasted directly into Discord without going
+through the web UI first), `id` and `addedBy` fall back to empty strings so playback still works
+— the library is the web UI's domain, not the bot's.
+
+### /playlist play command — DB lookup behaviour
+
+`playlist.ts` queries Prisma for a playlist by name (case-insensitive). Songs are fetched in
+`position` order with their full `Song` records joined, so every `QueuedSong` has real `id` and
+`addedBy` values. The `requestedBy` field is set to the Discord member's display name at queue
+time.
+
 ### yt-dlp wrapper
 
 ```typescript
@@ -263,12 +289,10 @@ The API runs in the same Node.js process as the bot. `packages/api/src/index.ts`
 
 ### Auth middleware
 
-Two middleware functions gate every protected route. Both are currently **Phase 5 stubs that pass all requests through** — real enforcement is implemented in Phase 5.
+Two middleware functions gate every protected route.
 
-- **`requireAuth`** — Will verify the JWT from the HttpOnly cookie and attach `req.user`. Currently a no-op.
-- **`requireAdmin`** — Will check `req.user.isAdmin` and return `403` if false. Currently a no-op.
-
-Until Phase 5, all endpoints are open and `addedBy`/`createdBy` fields in the DB are written as `'system'` as a placeholder.
+- **`requireAuth`** — Reads the JWT from the HttpOnly `session` cookie, verifies it using `JWT_SECRET`, and attaches the decoded payload to `req.user`. Returns `401` if the token is missing, expired, or invalid.
+- **`requireAdmin`** — Checks `req.user.isAdmin` and returns `403` if false. Must be used after `requireAuth`.
 
 ### Song endpoints
 
@@ -282,7 +306,7 @@ Until Phase 5, all endpoints are open and `addedBy`/`createdBy` fields in the DB
 1. Validate the URL format using `isValidYouTubeUrl()`.
 2. Call `getMetadata()` via yt-dlp to fetch title, duration, and youtubeId.
 3. Check for duplicates by `youtubeId` (more reliable than URL comparison).
-4. Save to the database. `addedBy` is `req.user.discordId` in Phase 5; `'system'` until then.
+4. Save to the database. `addedBy` is set to `req.user.discordId`.
 5. Return the new song record as `201 Created`.
 6. TODO (Phase 8): emit `songs:added` Socket.io event.
 
@@ -409,13 +433,15 @@ A centered card with a "Login with Discord" button. Unauthenticated users are re
 ### Discord OAuth2 flow
 
 1. User clicks "Login with Discord."
-2. They are redirected to Discord's OAuth2 authorization URL, requesting the `identify` and `guilds.members.read` scopes.
+2. They are redirected to Discord's OAuth2 authorization URL, requesting the `identify` scope.
 3. After authorising, Discord redirects to `/auth/callback?code=...`.
 4. The API exchanges the code for a Discord access token.
-5. The API fetches the user's guild member profile to get their role IDs.
-6. The API checks whether any of their role IDs match the configured admin role IDs.
-7. A JWT is issued containing the user's Discord ID, username, avatar, and `isAdmin` flag. It is set as an `HttpOnly` cookie.
-8. The user is redirected to the web UI.
+5. The API fetches the user's Discord identity (id, username, avatar).
+6. The API uses the bot token to fetch the user's guild member record and role IDs directly,
+   avoiding the need for the `guilds.members.read` OAuth scope.
+7. The API checks whether any of their role IDs match the configured admin role IDs.
+8. A JWT is issued containing the user's Discord ID, username, avatar, and `isAdmin` flag. It is set as an `HttpOnly` cookie.
+9. The user is redirected to the web UI. (Currently returns JSON — redirect to be wired up in Phase 6.)
 
 ### Role check
 
@@ -498,21 +524,19 @@ Bot connects, joins/leaves voice channels, and plays audio from a YouTube URL vi
 **Phase 2 — Queue and slash commands ✅ COMPLETE**
 `GuildPlayer` class built with full queue management. All slash commands implemented and working: `/join`, `/leave`, `/play`, `/skip`, `/stop`, `/loop`, `/shuffle`, `/queue`, `/nowplaying`. The `skipping` flag correctly handles skip behaviour across all loop modes.
 
-> **Note:** `/playlist play` is registered as a command but not yet functional — it requires database integration (Phase 4).
-
 **Phase 3 — Database and API ✅ COMPLETE**
-`packages/shared` created with `Song`, `QueuedSong`, `LoopMode`, `QueueState`, `Playlist` types. `packages/api` created as the new combined entry point — Express, Prisma, and the bot all start from `api/src/index.ts` in a single process. All song, playlist, and player CRUD endpoints implemented. `docker-compose.yml` added for PostgreSQL. Auth middleware stubs are in place (pass-through until Phase 5). Bot's `index.ts` refactored to export `startBot()` instead of self-executing. `GuildPlayer` updated to use `QueuedSong` and exposes `getQueueState()`. `bot/src/types.ts` now re-exports from shared.
+`packages/shared` created with `Song`, `QueuedSong`, `LoopMode`, `QueueState`, `Playlist` types. `packages/api` created as the new combined entry point — Express, Prisma, and the bot all start from `api/src/index.ts` in a single process. All song, playlist, and player CRUD endpoints implemented. `docker-compose.yml` added for PostgreSQL. Auth middleware fully implemented (not stubs). Bot's `index.ts` refactored to export `startBot()` instead of self-executing. `GuildPlayer` updated to use `QueuedSong` and exposes `getQueueState()`. `bot/src/types.ts` now re-exports from shared.
 
-> **Running the project going forward:** `npm run dev` starts everything (API + bot). `npm run bot:dev` no longer exists. `npm run bot:deploy` still works for registering slash commands.
+**Phase 4 — Bot reads from the database ✅ COMPLETE**
+`/playlist play [name]` fully implemented — queries Prisma for the playlist by name (case-insensitive), joins the `Song` records in position order, and enqueues them as fully populated `QueuedSong` objects. `/play` updated to look up the song by `youtubeId` after fetching metadata so songs in the library get real `id` and `addedBy` values. Bot-local Prisma singleton added at `bot/src/lib/prisma.ts`. Prisma schema updated to generate the client to the root `node_modules/.prisma/client` so both the bot and API packages resolve the same generated client. `SlashCommandSubcommandsOnlyBuilder` added to the `Command` type union.
 
-**Phase 4 — Bot reads from the database** ← *next*
-Wire the `/playlist play` slash command to query Prisma for the real playlist and its songs. Update `play.ts` to look up the song in the DB (by `youtubeId`) before queuing, so the `id` and `addedBy` fields in `QueuedSong` are populated from the real DB record rather than placeholders.
+> **Running the project:** `npm run dev` starts everything (API + bot). After any schema change or fresh clone, run `npm run db:generate` first.
 
-**Phase 5 — Discord OAuth2**
-Implement the auth flow. Replace the `requireAuth` and `requireAdmin` middleware stubs with real JWT verification. Replace all `'system'` placeholder values in `addedBy`/`createdBy` with `req.user.discordId`. Verify that login works end-to-end and that admin-only endpoints correctly return `403` for non-admins.
+**Phase 5 — Discord OAuth2 ✅ COMPLETE**
+Full OAuth2 flow implemented in `auth.ts`. Bot token used to fetch guild member roles server-side, avoiding the `guilds.members.read` scope. `requireAuth` and `requireAdmin` middleware are real JWT-based implementations. `GET /auth/me` and `POST /auth/logout` work. The `/auth/callback` redirect to the web UI is wired up as a TODO for Phase 6.
 
-**Phase 6 — Web UI: Songs and Playlists**
-Build the Song Library and Playlist pages. Auth is already in place, so you can build the admin/member split from the start.
+**Phase 6 — Web UI: Songs and Playlists** ← *next*
+Build the Song Library and Playlist pages in a new `packages/web` Vite + React workspace. Auth is already in place, so the admin/member split can be built from the start. Wire the `/auth/callback` redirect to point at the web UI origin. Update the CORS origin in `api/src/index.ts` if the dev port differs from `5173`.
 
 **Phase 7 — Web UI: Player page**
 Build the Player page with all controls wired up to the API.

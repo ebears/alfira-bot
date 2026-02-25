@@ -24,6 +24,7 @@ import { loopCommand } from './commands/loop';
 import { shuffleCommand } from './commands/shuffle';
 import { queueCommand } from './commands/queue';
 import { nowplayingCommand } from './commands/nowplaying';
+import { playlistCommand } from './commands/playlist';
 
 const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID } = process.env;
 
@@ -44,6 +45,7 @@ const commands = [
   shuffleCommand,
   queueCommand,
   nowplayingCommand,
+  playlistCommand,
 ].map((c) => c.data.toJSON());
 
 const rest = new REST().setToken(DISCORD_BOT_TOKEN);

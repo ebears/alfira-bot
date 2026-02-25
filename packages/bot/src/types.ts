@@ -1,5 +1,6 @@
 import {
   SlashCommandBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
   ChatInputCommandInteraction,
   Collection,
   Client,
@@ -14,10 +15,25 @@ export type { Song, QueuedSong, LoopMode, QueueState } from '@discord-music-bot/
 
 // ---------------------------------------------------------------------------
 // Command interface
-// Every slash command must export an object matching this shape.
+//
+// The `data` union covers three distinct builder shapes:
+//
+//   SlashCommandBuilder
+//     — a plain command with no subcommands (most commands).
+//
+//   Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+//     — used when a command adds options (e.g. addStringOption), which
+//       returns this narrowed type to prevent mixing options and subcommands.
+//
+//   SlashCommandSubcommandsOnlyBuilder
+//     — returned by .addSubcommand(), which prevents adding top-level options
+//       afterward. Required for commands like /playlist that use subcommands.
 // ---------------------------------------------------------------------------
 export interface Command {
-  data: SlashCommandBuilder | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>;
+  data:
+    | SlashCommandBuilder
+    | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+    | SlashCommandSubcommandsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 

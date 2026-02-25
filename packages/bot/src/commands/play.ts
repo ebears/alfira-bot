@@ -6,6 +6,7 @@ import {
   getVoiceConnection,
 } from '@discordjs/voice';
 import { isValidYouTubeUrl, getMetadata } from '../utils/ytdlp';
+import prisma from '../lib/prisma';
 import { getPlayer, createPlayer } from '../player/manager';
 import type { QueuedSong } from '@discord-music-bot/shared';
 import type { Command } from '../types';
@@ -65,7 +66,7 @@ export const playCommand: Command = {
     await interaction.deferReply();
 
     // ---------------------------------------------------------------------------
-    // Fetch song metadata.
+    // Fetch song metadata via yt-dlp.
     // ---------------------------------------------------------------------------
     let metadata;
     try {
@@ -77,6 +78,18 @@ export const playCommand: Command = {
       );
       return;
     }
+
+    // ---------------------------------------------------------------------------
+    // Look up the song in the database by youtubeId.
+    //
+    // This populates id and addedBy from the real DB record when the song is
+    // in the library. If it isn't in the library yet (someone pasted a URL that
+    // wasn't added through the web UI), we fall back to empty strings so the
+    // bot still plays it — the library is the web UI's domain, not the bot's.
+    // ---------------------------------------------------------------------------
+    const dbSong = await prisma.song.findUnique({
+      where: { youtubeId: metadata.youtubeId },
+    });
 
     // ---------------------------------------------------------------------------
     // Get or create the voice connection.
@@ -106,31 +119,33 @@ export const playCommand: Command = {
 
     // ---------------------------------------------------------------------------
     // Get or create the GuildPlayer for this guild.
-    //
-    // The text channel is passed so the player can send "Now playing" embeds
-    // when auto-advancing between tracks (where there's no interaction to reply to).
     // ---------------------------------------------------------------------------
     const textChannel = interaction.channel as TextChannel;
     const player = createPlayer(interaction.guild.id, connection, textChannel);
 
     // ---------------------------------------------------------------------------
-    // Build the Song object and hand it to the player.
+    // Build the QueuedSong.
+    //
+    // If the song exists in the library, use all fields from the DB record so
+    // that id and addedBy are real values. If not, fall back to metadata-only
+    // values with empty placeholder strings for id and addedBy.
     //
     // Note: getStreamUrl() is NOT called here. The GuildPlayer calls it at
-    // playback time, just before creating the AudioResource. This ensures CDN
-    // URLs are always fresh, even for songs that sat in the queue for a while.
+    // playback time so CDN URLs are always fresh for songs in long queues.
     // ---------------------------------------------------------------------------
-    const song: QueuedSong = {
-      id: '',  // Not yet persisted — Phase 4 replaces this with the DB record's ID
-      title: metadata.title,
-      youtubeUrl: url,
-      youtubeId: metadata.youtubeId,
-      duration: metadata.duration,
-      thumbnailUrl: metadata.thumbnailUrl,
-      addedBy: '',       // Not yet persisted — Phase 4 fills this from the DB record
-      createdAt: new Date(),
-      requestedBy: member.displayName,
-    };
+    const song: QueuedSong = dbSong
+      ? { ...dbSong, requestedBy: member.displayName }
+      : {
+          id: '',
+          title: metadata.title,
+          youtubeUrl: url,
+          youtubeId: metadata.youtubeId,
+          duration: metadata.duration,
+          thumbnailUrl: metadata.thumbnailUrl,
+          addedBy: '',
+          createdAt: new Date(),
+          requestedBy: member.displayName,
+        };
 
     const queueLength = player.getQueue().length;
     const isPlaying = player.isPlaying();
@@ -146,8 +161,6 @@ export const playCommand: Command = {
         `✅ Added to queue (position ${queueLength + 1}): **${song.title}**`
       );
     } else {
-      // The player was idle, so addToQueue() started playback. The GuildPlayer
-      // will send the "Now playing" embed to the text channel automatically.
       await interaction.editReply(`✅ Starting playback: **${song.title}**`);
     }
   },

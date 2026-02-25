@@ -8,6 +8,7 @@ import { loopCommand } from './commands/loop';
 import { shuffleCommand } from './commands/shuffle';
 import { queueCommand } from './commands/queue';
 import { nowplayingCommand } from './commands/nowplaying';
+import { playlistCommand } from './commands/playlist';
 import type { Command } from './types';
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,7 @@ export async function startBot(): Promise<void> {
     shuffleCommand,
     queueCommand,
     nowplayingCommand,
+    playlistCommand,
   ];
 
   for (const command of commands) {
