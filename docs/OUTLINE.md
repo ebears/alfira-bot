@@ -80,7 +80,7 @@ discord-music-bot/
     │   └── src/
     │       └── types.ts                     ← Song, QueuedSong, LoopMode, QueueState, Playlist
     │
-    ├── api/                                 ← ✅ Complete (Phase 3 & 5)
+    ├── api/                                 ← ✅ Complete (Phases 3, 5)
     │   ├── package.json
     │   ├── tsconfig.json
     │   ├── .env.example
@@ -100,29 +100,63 @@ discord-music-bot/
     │           ├── playlists.ts             ← Full CRUD + song add/remove
     │           ├── player.ts                ← queue, play, skip, stop, loop, shuffle
     │           └── auth.ts                  ← Full Discord OAuth2 flow + JWT issuance
+    │                                           /auth/callback now redirects to WEB_UI_ORIGIN
     │
-    └── bot/                                 ← ✅ Complete (Phases 1, 2, 3 & 4)
-        ├── package.json                     ← @prisma/client added as dependency
+    ├── bot/                                 ← ✅ Complete (Phases 1, 2, 3, 4)
+    │   ├── package.json
+    │   ├── tsconfig.json
+    │   ├── .env.example
+    │   └── src/
+    │       ├── index.ts
+    │       ├── types.ts
+    │       ├── deploy-commands.ts
+    │       ├── commands/
+    │       │   ├── join.ts, leave.ts, play.ts, skip.ts, stop.ts
+    │       │   ├── loop.ts, shuffle.ts, queue.ts, nowplaying.ts
+    │       │   └── playlist.ts
+    │       ├── lib/
+    │       │   └── prisma.ts
+    │       ├── player/
+    │       │   ├── GuildPlayer.ts
+    │       │   └── manager.ts
+    │       └── utils/
+    │           └── ytdlp.ts
+    │
+    └── web/                                 ← ✅ Complete (Phase 6)
+        ├── package.json                     ← Vite + React + Tailwind + Axios
         ├── tsconfig.json
-        ├── .env.example
+        ├── vite.config.ts                   ← Proxies /api and /auth to :3001
+        ├── tailwind.config.js               ← Dark theme: near-black, lime accent (#c8f135)
+        ├── postcss.config.js
+        ├── index.html                       ← Bebas Neue, Karla, JetBrains Mono from Google Fonts
         └── src/
-            ├── index.ts                     ← Exports startBot(), loads playlistCommand
-            ├── types.ts                     ← Re-exports from shared; Command union includes
-            │                                   SlashCommandSubcommandsOnlyBuilder
-            ├── deploy-commands.ts           ← Registers all 10 slash commands
-            ├── commands/
-            │   ├── join.ts, leave.ts, play.ts, skip.ts, stop.ts
-            │   ├── loop.ts, shuffle.ts, queue.ts, nowplaying.ts
-            │   └── playlist.ts              ← /playlist play [name] — queries DB by name
-            ├── lib/
-            │   └── prisma.ts                ← Bot-local Prisma singleton (separate from API's
-            │                                   to avoid circular dependency)
-            ├── player/
-            │   ├── GuildPlayer.ts           ← Uses QueuedSong, exposes getQueueState()
-            │   └── manager.ts
-            └── utils/
-                └── ytdlp.ts
+            ├── main.tsx
+            ├── App.tsx                      ← Route definitions
+            ├── index.css                    ← Tailwind directives + global component classes
+            ├── api/
+            │   ├── client.ts                ← Axios instance; 401 → redirect to /login
+            │   ├── types.ts                 ← Frontend-local mirrors of shared types
+            │   └── api.ts                   ← Typed wrappers for all API endpoints
+            ├── context/
+            │   └── AuthContext.tsx          ← Fetches /auth/me on load; exposes user + logout
+            └── components/
+            │   ├── ProtectedRoute.tsx       ← Redirects unauthenticated users to /login
+            │   └── Layout.tsx               ← Sidebar nav, main content area, Now Playing bar stub
+            └── pages/
+                ├── LoginPage.tsx            ← Centered card; "Login with Discord" → /auth/login
+                ├── SongsPage.tsx            ← Searchable grid, add-song modal, delete confirm,
+                │                               add-to-playlist popover (admin only)
+                ├── PlaylistsPage.tsx        ← List with song counts, create/delete (admin only)
+                ├── PlaylistDetailPage.tsx   ← Ordered track list, click-to-rename, add songs modal,
+                │                               remove-from-playlist, Play modal with mode/loop
+                └── PlayerPage.tsx           ← Stub — implemented in Phase 7
 ```
+
+### Environment variable added in Phase 6
+
+Add `WEB_UI_ORIGIN=http://localhost:5173` to `packages/api/.env`. This controls where
+`/auth/callback` redirects after a successful login. In production, set it to your deployed
+frontend URL.
 
 ### Prisma client generation note
 
@@ -363,7 +397,7 @@ Two middleware functions gate every protected route.
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/auth/login` | Redirect to Discord OAuth2 |
-| `GET` | `/auth/callback` | Handle OAuth2 callback, issue JWT, redirect to web UI |
+| `GET` | `/auth/callback` | Handle OAuth2 callback, issue JWT, redirect to WEB_UI_ORIGIN |
 | `GET` | `/auth/me` | Return the current user's info and role |
 | `POST` | `/auth/logout` | Clear the session cookie |
 
@@ -373,13 +407,19 @@ Two middleware functions gate every protected route.
 
 The web UI is the primary way all users interact with the bot. Since the web player is central, real-time state from Socket.io should be treated as the source of truth for the player page — not polling.
 
+### Design system
+
+Dark, music-poster aesthetic. Near-black backgrounds (`#080808` base, `#111111` surface),
+electric lime accent (`#c8f135`), Bebas Neue for display headings, Karla for body text,
+JetBrains Mono for metadata and labels. Defined as Tailwind theme tokens.
+
 ### Layout
 
 A persistent sidebar for navigation and a fixed **Now Playing bar** at the bottom of every page, visible to all users. The bar shows the current song's thumbnail, title, and duration. Admins also see Skip and Stop buttons in the bar.
 
 ```
 ┌─────────────────────────────────────┐
-│  🎵 BotName       [User Avatar]     │
+│  🎵 alfira      [User Avatar]       │
 ├──────────┬──────────────────────────┤
 │          │                          │
 │  Songs   │    [Page Content]        │
@@ -393,30 +433,34 @@ A persistent sidebar for navigation and a fixed **Now Playing bar** at the botto
 └─────────────────────────────────────┘
 ```
 
-### Login page (`/login`)
+### Login page (`/login`) ✅
 
-A centered card with a "Login with Discord" button. Unauthenticated users are redirected here from any protected route. After OAuth2 completes, they are redirected back to wherever they were trying to go.
+A centered card with a "Login with Discord" button. Unauthenticated users are redirected here
+from any protected route via `ProtectedRoute`. After OAuth2 completes the API sets the JWT
+cookie and redirects to the web UI root; `AuthContext` then fetches `/auth/me` automatically.
 
-### Song Library (`/songs`)
+### Song Library (`/songs`) ✅
 
 - A search bar for client-side filtering by title.
-- A grid of song cards showing: thumbnail, title, and duration.
+- A responsive grid of song cards showing: thumbnail, title, and duration.
 - **Admins only:** An "Add Song" button that opens a modal with a YouTube URL input. On submit, calls `POST /api/songs`. Shows a loading state while yt-dlp fetches metadata. Displays an inline error if the URL is invalid or already exists.
-- **Admins only:** A delete button on each song card, with a confirmation dialog before calling `DELETE /api/songs/:id`.
-- **Admins only:** An "Add to Playlist" option on each card.
+- **Admins only:** A delete button on each song card with a confirmation dialog.
+- **Admins only:** An "add to playlist" popover on each card showing all playlists; already-added playlists show a checkmark.
 
-### Playlists (`/playlists`)
+### Playlists (`/playlists`) ✅
 
-- A list of playlist cards showing name and song count.
-- **Admins only:** A "New Playlist" button.
-- Clicking a playlist opens its detail view.
+- A list of playlist rows showing name and song count.
+- **Admins only:** A "New Playlist" button that opens a create modal.
+- Clicking a playlist navigates to its detail view.
+- **Admins only:** Per-row delete with hover reveal.
 
-**Playlist detail (`/playlists/:id`):**
-- The playlist name is shown at the top. **Admins** can click it to rename inline.
-- An ordered list of songs in the playlist.
-- **Admins only:** A remove button on each song row.
-- **Admins only:** An "Add Songs" button opens a modal showing the full song library, allowing songs to be appended to the playlist.
-- **Admins only:** A "Play Playlist" button with mode options (Sequential / Random) and a loop selector.
+**Playlist detail (`/playlists/:id`) ✅**
+- Ordered track list with position numbers and thumbnails.
+- **Admins only:** Click the playlist name to rename it inline.
+- **Admins only:** A "Remove" button on each song row (hover-revealed).
+- **Admins only:** An "Add Songs" button opens a searchable modal showing the full library, with per-song add buttons that show a checkmark once added.
+- **Admins only:** A "Play" button opens a modal with sequential/random order and off/song/queue loop selectors, wired to `POST /api/player/play`.
+- **Admins only:** A "Delete" button to remove the playlist entirely.
 
 ### Player (`/player`)
 
@@ -441,7 +485,7 @@ A centered card with a "Login with Discord" button. Unauthenticated users are re
    avoiding the need for the `guilds.members.read` OAuth scope.
 7. The API checks whether any of their role IDs match the configured admin role IDs.
 8. A JWT is issued containing the user's Discord ID, username, avatar, and `isAdmin` flag. It is set as an `HttpOnly` cookie.
-9. The user is redirected to the web UI. (Currently returns JSON — redirect to be wired up in Phase 6.)
+9. The user is redirected to `WEB_UI_ORIGIN` (default: `http://localhost:5173`).
 
 ### Role check
 
@@ -455,7 +499,10 @@ The `requireAdmin` middleware reads these at startup and checks the `isAdmin` fl
 
 ### What this means for the UI
 
-The `GET /auth/me` endpoint returns the user's info including `isAdmin`. The React app fetches this on load and stores it in global state. All admin-only UI elements are conditionally rendered based on this flag. This is UI-only gating — the API enforces the same rules independently, so hiding a button in the UI is not the only line of defence.
+The `GET /auth/me` endpoint returns the user's info including `isAdmin`. `AuthContext` fetches
+this on load and stores it in React context. All admin-only UI elements are conditionally
+rendered based on this flag. This is UI-only gating — the API enforces the same rules
+independently.
 
 ---
 
@@ -510,7 +557,7 @@ On initial connect (and reconnect), the client always fetches the current queue 
 | Bot is kicked from voice channel | `GuildPlayer` is destroyed; `player:stopped` state is broadcast via Socket.io |
 | User runs `/play` without being in a voice channel | Bot replies with an ephemeral error message visible only to that user |
 | Web UI loses Socket.io connection | Socket.io handles automatic reconnection; on reconnect, the client re-fetches queue state via REST |
-| JWT is expired | API returns `401`; the web UI redirects the user to `/login` |
+| JWT is expired | API returns `401`; the Axios interceptor in `client.ts` redirects the user to `/login` |
 
 ---
 
@@ -533,16 +580,20 @@ Bot connects, joins/leaves voice channels, and plays audio from a YouTube URL vi
 > **Running the project:** `npm run dev` starts everything (API + bot). After any schema change or fresh clone, run `npm run db:generate` first.
 
 **Phase 5 — Discord OAuth2 ✅ COMPLETE**
-Full OAuth2 flow implemented in `auth.ts`. Bot token used to fetch guild member roles server-side, avoiding the `guilds.members.read` scope. `requireAuth` and `requireAdmin` middleware are real JWT-based implementations. `GET /auth/me` and `POST /auth/logout` work. The `/auth/callback` redirect to the web UI is wired up as a TODO for Phase 6.
+Full OAuth2 flow implemented in `auth.ts`. Bot token used to fetch guild member roles server-side, avoiding the `guilds.members.read` scope. `requireAuth` and `requireAdmin` middleware are real JWT-based implementations. `GET /auth/me` and `POST /auth/logout` work. `/auth/callback` now redirects to `WEB_UI_ORIGIN` (add this to `packages/api/.env`).
 
-**Phase 6 — Web UI: Songs and Playlists** ← *next*
-Build the Song Library and Playlist pages in a new `packages/web` Vite + React workspace. Auth is already in place, so the admin/member split can be built from the start. Wire the `/auth/callback` redirect to point at the web UI origin. Update the CORS origin in `api/src/index.ts` if the dev port differs from `5173`.
+**Phase 6 — Web UI: Songs and Playlists ✅ COMPLETE**
+`packages/web` created as a new Vite + React + Tailwind workspace. Dark music-poster aesthetic with near-black backgrounds and lime accent. `AuthContext` fetches `/auth/me` on load and gates all protected routes via `ProtectedRoute`. `Layout` provides the persistent sidebar and a Now Playing bar stub. Login page redirects to `/auth/login`. Song Library page has searchable grid, add-song modal, delete confirm, and add-to-playlist popover. Playlists page lists all playlists with create/delete. Playlist detail has ordered track list, inline rename, add-songs modal, remove-from-playlist, and a Play modal wired to the player API. Axios interceptor globally handles 401 → redirect to `/login`. Run with `npm run web:dev`.
 
-**Phase 7 — Web UI: Player page**
-Build the Player page with all controls wired up to the API.
+**Phase 7 — Web UI: Player page** ← *next*
+Build the Player page with full playback controls wired to the API. The Now Playing bar in
+`Layout.tsx` is already stubbed and ready to be wired up. Fetch initial queue state via
+`GET /api/player/queue` on mount. Display current song (large thumbnail, title, duration
+progress), the upcoming queue list, and admin controls: Skip, Stop, loop mode selector,
+Shuffle, and a Load Playlist section.
 
 **Phase 8 — Real-time sync**
-Add Socket.io to the API. Wire `GuildPlayer` to call `broadcastQueueUpdate()` after every state change. Implement `player:update`, `songs:added`, `songs:deleted`, and `playlists:updated` events. Replace the `TODO (Phase 8)` comments in all route handlers. Update the web UI to consume events. Test by controlling playback from both Discord slash commands and the web UI simultaneously.
+Add Socket.io to the API. Wire `GuildPlayer` to call `broadcastQueueUpdate()` after every state change. Implement `player:update`, `songs:added`, `songs:deleted`, and `playlists:updated` events. Replace the `TODO (Phase 8)` comments in all route handlers. Update the web UI to consume events via a `useSocket` hook. Test by controlling playback from both Discord slash commands and the web UI simultaneously.
 
 **Phase 9 — Polish**
 Add loading states, error messages, toast notifications, and empty states throughout the UI. Test edge cases from the error handling table above.

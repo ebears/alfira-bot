@@ -6,9 +6,6 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Read config once at module load so missing values are caught at startup.
-// ---------------------------------------------------------------------------
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -19,22 +16,19 @@ const {
   ADMIN_ROLE_IDS,
 } = process.env;
 
+// The web UI origin. In development this is the Vite dev server.
+// In production, point this at your deployed frontend URL.
+const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173';
+
 const ADMIN_ROLE_ID_SET = new Set(
   (ADMIN_ROLE_IDS ?? '').split(',').map((id) => id.trim()).filter(Boolean)
 );
 
-// JWT lifetime. Re-logging in always issues a fresh token.
 const JWT_EXPIRES_IN = '7d';
-
-// Cookie name. Consistent across all auth routes.
 const COOKIE_NAME = 'session';
 
 // ---------------------------------------------------------------------------
 // GET /auth/login
-//
-// Redirects the user to Discord's OAuth2 authorization page.
-// We only request 'identify' — the user's ID, username, and avatar.
-// Role membership is checked server-side using the bot token (see callback).
 // ---------------------------------------------------------------------------
 router.get('/login', (_req, res) => {
   const params = new URLSearchParams({
@@ -49,16 +43,6 @@ router.get('/login', (_req, res) => {
 
 // ---------------------------------------------------------------------------
 // GET /auth/callback
-//
-// Handles the OAuth2 redirect from Discord. Flow:
-//   1. Exchange the authorization code for a Discord access token.
-//   2. Fetch the user's Discord identity (id, username, avatar).
-//   3. Use the bot token to fetch the user's guild member record and roles.
-//      This avoids needing the 'guilds.members.read' OAuth scope, which
-//      would require adding 'bot' scope and complicating the auth URL.
-//   4. Determine isAdmin by checking roles against ADMIN_ROLE_IDS.
-//   5. Issue a signed JWT and set it as an HttpOnly cookie.
-//   6. Return JSON with the user info (Phase 6 will redirect to the UI instead).
 // ---------------------------------------------------------------------------
 router.get(
   '/callback',
@@ -70,7 +54,7 @@ router.get(
       return;
     }
 
-    // Step 1: exchange code for Discord access token.
+    // 1. Exchange code for Discord access token.
     let discordToken: string;
     try {
       const tokenRes = await axios.post(
@@ -90,7 +74,7 @@ router.get(
       return;
     }
 
-    // Step 2: fetch the user's Discord identity.
+    // 2. Fetch Discord identity.
     let discordUser: { id: string; username: string; avatar: string | null };
     try {
       const userRes = await axios.get('https://discord.com/api/users/@me', {
@@ -102,8 +86,7 @@ router.get(
       return;
     }
 
-    // Step 3: fetch the user's guild member record using the bot token.
-    // This gives us their role IDs without requiring additional OAuth scopes.
+    // 3. Fetch guild member roles via bot token.
     let memberRoles: string[] = [];
     try {
       const memberRes = await axios.get(
@@ -113,24 +96,21 @@ router.get(
       memberRoles = memberRes.data.roles ?? [];
     } catch (err: any) {
       if (err?.response?.status === 404) {
-        // User is not in the guild — they cannot use this app.
         res.status(403).json({ error: 'You must be a member of the server to use this app.' });
         return;
       }
-      // Any other error: proceed without roles (user will be treated as member).
       console.warn('Could not fetch guild member roles, defaulting to member access:', err?.message);
     }
 
-    // Step 4: determine isAdmin.
+    // 4. Determine isAdmin.
     const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
 
-    // Step 5: build avatar URL. Discord avatars are served from their CDN.
-    // If the user has no custom avatar, null is fine — the UI will show a fallback.
+    // 5. Build avatar URL.
     const avatarUrl = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : null;
 
-    // Step 6: issue the JWT.
+    // 6. Issue JWT.
     const payload = {
       discordId: discordUser.id,
       username: discordUser.username,
@@ -141,26 +121,19 @@ router.get(
     const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: JWT_EXPIRES_IN });
 
     res.cookie(COOKIE_NAME, token, {
-      httpOnly: true,   // Not accessible via document.cookie — prevents XSS theft.
-      sameSite: 'lax',  // Sent on same-site navigations; blocks cross-site CSRF.
-      secure: process.env.NODE_ENV === 'production', // HTTPS-only in production.
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds.
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Phase 6: change this to res.redirect('http://localhost:5173') once the
-    // web UI exists. The cookie will be sent with that redirect automatically.
-    res.json({
-      message: 'Login successful.',
-      user: payload,
-    });
+    // 7. Redirect to the web UI. The cookie travels with this redirect.
+    res.redirect(WEB_UI_ORIGIN);
   })
 );
 
 // ---------------------------------------------------------------------------
 // GET /auth/me
-//
-// Returns the current user's info decoded from the JWT cookie.
-// The requireAuth middleware verifies the JWT and attaches req.user.
 // ---------------------------------------------------------------------------
 router.get(
   '/me',
@@ -172,11 +145,6 @@ router.get(
 
 // ---------------------------------------------------------------------------
 // POST /auth/logout
-//
-// Clears the session cookie. The JWT itself is not invalidated server-side
-// (stateless JWTs can't be revoked without a blocklist). The 7-day expiry
-// means a stolen-but-cleared token is valid until expiry, which is an
-// acceptable trade-off for a single-server self-hosted app.
 // ---------------------------------------------------------------------------
 router.post('/logout', (_req, res) => {
   res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
