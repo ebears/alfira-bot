@@ -37,5 +37,5 @@ COPY package.json ./
 EXPOSE 3001
 
 # The API entry point starts Express, Socket.io, and the Discord bot.
-CMD ["node", "packages/api/dist/src/index.js"]
+CMD ["node", "packages/api/dist/index.js"]
 
