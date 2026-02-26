@@ -18,8 +18,8 @@ RUN npm ci && \
     npm run db:generate && \
     cp -r node_modules/.prisma packages/api/node_modules/ && \
     cp -r node_modules/.prisma packages/bot/node_modules/ && \
-    npm run -w packages/api build && \
-    npm run -w packages/bot build
+    npm run -w packages/bot build && \
+    npm run -w packages/api build
 
 # Use a smaller runtime image.
 FROM node:22-slim AS runtime
