@@ -13,8 +13,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages ./packages
 
-# Install and build all workspaces.
+# Install dependencies and generate Prisma client, then build workspaces.
 RUN npm ci && \
+    npm run db:generate && \
     npm run -w packages/api build && \
     npm run -w packages/bot build
 
