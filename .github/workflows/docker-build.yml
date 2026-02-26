@@ -2,9 +2,10 @@ name: Build Docker images
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: main
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
   workflow_dispatch:
 
 jobs:
@@ -44,4 +45,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/alfira-bot-web:latest
             ghcr.io/${{ github.repository_owner }}/alfira-bot-web:${{ github.sha }}
-
