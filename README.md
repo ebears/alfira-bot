@@ -1,14 +1,12 @@
-alfira-bot
-==========
+<p align="center">
+  <img width="250" height="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/logo.png">
+</p>
 
-## Overview
+<h1 align="center">Alfira</h1>
 
-`alfira-bot` is a self-hosted **Discord music bot** with a **web UI as the primary interface**.  
+**Alfira** is a self-hosted **Discord music bot** with a **web UI as the primary interface**.  
 The bot handles joining voice channels and audio playback; the web app handles browsing songs,
 managing playlists, and controlling playback in real time.
-
-For a full technical deep-dive (types, routes, flows, and build phases), see  
-`docs/OUTLINE.md`.
 
 ## Features
 
@@ -40,7 +38,7 @@ For a full technical deep-dive (types, routes, flows, and build phases), see
 - **Database**: PostgreSQL + Prisma
 - **Frontend**: React (Vite) + Tailwind CSS
 
-## Packages & structure (monorepo)
+### Structure
 
 The project is an npm workspaces monorepo:
 
@@ -56,9 +54,17 @@ Top-level scripts:
 - `npm run db:generate` – Generate Prisma client.
 - `npm run db:migrate` – Run Prisma migrations.
 
-## Local development
+<p align="center">
+  <img width="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/icon.png">
+</p>
 
-### 1. Start PostgreSQL
+<h2 align="center">Setup</h2>
+
+### Local (Development)
+
+**Requirements:** `Node.js`/`NPM`, `Docker` (or an available development PostGreSQL), `yt-dlp`, and `ffmpeg`.
+
+#### 1. Start PostgreSQL
 
 Use the dev `docker-compose.yml` (database only):
 
@@ -68,7 +74,7 @@ docker compose up -d
 
 This starts PostgreSQL on `localhost:5432` with credentials matching `packages/api/.env.example`.
 
-### 2. Configure environment variables
+#### 2. Configure environment variables
 
 Copy and fill in:
 
@@ -79,14 +85,14 @@ Copy and fill in:
 At minimum, you will need values from the
 [Discord Developer Portal](https://discord.com/developers/applications) and your guild/role IDs.
 
-### 3. Run migrations and generate Prisma client
+#### 3. Run migrations and generate Prisma client
 
 ```bash
 npm run db:generate
 npm run db:migrate
 ```
 
-### 4. Run API + bot and web UI
+#### 4. Run API + bot and web UI
 
 In one terminal (API + bot):
 
@@ -105,7 +111,11 @@ The default dev URLs are:
 - API + auth + Socket.io: `http://localhost:3001`
 - Web UI: `http://localhost:5173`
 
-## Docker deployment
+---
+
+### Docker (Production)
+
+**Requirements:** `Docker`, a reverse proxy (like `Caddy`)
 
 For a containerised deployment of the whole stack (database, API+bot, web) using the
 pre-built images published to GHCR:
@@ -131,7 +141,7 @@ and set `WEB_UI_ORIGIN` / `DISCORD_REDIRECT_URI` to match the public URL, such a
 - `WEB_UI_ORIGIN=http://musicbot.example.com`
 - `DISCORD_REDIRECT_URI=http://musicbot.example.com/auth/callback`
 
-### Locking down internal services (recommended)
+#### Locking down internal services (recommended)
 
 In a production setup where Caddy (or another reverse proxy) runs in Docker too, you will usually
 want:
@@ -146,26 +156,30 @@ want:
   then forwards to `api`/`web` internally.
 
 This keeps the database, API, and web containers reachable only via your reverse proxy and Docker
-networking, rather than directly over the public internet.
+networking.
 
-## GitHub Actions & container images
+Example `Caddyfile` snippet:
 
-The workflow at `.github/workflows/docker-build.yml`:
+```Caddy
+https://alfira.website.com {
+  reverse_proxy /api* api:3001
+  reverse_proxy /auth* api:3001
+  reverse_proxy /socket.io* api:3001
+  reverse_proxy /* web:8080
+}
+```
 
-- Builds **API + bot** from `Dockerfile.api` and tags:
-  - `ghcr.io/<owner>/alfira-bot-api:latest`
-  - `ghcr.io/<owner>/alfira-bot-api:<git-sha>`
-- Builds **web** from `Dockerfile.web` and tags:
-  - `ghcr.io/<owner>/alfira-bot-web:latest`
-  - `ghcr.io/<owner>/alfira-bot-web:<git-sha>`
-- Logs in to GitHub Container Registry (GHCR) using `GITHUB_TOKEN` and pushes the images.
+---
 
-Make sure the repository allows **write** access for `GITHUB_TOKEN` under  
-Settings → Actions → General → Workflow permissions.
-
-## Further reading
+### Further Reading
 
 - `docs/OUTLINE.md` – complete architecture and build phases, including detailed
   type definitions, endpoint contracts, and real-time event flows.
 - `docs/OPERATIONS.md` – operational runbooks for production, including how to apply
   Prisma migrations with the `migrate` service or a one-off container.
+
+---
+
+### Disclaimer
+
+**YMMV:** This project was written for personal use and with the help of LLMs.
