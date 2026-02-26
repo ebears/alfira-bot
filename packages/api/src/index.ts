@@ -32,6 +32,10 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10);
 // ---------------------------------------------------------------------------
 const app = express();
 
+// Trust X-Forwarded-For only from the Caddy machine.
+// Replace with your actual Caddy machine's LAN IP.
+app.set('trust proxy', process.env.TRUSTED_PROXY_IP ?? false);
+
 app.use(cors({
   origin: process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173',
   credentials: true,

@@ -3,13 +3,13 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: botuser
-      POSTGRES_PASSWORD: botpass
-      POSTGRES_DB: musicbot
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U botuser -d musicbot']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
@@ -32,9 +32,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_ROLE_IDS: ${ADMIN_ROLE_IDS}
       WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:8080}
+      TRUSTED_PROXY_IP: ${TRUSTED_PROXY_IP}
     ports:
-      # Expose API directly if you want to hit it without going through a reverse proxy.
-      - '3001:3001'
+      - '${DOCKER_HOST_IP}:3001:3001'
 
   web:
     image: ghcr.io/ebears/alfira-bot-web:latest
@@ -53,9 +53,8 @@ services:
     restart: "no"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     command: ["npm", "run", "-w", "packages/api", "db:migrate:deploy"]
 
 volumes:
   pgdata:
-
