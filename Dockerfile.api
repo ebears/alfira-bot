@@ -1,10 +1,10 @@
 FROM node:20-slim AS base
 
 # Install system dependencies: ffmpeg and yt-dlp are required at runtime
-# by the bot's yt-dlp wrapper.
+# by the bot's yt-dlp wrapper. Use the Debian yt-dlp package to avoid
+# pip-in-system-env (PEP 668) issues.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg python3 python3-pip && \
-    pip3 install --no-cache-dir yt-dlp && \
+    apt-get install -y --no-install-recommends ffmpeg python3 yt-dlp && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -22,8 +22,7 @@ RUN npm ci && \
 FROM node:20-slim AS runtime
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg python3 python3-pip && \
-    pip3 install --no-cache-dir yt-dlp && \
+    apt-get install -y --no-install-recommends ffmpeg python3 yt-dlp && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
