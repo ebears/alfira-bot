@@ -16,6 +16,7 @@ COPY packages ./packages
 # Install dependencies and generate Prisma client, then build workspaces.
 RUN npm ci && \
     npm run db:generate && \
+    cp -r node_modules/.prisma packages/bot/node_modules/ && \
     npm run -w packages/api build && \
     npm run -w packages/bot build
 
