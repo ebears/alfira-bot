@@ -1,19 +1,16 @@
 FROM node:22-slim AS base
 
-# Install system dependencies: ffmpeg and yt-dlp are required at runtime
-# by the bot's yt-dlp wrapper. Use the Debian yt-dlp package to avoid
-# pip-in-system-env (PEP 668) issues.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg python3 yt-dlp && \
+    apt-get install -y --no-install-recommends ffmpeg python3 curl && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install root dependencies (monorepo) first for better layer caching.
 COPY package.json package-lock.json ./
 COPY packages ./packages
 
-# Install dependencies and generate Prisma client, then build workspaces.
 RUN npm ci && \
     npm run db:generate && \
     cp -r node_modules/.prisma packages/api/node_modules/ && \
@@ -21,24 +18,22 @@ RUN npm ci && \
     npm run -w packages/bot build && \
     npm run -w packages/api build
 
-# Use a smaller runtime image.
 FROM node:22-slim AS runtime
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg python3 yt-dlp && \
+    apt-get install -y --no-install-recommends ffmpeg python3 curl && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy node_modules and built packages from the build stage.
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages ./packages
 COPY package.json ./
 
 EXPOSE 3001
 
-# The API entry point starts Express, Socket.io, and the Discord bot.
 CMD ["node", "packages/api/dist/index.js"]
-
