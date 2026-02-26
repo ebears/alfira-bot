@@ -95,7 +95,7 @@ router.post(
         return;
       }
 
-      dbSongs = playlist.songs.map((ps): Song => ps.song);
+      dbSongs = playlist.songs.map((ps: { song: Song }): Song => ps.song);
     } else {
       dbSongs = await prisma.song.findMany({ orderBy: { createdAt: 'asc' } });
     }
