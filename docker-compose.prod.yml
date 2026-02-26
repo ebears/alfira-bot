@@ -47,6 +47,17 @@ services:
       # Main entrypoint for the app.
       - '8080:80'
 
+  migrate:
+    image: ghcr.io/ebears/alfira-bot-api:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+    command: ["npm", "run", "-w", "packages/api", "db:migrate:deploy"]
+
 volumes:
   pgdata:
 

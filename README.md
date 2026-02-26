@@ -167,3 +167,5 @@ Settings → Actions → General → Workflow permissions.
 
 - `docs/OUTLINE.md` – complete architecture and build phases, including detailed
   type definitions, endpoint contracts, and real-time event flows.
+- `OPERATIONS.md` – operational runbooks for production, including how to apply
+  Prisma migrations with the `migrate` service or a one-off container.

@@ -6,6 +6,7 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
   },
