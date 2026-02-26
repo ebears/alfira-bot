@@ -730,16 +730,33 @@ and song count changes from any session; `PlaylistDetailPage` subscribes to `pla
 and triggers a full refetch when the event matches the current playlist id, keeping the track
 list in sync across tabs and users.
 
-**Phase 10 — Containerisation** ← *next*
-Dockerise the full application for self-hosted deployment. Planned work:
-- `Dockerfile` for the API/bot service — Node.js base image with `ffmpeg` and `yt-dlp`
-  installed as system dependencies (required at runtime by `ytdlp.ts`).
-- `Dockerfile` for the web service — multi-stage build: `vite build` in a Node image,
-  static output served by Caddy.
-- `docker-compose.yml` extended to include all three services (`db`, `api`, `web`) with
-  correct environment variable wiring, a shared network, and a health check on the API
-  before the bot attempts to connect.
-- Production Caddy config proxying `/api`, `/auth`, and `/socket.io` (with WebSocket upgrade)
-  to the API container, and serving the Vite static bundle for everything else.
-- Update `.env.example` files to document any new production-specific variables
-  (e.g. `NODE_ENV=production`, production `WEB_UI_ORIGIN`).
+**Phase 10 — Containerisation ✅ COMPLETE**
+Dockerise the full application for self-hosted deployment.
+
+- `Dockerfile.api` builds a production image for the combined API + bot process:
+  Node.js 20 slim base image with `ffmpeg` and `yt-dlp` installed as system
+  dependencies (required at runtime by `ytdlp.ts`). The monorepo dependencies
+  are installed once and the `api` and `bot` workspaces are built in a
+  dedicated build stage; the runtime stage copies the compiled output and
+  starts `packages/api/dist/src/index.js`, which in turn brings up Express,
+  Socket.io, and the Discord bot in a single container.
+- `Dockerfile.web` builds the Vite frontend and serves it via a lightweight
+  `nginx:alpine` runtime image. A multi-stage build runs
+  `npm run -w packages/web build` in a Node 20 slim image, then copies
+  `packages/web/dist` into the nginx document root so it can serve the
+  static bundle.
+- `docker-compose.prod.yml` defines the production stack with three services:
+  `db` (PostgreSQL 16), `api` (built from `Dockerfile.api`), and `web`
+  (built from `Dockerfile.web` with nginx serving the static assets). The `db` service has a health check
+  so the API only starts once PostgreSQL is ready. The API container receives
+  all secrets and configuration via environment variables, including
+  `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
+  `DISCORD_REDIRECT_URI`, `GUILD_ID`, `JWT_SECRET`, `ADMIN_ROLE_IDS`, and
+  `WEB_UI_ORIGIN`. For local dockerised runs, `WEB_UI_ORIGIN` and
+  `DISCORD_REDIRECT_URI` should typically be set to `http://localhost:8080`
+  and `http://localhost:8080/auth/callback` respectively so OAuth2 redirects
+  back to the web UI (and through any external reverse proxy you configure,
+  such as your existing Caddy instance).
+- The original development-only `docker-compose.yml` remains focused on
+  PostgreSQL only (for hot-reload local development), and its comments have
+  been updated to reference Phase 10 as the full containerisation step.

@@ -1,0 +1,42 @@
+FROM node:20-slim AS base
+
+# Install system dependencies: ffmpeg and yt-dlp are required at runtime
+# by the bot's yt-dlp wrapper.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg python3 python3-pip && \
+    pip3 install --no-cache-dir yt-dlp && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install root dependencies (monorepo) first for better layer caching.
+COPY package.json package-lock.json ./
+COPY packages ./packages
+
+# Install and build all workspaces.
+RUN npm ci && \
+    npm run -w packages/api build && \
+    npm run -w packages/bot build
+
+# Use a smaller runtime image.
+FROM node:20-slim AS runtime
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg python3 python3-pip && \
+    pip3 install --no-cache-dir yt-dlp && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy node_modules and built packages from the build stage.
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/packages ./packages
+COPY package.json ./
+
+EXPOSE 3001
+
+# The API entry point starts Express, Socket.io, and the Discord bot.
+CMD ["node", "packages/api/dist/src/index.js"]
+

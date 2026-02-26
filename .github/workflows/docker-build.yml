@@ -1,0 +1,47 @@
+name: Build Docker images
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API + bot image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.api
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/alfira-bot-api:latest
+            ghcr.io/${{ github.repository_owner }}/alfira-bot-api:${{ github.sha }}
+
+      - name: Build web (Caddy) image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.web
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/alfira-bot-web:latest
+            ghcr.io/${{ github.repository_owner }}/alfira-bot-web:${{ github.sha }}
+

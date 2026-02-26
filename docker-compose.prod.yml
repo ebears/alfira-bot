@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: botuser
+      POSTGRES_PASSWORD: botpass
+      POSTGRES_DB: musicbot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U botuser -d musicbot']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-http://localhost:8080/auth/callback}
+      GUILD_ID: ${GUILD_ID}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_ROLE_IDS: ${ADMIN_ROLE_IDS}
+      WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:8080}
+    ports:
+      # Expose API directly if you want to hit it without going through a reverse proxy.
+      - '3001:3001'
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # Main entrypoint for the app.
+      - '8080:80'
+
+volumes:
+  pgdata:
+

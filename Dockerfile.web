@@ -1,0 +1,21 @@
+FROM node:20-slim AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages ./packages
+
+RUN npm ci && \
+    npm run -w packages/web build
+
+FROM nginx:alpine AS runtime
+
+WORKDIR /usr/share/nginx/html
+
+# Static assets built by Vite.
+COPY --from=build /app/packages/web/dist ./
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+

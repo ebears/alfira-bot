@@ -6,7 +6,7 @@ version: '3.8'
 # This runs the database in Docker while the API and bot run locally via
 # ts-node, which gives you hot-reloadable code and easy debugging.
 #
-# The full app deployment (bot + API + web all containerised) is Phase 9.
+# The full app deployment (bot + API + web all containerised) is Phase 10.
 #
 # Usage:
 #   docker compose up -d       — start PostgreSQL in the background
