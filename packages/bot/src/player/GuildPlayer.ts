@@ -11,6 +11,7 @@ import {
 } from '@discordjs/voice';
 import { TextChannel, EmbedBuilder } from 'discord.js';
 import { getStreamUrl } from '../utils/ytdlp';
+import { broadcastQueueUpdate } from '../lib/broadcast';
 import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
 
 export class GuildPlayer {
@@ -70,11 +71,15 @@ export class GuildPlayer {
   /**
    * Add a song to the end of the queue.
    * If nothing is currently playing, playback starts immediately.
+   * Broadcasts the updated state after the queue is modified.
    */
   async addToQueue(song: QueuedSong): Promise<void> {
     this.queue.push(song);
     if (this.currentSong === null) {
       await this.playNext();
+    } else {
+      // Already playing — just broadcast the new queue length.
+      broadcastQueueUpdate(this.getQueueState());
     }
   }
 
@@ -87,6 +92,7 @@ export class GuildPlayer {
     this.skipping = true;
     // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
     // which calls onTrackEnd(). The skipping flag tells it to advance.
+    // broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
     this.audioPlayer.stop();
   }
 
@@ -100,6 +106,9 @@ export class GuildPlayer {
     this.currentSong = null;
     this.audioPlayer.stop(true); // true = force-stop, suppresses the Idle event
     this.connection.destroy();
+
+    // Broadcast the stopped/empty state so all clients update immediately.
+    broadcastQueueUpdate(this.getQueueState());
   }
 
   /**
@@ -111,6 +120,7 @@ export class GuildPlayer {
       const j = Math.floor(Math.random() * (i + 1));
       [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
     }
+    broadcastQueueUpdate(this.getQueueState());
   }
 
   /**
@@ -118,6 +128,7 @@ export class GuildPlayer {
    */
   setLoopMode(mode: LoopMode): void {
     this.loopMode = mode;
+    broadcastQueueUpdate(this.getQueueState());
   }
 
   // ---------------------------------------------------------------------------
@@ -144,8 +155,8 @@ export class GuildPlayer {
   // ---------------------------------------------------------------------------
   // getQueueState
   //
-  // Returns a QueueState snapshot. Used by GET /api/player/queue and will
-  // also be the payload for the Socket.io player:update event in Phase 8.
+  // Returns a QueueState snapshot. Used by GET /api/player/queue and as the
+  // payload for the Socket.io player:update event.
   // ---------------------------------------------------------------------------
   getQueueState(): QueueState {
     return {
@@ -164,12 +175,15 @@ export class GuildPlayer {
    * Pull the next song off the queue and start playing it.
    * Fetches a fresh CDN URL at playback time (not at enqueue time) to avoid
    * using stale URLs for tracks that have been waiting in a long queue.
+   * Broadcasts the new state once playback begins (or when the queue empties).
    */
   private async playNext(): Promise<void> {
     const next = this.queue.shift();
 
     if (!next) {
       this.currentSong = null;
+      // Queue exhausted — broadcast the idle state.
+      broadcastQueueUpdate(this.getQueueState());
       return;
     }
 
@@ -204,6 +218,9 @@ export class GuildPlayer {
       await this.playNext();
       return;
     }
+
+    // Broadcast after confirming playback has actually started.
+    broadcastQueueUpdate(this.getQueueState());
 
     await this.textChannel.send({ embeds: [this.buildNowPlayingEmbed(next)] });
   }

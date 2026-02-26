@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { isValidYouTubeUrl, getMetadata } from '@discord-music-bot/bot/src/utils/ytdlp';
+import { emitSongAdded, emitSongDeleted } from '../lib/socket';
 
 const router = Router();
 
@@ -30,11 +31,10 @@ router.get(
 //
 // Flow:
 //   1. Validate the URL format.
-//   2. Check for duplicates by youtubeId.
-//   3. Run yt-dlp to fetch metadata (title, duration, thumbnail).
+//   2. Fetch metadata via yt-dlp (title, duration, youtubeId).
+//   3. Check for duplicates by youtubeId.
 //   4. Save to the database.
-//
-// Phase 8: emit a songs:added Socket.io event after saving.
+//   5. Emit songs:added so all connected clients update in real time.
 // ---------------------------------------------------------------------------
 router.post(
   '/',
@@ -90,7 +90,8 @@ router.post(
       },
     });
 
-    // TODO (Phase 8): emit songs:added event via Socket.io
+    // Notify all connected clients so the Songs page updates in real time.
+    emitSongAdded(song);
 
     res.status(201).json(song);
   })
@@ -101,8 +102,6 @@ router.post(
 //
 // Deletes a song and all its PlaylistSong associations (via cascade).
 // Admin only.
-//
-// Phase 8: emit a songs:deleted event after deleting.
 // ---------------------------------------------------------------------------
 router.delete(
   '/:id',
@@ -119,7 +118,8 @@ router.delete(
 
     await prisma.song.delete({ where: { id } });
 
-    // TODO (Phase 8): emit songs:deleted event via Socket.io
+    // Notify all connected clients so the Songs page removes the card in real time.
+    emitSongDeleted(id);
 
     res.status(204).send();
   })

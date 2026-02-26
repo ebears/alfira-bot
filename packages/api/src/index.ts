@@ -1,14 +1,17 @@
 import 'dotenv/config';
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import prisma from './lib/prisma';
+import { initSocket, emitPlayerUpdate } from './lib/socket';
 import { errorHandler } from './middleware/errorHandler';
 import songsRouter from './routes/songs';
 import playlistsRouter from './routes/playlists';
 import playerRouter from './routes/player';
 import authRouter from './routes/auth';
 import { startBot } from '@discord-music-bot/bot';
+import { setBroadcastQueueUpdate } from '@discord-music-bot/bot/src/lib/broadcast';
 
 // ---------------------------------------------------------------------------
 // Validate required environment variables.
@@ -30,8 +33,8 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Web UI origin (Phase 6)
-  credentials: true,               // Required for cookies to be sent cross-origin
+  origin: process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173',
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -44,7 +47,7 @@ app.use('/api/playlists', playlistsRouter);
 app.use('/api/player', playerRouter);
 app.use('/auth', authRouter);
 
-// Health check — useful for verifying the server is up before running tests.
+// Health check — useful for verifying the server is up.
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
@@ -53,15 +56,24 @@ app.get('/health', (_req, res) => {
 app.use(errorHandler);
 
 // ---------------------------------------------------------------------------
+// Create the HTTP server.
+//
+// We wrap Express in a plain http.Server so Socket.io can share the same
+// port. Both HTTP (REST) and WebSocket (Socket.io) traffic are handled on
+// PORT=3001 — no extra port needed.
+// ---------------------------------------------------------------------------
+const httpServer = http.createServer(app);
+
+// ---------------------------------------------------------------------------
 // Startup sequence
 //
 // Order matters:
-//   1. Verify the database is reachable before accepting traffic.
-//   2. Start the HTTP server.
-//   3. Start the Discord bot.
-//
-// The bot starts last so that if it fails, the API is still running and can
-// report the error clearly rather than crashing the whole process silently.
+//   1. Verify the database is reachable.
+//   2. Initialise Socket.io on the HTTP server.
+//   3. Inject the broadcast function into the bot package so GuildPlayer can
+//      call broadcastQueueUpdate() without importing from the API.
+//   4. Start the HTTP server.
+//   5. Start the Discord bot.
 // ---------------------------------------------------------------------------
 async function main(): Promise<void> {
   // 1. Verify database connectivity.
@@ -74,12 +86,22 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // 2. Start the HTTP server.
-  app.listen(PORT, () => {
-    console.log(`✅  API listening on http://localhost:${PORT}`);
+  // 2. Initialise Socket.io.
+  initSocket(httpServer);
+
+  // 3. Inject the broadcast function into the bot package.
+  //    GuildPlayer calls broadcastQueueUpdate() after every state change;
+  //    this wires it to the real Socket.io emit.
+  setBroadcastQueueUpdate((state) => {
+    emitPlayerUpdate(state);
   });
 
-  // 3. Start the Discord bot.
+  // 4. Start the HTTP server (Express + Socket.io on the same port).
+  httpServer.listen(PORT, () => {
+    console.log(`✅  API + Socket.io listening on http://localhost:${PORT}`);
+  });
+
+  // 5. Start the Discord bot.
   try {
     await startBot();
   } catch (error) {

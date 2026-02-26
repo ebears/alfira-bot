@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import { getQueueState, skipTrack, stopPlayback, setLoopMode, shuffleQueue } from '../api/api';
+import { useSocket } from '../hooks/useSocket';
 import type { QueueState, LoopMode } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -24,18 +25,16 @@ interface PlayerContextValue {
   loading: boolean;
   // Elapsed seconds for the current song (client-side simulation).
   elapsed: number;
-  // Actions — each calls the API and immediately refetches state.
+  // Actions — each calls the API; state updates arrive via Socket.io.
   skip: () => Promise<void>;
   stop: () => Promise<void>;
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
-  // Force an immediate refetch (e.g. after starting playback from PlayerPage).
+  // Force an immediate REST refetch (e.g. after starting playback from PlayerPage).
   refetch: () => Promise<void>;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
-
-const POLL_INTERVAL_MS = 3000;
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
@@ -46,8 +45,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const timedSongId = useRef<string | null>(null);
   const elapsedRef = useRef(0);
 
+  const socket = useSocket();
+
   // ---------------------------------------------------------------------------
-  // Fetch queue state from the API.
+  // REST fetch — used for initial load and after actions where we want the
+  // freshest server state immediately (e.g. after startPlayback).
   // ---------------------------------------------------------------------------
   const refetch = useCallback(async () => {
     try {
@@ -61,14 +63,36 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Poll on mount and every POLL_INTERVAL_MS.
-  // Phase 8 will replace this with Socket.io events.
+  // Socket.io — primary state update mechanism.
+  //
+  // On connect (and reconnect), always fetch the current state via REST to
+  // avoid a stale snapshot for users who open the page mid-song. After that,
+  // player:update events keep the state in sync without polling.
   // ---------------------------------------------------------------------------
   useEffect(() => {
+    // Fetch immediately when the context mounts.
     refetch();
-    const id = setInterval(refetch, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [refetch]);
+
+    const handlePlayerUpdate = (data: QueueState) => {
+      setState(data);
+      // Mark loading as false on the first real-time update too, in case
+      // the REST fetch hasn't resolved yet.
+      setLoading(false);
+    };
+
+    const handleReconnect = () => {
+      // Re-sync after a dropped connection so we don't show stale state.
+      refetch();
+    };
+
+    socket.on('player:update', handlePlayerUpdate);
+    socket.on('connect', handleReconnect);
+
+    return () => {
+      socket.off('player:update', handlePlayerUpdate);
+      socket.off('connect', handleReconnect);
+    };
+  }, [socket, refetch]);
 
   // ---------------------------------------------------------------------------
   // Client-side elapsed-time counter.
@@ -81,7 +105,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const songId = state.currentSong?.id ?? null;
 
     if (songId !== timedSongId.current) {
-      // Song changed — reset the counter.
       timedSongId.current = songId;
       elapsedRef.current = 0;
       setElapsed(0);
@@ -101,7 +124,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [state.isPlaying, state.currentSong]);
 
   // ---------------------------------------------------------------------------
-  // Action helpers — call API then immediately refetch so the UI updates fast.
+  // Action helpers
+  //
+  // Each action calls the API and then does a short-delay refetch as a
+  // safety net. The socket player:update event will usually arrive first
+  // (triggered by GuildPlayer on the server), so the refetch is redundant
+  // in the happy path — but it guards against any missed events.
   // ---------------------------------------------------------------------------
   const skip = useCallback(async () => {
     await skipTrack();
@@ -118,15 +146,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const setLoop = useCallback(
     async (mode: LoopMode) => {
       await setLoopMode(mode);
-      await refetch();
+      // No refetch needed — setLoopMode triggers a broadcastQueueUpdate
+      // in GuildPlayer which arrives via the socket immediately.
     },
-    [refetch]
+    []
   );
 
   const shuffle = useCallback(async () => {
     await shuffleQueue();
-    await refetch();
-  }, [refetch]);
+    // Same as above — the socket event arrives before a refetch would.
+  }, []);
 
   return (
     <PlayerContext.Provider

@@ -18,7 +18,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

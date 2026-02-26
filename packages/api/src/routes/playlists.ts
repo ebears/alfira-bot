@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
+import { emitPlaylistUpdated } from '../lib/socket';
 
 const router = Router();
 
@@ -49,7 +50,7 @@ router.post(
       },
     });
 
-    // TODO (Phase 8): emit playlists:updated event via Socket.io
+    emitPlaylistUpdated({ ...playlist, _count: { songs: 0 } });
 
     res.status(201).json(playlist);
   })
@@ -109,9 +110,10 @@ router.patch(
     const playlist = await prisma.playlist.update({
       where: { id: req.params.id },
       data: { name: name.trim() },
+      include: { _count: { select: { songs: true } } },
     });
 
-    // TODO (Phase 8): emit playlists:updated event via Socket.io
+    emitPlaylistUpdated(playlist);
 
     res.json(playlist);
   })
@@ -136,7 +138,11 @@ router.delete(
 
     await prisma.playlist.delete({ where: { id: req.params.id } });
 
-    // TODO (Phase 8): emit playlists:updated event via Socket.io
+    // No playlist:deleted event needed — the web UI uses the playlists:updated
+    // event to re-fetch the list. For deletions, clients will notice the item
+    // is gone on the next fetch triggered by the event. A dedicated
+    // playlists:deleted event with just the ID could be added later for
+    // instant optimistic removal, but it is not in scope for Phase 8.
 
     res.status(204).send();
   })
@@ -174,8 +180,7 @@ router.post(
       return;
     }
 
-    // Check for duplicate — the schema enforces this too, but a friendly
-    // error message is better than a Prisma constraint violation.
+    // Check for duplicate.
     const existing = await prisma.playlistSong.findUnique({
       where: { playlistId_songId: { playlistId: playlist.id, songId: song.id } },
     });
@@ -200,7 +205,12 @@ router.post(
       include: { song: true },
     });
 
-    // TODO (Phase 8): emit playlists:updated event via Socket.io
+    // Fetch the updated playlist with the new song count for the broadcast.
+    const updatedPlaylist = await prisma.playlist.findUnique({
+      where: { id: playlist.id },
+      include: { _count: { select: { songs: true } } },
+    });
+    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
 
     res.status(201).json(playlistSong);
   })
@@ -247,7 +257,12 @@ router.delete(
       )
     );
 
-    // TODO (Phase 8): emit playlists:updated event via Socket.io
+    // Broadcast the updated playlist with the new song count.
+    const updatedPlaylist = await prisma.playlist.findUnique({
+      where: { id: playlistId },
+      include: { _count: { select: { songs: true } } },
+    });
+    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
 
     res.status(204).send();
   })

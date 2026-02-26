@@ -80,29 +80,37 @@ discord-music-bot/
     │   └── src/
     │       └── types.ts                     ← Song, QueuedSong, LoopMode, QueueState, Playlist
     │
-    ├── api/                                 ← ✅ Complete (Phases 3, 5)
-    │   ├── package.json
+    ├── api/                                 ← ✅ Complete (Phases 3, 5, 8)
+    │   ├── package.json                     ← Added socket.io dependency
     │   ├── tsconfig.json
     │   ├── .env.example
     │   ├── .env                             ← Create from .env.example (never commit)
     │   ├── prisma/
     │   │   └── schema.prisma                ← output set to root node_modules/.prisma/client
     │   └── src/
-    │       ├── index.ts                     ← Combined entry point: Express + bot in one process
+    │       ├── index.ts                     ← http.createServer wraps Express; initialises
+    │       │                                   Socket.io and injects broadcastQueueUpdate
+    │       │                                   into the bot package before starting the bot
     │       ├── lib/
-    │       │   └── prisma.ts                ← Prisma client singleton
+    │       │   ├── prisma.ts                ← Prisma client singleton
+    │       │   └── socket.ts                ← Socket.io server singleton + emit helpers
+    │       │                                   (emitPlayerUpdate, emitSongAdded,
+    │       │                                    emitSongDeleted, emitPlaylistUpdated)
     │       ├── middleware/
     │       │   ├── requireAuth.ts           ← JWT verification via HttpOnly cookie
     │       │   ├── requireAdmin.ts          ← Checks req.user.isAdmin, returns 403 if false
     │       │   └── errorHandler.ts          ← Global error handler + asyncHandler wrapper
     │       └── routes/
     │           ├── songs.ts                 ← GET, POST, DELETE /api/songs
+    │           │                               POST emits songs:added after save
+    │           │                               DELETE emits songs:deleted after delete
     │           ├── playlists.ts             ← Full CRUD + song add/remove
+    │           │                               All mutating routes emit playlists:updated
     │           ├── player.ts                ← queue, play, skip, stop, loop, shuffle
     │           └── auth.ts                  ← Full Discord OAuth2 flow + JWT issuance
-    │                                           /auth/callback now redirects to WEB_UI_ORIGIN
+    │                                           /auth/callback redirects to WEB_UI_ORIGIN
     │
-    ├── bot/                                 ← ✅ Complete (Phases 1, 2, 3, 4)
+    ├── bot/                                 ← ✅ Complete (Phases 1, 2, 3, 4, 8)
     │   ├── package.json
     │   ├── tsconfig.json
     │   ├── .env.example
@@ -115,17 +123,25 @@ discord-music-bot/
     │       │   ├── loop.ts, shuffle.ts, queue.ts, nowplaying.ts
     │       │   └── playlist.ts
     │       ├── lib/
-    │       │   └── prisma.ts
+    │       │   ├── prisma.ts                ← Prisma client singleton
+    │       │   └── broadcast.ts             ← Injectable broadcastQueueUpdate callback.
+    │       │                                   Avoids circular dep (api→bot→api): the bot
+    │       │                                   package defines the interface; the API entry
+    │       │                                   point injects the Socket.io implementation
+    │       │                                   at startup via setBroadcastQueueUpdate().
     │       ├── player/
-    │       │   ├── GuildPlayer.ts
+    │       │   ├── GuildPlayer.ts           ← Calls broadcastQueueUpdate() after every
+    │       │   │                               state change: addToQueue, stop, shuffle,
+    │       │   │                               setLoopMode, playNext, queue-empty
     │       │   └── manager.ts
     │       └── utils/
     │           └── ytdlp.ts
     │
-    └── web/                                 ← ✅ Complete (Phases 6, 7)
-        ├── package.json                     ← Vite + React + Tailwind + Axios
+    └── web/                                 ← ✅ Complete (Phases 6, 7, 8)
+        ├── package.json                     ← Added socket.io-client dependency
         ├── tsconfig.json
-        ├── vite.config.ts                   ← Proxies /api and /auth to :3001
+        ├── vite.config.ts                   ← Proxies /api, /auth, and /socket.io to :3001
+        │                                       /socket.io proxy has ws:true for WebSocket
         ├── tailwind.config.js               ← Dark theme: near-black, lime accent (#c8f135)
         ├── postcss.config.js
         ├── index.html                       ← Bebas Neue, Karla, JetBrains Mono from Google Fonts
@@ -137,18 +153,20 @@ discord-music-bot/
             │   ├── client.ts                ← Axios instance; 401 → redirect to /login
             │   ├── types.ts                 ← Frontend-local mirrors of shared types
             │   └── api.ts                   ← Typed wrappers for all API endpoints
+            ├── hooks/
+            │   └── useSocket.ts             ← Module-level Socket.io singleton. Returns the
+            │                                   shared socket instance. Singleton pattern
+            │                                   prevents the null-ref race that a useRef
+            │                                   approach causes under React StrictMode.
             ├── context/
             │   ├── AuthContext.tsx          ← Fetches /auth/me on load; exposes user + logout
-            │   └── PlayerContext.tsx        ← Polls /api/player/queue every 3s; exposes
-            │                                   state, elapsed, skip, stop, setLoop, shuffle,
-            │                                   refetch. Client-side elapsed counter resets on
-            │                                   song change. Phase 8 will replace polling with
-            │                                   Socket.io events.
+            │   └── PlayerContext.tsx        ← Subscribes to socket player:update events.
+            │                                   Initial state fetched via REST on mount and on
+            │                                   reconnect. Client-side elapsed counter resets
+            │                                   on song change. setInterval polling removed.
             └── components/
             │   ├── ProtectedRoute.tsx       ← Redirects unauthenticated users to /login
-            │   └── Layout.tsx               ← Sidebar nav, main content area, wired Now
-            │                                   Playing bar: thumbnail, title, elapsed/total
-            │                                   time, live progress bar, Skip + Stop for admins
+            │   └── Layout.tsx               ← Sidebar nav, main content area, Now Playing bar
             └── pages/
                 ├── LoginPage.tsx            ← Centered card; "Login with Discord" → /auth/login
                 ├── SongsPage.tsx            ← Searchable grid, add-song modal, delete confirm,
@@ -156,11 +174,8 @@ discord-music-bot/
                 ├── PlaylistsPage.tsx        ← List with song counts, create/delete (admin only)
                 ├── PlaylistDetailPage.tsx   ← Ordered track list, click-to-rename, add songs modal,
                 │                               remove-from-playlist, Play modal with mode/loop
-                └── PlayerPage.tsx           ← Now Playing card (blurred banner, thumbnail,
-                                                progress bar), idle state, admin controls
-                                                (Skip, Stop, Shuffle, Loop mode selector),
-                                                queue list, Load Playlist modal. Members see
-                                                full state read-only; controls hidden.
+                └── PlayerPage.tsx           ← Now Playing card, idle state, admin controls,
+                                                queue list, Load Playlist modal
 ```
 
 ### Environment variable added in Phase 6
@@ -258,17 +273,17 @@ GuildPlayer
 ├── audioPlayer: AudioPlayer (@discordjs/voice)
 ├── textChannel: TextChannel   — For "Now playing" embeds on auto-advance
 │
-├── addToQueue(song)   — Append a QueuedSong; starts playback if idle
+├── addToQueue(song)   — Append a QueuedSong; starts playback if idle; broadcasts state
 ├── skip()             — Sets skipping flag and stops AudioPlayer (triggers onTrackEnd)
-├── stop()             — Clears queue, stops player, destroys connection
-├── shuffle()          — Fisher-Yates shuffle of the upcoming queue
-├── setLoopMode(mode)  — Change loop mode
+├── stop()             — Clears queue, stops player, destroys connection; broadcasts state
+├── shuffle()          — Fisher-Yates shuffle of the upcoming queue; broadcasts state
+├── setLoopMode(mode)  — Change loop mode; broadcasts state
 ├── getCurrentSong()   — Read-only getter → QueuedSong | null
 ├── getQueue()         — Returns a shallow copy of the queue → QueuedSong[]
 ├── getLoopMode()      — Read-only getter → LoopMode
 ├── isPlaying()        — Checks AudioPlayer status → boolean
 ├── getQueueState()    — Returns a QueueState snapshot for API/Socket.io
-├── playNext()         — Internal: fetches fresh CDN URL and starts next track
+├── playNext()         — Internal: fetches fresh CDN URL, starts next track, broadcasts state
 └── onTrackEnd()       — Internal: applies loop logic and calls playNext()
 ```
 
@@ -279,7 +294,7 @@ GuildPlayer
 3. `getStreamUrl()` runs `yt-dlp -g` to resolve a direct CDN URL just before playback. This is intentionally deferred to playback time — not enqueue time — so URLs never go stale in long queues.
 4. `@discordjs/voice` creates an `AudioResource` from the CDN URL and FFmpeg handles buffering and Opus encoding. The CDN URL approach (rather than piping yt-dlp stdout) eliminates throttle-induced choppiness.
 5. When the track ends, `onTrackEnd()` checks the `skipping` flag and loop mode, then either replays the song, advances the queue, or stops.
-6. The player sends a "Now playing" embed to the text channel on auto-advance. **`broadcastQueueUpdate()` is not yet wired up** — that is a Phase 8 concern when Socket.io is added.
+6. After every state change, `broadcastQueueUpdate()` is called, which emits a `player:update` Socket.io event to all connected web clients.
 
 ### /play command — DB lookup behaviour
 
@@ -330,7 +345,7 @@ export function isValidYouTubeUrl(url: string): boolean
 
 ## 6. REST API
 
-The API runs in the same Node.js process as the bot. `packages/api/src/index.ts` is the combined entry point — it starts Express, connects Prisma, then calls `startBot()`. This shared process is what allows `GuildPlayer` to call `broadcastQueueUpdate()` directly in Phase 8.
+The API runs in the same Node.js process as the bot. `packages/api/src/index.ts` is the combined entry point — it creates an `http.Server` wrapping Express, initialises Socket.io on that server, injects the broadcast function into the bot package, then calls `startBot()`. This shared process is what allows `GuildPlayer` to call `broadcastQueueUpdate()` directly without any inter-process communication.
 
 ### Auth middleware
 
@@ -353,7 +368,7 @@ Two middleware functions gate every protected route.
 3. Check for duplicates by `youtubeId` (more reliable than URL comparison).
 4. Save to the database. `addedBy` is set to `req.user.discordId`.
 5. Return the new song record as `201 Created`.
-6. TODO (Phase 8): emit `songs:added` Socket.io event.
+6. Emit `songs:added` Socket.io event so all connected clients update in real time.
 
 ### Playlist endpoints
 
@@ -367,6 +382,10 @@ Two middleware functions gate every protected route.
 | `POST` | `/api/playlists/:id/songs` | Admin | Add a song to a playlist |
 | `DELETE` | `/api/playlists/:id/songs/:songId` | Admin | Remove a song from a playlist |
 
+All mutating playlist routes emit a `playlists:updated` Socket.io event after the database write
+completes. The payload is always the full updated playlist object with a fresh `_count.songs`
+value so clients can update song counts without a separate fetch.
+
 ### Player endpoints
 
 | Method | Path | Auth | Description |
@@ -377,6 +396,10 @@ Two middleware functions gate every protected route.
 | `POST` | `/api/player/stop` | Admin | Stop playback |
 | `POST` | `/api/player/loop` | Admin | Set loop mode |
 | `POST` | `/api/player/shuffle` | Admin | Shuffle the queue |
+
+Player mutation routes do not emit Socket.io events directly — `GuildPlayer` emits
+`player:update` itself after every state change, so the broadcast always reflects the actual
+in-memory state of the player rather than the API's interpretation of it.
 
 **`POST /api/player/play` request body:**
 ```json
@@ -416,7 +439,7 @@ Two middleware functions gate every protected route.
 
 ## 7. Web UI
 
-The web UI is the primary way all users interact with the bot. Since the web player is central, real-time state from Socket.io should be treated as the source of truth for the player page — not polling.
+The web UI is the primary way all users interact with the bot. Real-time state from Socket.io is the source of truth for the player — no polling.
 
 ### Design system
 
@@ -486,17 +509,23 @@ cookie and redirects to the web UI root; `AuthContext` then fetches `/auth/me` a
   in-flight and are disabled when not applicable (e.g. Skip disabled when nothing is playing).
 - **Admins only:** A "Load Playlist" button opens a modal to select a playlist, order
   (sequential/random), and loop mode, then calls `POST /api/player/play`.
-- **Members:** The page is fully visible but all controls are hidden. They see exactly what's
-  playing and what's coming up, updated every 3 seconds via polling (replaced by Socket.io in
-  Phase 8).
+- **Members:** The page is fully visible but all controls are hidden. State updates in real time
+  via Socket.io — no polling.
 
 ### PlayerContext (`src/context/PlayerContext.tsx`) ✅
 
 Shared state layer that powers both the Now Playing bar and the Player page without double-fetching.
-Polls `GET /api/player/queue` every 3 seconds. Runs a client-side elapsed-time counter that
-resets whenever the current song ID changes, giving a smooth progress bar without a server-side
-position field. Phase 8 will replace the `setInterval` poll with a Socket.io `player:update`
-listener.
+Subscribes to `player:update` Socket.io events and replaces local state on every event. Fetches
+initial state via `GET /api/player/queue` on mount and on socket reconnect to handle users who
+open the UI mid-song. Runs a client-side elapsed-time counter that resets whenever the current
+song ID changes, giving a smooth progress bar without a server-side position field.
+
+### useSocket (`src/hooks/useSocket.ts`) ✅
+
+Returns a module-level Socket.io singleton. A single connection is created on first import and
+reused across all components and re-renders. The singleton pattern is necessary because React
+StrictMode deliberately unmounts and remounts components in development, which would null out a
+`useRef`-based socket before the next render could use it.
 
 ---
 
@@ -540,7 +569,14 @@ Socket.io is used to push state from the server to all connected web clients. Si
 
 ### Architecture
 
-The bot, API, and Socket.io server run in the same Node.js process. When the `GuildPlayer` changes state (song starts, song ends, skip, stop, shuffle), it directly calls a `broadcastQueueUpdate()` function that emits to all connected Socket.io clients. No Redis or inter-process communication is needed for a single-server setup.
+The bot, API, and Socket.io server all run in the same Node.js process. `GuildPlayer` calls
+`broadcastQueueUpdate()` after every state change, which triggers an `emitPlayerUpdate()` call
+on the Socket.io server. No Redis or inter-process communication is needed.
+
+The circular dependency problem (API → bot → API) is solved by an injectable callback in
+`packages/bot/src/lib/broadcast.ts`. The bot package defines the interface
+(`setBroadcastQueueUpdate`, `broadcastQueueUpdate`); the API entry point injects the Socket.io
+implementation at startup. This keeps the bot package free of any API imports.
 
 ### Events emitted by the server
 
@@ -555,23 +591,40 @@ A single `player:update` event covers all playback changes (now playing, skip, s
 
 ### Client handling
 
+`PlayerContext` subscribes to `player:update` on mount and unsubscribes on unmount. On every
+socket connect and reconnect, it fetches the current state via `GET /api/player/queue` so users
+who open the page mid-song see the correct state immediately without waiting for the next event.
+
 ```typescript
-// hooks/usePlayer.ts
-const socket = useSocket(); // connects to Socket.io on mount
+// Simplified from packages/web/src/context/PlayerContext.tsx
+const socket = useSocket();
 
 useEffect(() => {
-  socket.on('player:update', (state: QueueState) => {
-    setQueueState(state);
-  });
+  refetch(); // fetch current state immediately on mount/reconnect
 
-  // Fetch initial state on connect (in case we missed events)
-  fetchQueueState().then(setQueueState);
+  socket.on('player:update', (state: QueueState) => setState(state));
+  socket.on('connect', refetch);
 
-  return () => socket.off('player:update');
-}, [socket]);
+  return () => {
+    socket.off('player:update');
+    socket.off('connect', refetch);
+  };
+}, [socket, refetch]);
 ```
 
-On initial connect (and reconnect), the client always fetches the current queue state via `GET /api/player/queue`. This ensures a user who opens the web UI mid-song sees the correct state immediately, without waiting for the next `player:update` event.
+### Vite dev proxy
+
+The `/socket.io` path must be proxied from Vite (`:5173`) to the Express server (`:3001`) with
+`ws: true` to allow the WebSocket upgrade. Without this, Socket.io falls back to long-polling
+and the Vite console shows `ECONNRESET` errors.
+
+```typescript
+// vite.config.ts
+'/socket.io': {
+  target: 'http://localhost:3001',
+  ws: true,
+},
+```
 
 ---
 
@@ -624,14 +677,25 @@ with a Now Playing card (blurred banner, centred thumbnail, progress bar), idle 
 controls (Skip, Stop, Shuffle with queue count, loop mode selector), queue list, and a Load
 Playlist modal.
 
-**Phase 8 — Real-time sync** ← *next*
-Add Socket.io to the API. Wire `GuildPlayer` to call `broadcastQueueUpdate()` after every state
-change. Implement `player:update`, `songs:added`, `songs:deleted`, and `playlists:updated`
-events. Replace the `TODO (Phase 8)` comments in all route handlers. Update `PlayerContext` to
-replace its `setInterval` poll with a `socket.on('player:update', ...)` listener; keep the
-initial REST fetch on connect for users who open the UI mid-song. Add a `useSocket` hook that
-manages the Socket.io connection lifecycle. Install `socket.io` on the server and
-`socket.io-client` in the web package.
+**Phase 8 — Real-time sync ✅ COMPLETE**
+`socket.io` added to the API package; `socket.io-client` added to the web package. Express
+wrapped in `http.createServer` so Socket.io and REST share port 3001. `packages/bot/src/lib/broadcast.ts`
+added as an injectable callback interface to solve the circular dependency between the API and
+bot packages. `GuildPlayer` updated to call `broadcastQueueUpdate()` after every state-changing
+operation. `emitSongAdded` and `emitSongDeleted` wired into `songs.ts`; `emitPlaylistUpdated`
+wired into all mutating routes in `playlists.ts`. `useSocket` hook added to the web package
+as a module-level singleton (prevents null-ref crash under React StrictMode). `PlayerContext`
+updated to replace its `setInterval` poll with `socket.on('player:update', ...)` while keeping
+the initial REST fetch on mount and reconnect. Vite proxy updated with a `/socket.io` entry
+and `ws: true`.
 
-**Phase 9 — Polish**
-Add loading states, error messages, toast notifications, and empty states throughout the UI. Test edge cases from the error handling table above.
+**Phase 9 — Polish** ← *next*
+Add loading states, error messages, toast notifications, and empty states throughout the UI.
+Test edge cases from the error handling table above. Candidates include:
+
+- Toast notifications for async actions (song added, playlist created, playback started, errors)
+- Graceful handling when the bot is not in a voice channel (player page idle state already exists; other surfaces need love)
+- Skeleton loaders are already present on most pages — audit for any missing cases
+- Error boundaries to prevent a single component crash from blanking the whole page
+- `songs:added` and `songs:deleted` Socket.io events wired into `SongsPage` so the library updates in real time without a manual refresh
+- `playlists:updated` event wired into `PlaylistsPage` and `PlaylistDetailPage` for the same reason
