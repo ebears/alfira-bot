@@ -1,3 +1,27 @@
+FROM node:22-slim AS base
+
+# Install system dependencies: ffmpeg and yt-dlp are required at runtime
+# by the bot's yt-dlp wrapper. Use the Debian yt-dlp package to avoid
+# pip-in-system-env (PEP 668) issues.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg python3 yt-dlp && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install root dependencies (monorepo) first for better layer caching.
+COPY package.json package-lock.json ./
+COPY packages ./packages
+
+# Install dependencies and generate Prisma client, then build workspaces.
+RUN npm ci && \
+    npm run db:generate && \
+    cp -r node_modules/.prisma packages/api/node_modules/ && \
+    cp -r node_modules/.prisma packages/bot/node_modules/ && \
+    npm run -w packages/api build && \
+    npm run -w packages/bot build
+
+# Use a smaller runtime image.
 FROM node:22-slim AS runtime
 
 RUN apt-get update && \
@@ -8,18 +32,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
-COPY packages ./packages
-
-# Install production dependencies only, then restore the generated Prisma client.
-RUN npm ci --omit=dev && \
-    cp -r packages/api/node_modules/.prisma node_modules/ || true
-
-# Copy built dist folders from the build stage (node_modules stays from the install above).
-COPY --from=base /app/packages/api/dist ./packages/api/dist
-COPY --from=base /app/packages/bot/dist ./packages/bot/dist
-COPY --from=base /app/packages/api/node_modules/.prisma ./packages/api/node_modules/.prisma
-COPY --from=base /app/packages/bot/node_modules/.prisma ./packages/bot/node_modules/.prisma
+# Copy node_modules and built packages from the build stage.
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/packages ./packages
+COPY package.json ./
 
 EXPOSE 3001
+
+# The API entry point starts Express, Socket.io, and the Discord bot.
 CMD ["node", "packages/api/dist/index.js"]
+
