@@ -120,7 +120,16 @@ router.get(
     }
 
     // 3. Fetch guild member roles via bot token.
-    let memberRoles: string[] = [];
+    //
+    // Three outcomes:
+    //   - Success (2xx): proceed with the real role list.
+    //   - 404: user is not in the guild — deny login.
+    //   - Anything else (network error, rate limit, 5xx from Discord): fail
+    //     closed. We do not know the user's roles, so we cannot safely issue
+    //     a token. Logging in with an assumed role list would mean a Discord
+    //     outage silently grants or revokes admin access depending on which
+    //     direction we default. Refusing is the only safe option.
+    let memberRoles: string[];
     try {
       const memberRes = await axios.get(
         `https://discord.com/api/guilds/${GUILD_ID}/members/${discordUser.id}`,
@@ -132,7 +141,19 @@ router.get(
         res.status(403).json({ error: 'You must be a member of the server to use this app.' });
         return;
       }
-      console.warn('Could not fetch guild member roles, defaulting to member access:', err?.message);
+
+      // Discord is unreachable or returned an unexpected error.
+      // Log the detail server-side; return a generic message to the client.
+      console.error(
+        'Failed to fetch guild member roles for user',
+        discordUser.id,
+        '— denying login.',
+        err?.message
+      );
+      res.status(503).json({
+        error: 'Could not verify your server membership. Please try again in a moment.',
+      });
+      return;
     }
 
     // 4. Determine isAdmin.

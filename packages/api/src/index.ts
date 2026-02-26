@@ -15,8 +15,21 @@ import { setBroadcastQueueUpdate } from '@discord-music-bot/bot/src/lib/broadcas
 
 // ---------------------------------------------------------------------------
 // Validate required environment variables.
+//
+// JWT_SECRET and DISCORD_CLIENT_SECRET are included here even though they
+// aren't used directly in this file. Without them the server starts fine but
+// then fails mid-request in auth flows — JWT signing throws at runtime and
+// the OAuth token exchange returns a 401 from Discord. Catching both at boot
+// gives a clear error message instead of a cryptic runtime failure.
 // ---------------------------------------------------------------------------
-const requiredVars = ['DISCORD_BOT_TOKEN', 'DISCORD_CLIENT_ID', 'GUILD_ID', 'DATABASE_URL'];
+const requiredVars = [
+  'DISCORD_BOT_TOKEN',
+  'DISCORD_CLIENT_ID',
+  'DISCORD_CLIENT_SECRET',
+  'GUILD_ID',
+  'DATABASE_URL',
+  'JWT_SECRET',
+];
 const missing = requiredVars.filter((v) => !process.env[v]);
 
 if (missing.length > 0) {
