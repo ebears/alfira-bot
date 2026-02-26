@@ -62,49 +62,48 @@ Top-level scripts:
 
 ### Local (Development)
 
-**Requirements:** `Node.js`/`NPM`, `Docker` (or an available development PostGreSQL), `yt-dlp`, and `ffmpeg`.
+**Requirements:** `Docker` (with Compose). No local Node.js, ffmpeg, or yt-dlp installation needed.
 
-#### 1. Start PostgreSQL
+#### 1. Configure environment variables
 
-Use the dev `docker-compose.yml` (database only):
+```bash
+cp packages/api/.env.example packages/api/.env
+cp packages/bot/.env.example packages/bot/.env
+```
+
+Fill in both files with values from the
+[Discord Developer Portal](https://discord.com/developers/applications) and your guild/role IDs.
+At minimum you need `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
+`GUILD_ID`, and `JWT_SECRET`.
+
+> `DATABASE_URL` is set automatically by Docker Compose and does not need to be in your `.env`.
+
+#### 2. Build images and start all services
+
+```bash
+docker compose up --build
+```
+
+This builds the API and web images, applies any pending database migrations via the `migrate`
+service, and then starts:
+
+- `db` – PostgreSQL 16 on `localhost:5432`
+- `api` – Express API + Socket.io + Discord bot on `localhost:3001`
+- `web` – Vite dev server on `localhost:5173` (with HMR)
+
+On subsequent starts you can skip the build step:
 
 ```bash
 docker compose up -d
 ```
 
-This starts PostgreSQL on `localhost:5432` with credentials matching `packages/api/.env.example`.
+#### 3. Developing
 
-#### 2. Configure environment variables
-
-Copy and fill in:
-
-- `packages/api/.env` (from `.env.example`) – database URL, Discord OAuth credentials,
-  JWT secret, guild ID, admin role IDs, `WEB_UI_ORIGIN`, etc.
-- `packages/bot/.env` (optional, mainly for local command deployment).
-
-At minimum, you will need values from the
-[Discord Developer Portal](https://discord.com/developers/applications) and your guild/role IDs.
-
-#### 3. Run migrations and generate Prisma client
-
-```bash
-npm run db:generate
-npm run db:migrate
-```
-
-#### 4. Run API + bot and web UI
-
-In one terminal (API + bot):
-
-```bash
-npm run dev
-```
-
-In another terminal (web UI):
-
-```bash
-npm run web:dev
-```
+| What changed | Action |
+|---|---|
+| `packages/web/src/**` | Nothing — Vite HMR applies the change in the browser automatically. |
+| `packages/api/src/**` | `docker compose restart api` |
+| `packages/bot/src/**` | `docker compose build api && docker compose up -d api` |
 
 The default dev URLs are:
 
@@ -158,7 +157,7 @@ want:
 This keeps the database, API, and web containers reachable only via your reverse proxy and Docker
 networking.
 
-Example `Caddyfile` snippet:
+##### Example `Caddyfile` Snippet
 
 ```Caddy
 https://alfira.website.com {
