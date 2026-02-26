@@ -1,3 +1,23 @@
+# ---------------------------------------------------------------------------
+# Development stage — runs the Vite dev server with source files mounted
+# from the host.  Vite HMR picks up changes in packages/web/src automatically.
+# ---------------------------------------------------------------------------
+FROM node:22-slim AS dev
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages ./packages
+
+RUN npm ci
+
+EXPOSE 5173
+
+CMD ["npm", "run", "web:dev"]
+
+# ---------------------------------------------------------------------------
+# Production stages
+# ---------------------------------------------------------------------------
 FROM node:22-slim AS build
 
 WORKDIR /app

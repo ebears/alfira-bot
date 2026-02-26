@@ -1,0 +1,35 @@
+# Dependencies — reinstalled inside the image by npm ci.
+node_modules
+packages/*/node_modules
+
+# Build output — compiled fresh inside the image.
+dist
+build
+packages/*/dist
+packages/*/build
+
+# Prisma generated client — regenerated inside the image.
+packages/api/prisma/generated
+packages/shared/prisma/generated
+
+# Local environment files — secrets must never enter the build context.
+.env
+packages/api/.env
+packages/bot/.env
+
+# Version control
+.git
+.gitignore
+.github
+
+# Editor and OS clutter
+.vscode
+.idea
+.cursor
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker files (no need to copy these into the image)
+.dockerignore
+docker-compose*.yml

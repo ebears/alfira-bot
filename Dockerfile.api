@@ -1,3 +1,38 @@
+# ---------------------------------------------------------------------------
+# Development stage — runs the API + bot via ts-node with source files
+# mounted from the host for quick iteration.  The bot package is compiled
+# during the image build so its dist/ is available to ts-node at runtime.
+# Rebuild this image after changing anything in packages/bot:
+#   docker compose build api
+# ---------------------------------------------------------------------------
+FROM node:22-slim AS dev
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg python3 curl ca-certificates && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages ./packages
+
+RUN npm ci && \
+    npm run db:generate && \
+    cp -r node_modules/.prisma packages/api/node_modules/ && \
+    cp -r node_modules/.prisma packages/bot/node_modules/ && \
+    npm run -w packages/bot build
+
+ENV NODE_ENV=development
+
+EXPOSE 3001
+
+CMD ["npm", "run", "dev"]
+
+# ---------------------------------------------------------------------------
+# Production stages
+# ---------------------------------------------------------------------------
 FROM node:22-slim AS base
 
 RUN apt-get update && \

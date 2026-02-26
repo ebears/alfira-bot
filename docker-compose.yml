@@ -1,15 +1,27 @@
 # ---------------------------------------------------------------------------
-# Development docker-compose — PostgreSQL only.
+# Development docker-compose — full stack.
 #
-# This runs the database in Docker while the API and bot run locally via
-# ts-node, which gives you hot-reloadable code and easy debugging.
+# Runs PostgreSQL, the API + bot, and the web front-end all inside Docker.
+# Source files are mounted as volumes so you can edit code without rebuilding:
 #
-# The full app deployment (bot + API + web all containerised) is Phase 10.
+#   API + bot  — edit packages/api/src, then `docker compose restart api`.
+#   Web        — edit packages/web/src; Vite HMR applies changes instantly.
+#
+# The bot package is pre-compiled during the API image build.  If you change
+# code inside packages/bot, rebuild the image first:
+#   docker compose build api
+#
+# First-time setup:
+#   cp packages/api/.env.example packages/api/.env   # fill in all values
+#   cp packages/bot/.env.example packages/bot/.env   # fill in all values
 #
 # Usage:
-#   docker compose up -d       — start PostgreSQL in the background
-#   docker compose down        — stop and remove the container
-#   docker compose down -v     — stop and wipe all data (clean slate)
+#   docker compose up --build     — build images and start all services
+#   docker compose up -d          — start in the background (after first build)
+#   docker compose down           — stop and remove containers
+#   docker compose down -v        — stop and wipe all data (clean slate)
+#   docker compose restart api    — reload the API after TypeScript changes
+#   docker compose build api      — rebuild the API image (e.g. after bot changes)
 # ---------------------------------------------------------------------------
 
 services:
@@ -21,11 +33,75 @@ services:
       POSTGRES_PASSWORD: botpass
       POSTGRES_DB: musicbot
     ports:
-      # Exposes PostgreSQL on localhost:5432 so Prisma can connect from the
-      # host machine. Change the left-hand port if 5432 is already in use.
-      - '5432:5432'
+      # Exposes PostgreSQL on localhost:5432 for tools like Prisma Studio or
+      # any DB client running directly on the host.
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U botuser -d musicbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: dev
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+    command: ["npm", "run", "-w", "packages/api", "db:migrate:deploy"]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      # Local .env files provide Discord tokens, OAuth secrets, JWT secret, etc.
+      # Copy the .env.example files and fill in real values before first run.
+      - packages/api/.env
+      - packages/bot/.env
+    environment:
+      # Override DATABASE_URL so it resolves to the 'db' service, not localhost.
+      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    volumes:
+      # Live-mount API source files — restart the service to pick up changes.
+      # The bot's compiled dist/ is baked into the image and stays intact here.
+      - ./packages/api/src:/app/packages/api/src
+      - ./packages/api/prisma:/app/packages/api/prisma
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      target: dev
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      # Vite proxy target — must use the Docker service name, not localhost.
+      API_URL: http://api:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      # Live-mount web source files — Vite HMR picks up changes automatically.
+      - ./packages/web/src:/app/packages/web/src
+      - ./packages/web/index.html:/app/packages/web/index.html
 
 volumes:
   pgdata:
