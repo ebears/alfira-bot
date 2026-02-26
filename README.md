@@ -107,7 +107,8 @@ The default dev URLs are:
 
 ## Docker deployment
 
-For a containerised deployment of the whole stack (database, API+bot, web):
+For a containerised deployment of the whole stack (database, API+bot, web) using the
+pre-built images published to GHCR:
 
 ```bash
 docker compose -f docker-compose.prod.yml up --build -d
@@ -116,8 +117,8 @@ docker compose -f docker-compose.prod.yml up --build -d
 This starts:
 
 - `db` – PostgreSQL 16 with a healthcheck.
-- `api` – Built from `Dockerfile.api` (Express API + Socket.io + Discord bot).
-- `web` – Built from `Dockerfile.web` (static Vite build served by nginx on port 80).
+- `api` – `ghcr.io/ebears/alfira-bot-api` (Express API + Socket.io + Discord bot).
+- `web` – `ghcr.io/ebears/alfira-bot-web` (static Vite build served by nginx on port 80).
 
 By default, `docker-compose.prod.yml` maps:
 

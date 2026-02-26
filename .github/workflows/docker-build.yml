@@ -35,7 +35,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/alfira-bot-api:latest
             ghcr.io/${{ github.repository_owner }}/alfira-bot-api:${{ github.sha }}
 
-      - name: Build web (Caddy) image
+      - name: Build web image
         uses: docker/build-push-action@v6
         with:
           context: .

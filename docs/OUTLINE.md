@@ -746,8 +746,8 @@ Dockerise the full application for self-hosted deployment.
   `packages/web/dist` into the nginx document root so it can serve the
   static bundle.
 - `docker-compose.prod.yml` defines the production stack with three services:
-  `db` (PostgreSQL 16), `api` (built from `Dockerfile.api`), and `web`
-  (built from `Dockerfile.web` with nginx serving the static assets). The `db` service has a health check
+  `db` (PostgreSQL 16), `api` (running the `ghcr.io/ebears/alfira-bot-api` image), and `web`
+  (running the `ghcr.io/ebears/alfira-bot-web` image, which serves the static assets via nginx). The `db` service has a health check
   so the API only starts once PostgreSQL is ready. The API container receives
   all secrets and configuration via environment variables, including
   `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
