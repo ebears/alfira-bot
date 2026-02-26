@@ -14,6 +14,35 @@ import { getStreamUrl } from '../utils/ytdlp';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
 
+// ---------------------------------------------------------------------------
+// Retry helper
+//
+// Retries an async operation up to `maxRetries` additional times (so the
+// function is called at most maxRetries + 1 times total). A fixed `delayMs`
+// pause is inserted between each attempt. If all attempts fail, the last
+// error is re-thrown.
+// ---------------------------------------------------------------------------
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number,
+  delayMs: number,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 export class GuildPlayer {
   // ---------------------------------------------------------------------------
   // State
@@ -30,22 +59,49 @@ export class GuildPlayer {
   // loop mode. Without this, skipping in 'song' mode would just replay.
   private skipping = false;
 
+  // Set to true by stop() before connection.destroy() is called, so the
+  // VoiceConnectionStatus.Destroyed handler can distinguish an intentional
+  // teardown (stop/leave commands) from an unexpected connection loss and
+  // avoid posting a spurious warning message or double-broadcasting.
+  private intentionallyStopped = false;
+
+  // Guards against multiple simultaneous reconnect attempts when the
+  // Disconnected event fires in quick succession.
+  private isReconnecting = false;
+
   private readonly connection: VoiceConnection;
   private readonly audioPlayer: AudioPlayer;
+  private readonly guildId: string;
 
   // The text channel where the bot will post "Now playing" embeds when
   // auto-advancing between tracks (i.e. not triggered by a slash command).
   private readonly textChannel: TextChannel;
 
+  // Callback provided by the manager so this class can remove itself from
+  // the player map without creating a circular import between GuildPlayer
+  // and manager.ts.
+  private readonly onDestroyed: () => void;
+
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
-  constructor(connection: VoiceConnection, textChannel: TextChannel) {
+  constructor(
+    connection: VoiceConnection,
+    textChannel: TextChannel,
+    guildId: string,
+    onDestroyed: () => void,
+  ) {
     this.connection = connection;
     this.textChannel = textChannel;
+    this.guildId = guildId;
+    this.onDestroyed = onDestroyed;
 
     this.audioPlayer = createAudioPlayer();
     this.connection.subscribe(this.audioPlayer);
+
+    // -------------------------------------------------------------------------
+    // AudioPlayer event handlers
+    // -------------------------------------------------------------------------
 
     // When a track finishes (or is stopped), decide what to play next.
     this.audioPlayer.on(AudioPlayerStatus.Idle, () => {
@@ -54,13 +110,102 @@ export class GuildPlayer {
 
     this.audioPlayer.on('error', (error) => {
       console.error(
-        `AudioPlayer error in guild ${this.textChannel.guildId}:`,
+        `[GuildPlayer:${this.guildId}] AudioPlayer error:`,
         error.message,
         '| Track:',
-        this.currentSong?.title ?? 'unknown'
+        this.currentSong?.title ?? 'unknown',
       );
       // Treat an error as a track end so the queue keeps moving.
       this.onTrackEnd();
+    });
+
+    // AutoPaused fires when all voice connection subscribers are temporarily
+    // unable to receive audio (e.g. a brief network stutter). The player will
+    // resume automatically once the connection is ready again — we just log it.
+    this.audioPlayer.on(AudioPlayerStatus.AutoPaused, () => {
+      console.warn(
+        `[GuildPlayer:${this.guildId}] AudioPlayer AutoPaused — ` +
+          'voice connection may be temporarily unavailable.',
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // VoiceConnection event handlers
+    // -------------------------------------------------------------------------
+
+    // Disconnected can be a transient network blip. Give Discord 5 s to start
+    // reconnecting on its own. If it transitions to Signalling or Connecting
+    // within that window, the handshake is underway and we leave it alone. If
+    // nothing happens, we destroy the connection ourselves so the Destroyed
+    // handler can run cleanup.
+    this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
+      if (this.isReconnecting) return;
+      this.isReconnecting = true;
+
+      console.warn(
+        `[GuildPlayer:${this.guildId}] Voice connection disconnected — attempting recovery.`,
+      );
+
+      try {
+        await Promise.race([
+          entersState(this.connection, VoiceConnectionStatus.Signalling, 5_000),
+          entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000),
+        ]);
+        console.info(
+          `[GuildPlayer:${this.guildId}] Voice connection is reconnecting.`,
+        );
+      } catch {
+        // The connection did not start reconnecting. Destroy it unless it has
+        // already been moved to the Destroyed state by something else (e.g. a
+        // concurrent stop() call).
+        if (this.connection.state.status !== VoiceConnectionStatus.Destroyed) {
+          console.error(
+            `[GuildPlayer:${this.guildId}] Voice connection could not recover — destroying.`,
+          );
+          this.connection.destroy();
+        }
+      } finally {
+        this.isReconnecting = false;
+      }
+    });
+
+    // Destroyed fires for both intentional teardowns (stop/leave commands) and
+    // unexpected connection losses. In the unexpected case we reset queue state,
+    // broadcast to the web UI, stop the AudioPlayer so it does not try to keep
+    // playing to a dead connection, and post a warning in the text channel.
+    // In both cases we remove this instance from the manager's Map.
+    this.connection.on(VoiceConnectionStatus.Destroyed, () => {
+      console.info(`[GuildPlayer:${this.guildId}] Voice connection destroyed.`);
+
+      if (!this.intentionallyStopped) {
+        // Force the AudioPlayer to stop so the Idle handler does not fire and
+        // attempt to play the next track against a destroyed connection.
+        this.audioPlayer.stop(true);
+
+        // Reset in-memory state and push it to the web UI.
+        this.queue = [];
+        this.queueSnapshot = [];
+        this.currentSong = null;
+        broadcastQueueUpdate(this.getQueueState());
+
+        // Notify the text channel. fire-and-forget; don't let a channel error
+        // bubble up through an event handler.
+        this.textChannel
+          .send(
+            '⚠️ Lost the voice connection unexpectedly. ' +
+              'Use **/play** or **/join** to reconnect.',
+          )
+          .catch((err) =>
+            console.error(
+              `[GuildPlayer:${this.guildId}] Failed to send disconnect warning:`,
+              err,
+            ),
+          );
+      }
+
+      // Always clean up the manager entry. removePlayer() is a simple
+      // Map.delete(), so calling it twice is harmless.
+      this.onDestroyed();
     });
   }
 
@@ -101,6 +246,11 @@ export class GuildPlayer {
    * After calling this, the GuildPlayer instance should be discarded.
    */
   stop(): void {
+    // Set the flag BEFORE calling connection.destroy() — the Destroyed event
+    // fires synchronously inside destroy(), so the flag must already be true
+    // when the handler runs.
+    this.intentionallyStopped = true;
+
     this.queue = [];
     this.queueSnapshot = [];
     this.currentSong = null;
@@ -173,11 +323,20 @@ export class GuildPlayer {
 
   /**
    * Pull the next song off the queue and start playing it.
+   *
    * Fetches a fresh CDN URL at playback time (not at enqueue time) to avoid
    * using stale URLs for tracks that have been waiting in a long queue.
+   * Retries the URL fetch up to 2 times (3 attempts total) before skipping.
+   *
    * Broadcasts the new state once playback begins (or when the queue empties).
+   * Bails out early if the voice connection has already been destroyed.
    */
   private async playNext(): Promise<void> {
+    // Guard: don't attempt to play anything if the connection is gone.
+    if (this.connection.state.status === VoiceConnectionStatus.Destroyed) {
+      return;
+    }
+
     const next = this.queue.shift();
 
     if (!next) {
@@ -191,11 +350,17 @@ export class GuildPlayer {
 
     let streamUrl: string;
     try {
-      streamUrl = await getStreamUrl(next.youtubeUrl);
+      // Retry up to 2 extra times (3 attempts total), waiting 1 s between
+      // each attempt. This handles transient yt-dlp / network failures
+      // without immediately skipping a song the user wanted to hear.
+      streamUrl = await withRetry(() => getStreamUrl(next.youtubeUrl), 2, 1_000);
     } catch (error) {
-      console.error(`Failed to get stream URL for "${next.title}":`, error);
+      console.error(
+        `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
+        error,
+      );
       await this.textChannel.send(
-        `⚠️ Skipping **${next.title}** — could not resolve the audio stream.`
+        `⚠️ Skipping **${next.title}** — could not resolve the audio stream.`,
       );
       // Try the next song instead.
       await this.playNext();
@@ -211,9 +376,11 @@ export class GuildPlayer {
     try {
       await entersState(this.audioPlayer, AudioPlayerStatus.Playing, 5_000);
     } catch {
-      console.error(`AudioPlayer failed to enter Playing state for "${next.title}"`);
+      console.error(
+        `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`,
+      );
       await this.textChannel.send(
-        `⚠️ Skipping **${next.title}** — audio failed to start.`
+        `⚠️ Skipping **${next.title}** — audio failed to start.`,
       );
       await this.playNext();
       return;
@@ -259,7 +426,7 @@ export class GuildPlayer {
       .addFields(
         { name: 'Duration', value: formatDuration(song.duration), inline: true },
         { name: 'Requested by', value: song.requestedBy, inline: true },
-        { name: 'Loop', value: formatLoopMode(this.loopMode), inline: true }
+        { name: 'Loop', value: formatLoopMode(this.loopMode), inline: true },
       );
   }
 }
