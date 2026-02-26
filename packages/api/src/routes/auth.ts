@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -28,9 +29,40 @@ const JWT_EXPIRES_IN = '7d';
 const COOKIE_NAME = 'session';
 
 // ---------------------------------------------------------------------------
+// Rate limiting
+//
+// Applied to /auth/login and /auth/callback.
+//
+// Why: without rate limiting, an attacker can hammer the OAuth flow to probe
+// for valid guild members or attempt to enumerate users. The callback is
+// equally important — a burst of crafted requests can be used to exhaust
+// Discord API quota or cause unexpected server behaviour.
+//
+// Limits: 20 requests per 15 minutes per IP. This is generous enough for
+// normal usage (a user retrying after a misconfigured redirect) but tight
+// enough to stop automated scanning.
+//
+// keyGenerator: uses req.ip, which Express populates correctly only after
+// trust proxy is set in index.ts. Without that setting, all requests would
+// appear to come from the Caddy machine's IP and share a single bucket.
+//
+// skipSuccessfulRequests: true so that legitimate logins don't count against
+// the limit. Only failed or abnormal requests burn tokens.
+// ---------------------------------------------------------------------------
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,    // Return rate limit info in RateLimit-* headers
+  legacyHeaders: false,     // Disable the X-RateLimit-* headers
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => req.ip ?? 'unknown',
+  message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+});
+
+// ---------------------------------------------------------------------------
 // GET /auth/login
 // ---------------------------------------------------------------------------
-router.get('/login', (_req, res) => {
+router.get('/login', authLimiter, (_req, res) => {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID!,
     redirect_uri: DISCORD_REDIRECT_URI!,
@@ -46,6 +78,7 @@ router.get('/login', (_req, res) => {
 // ---------------------------------------------------------------------------
 router.get(
   '/callback',
+  authLimiter,
   asyncHandler(async (req, res) => {
     const { code } = req.query;
 
