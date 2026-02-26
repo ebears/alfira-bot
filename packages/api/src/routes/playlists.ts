@@ -249,7 +249,7 @@ router.delete(
     });
 
     await Promise.all(
-      remaining.map((ps, index) =>
+      remaining.map((ps: { id: string }, index: number) =>
         prisma.playlistSong.update({
           where: { id: ps.id },
           data: { position: index },

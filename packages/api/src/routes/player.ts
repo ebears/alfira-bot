@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { getPlayer } from '@discord-music-bot/bot/src/player/manager';
-import type { LoopMode, QueuedSong } from '@discord-music-bot/shared';
+import type { LoopMode, QueuedSong, Song } from '@discord-music-bot/shared';
 
 const router = Router();
 
@@ -78,7 +78,7 @@ router.post(
     }
 
     // Fetch songs from the database.
-    let dbSongs;
+    let dbSongs: Song[];
     if (playlistId) {
       const playlist = await prisma.playlist.findUnique({
         where: { id: playlistId },
@@ -95,7 +95,7 @@ router.post(
         return;
       }
 
-      dbSongs = playlist.songs.map((ps) => ps.song);
+      dbSongs = playlist.songs.map((ps): Song => ps.song);
     } else {
       dbSongs = await prisma.song.findMany({ orderBy: { createdAt: 'asc' } });
     }
