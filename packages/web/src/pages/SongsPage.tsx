@@ -2,9 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist } from '../api/api';
 import type { Song, Playlist } from '../api/types';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../hooks/useSocket';
 
 export default function SongsPage() {
   const { user } = useAuth();
+  const socket = useSocket();
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,36 @@ export default function SongsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // ---------------------------------------------------------------------------
+  // Real-time socket wiring
+  //
+  // songs:added   — prepend the new song so it appears at the top (newest first,
+  //                 matching the GET /api/songs orderBy: createdAt desc order).
+  // songs:deleted — remove the card immediately without a round-trip.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const handleSongAdded = (song: Song) => {
+      setSongs((prev) => {
+        // Guard against duplicates (e.g. the admin who added it already has it
+        // in state from the optimistic update in the modal's onAdded callback).
+        if (prev.some((s) => s.id === song.id)) return prev;
+        return [song, ...prev];
+      });
+    };
+
+    const handleSongDeleted = (id: string) => {
+      setSongs((prev) => prev.filter((s) => s.id !== id));
+    };
+
+    socket.on('songs:added', handleSongAdded);
+    socket.on('songs:deleted', handleSongDeleted);
+
+    return () => {
+      socket.off('songs:added', handleSongAdded);
+      socket.off('songs:deleted', handleSongDeleted);
+    };
+  }, [socket]);
 
   const filtered = songs.filter((s) =>
     s.title.toLowerCase().includes(search.toLowerCase())
@@ -89,7 +121,12 @@ export default function SongsPage() {
         <AddSongModal
           onClose={() => setShowAddModal(false)}
           onAdded={(song) => {
-            setSongs((prev) => [song, ...prev]);
+            setSongs((prev) => {
+              // The socket event will also fire for this add, so guard against
+              // duplicates here too.
+              if (prev.some((s) => s.id === song.id)) return prev;
+              return [song, ...prev];
+            });
             setShowAddModal(false);
           }}
         />

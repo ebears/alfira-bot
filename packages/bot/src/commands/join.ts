@@ -1,9 +1,10 @@
-import { SlashCommandBuilder, GuildMember, ChannelType } from 'discord.js';
+import { SlashCommandBuilder, GuildMember, ChannelType, TextChannel } from 'discord.js';
 import {
   joinVoiceChannel,
   VoiceConnectionStatus,
   entersState,
 } from '@discordjs/voice';
+import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
 
 export const joinCommand: Command = {
@@ -55,9 +56,13 @@ export const joinCommand: Command = {
       });
 
       // Wait until the connection is ready (or fail after 5 seconds).
-      // Without this, subsequent audio operations may fire before the
-      // WebSocket handshake with Discord's voice server is complete.
       await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+
+      // Create a GuildPlayer for this guild so the web UI can immediately
+      // start playback via POST /api/player/play without needing a Discord
+      // slash command first. The text channel is used for "Now playing" embeds.
+      const textChannel = interaction.channel as TextChannel;
+      createPlayer(interaction.guild.id, connection, textChannel);
 
       await interaction.editReply(`✅ Joined **${voiceChannel.name}**.`);
     } catch (error) {

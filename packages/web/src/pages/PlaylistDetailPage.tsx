@@ -4,13 +4,15 @@ import {
   getPlaylist, renamePlaylist, removeSongFromPlaylist,
   addSongToPlaylist, getSongs, startPlayback, deletePlaylist,
 } from '../api/api';
-import type { PlaylistDetail, Song, LoopMode } from '../api/types';
+import type { PlaylistDetail, Song, LoopMode, Playlist } from '../api/types';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../hooks/useSocket';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const socket = useSocket();
 
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,33 @@ export default function PlaylistDetailPage() {
     if (editingName) nameInputRef.current?.focus();
   }, [editingName]);
 
+  // ---------------------------------------------------------------------------
+  // Real-time socket wiring
+  //
+  // playlists:updated fires after any mutation: rename, song added, song removed,
+  // or a new playlist being created. We only care about events for this playlist.
+  //
+  // The payload is a Playlist (with _count.songs) but does NOT include the full
+  // songs array — that's a PlaylistDetail shape. So when we receive an update
+  // for this playlist we trigger a full refetch to get the fresh songs list.
+  //
+  // This also handles the case where an admin in another browser tab renames
+  // the playlist or adds/removes songs — the detail view stays in sync.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const handlePlaylistUpdated = (updated: Playlist) => {
+      if (updated.id !== id) return;
+      // Refetch to get the full PlaylistDetail including the updated songs array.
+      load();
+    };
+
+    socket.on('playlists:updated', handlePlaylistUpdated);
+
+    return () => {
+      socket.off('playlists:updated', handlePlaylistUpdated);
+    };
+  }, [socket, id, load]);
+
   const handleRename = async () => {
     if (!playlist || !nameValue.trim() || nameValue.trim() === playlist.name) {
       setEditingName(false);
@@ -50,11 +79,15 @@ export default function PlaylistDetailPage() {
     const updated = await renamePlaylist(playlist.id, nameValue.trim());
     setPlaylist((p) => p ? { ...p, name: updated.name } : p);
     setEditingName(false);
+    // The socket event from the rename will also arrive and trigger a refetch,
+    // but the optimistic update above means the user sees the change instantly.
   };
 
   const handleRemoveSong = async (songId: string) => {
     if (!playlist) return;
     await removeSongFromPlaylist(playlist.id, songId);
+    // Optimistic update — the socket event will also arrive and trigger a
+    // refetch, which will reconcile any inconsistency.
     setPlaylist((p) => p ? {
       ...p,
       songs: p.songs.filter((ps) => ps.songId !== songId),

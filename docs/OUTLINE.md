@@ -110,7 +110,7 @@ discord-music-bot/
     │           └── auth.ts                  ← Full Discord OAuth2 flow + JWT issuance
     │                                           /auth/callback redirects to WEB_UI_ORIGIN
     │
-    ├── bot/                                 ← ✅ Complete (Phases 1, 2, 3, 4, 8)
+    ├── bot/                                 ← ✅ Complete (Phases 1, 2, 3, 4, 8, 9)
     │   ├── package.json
     │   ├── tsconfig.json
     │   ├── .env.example
@@ -119,7 +119,10 @@ discord-music-bot/
     │       ├── types.ts
     │       ├── deploy-commands.ts
     │       ├── commands/
-    │       │   ├── join.ts, leave.ts, play.ts, skip.ts, stop.ts
+    │       │   ├── join.ts                  ← Fixed: now calls createPlayer() after joining
+    │       │   │                               so POST /api/player/play works immediately
+    │       │   │                               without requiring a Discord /play command first
+    │       │   ├── leave.ts, play.ts, skip.ts, stop.ts
     │       │   ├── loop.ts, shuffle.ts, queue.ts, nowplaying.ts
     │       │   └── playlist.ts
     │       ├── lib/
@@ -137,7 +140,7 @@ discord-music-bot/
     │       └── utils/
     │           └── ytdlp.ts
     │
-    └── web/                                 ← ✅ Complete (Phases 6, 7, 8)
+    └── web/                                 ← ✅ Complete (Phases 6, 7, 8, 9)
         ├── package.json                     ← Added socket.io-client dependency
         ├── tsconfig.json
         ├── vite.config.ts                   ← Proxies /api, /auth, and /socket.io to :3001
@@ -170,10 +173,18 @@ discord-music-bot/
             └── pages/
                 ├── LoginPage.tsx            ← Centered card; "Login with Discord" → /auth/login
                 ├── SongsPage.tsx            ← Searchable grid, add-song modal, delete confirm,
-                │                               add-to-playlist popover (admin only)
-                ├── PlaylistsPage.tsx        ← List with song counts, create/delete (admin only)
-                ├── PlaylistDetailPage.tsx   ← Ordered track list, click-to-rename, add songs modal,
-                │                               remove-from-playlist, Play modal with mode/loop
+                │                               add-to-playlist popover (admin only).
+                │                               Wired to songs:added (prepend with duplicate
+                │                               guard) and songs:deleted (filter by id).
+                ├── PlaylistsPage.tsx        ← List with song counts, create/delete (admin only).
+                │                               Wired to playlists:updated — upserts by id so
+                │                               renames, count changes, and new playlists from
+                │                               other sessions all appear without a refresh.
+                ├── PlaylistDetailPage.tsx   ← Ordered track list, click-to-rename, add songs
+                │                               modal, remove-from-playlist, Play modal with
+                │                               mode/loop. Wired to playlists:updated — triggers
+                │                               a full refetch when the event matches the current
+                │                               playlist id, keeping the songs list in sync.
                 └── PlayerPage.tsx           ← Now Playing card, idle state, admin controls,
                                                 queue list, Load Playlist modal
 ```
@@ -295,6 +306,16 @@ GuildPlayer
 4. `@discordjs/voice` creates an `AudioResource` from the CDN URL and FFmpeg handles buffering and Opus encoding. The CDN URL approach (rather than piping yt-dlp stdout) eliminates throttle-induced choppiness.
 5. When the track ends, `onTrackEnd()` checks the `skipping` flag and loop mode, then either replays the song, advances the queue, or stops.
 6. After every state change, `broadcastQueueUpdate()` is called, which emits a `player:update` Socket.io event to all connected web clients.
+
+### /join command — GuildPlayer creation
+
+`/join` now calls `createPlayer()` after the voice connection is confirmed ready. This means
+`POST /api/player/play` can be used immediately after `/join` without requiring a Discord `/play`
+command first. Previously, only `/play` and `/playlist play` created a `GuildPlayer`, so the web
+UI would return a 409 error even when the bot was visibly in a voice channel.
+
+`createPlayer()` in `manager.ts` is idempotent — it returns the existing player if one already
+exists, so calling `/join` while playback is already active is safe.
 
 ### /play command — DB lookup behaviour
 
@@ -481,6 +502,7 @@ cookie and redirects to the web UI root; `AuthContext` then fetches `/auth/me` a
 - **Admins only:** An "Add Song" button that opens a modal with a YouTube URL input. On submit, calls `POST /api/songs`. Shows a loading state while yt-dlp fetches metadata. Displays an inline error if the URL is invalid or already exists.
 - **Admins only:** A delete button on each song card with a confirmation dialog.
 - **Admins only:** An "add to playlist" popover on each card showing all playlists; already-added playlists show a checkmark.
+- **Real-time:** `songs:added` prepends new cards without a refresh (duplicate-guarded so the adding admin doesn't see it twice). `songs:deleted` removes cards instantly.
 
 ### Playlists (`/playlists`) ✅
 
@@ -488,6 +510,7 @@ cookie and redirects to the web UI root; `AuthContext` then fetches `/auth/me` a
 - **Admins only:** A "New Playlist" button that opens a create modal.
 - Clicking a playlist navigates to its detail view.
 - **Admins only:** Per-row delete with hover reveal.
+- **Real-time:** `playlists:updated` upserts rows by id — handles renames, song count changes, and new playlists created in other sessions, all without a refresh.
 
 **Playlist detail (`/playlists/:id`) ✅**
 - Ordered track list with position numbers and thumbnails.
@@ -496,6 +519,7 @@ cookie and redirects to the web UI root; `AuthContext` then fetches `/auth/me` a
 - **Admins only:** An "Add Songs" button opens a searchable modal showing the full library, with per-song add buttons that show a checkmark once added.
 - **Admins only:** A "Play" button opens a modal with sequential/random order and off/song/queue loop selectors, wired to `POST /api/player/play`.
 - **Admins only:** A "Delete" button to remove the playlist entirely.
+- **Real-time:** `playlists:updated` triggers a full refetch when the event matches the current playlist id, keeping the track list in sync across sessions.
 
 ### Player (`/player`) ✅
 
@@ -595,6 +619,12 @@ A single `player:update` event covers all playback changes (now playing, skip, s
 socket connect and reconnect, it fetches the current state via `GET /api/player/queue` so users
 who open the page mid-song see the correct state immediately without waiting for the next event.
 
+`SongsPage` subscribes to `songs:added` and `songs:deleted`. `PlaylistsPage` and
+`PlaylistDetailPage` both subscribe to `playlists:updated`. All handlers are registered in
+`useEffect` and cleaned up on unmount. Duplicate-guard logic prevents the acting user from
+seeing double updates when their own optimistic state update and the incoming socket event
+both fire for the same change.
+
 ```typescript
 // Simplified from packages/web/src/context/PlayerContext.tsx
 const socket = useSocket();
@@ -639,6 +669,7 @@ and the Vite console shows `ECONNRESET` errors.
 | User runs `/play` without being in a voice channel | Bot replies with an ephemeral error message visible only to that user |
 | Web UI loses Socket.io connection | Socket.io handles automatic reconnection; on reconnect, the client re-fetches queue state via REST |
 | JWT is expired | API returns `401`; the Axios interceptor in `client.ts` redirects the user to `/login` |
+| Web UI calls `POST /api/player/play` after `/join` | Fixed: `/join` now calls `createPlayer()` so the player is registered immediately; previously returned 409 even with the bot in a voice channel |
 
 ---
 
@@ -689,13 +720,26 @@ updated to replace its `setInterval` poll with `socket.on('player:update', ...)`
 the initial REST fetch on mount and reconnect. Vite proxy updated with a `/socket.io` entry
 and `ws: true`.
 
-**Phase 9 — Polish** ← *next*
-Add loading states, error messages, toast notifications, and empty states throughout the UI.
-Test edge cases from the error handling table above. Candidates include:
+**Phase 9 — Polish ✅ COMPLETE**
+Bug fix: `/join` now calls `createPlayer()` after the voice connection is ready, so
+`POST /api/player/play` works immediately without requiring a Discord `/play` command first.
+Real-time socket wiring completed across all three data-bearing pages: `SongsPage` subscribes
+to `songs:added` (prepend with duplicate guard) and `songs:deleted` (filter by id);
+`PlaylistsPage` subscribes to `playlists:updated` and upserts by id, covering creates, renames,
+and song count changes from any session; `PlaylistDetailPage` subscribes to `playlists:updated`
+and triggers a full refetch when the event matches the current playlist id, keeping the track
+list in sync across tabs and users.
 
-- Toast notifications for async actions (song added, playlist created, playback started, errors)
-- Graceful handling when the bot is not in a voice channel (player page idle state already exists; other surfaces need love)
-- Skeleton loaders are already present on most pages — audit for any missing cases
-- Error boundaries to prevent a single component crash from blanking the whole page
-- `songs:added` and `songs:deleted` Socket.io events wired into `SongsPage` so the library updates in real time without a manual refresh
-- `playlists:updated` event wired into `PlaylistsPage` and `PlaylistDetailPage` for the same reason
+**Phase 10 — Containerisation** ← *next*
+Dockerise the full application for self-hosted deployment. Planned work:
+- `Dockerfile` for the API/bot service — Node.js base image with `ffmpeg` and `yt-dlp`
+  installed as system dependencies (required at runtime by `ytdlp.ts`).
+- `Dockerfile` for the web service — multi-stage build: `vite build` in a Node image,
+  static output served by Caddy.
+- `docker-compose.yml` extended to include all three services (`db`, `api`, `web`) with
+  correct environment variable wiring, a shared network, and a health check on the API
+  before the bot attempts to connect.
+- Production Caddy config proxying `/api`, `/auth`, and `/socket.io` (with WebSocket upgrade)
+  to the API container, and serving the Vite static bundle for everything else.
+- Update `.env.example` files to document any new production-specific variables
+  (e.g. `NODE_ENV=production`, production `WEB_UI_ORIGIN`).

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { getPlaylists, createPlaylist, deletePlaylist } from '../api/api';
 import type { Playlist } from '../api/types';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../hooks/useSocket';
 
 export default function PlaylistsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const socket = useSocket();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -23,9 +25,49 @@ export default function PlaylistsPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // ---------------------------------------------------------------------------
+  // Real-time socket wiring
+  //
+  // playlists:updated covers four mutations: create, rename, song added, song
+  // removed. The payload is always a full Playlist object with _count.songs.
+  //
+  // Strategy: upsert by id.
+  //   - If the playlist is already in the list, replace it (handles renames and
+  //     song count changes).
+  //   - If it's not in the list yet, append it (handles newly created playlists
+  //     from another session).
+  //
+  // There is no playlists:deleted socket event — the server emits 204 with no
+  // payload. Deleted playlists will disappear on the next natural page load or
+  // navigation. This matches the behaviour described in the API route comments.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const handlePlaylistUpdated = (updated: Playlist) => {
+      setPlaylists((prev) => {
+        const exists = prev.some((p) => p.id === updated.id);
+        if (exists) {
+          return prev.map((p) => (p.id === updated.id ? updated : p));
+        }
+        return [...prev, updated];
+      });
+    };
+
+    socket.on('playlists:updated', handlePlaylistUpdated);
+
+    return () => {
+      socket.off('playlists:updated', handlePlaylistUpdated);
+    };
+  }, [socket]);
+
   const handleCreate = async (name: string) => {
     const pl = await createPlaylist(name);
-    setPlaylists((prev) => [...prev, pl]);
+    // The socket event will also fire and upsert, but we do an optimistic
+    // update here too so the creating user sees it instantly without waiting
+    // for the round-trip.
+    setPlaylists((prev) => {
+      if (prev.some((p) => p.id === pl.id)) return prev;
+      return [...prev, pl];
+    });
     setShowCreate(false);
   };
 
