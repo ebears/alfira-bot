@@ -20,7 +20,7 @@ RUN npm ci && \
     npm run -w packages/bot build
 
 # Use a smaller runtime image.
-FROM node:20-slim AS runtime
+FROM node:22-slim AS runtime
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg python3 yt-dlp && \
