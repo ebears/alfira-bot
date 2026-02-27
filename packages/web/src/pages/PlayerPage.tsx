@@ -17,37 +17,19 @@ function formatDuration(seconds: number): string {
 // PlayerPage
 // ---------------------------------------------------------------------------
 export default function PlayerPage() {
-  const { state, loading, elapsed, skip, stop, pause, setLoop, shuffle, refetch } = usePlayer();
+  const { state, loading, elapsed, setLoop, shuffle, refetch } = usePlayer();
   const { isAdminView: isAdmin } = useAdminView();
 
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
-  const [skipBusy, setSkipBusy] = useState(false);
-  const [stopBusy, setStopBusy] = useState(false);
-  const [pauseBusy, setPauseBusy] = useState(false);
 
-  const { currentSong, queue, isPlaying, isPaused, loopMode } = state;
+  const { currentSong, queue, isPlaying, loopMode } = state;
 
   const progress = currentSong
     ? Math.min((elapsed / currentSong.duration) * 100, 100)
     : 0;
-
-  const handleSkip = async () => {
-    setSkipBusy(true);
-    try { await skip(); } finally { setSkipBusy(false); }
-  };
-
-  const handleStop = async () => {
-    setStopBusy(true);
-    try { await stop(); } finally { setStopBusy(false); }
-  };
-
-  const handlePause = async () => {
-    setPauseBusy(true);
-    try { await pause(); } finally { setPauseBusy(false); }
-  };
 
   const handleLoop = async (mode: LoopMode) => {
     if (mode === loopMode) return;
@@ -99,35 +81,6 @@ export default function PlayerPage() {
         <section className="mt-6 space-y-4">
           {/* Playback controls row */}
           <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={handlePause}
-              disabled={pauseBusy || !currentSong}
-              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isPaused ? <IconPlay size={14} /> : <IconPause size={14} />}
-              <span>{isPaused ? 'Resume' : 'Pause'}</span>
-            </button>
-
-            <button
-              onClick={handleSkip}
-              disabled={skipBusy || !currentSong}
-              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <IconSkip size={14} />
-              <span>Skip</span>
-            </button>
-
-            <button
-              onClick={handleStop}
-              disabled={stopBusy || !currentSong}
-              className="flex items-center gap-2 font-body text-sm px-4 py-2 rounded border
-                         border-danger/30 text-danger hover:bg-danger/10 transition-colors
-                         duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <IconStop size={14} />
-              <span>Stop</span>
-            </button>
-
             <button
               onClick={handleShuffle}
               disabled={shuffleBusy || queue.length === 0}
@@ -609,25 +562,6 @@ function IconMusic({ size = 20, className = '' }: { size?: number; className?: s
   );
 }
 
-function IconSkip({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="5 4 15 12 5 20 5 4" />
-      <line x1="19" y1="5" x2="19" y2="19" />
-    </svg>
-  );
-}
-
-function IconStop({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-    </svg>
-  );
-}
-
 function IconShuffle({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -659,25 +593,6 @@ function IconPlus({ size = 20, className = '' }: { size?: number; className?: st
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function IconPause({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="6" y="4" width="4" height="16" />
-      <rect x="14" y="4" width="4" height="16" />
-    </svg>
-  );
-}
-
-function IconPlay({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="5 3 19 12 5 21 5 3" />
     </svg>
   );
 }
