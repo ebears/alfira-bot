@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -22,25 +24,60 @@ export default function Layout() {
       {/* ------------------------------------------------------------------ */}
       {/* Sidebar                                                             */}
       {/* ------------------------------------------------------------------ */}
-      <aside className="w-56 flex-shrink-0 flex flex-col border-r border-border bg-surface">
-        {/* Wordmark */}
-        <div className="px-5 pt-6 pb-4">
-          <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
-          {user?.isAdmin && (
-            <span className="ml-2 text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
-              admin
-            </span>
+      <aside
+        className={`${
+          collapsed ? 'w-16' : 'w-56'
+        } flex-shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden${
+          user?.isAdmin ? ' border-t-2 border-t-accent' : ''
+        }`}
+      >
+        {/* Wordmark + collapse toggle */}
+        <div
+          className={`flex pt-6 pb-4 ${
+            collapsed
+              ? 'flex-col items-center justify-start px-3 gap-2'
+              : 'items-center justify-between px-5'
+          }`}
+        >
+          {!collapsed && (
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
+              {user?.isAdmin && (
+                <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
+                  admin
+                </span>
+              )}
+            </div>
           )}
+          {collapsed && user?.isAdmin && (
+            <div
+              className="w-7 h-7 flex items-center justify-center text-accent"
+              title="Admin mode"
+            >
+              <IconShield size={18} />
+            </div>
+          )}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded text-muted
+                       hover:text-fg hover:bg-elevated transition-colors duration-150"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <IconChevron size={16} pointRight={collapsed} />
+          </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 space-y-0.5">
+        <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-3'} space-y-0.5`}>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
+              title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded text-sm font-body font-medium transition-colors duration-150 ${
+                `flex items-center rounded text-sm font-body font-medium transition-colors duration-150 ${
+                  collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+                } ${
                   isActive
                     ? 'bg-accent/10 text-accent'
                     : 'text-muted hover:text-fg hover:bg-elevated'
@@ -48,38 +85,69 @@ export default function Layout() {
               }
             >
               <Icon size={16} />
-              {label}
+              {!collapsed && label}
             </NavLink>
           ))}
         </nav>
 
         {/* User section */}
         <div className="p-3 border-t border-border">
-          <div className="flex items-center gap-3 px-2 py-2 mb-1">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.username}
-                className="w-7 h-7 rounded-full border border-border"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-elevated border border-border flex items-center justify-center">
-                <span className="font-mono text-xs text-muted">
-                  {user?.username?.[0]?.toUpperCase()}
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-full bg-elevated border border-border flex items-center justify-center overflow-hidden"
+                title={user?.username}
+              >
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.username}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="font-mono text-xs text-muted">
+                    {user?.username?.[0]?.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-7 h-7 flex items-center justify-center rounded text-muted
+                           hover:text-danger hover:bg-elevated transition-colors duration-150"
+                title="Log out"
+              >
+                <IconLogout size={14} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 px-2 py-2 mb-1">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.username}
+                    className="w-7 h-7 rounded-full border border-border"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-elevated border border-border flex items-center justify-center">
+                    <span className="font-mono text-xs text-muted">
+                      {user?.username?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <span className="text-sm font-body text-fg truncate flex-1">
+                  {user?.username}
                 </span>
               </div>
-            )}
-            <span className="text-sm font-body text-fg truncate flex-1">
-              {user?.username}
-            </span>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full text-left px-3 py-2 text-xs font-mono text-muted hover:text-fg
-                       hover:bg-elevated rounded transition-colors duration-150"
-          >
-            log out
-          </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 text-xs font-mono text-muted hover:text-fg
+                           hover:bg-elevated rounded transition-colors duration-150"
+              >
+                log out
+              </button>
+            </>
+          )}
         </div>
       </aside>
 
@@ -235,6 +303,38 @@ function IconStop({ size = 20, className = '' }: { size?: number; className?: st
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    </svg>
+  );
+}
+
+function IconChevron({ size = 20, pointRight = false, className = '' }: { size?: number; pointRight?: boolean; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {pointRight
+        ? <polyline points="9 18 15 12 9 6" />
+        : <polyline points="15 18 9 12 15 6" />
+      }
+    </svg>
+  );
+}
+
+function IconLogout({ size = 20, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function IconShield({ size = 20, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
 }
