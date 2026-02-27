@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { getQueueState, skipTrack, stopPlayback, setLoopMode, shuffleQueue, togglePause } from '../api/api';
+import { getQueueState, skipTrack, stopPlayback, resumePlayback, setLoopMode, shuffleQueue, clearQueue, togglePause } from '../api/api';
 import { useSocket } from '../hooks/useSocket';
 import type { QueueState, LoopMode } from '../api/types';
 
@@ -30,6 +30,8 @@ interface PlayerContextValue {
   skip: () => Promise<void>;
   stop: () => Promise<void>;
   pause: () => Promise<void>;
+  clear: () => Promise<void>;
+  resume: () => Promise<void>;
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
   // Force an immediate REST refetch (e.g. after starting playback from PlayerPage).
@@ -163,9 +165,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // Same as above — the socket event arrives before a refetch would.
   }, []);
 
+  const clear = useCallback(async () => {
+    await clearQueue();
+    await refetch();
+  }, [refetch]);
+
+  const resume = useCallback(async () => {
+    await resumePlayback();
+    await new Promise((r) => setTimeout(r, 400));
+    await refetch();
+  }, [refetch]);
+
   return (
     <PlayerContext.Provider
-      value={{ state, loading, elapsed, skip, stop, pause, setLoop, shuffle, refetch }}
+      value={{ state, loading, elapsed, skip, stop, pause, clear, resume, setLoop, shuffle, refetch }}
     >
       {children}
     </PlayerContext.Provider>

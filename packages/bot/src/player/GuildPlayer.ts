@@ -52,6 +52,7 @@ export class GuildPlayer {
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
   private paused = false;
+  private stopping = false;
 
   // Set to true by skip() so onTrackEnd() knows to advance regardless of
   // loop mode. Without this, skipping in 'song' mode would just replay.
@@ -331,29 +332,37 @@ export class GuildPlayer {
   }
 
   /**
-   * Stop playback, clear the queue, and destroy the voice connection.
-   * After calling this, the GuildPlayer instance should be discarded.
+   * Resume playback (after stopping, NOT pausing).
+   */
+  async resume(): Promise<void> {
+    if (!this.currentSong) return;
+    // Re-queue the current song at the front and play it
+    this.queue.unshift(this.currentSong);
+    this.currentSong = null;
+    await this.playNext();
+  }
+
+  /**
+   * Stop playback.
    */
   stop(): void {
-    // Set the flag BEFORE calling connection.destroy() — the Destroyed event
-    // fires synchronously inside destroy(), so the flag must already be true
-    // when the handler runs.
-    this.intentionallyStopped = true;
+    this.stopping = true;
+    this.audioPlayer.stop(true);
+    this.paused = false;
+    broadcastQueueUpdate(this.getQueueState());
+  }
 
+  /**
+   * Clears the song queue.
+   */
+  clearQueue(): void {
+    this.intentionallyStopped = true; // tells Destroyed handler this is deliberate
     this.queue = [];
     this.currentSong = null;
-
     this.paused = false;
-
-    this.audioPlayer.stop(true); // true = force-stop, suppresses the Idle event
-
-    // Kill the FFmpeg process now that we know nothing else will consume it.
+    this.audioPlayer.stop(true);
     this.killCurrentFfmpeg?.();
     this.killCurrentFfmpeg = null;
-
-    this.connection.destroy();
-
-    // Broadcast the stopped/empty state so all clients update immediately.
     broadcastQueueUpdate(this.getQueueState());
   }
 
@@ -539,6 +548,10 @@ export class GuildPlayer {
    * Applies loop logic and advances the queue.
    */
   private async onTrackEnd(): Promise<void> {
+    if (this.stopping) {
+       this.stopping = false;
+       return; // don't advance, don't replay
+    }
     const finished = this.currentSong;
     const wasSkipping = this.skipping;
     this.skipping = false;

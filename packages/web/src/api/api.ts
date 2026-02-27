@@ -63,6 +63,8 @@ export const skipTrack = () => client.post('/api/player/skip');
 export const stopPlayback = () => client.post('/api/player/stop');
 export const setLoopMode = (mode: LoopMode) => client.post('/api/player/loop', { mode });
 export const shuffleQueue = () => client.post('/api/player/shuffle');
+export const clearQueue = () => client.post('/api/player/clear');
+export const resumePlayback = () => client.post('/api/player/resume');
 
 export const togglePause = () =>
   client.post<{ isPaused: boolean }>('/api/player/pause-toggle').then((r) => r.data);

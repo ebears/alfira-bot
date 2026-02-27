@@ -28,23 +28,15 @@ export const leaveCommand: Command = {
     }
 
     // ---------------------------------------------------------------------------
-    // Stop the GuildPlayer first (clears the queue and stops the AudioPlayer),
-    // then remove it from the manager so the next /play starts fresh.
-    //
-    // GuildPlayer.stop() also calls connection.destroy() internally, so we
-    // don't need to call it separately here.
+    // Clear the GuildPlayer first (stops the AudioPlayer, clears the queue,
+    // and destroys the voice connection), then remove it from the manager so
+    // the next /play starts fresh.
     // ---------------------------------------------------------------------------
     const player = getPlayer(interaction.guild.id);
     if (player) {
-      // stop() clears the queue, stops the AudioPlayer, and destroys the
-      // voice connection. The Destroyed event handler inside GuildPlayer calls
-      // onDestroyed(), which removes it from the manager automatically.
-      player.stop();
-    } else {
-      // Bot is in a channel but no player exists (e.g. joined via /join without
-      // playing anything). Destroy the connection directly.
-      connection.destroy();
+      player.clearQueue();
     }
+    connection.destroy();
 
     await interaction.reply('👋 Left the voice channel.');
   },

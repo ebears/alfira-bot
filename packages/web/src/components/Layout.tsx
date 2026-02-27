@@ -191,9 +191,10 @@ export default function Layout() {
 // Now Playing bar — wired to PlayerContext
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
-  const { state, elapsed, skip, stop, pause } = usePlayer();
+  const { state, elapsed, skip, stop, pause, resume } = usePlayer();
   const { isAdminView } = useAdminView();
   const { currentSong, isPlaying, isPaused } = state;
+  const isStopped = !!currentSong && !isPlaying && !isPaused;
 
   const progress = currentSong
     ? Math.min((elapsed / currentSong.duration) * 100, 100)
@@ -251,12 +252,18 @@ function NowPlayingBar() {
         {isAdminView && currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => pause().catch(console.error)}
+              onClick={() => {
+                if (isStopped) {
+                  resume().catch(console.error);
+                } else {
+                  pause().catch(console.error);
+                }
+              }}
               className="w-8 h-8 flex items-center justify-center rounded text-muted
                          hover:text-fg hover:bg-elevated transition-colors duration-150"
-              title={isPaused ? 'Resume' : 'Pause'}
+              title={isPaused || isStopped ? 'Resume' : 'Pause'}
             >
-              {isPaused ? <IconPlay size={16} /> : <IconPause size={16} />}
+              {isPaused || isStopped ? <IconPlay size={16} /> : <IconPause size={16} />}
             </button>
             <button
               onClick={() => skip().catch(console.error)}
@@ -274,6 +281,7 @@ function NowPlayingBar() {
             >
               <IconStop size={16} />
             </button>
+
           </div>
         )}
       </div>
