@@ -142,9 +142,7 @@ export const playlistCommand: Command = {
         requestedBy: member.displayName,
       }));
 
-      for (const song of queuedSongs) {
-        await player.addToQueue(song);
-      }
+      await player.addManyToQueue(queuedSongs);
 
       const count = queuedSongs.length;
       await interaction.editReply(

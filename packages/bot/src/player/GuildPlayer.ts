@@ -10,7 +10,8 @@ import {
   StreamType,
 } from '@discordjs/voice';
 import { TextChannel, EmbedBuilder } from 'discord.js';
-import { getStreamUrl } from '../utils/ytdlp';
+import { getStreamUrl, createAudioStream } from '../utils/ytdlp';
+import { formatDuration, formatLoopMode } from '../utils/format';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
 
@@ -51,10 +52,6 @@ export class GuildPlayer {
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
 
-  // A snapshot of the queue taken at the start of each full playthrough.
-  // Used to reset the queue when loopMode is 'queue' and the list exhausts.
-  private queueSnapshot: QueuedSong[] = [];
-
   // Set to true by skip() so onTrackEnd() knows to advance regardless of
   // loop mode. Without this, skipping in 'song' mode would just replay.
   private skipping = false;
@@ -68,6 +65,23 @@ export class GuildPlayer {
   // Guards against multiple simultaneous reconnect attempts when the
   // Disconnected event fires in quick succession.
   private isReconnecting = false;
+
+  // Kill function for the FFmpeg process currently backing the audio stream.
+  // Stored so we can terminate it on skip or stop, preventing zombie processes.
+  //
+  // Root cause of the "music stops silently mid-track" bug:
+  //   When createAudioResource() was called with a raw URL string and
+  //   StreamType.Arbitrary, @discordjs/voice spawned FFmpeg internally without
+  //   HTTP reconnect flags. If YouTube's CDN dropped the connection (throttle,
+  //   network blip, etc.) FFmpeg treated it as EOF, exited cleanly, and the
+  //   AudioPlayer transitioned to Idle — firing onTrackEnd() as if the song
+  //   finished normally, with no error logged anywhere.
+  //
+  //   The fix: we spawn FFmpeg ourselves (via createAudioStream) with
+  //   -reconnect/-reconnect_streamed/-reconnect_delay_max so transient drops
+  //   are retried transparently. We track the process here so it can be killed
+  //   when a track is skipped or playback is stopped.
+  private killCurrentFfmpeg: (() => void) | null = null;
 
   private readonly connection: VoiceConnection;
   private readonly audioPlayer: AudioPlayer;
@@ -182,9 +196,12 @@ export class GuildPlayer {
         // attempt to play the next track against a destroyed connection.
         this.audioPlayer.stop(true);
 
+        // Kill any running FFmpeg process so it doesn't linger as a zombie.
+        this.killCurrentFfmpeg?.();
+        this.killCurrentFfmpeg = null;
+
         // Reset in-memory state and push it to the web UI.
         this.queue = [];
-        this.queueSnapshot = [];
         this.currentSong = null;
         broadcastQueueUpdate(this.getQueueState());
 
@@ -229,6 +246,20 @@ export class GuildPlayer {
   }
 
   /**
+   * Add multiple songs to the end of the queue in one operation.
+   * Compared to calling addToQueue() in a loop, this pushes all songs before
+   * starting playback and only broadcasts a single queue-update event.
+   */
+  async addManyToQueue(songs: QueuedSong[]): Promise<void> {
+    this.queue.push(...songs);
+    if (this.currentSong === null) {
+      await this.playNext();
+    } else {
+      broadcastQueueUpdate(this.getQueueState());
+    }
+  }
+
+  /**
    * Skip the current song and immediately advance to the next one.
    * Works regardless of loop mode.
    */
@@ -237,7 +268,8 @@ export class GuildPlayer {
     this.skipping = true;
     // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
     // which calls onTrackEnd(). The skipping flag tells it to advance.
-    // broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
+    // The old FFmpeg process will be killed at the top of the next playNext()
+    // call. broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
     this.audioPlayer.stop();
   }
 
@@ -252,9 +284,14 @@ export class GuildPlayer {
     this.intentionallyStopped = true;
 
     this.queue = [];
-    this.queueSnapshot = [];
     this.currentSong = null;
+
     this.audioPlayer.stop(true); // true = force-stop, suppresses the Idle event
+
+    // Kill the FFmpeg process now that we know nothing else will consume it.
+    this.killCurrentFfmpeg?.();
+    this.killCurrentFfmpeg = null;
+
     this.connection.destroy();
 
     // Broadcast the stopped/empty state so all clients update immediately.
@@ -328,6 +365,10 @@ export class GuildPlayer {
    * using stale URLs for tracks that have been waiting in a long queue.
    * Retries the URL fetch up to 2 times (3 attempts total) before skipping.
    *
+   * Spawns FFmpeg with HTTP reconnect flags via createAudioStream() so that
+   * transient CDN drops are retried transparently instead of silently
+   * terminating the stream.
+   *
    * Broadcasts the new state once playback begins (or when the queue empties).
    * Bails out early if the voice connection has already been destroyed.
    */
@@ -367,8 +408,26 @@ export class GuildPlayer {
       return;
     }
 
-    const resource: AudioResource = createAudioResource(streamUrl, {
-      inputType: StreamType.Arbitrary,
+    // Kill any FFmpeg process left over from the previous track before
+    // starting a new one. This covers the normal track-end and skip paths;
+    // stop() kills it directly before destroying the connection.
+    this.killCurrentFfmpeg?.();
+    this.killCurrentFfmpeg = null;
+
+    // Spawn FFmpeg with HTTP reconnect flags so that transient CDN drops do
+    // not silently terminate playback. Without these flags, FFmpeg treats a
+    // dropped HTTP connection as EOF, exits cleanly, and the AudioPlayer
+    // transitions to Idle — calling onTrackEnd() as if the song finished
+    // normally, with no error logged anywhere.
+    //
+    // StreamType.OggOpus tells @discordjs/voice to demux the OGG container
+    // and send the already-encoded Opus packets to Discord directly — no
+    // Node.js Opus encoder library (@discordjs/opus / opusscript) is needed.
+    const { stream, kill } = createAudioStream(streamUrl);
+    this.killCurrentFfmpeg = kill;
+
+    const resource: AudioResource = createAudioResource(stream, {
+      inputType: StreamType.OggOpus,
     });
 
     this.audioPlayer.play(resource);
@@ -429,18 +488,4 @@ export class GuildPlayer {
         { name: 'Loop', value: formatLoopMode(this.loopMode), inline: true },
       );
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function formatLoopMode(mode: LoopMode): string {
-  return { off: '⬛ Off', song: '🔂 Song', queue: '🔁 Queue' }[mode];
 }

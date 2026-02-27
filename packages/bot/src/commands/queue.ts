@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
+import { formatDuration, formatLoopMode } from '../utils/format';
 import type { Command } from '../types';
 
 // Maximum number of queued songs to list before truncating.
@@ -64,19 +65,12 @@ export const queueCommand: Command = {
     // ---------------------------------------------------------------------------
     // Footer: total count and loop mode
     // ---------------------------------------------------------------------------
-    const loopLabels = { off: '⬛ Off', song: '🔂 Song', queue: '🔁 Queue' };
     const totalSongs = queue.length + (current ? 1 : 0);
 
     embed.setFooter({
-      text: `${totalSongs} song${totalSongs === 1 ? '' : 's'} total  •  Loop: ${loopLabels[loopMode]}`,
+      text: `${totalSongs} song${totalSongs === 1 ? '' : 's'} total  •  Loop: ${formatLoopMode(loopMode)}`,
     });
 
     await interaction.reply({ embeds: [embed] });
   },
 };
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}

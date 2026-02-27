@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
-import { getPlayer, removePlayer } from '../player/manager';
+import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 
 export const leaveCommand: Command = {
@@ -36,8 +36,10 @@ export const leaveCommand: Command = {
     // ---------------------------------------------------------------------------
     const player = getPlayer(interaction.guild.id);
     if (player) {
+      // stop() clears the queue, stops the AudioPlayer, and destroys the
+      // voice connection. The Destroyed event handler inside GuildPlayer calls
+      // onDestroyed(), which removes it from the manager automatically.
       player.stop();
-      removePlayer(interaction.guild.id);
     } else {
       // Bot is in a channel but no player exists (e.g. joined via /join without
       // playing anything). Destroy the connection directly.

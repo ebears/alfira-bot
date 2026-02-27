@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
+import { formatDuration, formatLoopMode } from '../utils/format';
 import type { Command } from '../types';
 
 export const nowplayingCommand: Command = {
@@ -23,7 +24,6 @@ export const nowplayingCommand: Command = {
 
     const loopMode = player!.getLoopMode();
     const queueLength = player!.getQueue().length;
-    const loopLabels = { off: '⬛ Off', song: '🔂 Song', queue: '🔁 Queue' };
 
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
@@ -33,7 +33,7 @@ export const nowplayingCommand: Command = {
       .addFields(
         { name: 'Duration', value: formatDuration(song.duration), inline: true },
         { name: 'Requested by', value: song.requestedBy, inline: true },
-        { name: 'Loop', value: loopLabels[loopMode], inline: true }
+        { name: 'Loop', value: formatLoopMode(loopMode), inline: true }
       )
       .setFooter({
         text: queueLength > 0
@@ -44,9 +44,3 @@ export const nowplayingCommand: Command = {
     await interaction.reply({ embeds: [embed] });
   },
 };
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}

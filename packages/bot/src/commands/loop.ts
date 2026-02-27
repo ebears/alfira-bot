@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
+import { formatLoopMode } from '../utils/format';
 import type { Command, LoopMode } from '../types';
 
 export const loopCommand: Command = {
@@ -34,12 +35,12 @@ export const loopCommand: Command = {
     const mode = interaction.options.getString('mode', true) as LoopMode;
     player.setLoopMode(mode);
 
-    const labels: Record<LoopMode, string> = {
-      off: '⬛ Loop is now **off**.',
-      song: '🔂 Looping the **current song**.',
-      queue: '🔁 Looping the **entire queue**.',
+    const confirmations: Record<LoopMode, string> = {
+      off:   `${formatLoopMode('off')} Loop is now **off**.`,
+      song:  `${formatLoopMode('song')} Looping the **current song**.`,
+      queue: `${formatLoopMode('queue')} Looping the **entire queue**.`,
     };
 
-    await interaction.reply(labels[mode]);
+    await interaction.reply(confirmations[mode]);
   },
 };

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { getPlayer, removePlayer } from '../player/manager';
+import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 
 export const stopCommand: Command = {
@@ -21,10 +21,9 @@ export const stopCommand: Command = {
     }
 
     // stop() clears the queue, stops the AudioPlayer, and destroys the
-    // voice connection. Remove it from the manager so the next /play
-    // creates a fresh player.
+    // voice connection. The Destroyed event handler inside GuildPlayer calls
+    // onDestroyed(), which removes it from the manager automatically.
     player.stop();
-    removePlayer(interaction.guild.id);
 
     await interaction.reply('⏹️ Stopped playback and cleared the queue.');
   },
