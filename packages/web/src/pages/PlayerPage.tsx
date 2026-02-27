@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { usePlayer } from '../context/PlayerContext';
-import { useAuth } from '../context/AuthContext';
+import { useAdminView } from '../context/AdminViewContext';
 import { startPlayback, getPlaylists } from '../api/api';
 import type { LoopMode, Playlist } from '../api/types';
 
@@ -18,8 +18,7 @@ function formatDuration(seconds: number): string {
 // ---------------------------------------------------------------------------
 export default function PlayerPage() {
   const { state, loading, elapsed, skip, stop, setLoop, shuffle, refetch } = usePlayer();
-  const { user } = useAuth();
-  const isAdmin = user?.isAdmin ?? false;
+  const { isAdminView: isAdmin } = useAdminView();
 
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);

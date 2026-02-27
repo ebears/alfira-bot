@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist } from '../api/api';
 import type { Song, Playlist } from '../api/types';
-import { useAuth } from '../context/AuthContext';
+import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
 
 export default function SongsPage() {
-  const { user } = useAuth();
+  const { isAdminView } = useAdminView();
   const socket = useSocket();
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -77,7 +77,7 @@ export default function SongsPage() {
             {loading ? '—' : `${songs.length} track${songs.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        {user?.isAdmin && (
+        {isAdminView && (
           <button className="btn-primary" onClick={() => setShowAddModal(true)}>
             + Add Song
           </button>
@@ -99,14 +99,14 @@ export default function SongsPage() {
       {loading ? (
         <SkeletonGrid />
       ) : filtered.length === 0 ? (
-        <EmptyState search={search} isAdmin={user?.isAdmin ?? false} onAdd={() => setShowAddModal(true)} />
+        <EmptyState search={search} isAdmin={isAdminView} onAdd={() => setShowAddModal(true)} />
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
           {filtered.map((song, i) => (
             <SongCard
               key={song.id}
               song={song}
-              isAdmin={user?.isAdmin ?? false}
+              isAdmin={isAdminView}
               playlists={playlists}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
               onDelete={() => setDeleteId(song.id)}

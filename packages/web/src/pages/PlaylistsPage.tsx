@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylists, createPlaylist, deletePlaylist } from '../api/api';
 import type { Playlist } from '../api/types';
-import { useAuth } from '../context/AuthContext';
+import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
 
 export default function PlaylistsPage() {
-  const { user } = useAuth();
+  const { isAdminView } = useAdminView();
   const navigate = useNavigate();
   const socket = useSocket();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -87,7 +87,7 @@ export default function PlaylistsPage() {
             {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        {user?.isAdmin && (
+        {isAdminView && (
           <button className="btn-primary" onClick={() => setShowCreate(true)}>
             + New Playlist
           </button>
@@ -98,14 +98,14 @@ export default function PlaylistsPage() {
       {loading ? (
         <SkeletonList />
       ) : playlists.length === 0 ? (
-        <EmptyState isAdmin={user?.isAdmin ?? false} onCreate={() => setShowCreate(true)} />
+        <EmptyState isAdmin={isAdminView} onCreate={() => setShowCreate(true)} />
       ) : (
         <div className="grid gap-3">
           {playlists.map((pl, i) => (
             <PlaylistRow
               key={pl.id}
               playlist={pl}
-              isAdmin={user?.isAdmin ?? false}
+              isAdmin={isAdminView}
               style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
               onClick={() => navigate(`/playlists/${pl.id}`)}
               onDelete={(e) => { e.stopPropagation(); setDeleteTarget(pl); }}

@@ -5,12 +5,12 @@ import {
   addSongToPlaylist, getSongs, startPlayback, deletePlaylist,
 } from '../api/api';
 import type { PlaylistDetail, Song, LoopMode, Playlist } from '../api/types';
-import { useAuth } from '../context/AuthContext';
+import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { isAdminView } = useAdminView();
   const navigate = useNavigate();
   const socket = useSocket();
 
@@ -118,7 +118,7 @@ export default function PlaylistDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8 gap-4">
         <div className="flex-1 min-w-0">
-          {editingName && user?.isAdmin ? (
+          {editingName && isAdminView ? (
             <input
               ref={nameInputRef}
               value={nameValue}
@@ -135,10 +135,10 @@ export default function PlaylistDetailPage() {
           ) : (
             <h1
               className={`font-display text-5xl text-fg tracking-wider ${
-                user?.isAdmin ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
+                isAdminView ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
               }`}
-              onClick={() => user?.isAdmin && setEditingName(true)}
-              title={user?.isAdmin ? 'Click to rename' : undefined}
+              onClick={() => isAdminView && setEditingName(true)}
+              title={isAdminView ? 'Click to rename' : undefined}
             >
               {playlist.name}
             </h1>
@@ -148,7 +148,7 @@ export default function PlaylistDetailPage() {
           </p>
         </div>
 
-        {user?.isAdmin && (
+        {isAdminView && (
           <div className="flex gap-2 flex-shrink-0">
             <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
               + Add Songs
@@ -172,7 +172,7 @@ export default function PlaylistDetailPage() {
 
       {/* Song list */}
       {playlist.songs.length === 0 ? (
-        <EmptyState isAdmin={user?.isAdmin ?? false} onAdd={() => setShowAddSongs(true)} />
+        <EmptyState isAdmin={isAdminView} onAdd={() => setShowAddSongs(true)} />
       ) : (
         <div className="space-y-1">
           {playlist.songs.map((ps, i) => (
@@ -180,7 +180,7 @@ export default function PlaylistDetailPage() {
               key={ps.id}
               position={i + 1}
               song={ps.song}
-              isAdmin={user?.isAdmin ?? false}
+              isAdmin={isAdminView}
               onRemove={() => setRemoveId(ps.songId)}
             />
           ))}

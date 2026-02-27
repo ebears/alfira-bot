@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 
 const NAV_ITEMS = [
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { isAdminView, toggleAdminView } = useAdminView();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -155,6 +157,26 @@ export default function Layout() {
       {/* Main content + now playing bar                                      */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <div className="flex-shrink-0 h-11 flex items-center justify-end px-5 border-b border-border/50">
+          <button
+            onClick={user?.isAdmin ? toggleAdminView : undefined}
+            disabled={!user?.isAdmin}
+            title={!user?.isAdmin ? 'Admin only' : isAdminView ? 'Switch to user view' : 'Switch to admin view'}
+            className={`flex items-center gap-1.5 font-mono text-[11px] px-3 py-1 rounded border
+                       transition-colors duration-150 ${
+                         !user?.isAdmin
+                           ? 'border-border/40 text-faint cursor-not-allowed'
+                           : isAdminView
+                             ? 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/20'
+                             : 'border-border text-muted hover:text-fg hover:border-muted'
+                       }`}
+          >
+            <IconShield size={12} />
+            {isAdminView ? 'admin view' : 'user view'}
+          </button>
+        </div>
+
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
@@ -170,7 +192,7 @@ export default function Layout() {
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
   const { state, elapsed, skip, stop } = usePlayer();
-  const { user } = useAuth();
+  const { isAdminView } = useAdminView();
   const { currentSong, isPlaying } = state;
 
   const progress = currentSong
@@ -226,7 +248,7 @@ function NowPlayingBar() {
         </div>
 
         {/* Admin controls */}
-        {user?.isAdmin && currentSong && (
+        {isAdminView && currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => skip().catch(console.error)}
