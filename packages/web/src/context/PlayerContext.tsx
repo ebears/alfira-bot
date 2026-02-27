@@ -15,6 +15,7 @@ import type { QueueState, LoopMode } from '../api/types';
 // ---------------------------------------------------------------------------
 const EMPTY_STATE: QueueState = {
   isPlaying: false,
+  isPaused: false,
   loopMode: 'off',
   currentSong: null,
   queue: [],
