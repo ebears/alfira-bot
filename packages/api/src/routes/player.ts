@@ -322,4 +322,25 @@ router.post(
   })
 );
 
+// ---------------------------------------------------------------------------
+// POST /api/player/pause-toggle
+// Admin only.
+// ---------------------------------------------------------------------------
+router.post(
+  '/pause-toggle',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    const player = getPlayer(GUILD_ID);
+
+    if (!player || !player.getCurrentSong()) {
+      res.status(409).json({ error: 'Nothing is currently playing.' });
+      return;
+    }
+
+    const isPaused = player.togglePause();
+    res.json({ isPaused });
+  })
+);
+
 export default router;

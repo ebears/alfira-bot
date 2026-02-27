@@ -51,6 +51,7 @@ export class GuildPlayer {
   private queue: QueuedSong[] = [];
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
+  private paused = false;
 
   // Set to true by skip() so onTrackEnd() knows to advance regardless of
   // loop mode. Without this, skipping in 'song' mode would just replay.
@@ -342,6 +343,8 @@ export class GuildPlayer {
     this.queue = [];
     this.currentSong = null;
 
+    this.paused = false;
+
     this.audioPlayer.stop(true); // true = force-stop, suppresses the Idle event
 
     // Kill the FFmpeg process now that we know nothing else will consume it.
@@ -374,6 +377,24 @@ export class GuildPlayer {
     broadcastQueueUpdate(this.getQueueState());
   }
 
+  /**
+   * Toggle pause.
+   */
+  togglePause(): boolean {
+    if (!this.currentSong) return false;
+
+    if (this.paused) {
+      this.audioPlayer.unpause();
+      this.paused = false;
+    } else {
+      this.audioPlayer.pause(true);
+      this.paused = true;
+    }
+
+    broadcastQueueUpdate(this.getQueueState());
+    return this.paused;
+  }
+
   // ---------------------------------------------------------------------------
   // Getters (read-only views of internal state for commands to display)
   // ---------------------------------------------------------------------------
@@ -395,6 +416,10 @@ export class GuildPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
   }
 
+  isPausedState(): boolean {
+    return this.paused;
+  }
+
   // ---------------------------------------------------------------------------
   // getQueueState
   //
@@ -404,6 +429,7 @@ export class GuildPlayer {
   getQueueState(): QueueState {
     return {
       isPlaying: this.isPlaying(),
+      isPaused: this.paused,
       loopMode: this.loopMode,
       currentSong: this.currentSong,
       queue: [...this.queue],
@@ -444,6 +470,7 @@ export class GuildPlayer {
     }
 
     this.currentSong = next;
+    this.paused = false;
 
     let streamUrl: string;
     try {

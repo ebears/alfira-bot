@@ -51,6 +51,7 @@ export type LoopMode = 'off' | 'song' | 'queue';
 // ---------------------------------------------------------------------------
 export interface QueueState {
   isPlaying: boolean;
+  isPaused: boolean;
   loopMode: LoopMode;
   currentSong: QueuedSong | null;
   queue: QueuedSong[];

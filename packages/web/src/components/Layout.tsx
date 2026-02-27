@@ -191,9 +191,9 @@ export default function Layout() {
 // Now Playing bar — wired to PlayerContext
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
-  const { state, elapsed, skip, stop } = usePlayer();
+  const { state, elapsed, skip, stop, pause } = usePlayer();
   const { isAdminView } = useAdminView();
-  const { currentSong, isPlaying } = state;
+  const { currentSong, isPlaying, isPaused } = state;
 
   const progress = currentSong
     ? Math.min((elapsed / currentSong.duration) * 100, 100)
@@ -250,6 +250,14 @@ function NowPlayingBar() {
         {/* Admin controls */}
         {isAdminView && currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => pause().catch(console.error)}
+              className="w-8 h-8 flex items-center justify-center rounded text-muted
+                         hover:text-fg hover:bg-elevated transition-colors duration-150"
+              title={isPaused ? 'Resume' : 'Pause'}
+            >
+              {isPaused ? <IconPlay size={16} /> : <IconPause size={16} />}
+            </button>
             <button
               onClick={() => skip().catch(console.error)}
               className="w-8 h-8 flex items-center justify-center rounded text-muted
@@ -357,6 +365,16 @@ function IconShield({ size = 20, className = '' }: { size?: number; className?: 
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function IconPause({ size = 20, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="6" y="4" width="4" height="16" />
+      <rect x="14" y="4" width="4" height="16" />
     </svg>
   );
 }

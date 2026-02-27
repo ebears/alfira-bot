@@ -42,6 +42,7 @@ export interface QueuedSong extends Song {
 
 export interface QueueState {
   isPlaying: boolean;
+  isPaused: boolean;
   loopMode: LoopMode;
   currentSong: QueuedSong | null;
   queue: QueuedSong[];

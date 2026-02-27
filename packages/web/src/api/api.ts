@@ -64,6 +64,9 @@ export const stopPlayback = () => client.post('/api/player/stop');
 export const setLoopMode = (mode: LoopMode) => client.post('/api/player/loop', { mode });
 export const shuffleQueue = () => client.post('/api/player/shuffle');
 
+export const togglePause = () =>
+  client.post<{ isPaused: boolean }>('/api/player/pause-toggle').then((r) => r.data);
+
 export const quickAddToQueue = (youtubeUrl: string) =>
   client
     .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(

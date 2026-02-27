@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { getQueueState, skipTrack, stopPlayback, setLoopMode, shuffleQueue } from '../api/api';
+import { getQueueState, skipTrack, stopPlayback, setLoopMode, shuffleQueue, togglePause } from '../api/api';
 import { useSocket } from '../hooks/useSocket';
 import type { QueueState, LoopMode } from '../api/types';
 
@@ -28,6 +28,7 @@ interface PlayerContextValue {
   // Actions — each calls the API; state updates arrive via Socket.io.
   skip: () => Promise<void>;
   stop: () => Promise<void>;
+  pause: () => Promise<void>;
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
   // Force an immediate REST refetch (e.g. after starting playback from PlayerPage).
@@ -110,7 +111,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setElapsed(0);
     }
 
-    if (!state.isPlaying || !songId) return;
+    if (!state.isPlaying || state.isPaused || !songId) return;
 
     const id = setInterval(() => {
       elapsedRef.current = Math.min(
@@ -143,6 +144,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await refetch();
   }, [refetch]);
 
+  const pause = useCallback(async () => {
+    await togglePause();
+  }, []);
+
   const setLoop = useCallback(
     async (mode: LoopMode) => {
       await setLoopMode(mode);
@@ -159,7 +164,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PlayerContext.Provider
-      value={{ state, loading, elapsed, skip, stop, setLoop, shuffle, refetch }}
+      value={{ state, loading, elapsed, skip, stop, pause, setLoop, shuffle, refetch }}
     >
       {children}
     </PlayerContext.Provider>
