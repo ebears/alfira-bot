@@ -21,6 +21,10 @@ export default function PlaylistDetailPage() {
   const [showAddSongs, setShowAddSongs] = useState(false);
   const [showPlay, setShowPlay] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Only allow editing when user is admin AND edit mode is enabled
+  const canEdit = isAdminView && isEditMode;
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -83,6 +87,11 @@ export default function PlaylistDetailPage() {
     // but the optimistic update above means the user sees the change instantly.
   };
 
+  const toggleEditMode = () => {
+    setIsEditMode((prev) => !prev);
+    setEditingName(false);
+  };
+
   const handleRemoveSong = async (songId: string) => {
     if (!playlist) return;
     await removeSongFromPlaylist(playlist.id, songId);
@@ -118,7 +127,7 @@ export default function PlaylistDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8 gap-4">
         <div className="flex-1 min-w-0">
-          {editingName && isAdminView ? (
+          {editingName && canEdit ? (
             <input
               ref={nameInputRef}
               value={nameValue}
@@ -135,10 +144,10 @@ export default function PlaylistDetailPage() {
           ) : (
             <h1
               className={`font-display text-5xl text-fg tracking-wider ${
-                isAdminView ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
+                canEdit ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
               }`}
-              onClick={() => isAdminView && setEditingName(true)}
-              title={isAdminView ? 'Click to rename' : undefined}
+              onClick={() => canEdit && setEditingName(true)}
+              title={canEdit ? 'Click to rename' : undefined}
             >
               {playlist.name}
             </h1>
@@ -148,31 +157,43 @@ export default function PlaylistDetailPage() {
           </p>
         </div>
 
-        {isAdminView && (
-          <div className="flex gap-2 flex-shrink-0">
-            <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
-              + Add Songs
-            </button>
-            <button
-              className="btn-primary text-xs"
-              onClick={() => setShowPlay(true)}
-              disabled={playlist.songs.length === 0}
-            >
-              ▶ Play
-            </button>
-            <button
-              className="btn-danger text-xs"
-              onClick={handleDeletePlaylist}
-            >
-              Delete
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            className="btn-ghost text-xs"
+            onClick={() => setShowPlay(true)}
+            disabled={playlist.songs.length === 0}
+          >
+            ▶ Play
+          </button>
+          {isAdminView && (
+            <>
+              {isEditMode && (
+                <>
+                  <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
+                    + Add Songs
+                  </button>
+                  <button
+                    className="btn-danger text-xs"
+                    onClick={handleDeletePlaylist}
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+              <button
+                className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
+                onClick={toggleEditMode}
+              >
+                {isEditMode ? '✎ Editing' : '✎ Edit'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Song list */}
       {playlist.songs.length === 0 ? (
-        <EmptyState isAdmin={isAdminView} onAdd={() => setShowAddSongs(true)} />
+        <EmptyState isAdmin={canEdit} onAdd={() => setShowAddSongs(true)} />
       ) : (
         <div className="space-y-1">
           {playlist.songs.map((ps, i) => (
@@ -180,7 +201,7 @@ export default function PlaylistDetailPage() {
               key={ps.id}
               position={i + 1}
               song={ps.song}
-              isAdmin={isAdminView}
+              isAdmin={canEdit}
               onRemove={() => setRemoveId(ps.songId)}
             />
           ))}
