@@ -110,7 +110,17 @@ export class GuildPlayer {
     this.guildId = guildId;
     this.onDestroyed = onDestroyed;
 
-    this.audioPlayer = createAudioPlayer();
+    this.audioPlayer = createAudioPlayer({
+      behaviors: {
+        // Allow up to ~1 second of missed frames before auto-pausing.
+        // The default of 5 frames (~100 ms) is far too aggressive — any brief
+        // network jitter, encoding pause, or event-loop delay causes the
+        // AudioPlayer to transition to AutoPaused, which users hear as
+        // choppiness. 50 frames gives a comfortable cushion without masking
+        // genuine end-of-stream events.
+        maxMissedFrames: 50,
+      },
+    });
     this.connection.subscribe(this.audioPlayer);
 
     // -------------------------------------------------------------------------
@@ -146,6 +156,26 @@ export class GuildPlayer {
     // -------------------------------------------------------------------------
     // VoiceConnection event handlers
     // -------------------------------------------------------------------------
+
+    // Workaround: clear the UDP keepAlive interval whenever the underlying
+    // networking state changes. The keepAlive heartbeat fires roughly every
+    // 5 seconds and can disrupt the precise timing of outgoing audio packets,
+    // which users perceive as periodic stutters. Clearing the interval removes
+    // the interference without affecting connection health — Discord's WebSocket
+    // gateway maintains its own heartbeat independently.
+    // This mirrors the approach used by the Muse bot (museofficial/muse).
+    this.connection.on('stateChange', (oldState, newState) => {
+      const oldNetworking = Reflect.get(oldState, 'networking');
+      const newNetworking = Reflect.get(newState, 'networking');
+
+      const networkStateChangeHandler = (_: unknown, newNetworkState: object) => {
+        const newUdp = Reflect.get(newNetworkState, 'udp');
+        clearInterval(newUdp?.keepAliveInterval);
+      };
+
+      oldNetworking?.off('stateChange', networkStateChangeHandler);
+      newNetworking?.on('stateChange', networkStateChangeHandler);
+    });
 
     // Disconnected can be a transient network blip. Give Discord 5 s to start
     // reconnecting on its own. If it transitions to Signalling or Connecting
