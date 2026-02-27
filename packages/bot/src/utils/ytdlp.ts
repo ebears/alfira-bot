@@ -1,7 +1,7 @@
 import { execFile, spawn } from 'child_process';
 import type { ChildProcess } from 'child_process';
-import { PassThrough } from 'stream';
 import type { Readable } from 'stream';
+import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
 // ---------------------------------------------------------------------------
 // Metadata returned from yt-dlp for a YouTube video.
@@ -159,21 +159,37 @@ export interface AudioStreamHandle {
 //   -f ogg                        Wrap in an OGG container.
 //
 // Node.js-side output buffer:
-//   FFmpeg's stdout is piped through a PassThrough stream with a 256 KB
-//   highWaterMark (~21 seconds of audio at 96 kbps). When FFmpeg can encode
-//   faster than real-time — which it almost always can — it pre-fills this
-//   buffer. The cushion covers two failure modes:
+//   FFmpeg's stdout is piped into an fs-capacitor WriteStream, which spills
+//   all incoming data to a temporary file on disk. A ReadStream created from
+//   the same capacitor is returned to the AudioPlayer.
 //
-//   1. CDN reconnect gaps (the visible "Will reconnect" log lines): FFmpeg
-//      stops producing output while it re-establishes the HTTPS connection.
-//      With no buffer the AudioPlayer starves immediately; with the buffer
-//      it keeps drawing buffered audio for the ~0–2 seconds the reconnect
-//      takes.
+//   Why fs-capacitor instead of PassThrough:
 //
-//   2. Silent choppiness (more common than the logged errors): variable
-//      network throughput, encoding jitter, or brief Node.js event-loop
-//      delays cause irregular spacing between encoded packets. The buffer
-//      absorbs these micro-gaps before they reach the AudioPlayer.
+//   PassThrough is a back-pressure-coupled, in-memory pipe. The consumer
+//   (AudioPlayer) and producer (FFmpeg) are tightly coupled: if the consumer
+//   reads slowly, the in-memory buffer fills up and Node.js applies back-
+//   pressure to FFmpeg's stdout, preventing it from pre-filling the buffer
+//   ahead of time. When a CDN reconnect gap hits and FFmpeg stops producing
+//   output for 0–2 seconds, the effective cushion left in the PassThrough is
+//   often much smaller than the nominal 256 KB because back-pressure drained
+//   it.
+//
+//   fs-capacitor fully decouples the write side (FFmpeg) from the read side
+//   (AudioPlayer) by buffering to disk:
+//
+//   1. CDN reconnect gaps: FFmpeg pre-fills the temp file as fast as it can
+//      encode — there is no back-pressure from the read side to slow it down.
+//      The AudioPlayer reads from the temp file at its own pace, so the on-
+//      disk buffer absorbs the entire reconnect gap with no audible stutter.
+//
+//   2. Silent choppiness: variable network throughput, encoding jitter, or
+//      brief Node.js event-loop pauses cause irregular spacing between encoded
+//      packets. Because the disk buffer is decoupled, these micro-gaps never
+//      reach the AudioPlayer.
+//
+//   3. Unlimited buffer depth: unlike a fixed-size in-memory highWaterMark,
+//      the disk buffer can grow as large as needed, which is particularly
+//      useful for longer reconnect delays.
 //
 // The caller should use StreamType.OggOpus when passing the resulting stream
 // to createAudioResource. prism-media will demux the OGG container and hand
@@ -214,28 +230,40 @@ export function createAudioStream(cdnUrl: string): AudioStreamHandle {
   });
 
   // If the FFmpeg process itself fails to spawn or crashes at the OS level,
-  // forward the error into the buffer so @discordjs/voice sees a stream error
-  // rather than the pipe silently hanging open.
+  // destroy the capacitor so the read stream ends and @discordjs/voice sees a
+  // stream termination rather than the pipe silently hanging open.
   ffmpeg.on('error', (err) => {
     console.error('[FFmpeg] process error:', err.message);
-    buffer.destroy(err);
+    capacitor.destroy();
   });
 
-  // 256 KB ≈ 21 seconds of audio at 96 kbps. FFmpeg will pre-fill this buffer
-  // whenever it encodes faster than real-time, giving the AudioPlayer a cushion
-  // to draw from during CDN reconnects or any other brief output gaps.
-  const buffer = new PassThrough({ highWaterMark: 256 * 1024 });
-  ffmpeg.stdout!.pipe(buffer);
+  // Pipe FFmpeg's encoded output into an fs-capacitor WriteStream. The
+  // capacitor spills all data to a temp file on disk as it arrives, fully
+  // decoupling the FFmpeg write side from the AudioPlayer read side. This
+  // prevents back-pressure from limiting how far ahead FFmpeg can buffer,
+  // and ensures CDN reconnect gaps or event-loop jitter are absorbed by the
+  // on-disk buffer before they can reach the AudioPlayer.
+  const capacitor = new CapacitorWriteStream();
+  ffmpeg.stdout!.pipe(capacitor);
+
+  // Obtain a read stream from the capacitor. This stream reads from the temp
+  // file, starting from the beginning of the buffered data, and will continue
+  // to follow new writes until the capacitor is destroyed.
+  const readStream = capacitor.createReadStream();
 
   let killed = false;
   const kill = () => {
     if (!killed) {
       killed = true;
       ffmpeg.kill();
+      // Release the temp file. Any in-progress reads will receive an error,
+      // which @discordjs/voice will surface as a stream end — acceptable
+      // because kill() is only called on skip or stop.
+      capacitor.destroy();
     }
   };
 
-  return { stream: buffer, kill };
+  return { stream: readStream, kill };
 }
 
 // ---------------------------------------------------------------------------
