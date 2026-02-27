@@ -56,6 +56,7 @@ export const startPlayback = (opts: {
   playlistId?: string;
   mode: 'sequential' | 'random';
   loop: LoopMode;
+  startFromSongId?: string;
 }) => client.post('/api/player/play', opts);
 
 export const skipTrack = () => client.post('/api/player/skip');

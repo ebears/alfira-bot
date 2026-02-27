@@ -7,6 +7,7 @@ import {
 import type { PlaylistDetail, Song, LoopMode, Playlist } from '../api/types';
 import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
+import { usePlayer } from '../context/PlayerContext';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,10 +23,14 @@ export default function PlaylistDetailPage() {
   const [showPlay, setShowPlay] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [playingSongId, setPlayingSongId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Only allow editing when user is admin AND edit mode is enabled
   const canEdit = isAdminView && isEditMode;
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const { state: queueState } = usePlayer();
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -110,6 +115,51 @@ export default function PlaylistDetailPage() {
     navigate('/playlists');
   };
 
+  const handlePlayFromSong = async (
+    songId: string,
+    mode: 'sequential' | 'random' = 'sequential',
+    { throwErrors = false }: { throwErrors?: boolean } = {}
+  ) => {
+    if (!playlist) return;
+    setPlayingSongId(songId);
+    try {
+      await startPlayback({
+        playlistId: playlist.id,
+        mode,
+        loop: queueState.loopMode,
+        startFromSongId: songId,
+      });
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not start playback.';
+      if (throwErrors) {
+        throw err;
+      }
+      setNotification({ message: errorMsg, type: 'error' });
+      setTimeout(() => setNotification(null), 5000);
+    } finally {
+      setPlayingSongId(null);
+    }
+  };
+
+  const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
+    if (!playlist) return;
+    try {
+      await startPlayback({
+        playlistId: playlist.id,
+        mode,
+        loop: queueState.loopMode,
+      });
+      setNotification({ message: `Added "${playlist.name}" to queue`, type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
+      setNotification({ message: errorMsg, type: 'error' });
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
+
   if (loading) return <DetailSkeleton />;
   if (!playlist) return null;
 
@@ -159,11 +209,19 @@ export default function PlaylistDetailPage() {
 
         <div className="flex gap-2 flex-shrink-0">
           <button
-            className="btn-ghost text-xs"
+            className="btn-ghost text-xs flex items-center gap-1.5"
+            onClick={() => handleAddPlaylistToQueue()}
+            disabled={playlist.songs.length === 0}
+            title="Add playlist to current queue"
+          >
+            <PlusIcon size={14} /> Add to Queue
+          </button>
+          <button
+            className="btn-primary text-xs flex items-center gap-1.5"
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
           >
-            ▶ Play
+            <PlayIcon size={14} /> Play
           </button>
           {isAdminView && (
             <>
@@ -203,6 +261,8 @@ export default function PlaylistDetailPage() {
               song={ps.song}
               isAdmin={canEdit}
               onRemove={() => setRemoveId(ps.songId)}
+              onPlay={() => handlePlayFromSong(ps.songId)}
+              isPlaying={playingSongId === ps.songId}
             />
           ))}
         </div>
@@ -218,9 +278,18 @@ export default function PlaylistDetailPage() {
       )}
       {showPlay && (
         <PlayModal
-          playlistId={playlist.id}
           onClose={() => setShowPlay(false)}
+          onPlay={(mode) => handlePlayFromSong(playlist.songs[0]?.songId, mode, { throwErrors: true })}
         />
+      )}
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-mono text-xs animate-fade-up ${
+          notification.type === 'success' ? 'bg-accent/20 border border-accent/40 text-accent' : 'bg-danger/20 border border-danger/40 text-danger'
+        }`}>
+          {notification.message}
+        </div>
       )}
       {removeId && (
         <ConfirmRemoveModal
@@ -241,18 +310,38 @@ function SongRow({
   song,
   isAdmin,
   onRemove,
+  onPlay,
+  isPlaying,
 }: {
   position: number;
   song: Song;
   isAdmin: boolean;
   onRemove: () => void;
+  onPlay: () => void;
+  isPlaying?: boolean;
 }) {
   return (
     <div className="flex items-center gap-4 px-4 py-3 rounded-lg group
                     hover:bg-elevated transition-colors duration-100">
-      <span className="font-mono text-xs text-faint w-6 text-right flex-shrink-0">
-        {position}
-      </span>
+      <div className="w-6 flex-shrink-0 flex justify-end">
+        <span className={`font-mono text-xs text-faint text-right ${isPlaying ? 'hidden' : 'group-hover:hidden'}`}>
+          {position}
+        </span>
+        {isPlaying ? (
+          <span className="flex items-center justify-center">
+            <span className="animate-pulse text-accent text-xs">●</span>
+          </span>
+        ) : (
+          <button
+            onClick={onPlay}
+            className="hidden group-hover:flex items-center justify-center
+                       text-accent hover:text-accent/80 transition-colors duration-150"
+            title="Play from this song"
+          >
+            <PlayIcon size={14} />
+          </button>
+        )}
+      </div>
       <img
         src={song.thumbnailUrl}
         alt={song.title}
@@ -396,14 +485,15 @@ function AddSongsModal({
 // Play modal — mode and loop options
 // ---------------------------------------------------------------------------
 function PlayModal({
-  playlistId,
   onClose,
+  onPlay,
 }: {
-  playlistId: string;
   onClose: () => void;
+  onPlay: (mode: 'sequential' | 'random') => void;
 }) {
   const [mode, setMode] = useState<'sequential' | 'random'>('sequential');
   const [loop, setLoop] = useState<LoopMode>('off');
+  // loop is preserved for UI state but not passed to onPlay since we preserve server loop mode
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -411,7 +501,7 @@ function PlayModal({
     setLoading(true);
     setError('');
     try {
-      await startPlayback({ playlistId, mode, loop });
+      await onPlay(mode);
       onClose();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
@@ -562,6 +652,24 @@ function ChevronLeftIcon({ size = 16, className = '' }: { size?: number; classNa
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function PlayIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  );
+}
+
+function PlusIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
 }

@@ -290,6 +290,32 @@ export class GuildPlayer {
   }
 
   /**
+   * Replace the entire queue with new songs and immediately start playback.
+   * Clears the current queue, skips any currently playing song, and starts
+   * playing the first song from the new queue.
+   */
+  async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
+    // Clear the current queue and stop playback
+    this.queue = [];
+
+    // Kill any current FFmpeg process
+    this.killCurrentFfmpeg?.();
+    this.killCurrentFfmpeg = null;
+
+    // Stop the audio player (triggers Idle -> onTrackEnd, but queue is empty)
+    this.audioPlayer.stop(true); // true = force-stop, suppresses Idle event
+
+    // Set the new queue
+    this.queue = [...songs];
+
+    // Start playing the first song
+    await this.playNext();
+
+    // Broadcast the new state
+    broadcastQueueUpdate(this.getQueueState());
+  }
+
+  /**
    * Skip the current song and immediately advance to the next one.
    * Works regardless of loop mode.
    */

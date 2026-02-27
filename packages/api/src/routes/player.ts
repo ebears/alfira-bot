@@ -48,10 +48,12 @@ router.get(
 // Admin only.
 //
 // Body:
-//   playlistId? — if provided, load songs from this playlist; otherwise
-//                 load all songs from the library.
-//   mode        — "sequential" | "random"
-//   loop        — "off" | "song" | "queue"
+//   playlistId?      — if provided, load songs from this playlist; otherwise
+//                      load all songs from the library.
+//   mode             — "sequential" | "random"
+//   loop             — "off" | "song" | "queue"
+//   startFromSongId? — if provided, start playback from this specific song
+//                      (clears existing queue and interrupts current playback)
 //
 // Note: the bot must already be in a voice channel (via /join or /play in
 // Discord) before this endpoint can work. The API cannot create a voice
@@ -62,10 +64,11 @@ router.post(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { playlistId, mode, loop } = req.body as {
+    const { playlistId, mode, loop, startFromSongId } = req.body as {
       playlistId?: string;
       mode?: 'sequential' | 'random';
       loop?: LoopMode;
+      startFromSongId?: string;
     };
 
     const player = getPlayer(GUILD_ID);
@@ -105,7 +108,21 @@ router.post(
       return;
     }
 
-    // Apply shuffle if random mode is requested.
+    // If starting from a specific song, reorder so that song comes first
+    if (startFromSongId) {
+      const startIndex = dbSongs.findIndex((s) => s.id === startFromSongId);
+      if (startIndex === -1) {
+        res.status(404).json({ error: 'Start song not found in playlist.' });
+        return;
+      }
+      // Reorder: chosen song first, then all songs after it, then songs before it
+      dbSongs = [
+        ...dbSongs.slice(startIndex),
+        ...dbSongs.slice(0, startIndex),
+      ];
+    }
+
+    // Apply shuffle if random mode is requested (after reordering for startFromSongId).
     if (mode === 'random') {
       for (let i = dbSongs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -113,12 +130,14 @@ router.post(
       }
     }
 
-    // Set loop mode before adding songs so the first track picks it up.
-    if (loop) {
-      player.setLoopMode(loop);
-    }
+    // Preserve the current loop mode if not explicitly set
+    const currentLoopMode = player.getLoopMode();
+    const targetLoopMode = loop ?? currentLoopMode;
 
-    // Build QueuedSong objects and enqueue them.
+    // Set loop mode before adding songs so the first track picks it up.
+    player.setLoopMode(targetLoopMode);
+
+    // Build QueuedSong objects.
     // requestedBy shows who triggered playback in "Now playing" embeds.
     const requestedBy = req.user!.username;
 
@@ -127,8 +146,14 @@ router.post(
       requestedBy,
     }));
 
-    for (const song of queuedSongs) {
-      await player.addToQueue(song);
+    // If starting from a specific song, clear the queue and interrupt current playback
+    if (startFromSongId) {
+      await player.replaceQueueAndPlay(queuedSongs);
+    } else {
+      // Add songs to existing queue
+      for (const song of queuedSongs) {
+        await player.addToQueue(song);
+      }
     }
 
     res.json({ message: `Queued ${queuedSongs.length} song(s).` });
