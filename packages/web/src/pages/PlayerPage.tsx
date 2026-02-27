@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
-import { startPlayback, getPlaylists } from '../api/api';
+import { startPlayback, getPlaylists, quickAddToQueue } from '../api/api';
 import type { LoopMode, Playlist } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -21,6 +21,7 @@ export default function PlayerPage() {
   const { isAdminView: isAdmin } = useAdminView();
 
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
@@ -128,6 +129,13 @@ export default function PlayerPage() {
               <IconList size={14} />
               <span>Load Playlist</span>
             </button>
+            <button
+              onClick={() => setShowQuickAdd(true)}
+              className="flex items-center gap-2 btn-primary"
+            >
+              <IconPlus size={14} />
+              <span>Quick Add</span>
+            </button>
           </div>
 
           {/* Loop mode selector */}
@@ -212,13 +220,28 @@ export default function PlayerPage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Load Playlist modal                                                 */}
+      {/* Load Playlist modal */}
       {/* ------------------------------------------------------------------ */}
       {showLoadPlaylist && (
         <LoadPlaylistModal
           onClose={() => setShowLoadPlaylist(false)}
           onLoaded={async () => {
             setShowLoadPlaylist(false);
+            // Give the bot a moment to enqueue before we poll.
+            await new Promise((r) => setTimeout(r, 600));
+            await refetch();
+          }}
+        />
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Quick Add modal */}
+      {/* ------------------------------------------------------------------ */}
+      {showQuickAdd && (
+        <QuickAddModal
+          onClose={() => setShowQuickAdd(false)}
+          onAdded={async () => {
+            setShowQuickAdd(false);
             // Give the bot a moment to enqueue before we poll.
             await new Promise((r) => setTimeout(r, 600));
             await refetch();
@@ -473,6 +496,91 @@ function LoadPlaylistModal({
 }
 
 // ---------------------------------------------------------------------------
+// Quick Add Modal
+// ---------------------------------------------------------------------------
+function QuickAddModal({
+  onClose,
+  onAdded,
+}: {
+  onClose: () => void;
+  onAdded: () => void;
+}) {
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    if (!youtubeUrl.trim()) return;
+
+    setSubmitting(true);
+    setError('');
+    try {
+      await quickAddToQueue(youtubeUrl.trim());
+      onAdded();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(
+        e?.response?.data?.error ??
+          'Could not add song to queue. Is the bot in a voice channel?'
+      );
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
+        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Quick Add</h2>
+        <p className="font-mono text-xs text-muted mb-6">
+          add a song to the queue without saving to library
+        </p>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">
+              YouTube URL
+            </p>
+            <input
+              type="text"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+              className="input font-body w-full"
+              disabled={submitting}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && youtubeUrl.trim()) {
+                  handleSubmit();
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
+
+        <div className="flex gap-2 justify-end">
+          <button className="btn-ghost" onClick={onClose} disabled={submitting}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={submitting || !youtubeUrl.trim()}
+          >
+            {submitting ? 'Adding...' : 'Add to Queue'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Icons
 // ---------------------------------------------------------------------------
 function IconMusic({ size = 20, className = '' }: { size?: number; className?: string }) {
@@ -520,14 +628,22 @@ function IconShuffle({ size = 20, className = '' }: { size?: number; className?:
 
 function IconList({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <line x1="8" y1="6" x2="21" y2="6" />
       <line x1="8" y1="12" x2="21" y2="12" />
       <line x1="8" y1="18" x2="21" y2="18" />
       <line x1="3" y1="6" x2="3.01" y2="6" />
       <line x1="3" y1="12" x2="3.01" y2="12" />
       <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  );
+}
+
+function IconPlus({ size = 20, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
 }

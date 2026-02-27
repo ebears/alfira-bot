@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { getPlayer } from '@discord-music-bot/bot/src/player/manager';
+import { isValidYouTubeUrl, getMetadata } from '@discord-music-bot/bot/src/utils/ytdlp';
 import type { LoopMode, QueuedSong, Song } from '@discord-music-bot/shared';
 
 const router = Router();
@@ -242,14 +243,82 @@ router.post(
   requireAdmin,
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
-
     if (!player || player.getQueue().length === 0) {
       res.status(409).json({ error: 'No songs in the queue to shuffle.' });
       return;
     }
-
     player.shuffle();
     res.json({ message: 'Queue shuffled.' });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/player/quick-add
+//
+// Adds a song to the queue without saving it to the library.
+// Admin only.
+//
+// Body:
+// youtubeUrl — YouTube URL to fetch and queue
+// ---------------------------------------------------------------------------
+router.post(
+  '/quick-add',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { youtubeUrl } = req.body as { youtubeUrl?: string };
+
+    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
+      res.status(400).json({ error: 'youtubeUrl is required.' });
+      return;
+    }
+
+    const url = youtubeUrl.trim();
+
+    if (!isValidYouTubeUrl(url)) {
+      res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
+      return;
+    }
+
+    const player = getPlayer(GUILD_ID);
+    if (!player) {
+      res.status(409).json({
+        error: 'The bot is not in a voice channel. Use /join in Discord first.',
+      });
+      return;
+    }
+
+    // Fetch metadata from YouTube
+    let metadata;
+    try {
+      metadata = await getMetadata(url);
+    } catch {
+      res.status(422).json({
+        error: 'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
+      });
+      return;
+    }
+
+    // Create a QueuedSong without saving to database
+    const requestedBy = req.user!.username;
+    const queuedSong: QueuedSong = {
+      id: `temp-${Date.now()}`,
+      title: metadata.title,
+      youtubeUrl: url,
+      youtubeId: metadata.youtubeId,
+      duration: metadata.duration,
+      thumbnailUrl: metadata.thumbnailUrl,
+      addedBy: req.user!.discordId,
+      createdAt: new Date(),
+      requestedBy,
+    };
+
+    await player.addToQueue(queuedSong);
+
+    res.json({
+      message: `Added "${metadata.title}" to the queue.`,
+      song: queuedSong,
+    });
   })
 );
 

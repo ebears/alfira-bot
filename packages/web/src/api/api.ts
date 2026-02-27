@@ -63,3 +63,11 @@ export const skipTrack = () => client.post('/api/player/skip');
 export const stopPlayback = () => client.post('/api/player/stop');
 export const setLoopMode = (mode: LoopMode) => client.post('/api/player/loop', { mode });
 export const shuffleQueue = () => client.post('/api/player/shuffle');
+
+export const quickAddToQueue = (youtubeUrl: string) =>
+  client
+    .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(
+      '/api/player/quick-add',
+      { youtubeUrl }
+    )
+    .then((r) => r.data);
