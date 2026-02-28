@@ -355,16 +355,10 @@ export class GuildPlayer {
   /**
    * Clears the song queue.
    */
-  clearQueue(): void {
-    this.intentionallyStopped = true; // tells Destroyed handler this is deliberate
-    this.queue = [];
-    this.currentSong = null;
-    this.paused = false;
-    this.audioPlayer.stop(true);
-    this.killCurrentFfmpeg?.();
-    this.killCurrentFfmpeg = null;
-    broadcastQueueUpdate(this.getQueueState());
-  }
+   clearQueue(): void {
+     this.queue = [];
+     broadcastQueueUpdate(this.getQueueState());
+   }
 
   /**
    * Shuffle the upcoming queue in place using Fisher-Yates.

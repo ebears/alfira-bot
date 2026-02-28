@@ -350,14 +350,14 @@ router.post(
   requireAuth,
   requireAdmin,
   asyncHandler(async (_req, res) => {
-    const { removePlayer } = await import('@discord-music-bot/bot/src/player/manager');
     const player = getPlayer(GUILD_ID);
+
     if (!player) {
       res.status(409).json({ error: 'Nothing is playing.' });
       return;
     }
+
     player.clearQueue();
-    removePlayer(GUILD_ID);
     res.json({ message: 'Queue cleared.' });
   })
 );

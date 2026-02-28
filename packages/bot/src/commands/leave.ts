@@ -34,7 +34,7 @@ export const leaveCommand: Command = {
     // ---------------------------------------------------------------------------
     const player = getPlayer(interaction.guild.id);
     if (player) {
-      player.clearQueue();
+      player.stop();
     }
     connection.destroy();
 
