@@ -1,30 +1,17 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { getPlayer } from '../player/manager';
+import { leaveCommand } from './leave';
 import type { Command } from '../types';
 
+// ---------------------------------------------------------------------------
+// /stop is an alias for /leave.
+//
+// Both commands stop playback, clear the queue, and disconnect the bot from
+// the voice channel. /stop is kept so existing muscle-memory still works.
+// ---------------------------------------------------------------------------
 export const stopCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('stop')
     .setDescription('Stop playback, clear the queue, and leave the voice channel.'),
 
-  async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({ content: 'This command can only be used inside a server.', flags: 'Ephemeral' });
-      return;
-    }
-
-    const player = getPlayer(interaction.guild.id);
-
-    if (!player) {
-      await interaction.reply({ content: "I'm not playing anything.", flags: 'Ephemeral' });
-      return;
-    }
-
-    // stop() clears the queue, stops the AudioPlayer, and destroys the
-    // voice connection. The Destroyed event handler inside GuildPlayer calls
-    // onDestroyed(), which removes it from the manager automatically.
-    player.stop();
-
-    await interaction.reply('⏹️ Stopped playback and cleared the queue.');
-  },
+  execute: leaveCommand.execute,
 };

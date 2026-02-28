@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { getQueueState, skipTrack, stopPlayback, resumePlayback, setLoopMode, shuffleQueue, clearQueue, togglePause } from '../api/api';
+import { getQueueState, skipTrack, leaveVoice, resumePlayback, setLoopMode, shuffleQueue, clearQueue, togglePause } from '../api/api';
 import { useSocket } from '../hooks/useSocket';
 import type { QueueState, LoopMode } from '../api/types';
 
@@ -29,7 +29,8 @@ interface PlayerContextValue {
   elapsed: number;
   // Actions — each calls the API; state updates arrive via Socket.io.
   skip: () => Promise<void>;
-  stop: () => Promise<void>;
+  /** Stop playback, clear the queue, and disconnect the bot from voice. */
+  leave: () => Promise<void>;
   pause: () => Promise<void>;
   clear: () => Promise<void>;
   resume: () => Promise<void>;
@@ -156,8 +157,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await refetch();
   }, [refetch]);
 
-  const stop = useCallback(async () => {
-    await stopPlayback();
+  const leave = useCallback(async () => {
+    await leaveVoice();
     await refetch();
   }, [refetch]);
 
@@ -192,7 +193,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PlayerContext.Provider
-      value={{ state, loading, elapsed, skip, stop, pause, clear, resume, setLoop, shuffle, refetch }}
+      value={{ state, loading, elapsed, skip, leave, pause, clear, resume, setLoop, shuffle, refetch }}
     >
       {children}
     </PlayerContext.Provider>

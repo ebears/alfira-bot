@@ -191,7 +191,7 @@ export default function Layout() {
 // Now Playing bar — wired to PlayerContext
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
-  const { state, elapsed, skip, stop, pause, resume } = usePlayer();
+  const { state, elapsed, skip, leave, pause, resume } = usePlayer();
   const { isAdminView } = useAdminView();
   const { currentSong, isPlaying, isPaused } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
@@ -274,14 +274,13 @@ function NowPlayingBar() {
               <IconSkip size={16} />
             </button>
             <button
-              onClick={() => stop().catch(console.error)}
+              onClick={() => leave().catch(console.error)}
               className="w-8 h-8 flex items-center justify-center rounded text-muted
                          hover:text-danger hover:bg-elevated transition-colors duration-150"
-              title="Stop"
+              title="Leave voice channel"
             >
-              <IconStop size={16} />
+              <IconLeave size={16} />
             </button>
-
           </div>
         )}
       </div>
@@ -336,11 +335,14 @@ function IconSkip({ size = 20, className = '' }: { size?: number; className?: st
   );
 }
 
-function IconStop({ size = 20, className = '' }: { size?: number; className?: string }) {
+/** Door-with-arrow icon representing "leave voice channel" */
+function IconLeave({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }

@@ -198,6 +198,12 @@ https://alfira.website.com {
 
 ---
 
+## Acknowledgements
+
+The use of `fs-capacitor` for audio streaming was inspired by [muse](https://github.com/museofficial/muse), a self-hosted Discord music bot.
+
+---
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

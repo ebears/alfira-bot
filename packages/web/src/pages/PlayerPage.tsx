@@ -48,7 +48,6 @@ export default function PlayerPage() {
     try { await clear(); } finally { setClearBusy(false); }
   };
 
-  // ---------------------------------------------------------------------------
   // Loading skeleton
   // ---------------------------------------------------------------------------
   if (loading) {
@@ -99,7 +98,7 @@ export default function PlayerPage() {
             <button
               onClick={handleClear}
               disabled={clearBusy || (queue.length === 0 && !currentSong)}
-              className="flex items-center gap-2 btn-danger disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <IconTrash size={14} />
               <span>Clear Queue</span>
