@@ -17,7 +17,7 @@ function formatDuration(seconds: number): string {
 // PlayerPage
 // ---------------------------------------------------------------------------
 export default function PlayerPage() {
-  const { state, loading, elapsed, setLoop, shuffle, refetch, clear, leave } = usePlayer();
+  const { state, loading, elapsed, setLoop, shuffle, refetch, clear } = usePlayer();
   const { isAdminView: isAdmin } = useAdminView();
 
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
@@ -25,7 +25,6 @@ export default function PlayerPage() {
   const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
-  const [leaveBusy, setLeaveBusy] = useState(false);
 
   const { currentSong, queue, isPlaying, loopMode } = state;
 
@@ -49,12 +48,6 @@ export default function PlayerPage() {
     try { await clear(); } finally { setClearBusy(false); }
   };
 
-  const handleLeave = async () => {
-    setLeaveBusy(true);
-    try { await leave(); } finally { setLeaveBusy(false); }
-  };
-
-  // ---------------------------------------------------------------------------
   // Loading skeleton
   // ---------------------------------------------------------------------------
   if (loading) {
@@ -627,18 +620,6 @@ function IconTrash({ size = 20, className = '' }: { size?: number; className?: s
       <path d="M10 11v6" />
       <path d="M14 11v6" />
       <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-/** Door-with-arrow icon representing "leave voice channel" */
-function IconLeave({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }
