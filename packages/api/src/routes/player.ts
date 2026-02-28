@@ -31,9 +31,11 @@ router.get(
     if (!player) {
       res.json({
         isPlaying: false,
+        isPaused: false,
         loopMode: 'off',
         currentSong: null,
         queue: [],
+        trackStartedAt: null,
       });
       return;
     }

@@ -19,6 +19,7 @@ const EMPTY_STATE: QueueState = {
   loopMode: 'off',
   currentSong: null,
   queue: [],
+  trackStartedAt: null,
 };
 
 interface PlayerContextValue {
@@ -107,14 +108,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const songId = state.currentSong?.id ?? null;
+    const songChanged = songId !== timedSongId.current;
 
-    if (songId !== timedSongId.current) {
+    if (songChanged) {
       timedSongId.current = songId;
       elapsedRef.current = 0;
       setElapsed(0);
     }
 
-    if (!state.isPlaying || state.isPaused || !songId) return;
+    if (!songId) return;
+
+    // Seed elapsed from server timestamp on first mount or song change.
+    // This is what fixes the refresh bug — instead of always starting at 0,
+    // we calculate how far along the track actually is.
+    if (state.trackStartedAt && state.isPlaying && !state.isPaused) {
+      const serverElapsed = Math.floor((Date.now() - state.trackStartedAt) / 1000);
+      const clamped = Math.min(serverElapsed, state.currentSong?.duration ?? 0);
+      elapsedRef.current = clamped;
+      setElapsed(clamped);
+    }
+
+    if (!state.isPlaying || state.isPaused) return;
 
     const id = setInterval(() => {
       elapsedRef.current = Math.min(
@@ -125,7 +139,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, 1000);
 
     return () => clearInterval(id);
-  }, [state.isPlaying, state.currentSong]);
+  }, [state.isPlaying, state.isPaused, state.currentSong, state.trackStartedAt]);
 
   // ---------------------------------------------------------------------------
   // Action helpers
