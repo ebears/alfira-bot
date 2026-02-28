@@ -346,12 +346,12 @@ export class GuildPlayer {
    * Stop playback.
    */
   stop(): void {
+    this.intentionallyStopped = true;
     this.stopping = true;
     this.audioPlayer.stop(true);
     this.paused = false;
     broadcastQueueUpdate(this.getQueueState());
   }
-
   /**
    * Clears the song queue.
    */
