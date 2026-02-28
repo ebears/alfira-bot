@@ -17,7 +17,7 @@ export interface SongMetadata {
 // getMetadata
 //
 // Fetches title, duration, and id for a YouTube URL by running:
-//   yt-dlp --print %(id)s --print %(duration)s --print %(title)s <url>
+// yt-dlp --print %(id)s --print %(duration)s --print %(title)s <url>
 //
 // --print outputs exactly one value per flag and exits without downloading
 // anything — far cheaper than --dump-json, which fetches and serialises the
@@ -37,9 +37,12 @@ export function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
       'yt-dlp',
       [
         '--no-playlist',
-        '--print', '%(id)s',
-        '--print', '%(duration)s',
-        '--print', '%(title)s',
+        '--print',
+        '%(id)s',
+        '--print',
+        '%(duration)s',
+        '--print',
+        '%(title)s',
         youtubeUrl,
       ],
       (error, stdout) => {
@@ -54,10 +57,9 @@ export function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
           return reject(new Error('yt-dlp returned unexpected output'));
         }
 
-        const id          = lines[0].trim();
+        const id = lines[0].trim();
         const durationStr = lines[1].trim();
-        const title       = lines.slice(2).join('\n'); // handles newlines in titles
-
+        const title = lines.slice(2).join('\n'); // handles newlines in titles
         const duration = Math.round(parseFloat(durationStr) || 0);
 
         resolve({
@@ -86,9 +88,9 @@ export function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
 // itself — which it handles far more reliably.
 //
 // Key flags:
-//   -f bestaudio    Pick the best audio-only format available.
-//   --no-playlist   Only process the first video if given a playlist URL.
-//   -g              Print the direct media URL to stdout and exit.
+// -f bestaudio    Pick the best audio-only format available.
+// --no-playlist   Only process the first video if given a playlist URL.
+// -g              Print the direct media URL to stdout and exit.
 // ---------------------------------------------------------------------------
 export function getStreamUrl(youtubeUrl: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -132,64 +134,46 @@ export interface AudioStreamHandle {
 // unexpectedly with no visible errors.
 //
 // Key FFmpeg input flags:
-//   -reconnect 1                  Reconnect after a dropped HTTP connection.
-//   -reconnect_streamed 1         Also reconnect for live/streamed (chunked)
-//                                 sources.
-//   -reconnect_on_network_error 1 Reconnect on lower-level network/TLS errors
-//                                 (e.g. the "Error in the pull function" / IO
-//                                 error messages logged in the console). Without
-//                                 this flag, those failures are not retried.
-//   -reconnect_delay_max 2        Cap reconnect back-off at 2 s (down from the
-//                                 previous 5 s). A shorter cap means the gap
-//                                 that must be covered by the Node.js-side
-//                                 buffer is smaller.
+// -reconnect 1                   Reconnect after a dropped HTTP connection.
+// -reconnect_streamed 1          Also reconnect for live/streamed (chunked) sources.
+// -reconnect_on_network_error 1  Reconnect on lower-level network/TLS errors.
+// -reconnect_delay_max 2         Cap reconnect back-off at 2 seconds.
+// -analyzeduration 0             Disable input format probing (we know it's audio).
+// -fpsprobesize 0                Disable frame rate probing (not needed for audio).
+// -probesize 32                  Minimal probe size to speed up startup.
 //
 // Key FFmpeg output / encoding flags:
-//   -ar 48000                     Force 48 kHz sample rate. Opus requires
-//                                 48 kHz input; being explicit avoids any
-//                                 ambiguity about when FFmpeg resamples.
-//   -ac 2                         Force stereo output. Discord renders stereo
-//                                 and most music is stereo.
-//   -application audio            Opus application mode tuned for general
-//                                 audio/music (vs. "voip" or "lowdelay").
-//   -vn                           Discard any video stream.
-//   -c:a libopus -b:a 96k         Encode to Opus at 96 kbps — same codec
-//                                 Discord uses natively, so no quality is lost
-//                                 in a re-encode step on Discord's end.
-//   -f ogg                        Wrap in an OGG container.
+// -ar 48000    Force 48 kHz sample rate. Opus requires 48 kHz input.
+// -ac 2        Force stereo output. Discord renders stereo and most music is stereo.
+// -vn          Discard any video stream.
+// -c:a libopus Encode to Opus codec.
+// -b:a 96k     96 kbps bitrate — same codec Discord uses natively.
+// -f ogg       Wrap in an OGG container.
 //
 // Node.js-side output buffer:
-//   FFmpeg's stdout is piped into an fs-capacitor WriteStream, which spills
-//   all incoming data to a temporary file on disk. A ReadStream created from
-//   the same capacitor is returned to the AudioPlayer.
+// FFmpeg's stdout is piped into an fs-capacitor WriteStream, which spills
+// all incoming data to a temporary file on disk. A ReadStream created from
+// the same capacitor is returned to the AudioPlayer.
 //
-//   Why fs-capacitor instead of PassThrough:
+// Why fs-capacitor instead of PassThrough:
 //
-//   PassThrough is a back-pressure-coupled, in-memory pipe. The consumer
-//   (AudioPlayer) and producer (FFmpeg) are tightly coupled: if the consumer
-//   reads slowly, the in-memory buffer fills up and Node.js applies back-
-//   pressure to FFmpeg's stdout, preventing it from pre-filling the buffer
-//   ahead of time. When a CDN reconnect gap hits and FFmpeg stops producing
-//   output for 0–2 seconds, the effective cushion left in the PassThrough is
-//   often much smaller than the nominal 256 KB because back-pressure drained
-//   it.
+// PassThrough is a back-pressure-coupled, in-memory pipe. The consumer
+// (AudioPlayer) and producer (FFmpeg) are tightly coupled: if the consumer
+// reads slowly, the in-memory buffer fills up and Node.js applies back-
+// pressure to FFmpeg's stdout, preventing it from pre-filling the buffer
+// ahead of time.
 //
-//   fs-capacitor fully decouples the write side (FFmpeg) from the read side
-//   (AudioPlayer) by buffering to disk:
+// fs-capacitor fully decouples the write side (FFmpeg) from the read side
+// (AudioPlayer) by buffering to disk:
 //
-//   1. CDN reconnect gaps: FFmpeg pre-fills the temp file as fast as it can
-//      encode — there is no back-pressure from the read side to slow it down.
-//      The AudioPlayer reads from the temp file at its own pace, so the on-
-//      disk buffer absorbs the entire reconnect gap with no audible stutter.
-//
-//   2. Silent choppiness: variable network throughput, encoding jitter, or
-//      brief Node.js event-loop pauses cause irregular spacing between encoded
-//      packets. Because the disk buffer is decoupled, these micro-gaps never
-//      reach the AudioPlayer.
-//
-//   3. Unlimited buffer depth: unlike a fixed-size in-memory highWaterMark,
-//      the disk buffer can grow as large as needed, which is particularly
-//      useful for longer reconnect delays.
+// 1. CDN reconnect gaps: FFmpeg pre-fills the temp file as fast as it can
+//    encode — there is no back-pressure from the read side to slow it down.
+// 2. Silent choppiness: variable network throughput, encoding jitter, or
+//    brief Node.js event-loop pauses cause irregular spacing between encoded
+//    packets. Because the disk buffer is decoupled, these micro-gaps never
+//    reach the AudioPlayer.
+// 3. Unlimited buffer depth: unlike a fixed-size in-memory highWaterMark,
+//    the disk buffer can grow as large as needed.
 //
 // The caller should use StreamType.OggOpus when passing the resulting stream
 // to createAudioResource. prism-media will demux the OGG container and hand
@@ -201,32 +185,51 @@ export function createAudioStream(cdnUrl: string): AudioStreamHandle {
     'ffmpeg',
     [
       // ---- Input / HTTP options (must come before -i) ---------------------
-      '-reconnect',                  '1',
-      '-reconnect_streamed',         '1',
+      '-reconnect', '1',
+      '-reconnect_streamed', '1',
       '-reconnect_on_network_error', '1',
-      '-reconnect_delay_max',        '2',
-      '-i',                          cdnUrl,
-      // ---- Demux / logging ------------------------------------------------
-      '-analyzeduration',            '0',
-      '-loglevel',                   'warning',
+      '-reconnect_delay_max', '2',
+      // Disable input analysis to speed up startup and avoid format misdetection
+      '-analyzeduration', '0',
+      '-probesize', '32',
+      '-fpsprobesize', '0',
+      '-i', cdnUrl,
       // ---- Output encoding ------------------------------------------------
       '-vn',
-      '-ar',                         '48000',
-      '-ac',                         '2',
-      '-c:a',                        'libopus',
-      '-b:a',                        '96k',
-      '-application',                'audio',
-      '-f',                          'ogg',
+      '-ar', '48000',
+      '-ac', '2',
+      '-c:a', 'libopus',
+      '-b:a', '96k',
+      '-f', 'ogg',
       'pipe:1',
     ],
-    { stdio: ['ignore', 'pipe', 'pipe'] },
+    { stdio: ['ignore', 'pipe', 'pipe'] }
   );
 
-  // Surface FFmpeg warnings/errors in the bot console without letting them
-  // propagate as unhandled stream errors.
+  // Pipe FFmpeg's encoded output into an fs-capacitor WriteStream. The
+  // capacitor spills all data to a temp file on disk as it arrives, fully
+  // decoupling the FFmpeg write side from the AudioPlayer read side.
+  const capacitor = new CapacitorWriteStream();
+  ffmpeg.stdout!.pipe(capacitor);
+
+  // Surface FFmpeg warnings/errors in the bot console, filtering out benign
+  // "Error parsing Opus packet header" messages that occur when the stream ends.
+  // These are harmless and don't affect playback quality.
+  const benignErrorPatterns = [
+    /Error parsing Opus packet header/,
+    /Invalid packet header/,
+    /out#0\/ogg.*muxing overhead/,
+  ];
+
   ffmpeg.stderr?.on('data', (chunk: Buffer) => {
     const msg = chunk.toString().trim();
-    if (msg) console.warn('[FFmpeg]', msg);
+    if (!msg) return;
+
+    // Skip benign errors that occur at stream end
+    const isBenign = benignErrorPatterns.some(pattern => pattern.test(msg));
+    if (isBenign) return;
+
+    console.warn('[FFmpeg]', msg);
   });
 
   // If the FFmpeg process itself fails to spawn or crashes at the OS level,
@@ -236,15 +239,6 @@ export function createAudioStream(cdnUrl: string): AudioStreamHandle {
     console.error('[FFmpeg] process error:', err.message);
     capacitor.destroy();
   });
-
-  // Pipe FFmpeg's encoded output into an fs-capacitor WriteStream. The
-  // capacitor spills all data to a temp file on disk as it arrives, fully
-  // decoupling the FFmpeg write side from the AudioPlayer read side. This
-  // prevents back-pressure from limiting how far ahead FFmpeg can buffer,
-  // and ensures CDN reconnect gaps or event-loop jitter are absorbed by the
-  // on-disk buffer before they can reach the AudioPlayer.
-  const capacitor = new CapacitorWriteStream();
-  ffmpeg.stdout!.pipe(capacitor);
 
   // Obtain a read stream from the capacitor. This stream reads from the temp
   // file, starting from the beginning of the buffered data, and will continue
