@@ -1,9 +1,10 @@
 import { Router } from 'express';
+import { getVoiceConnection } from '@discordjs/voice';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
-import { getPlayer } from '@discord-music-bot/bot/src/player/manager';
+import { getPlayer, removePlayer } from '@discord-music-bot/bot/src/player/manager';
 import { isValidYouTubeUrl, getMetadata } from '@discord-music-bot/bot/src/utils/ytdlp';
 import type { LoopMode, QueuedSong, Song } from '@discord-music-bot/shared';
 
@@ -185,24 +186,75 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
+// POST /api/player/leave
+//
+// Stops playback, clears the queue, and disconnects the bot from the voice
+// channel. This is the web UI equivalent of the /leave slash command.
+// Admin only.
+// ---------------------------------------------------------------------------
+router.post(
+  '/leave',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    const player = getPlayer(GUILD_ID);
+    const connection = getVoiceConnection(GUILD_ID);
+
+    if (!player && !connection) {
+      res.status(409).json({ error: 'The bot is not in a voice channel.' });
+      return;
+    }
+
+    // Stop the player first (broadcasts idle state, kills FFmpeg process).
+    if (player) {
+      player.stop();
+    }
+
+    // Destroy the voice connection.
+    if (connection) {
+      connection.destroy();
+    }
+
+    // Belt-and-suspenders cleanup.
+    removePlayer(GUILD_ID);
+
+    res.json({ message: 'Left the voice channel.' });
+  })
+);
+
+// ---------------------------------------------------------------------------
 // POST /api/player/stop
+//
+// Alias for /leave — stops playback and disconnects the bot.
+// Kept for backwards compatibility.
 // Admin only.
 // ---------------------------------------------------------------------------
 router.post(
   '/stop',
   requireAuth,
   requireAdmin,
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
+    // Delegate to the leave handler by forwarding internally.
+    // We re-use the same logic rather than duplicating it.
     const player = getPlayer(GUILD_ID);
+    const connection = getVoiceConnection(GUILD_ID);
 
-    if (!player) {
-      res.status(409).json({ error: 'Nothing is playing.' });
+    if (!player && !connection) {
+      res.status(409).json({ error: 'The bot is not in a voice channel.' });
       return;
     }
 
-    player.stop();
+    if (player) {
+      player.stop();
+    }
 
-    res.json({ message: 'Stopped.' });
+    if (connection) {
+      connection.destroy();
+    }
+
+    removePlayer(GUILD_ID);
+
+    res.json({ message: 'Left the voice channel.' });
   })
 );
 

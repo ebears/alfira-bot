@@ -1,12 +1,12 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
-import { getPlayer } from '../player/manager';
+import { getPlayer, removePlayer } from '../player/manager';
 import type { Command } from '../types';
 
 export const leaveCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('leave')
-    .setDescription('Stop playback and leave the voice channel.'),
+    .setDescription('Stop playback, clear the queue, and leave the voice channel.'),
 
   async execute(interaction) {
     if (!interaction.guild) {
@@ -27,17 +27,20 @@ export const leaveCommand: Command = {
       return;
     }
 
-    // ---------------------------------------------------------------------------
-    // Clear the GuildPlayer first (stops the AudioPlayer, clears the queue,
-    // and destroys the voice connection), then remove it from the manager so
-    // the next /play starts fresh.
-    // ---------------------------------------------------------------------------
+    // Stop the GuildPlayer first (clears queue, broadcasts idle state, kills FFmpeg).
     const player = getPlayer(interaction.guild.id);
     if (player) {
       player.stop();
     }
+
+    // Destroy the voice connection. The GuildPlayer's Destroyed handler will
+    // call onDestroyed() and remove it from the manager.
     connection.destroy();
 
-    await interaction.reply('👋 Left the voice channel.');
+    // Belt-and-suspenders: remove from manager in case the Destroyed handler
+    // has already been unregistered or hasn't fired yet.
+    removePlayer(interaction.guild.id);
+
+    await interaction.reply('👋 Stopped playback and left the voice channel.');
   },
 };
