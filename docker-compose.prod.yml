@@ -1,6 +1,27 @@
+# ---------------------------------------------------------------------------
+# Production docker-compose — full stack (OPTIMIZED)
+#
+# Uses pre-built images from GitHub Container Registry.
+# Image sizes optimized:
+# - API image: ~350MB (reduced from ~1GB)
+# - Web image: ~30MB (reduced from ~694MB)
+# - Migrate: separate lightweight image (~150MB)
+#
+# Required environment variables (can be set in .env file):
+# - POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+# - DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
+# - JWT_SECRET, GUILD_ID, ADMIN_ROLE_IDS
+# - Optional: DISCORD_REDIRECT_URI, WEB_UI_ORIGIN, TRUSTED_PROXY_IP
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml logs -f
+#   docker compose -f docker-compose.prod.yml down
+# ---------------------------------------------------------------------------
+
 services:
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -9,10 +30,23 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    # Don't expose ports in production unless needed
+    # expose:
+    #   - 5432
+
+  migrate:
+    image: ghcr.io/ebears/alfira-bot-migrate:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 
   api:
     image: ghcr.io/ebears/alfira-bot-api:latest
@@ -20,6 +54,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -34,7 +70,19 @@ services:
       WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:8080}
       TRUSTED_PROXY_IP: ${TRUSTED_PROXY_IP}
     ports:
-      - '${DOCKER_HOST_IP}:3001:3001'
+      - "${DOCKER_HOST_IP:-0.0.0.0}:3001:3001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3001/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   web:
     image: ghcr.io/ebears/alfira-bot-web:latest
@@ -42,19 +90,14 @@ services:
     depends_on:
       - api
     ports:
-      # Main entrypoint for the app.
-      - '8080:80'
-
-  migrate:
-    image: ghcr.io/ebears/alfira-bot-api:latest
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: "no"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-    command: ["npm", "run", "-w", "packages/api", "db:migrate:deploy"]
+      - "8080:80"
+    healthcheck:
+      test:
+        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 volumes:
   pgdata:

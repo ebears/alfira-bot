@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# Lightweight Dockerfile for database migrations only
+# Reduces image size from ~1GB to ~150MB by:
+# - Installing only Prisma CLI and dependencies
+# - No ffmpeg, yt-dlp, or other bot dependencies
+# - Minimal Alpine image
+# ---------------------------------------------------------------------------
+
+FROM node:22-alpine AS deps
+
+# Install only what's needed for Prisma
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat
+
+WORKDIR /app
+
+# Copy package files first
+COPY package.json package-lock.json ./
+COPY packages/api/package.json ./packages/api/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN npm ci --workspace=packages/api --include=workspace-root
+
+# Copy Prisma schema (required for generating client)
+COPY packages/api/prisma ./packages/api/prisma
+
+# Generate Prisma client
+RUN npm run db:generate
+
+# ---------------------------------------------------------------------------
+# Runtime stage
+# ---------------------------------------------------------------------------
+FROM node:22-alpine AS runtime
+
+# Install only runtime dependencies for Prisma
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy Prisma schema and migrations
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/api/node_modules/.prisma ./packages/api/node_modules/.prisma
+COPY packages/api/prisma ./packages/api/prisma
+COPY packages/api/package.json ./packages/api/package.json
+COPY packages/shared ./packages/shared
+COPY package.json ./package.json
+
+# Run migrations
+CMD ["npm", "run", "-w", "packages/api", "db:migrate:deploy"]
