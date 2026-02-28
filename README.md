@@ -1,23 +1,28 @@
-<p align="center">
-  <img width="250" height="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/logo.png">
-</p>
-
 <h1 align="center">Alfira</h1>
-
 <p align="center">
-<img src="https://img.shields.io/badge/status-experimental%20%7C%20pre--release-orange" alt="Status: Experimental | Pre-release">
-<img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
+<img width="250" height="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/logo.png" alt="Alfira Logo">
 <br>
+<img src="https://img.shields.io/badge/status-experimental%20%7C%20pre--release-orange" alt="Status: Experimental | Pre-release">
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
+<img src="https://img.shields.io/badge/Last%20Commit-ebears/alfira--bot-brightgreen?logo=github" alt="Last Commit">
+<br>
+<img src="https://img.shields.io/badge/Discord.js-5865F2?logo=discord&logoColor=white" alt="Discord.js">
 <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+<img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker">
+<br>
 <img src="https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white" alt="Node.js">
 <img src="https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black" alt="React">
+<img src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+<img src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white" alt="Vite">
 <br>
-<img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker">
 <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL">
-<img src="https://img.shields.io/badge/Discord.js-5865F2?logo=discord&logoColor=white" alt="Discord.js">
+<img src="https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white" alt="Prisma">
+<img src="https://img.shields.io/badge/Socket.io-010101?logo=socket.io&logoColor=white" alt="Socket.io">
 <br>
-<img src="https://github.com/ebears/alfira-bot/actions/workflows/docker-build.yml/badge.svg" alt="GitHub Actions">
-<img src="https://img.shields.io/badge/GHCR-ghcr.io%2Febears%2Falfira--bot--api-blue" alt="GHCR">
+<a href="https://github.com/ebears/alfira-bot/actions/workflows/docker-build.yml"><img src="https://github.com/ebears/alfira-bot/actions/workflows/docker-build.yml/badge.svg" alt="GitHub Actions"></a>
+<a href="https://github.com/ebears/alfira-bot/pkgs/container/alfira-bot-api"><img src="https://img.shields.io/badge/GHCR-ghcr.io%2Febears%2Falfira--bot--api-blue" alt="GHCR"></a>
+<a href="https://github.com/ebears/alfira-bot"><img src="https://img.shields.io/github/repo-size/ebears/alfira-bot" alt="Repo Size"></a>
+<a href="https://github.com/ebears/alfira-bot/issues"><img src="https://img.shields.io/github/issues/ebears/alfira-bot" alt="Open Issues"></a>
 </p>
 
 **Alfira** is a self-hosted **Discord music bot** with a **web UI as the primary interface**. The bot handles joining voice channels and audio playback; the web app handles browsing songs, managing playlists, and controlling playback in real time.
