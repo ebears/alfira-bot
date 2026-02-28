@@ -10,7 +10,7 @@ import {
   StreamType,
 } from '@discordjs/voice';
 import { TextChannel, EmbedBuilder } from 'discord.js';
-import { getStreamUrl, createAudioStream } from '../utils/ytdlp';
+import { getStreamFormat, createAudioStream } from '../utils/ytdlp';
 import { formatDuration, formatLoopMode } from '../utils/format';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
@@ -493,11 +493,15 @@ export class GuildPlayer {
     this.paused = false;
 
     let streamUrl: string;
+    let isWebmOpus: boolean;
     try {
       // Retry up to 2 extra times (3 attempts total), waiting 1 s between
       // each attempt. This handles transient yt-dlp / network failures
       // without immediately skipping a song the user wanted to hear.
-      streamUrl = await withRetry(() => getStreamUrl(next.youtubeUrl), 2, 1_000);
+      ({ url: streamUrl, isWebmOpus } = await withRetry(
+        () => getStreamFormat(next.youtubeUrl),
+        2, 1_000,
+      ));
     } catch (error) {
       console.error(
         `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
@@ -517,20 +521,13 @@ export class GuildPlayer {
     this.killCurrentFfmpeg?.();
     this.killCurrentFfmpeg = null;
 
-    // Spawn FFmpeg with HTTP reconnect flags so that transient CDN drops do
-    // not silently terminate playback. Without these flags, FFmpeg treats a
-    // dropped HTTP connection as EOF, exits cleanly, and the AudioPlayer
-    // transitions to Idle — calling onTrackEnd() as if the song finished
-    // normally, with no error logged anywhere.
-    //
-    // StreamType.OggOpus tells @discordjs/voice to demux the OGG container
-    // and send the already-encoded Opus packets to Discord directly — no
-    // Node.js Opus encoder library (@discordjs/opus / opusscript) is needed.
-    const { stream, kill } = createAudioStream(streamUrl);
+    // isWebmOpus = true  → FFmpeg remuxes without re-encoding (~99% of tracks)
+    // isWebmOpus = false → FFmpeg re-encodes to Opus/OGG (M4A fallback)
+    const { stream, kill } = createAudioStream(streamUrl, isWebmOpus);
     this.killCurrentFfmpeg = kill;
 
     const resource: AudioResource = createAudioResource(stream, {
-      inputType: StreamType.OggOpus,
+      inputType: isWebmOpus ? StreamType.WebmOpus : StreamType.OggOpus,
     });
 
     this.audioPlayer.play(resource);
