@@ -96,7 +96,12 @@ export function getStreamUrl(youtubeUrl: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       'yt-dlp',
-      ['-f', 'bestaudio', '--no-playlist', '-g', youtubeUrl],
+      [
+        '-f', 'bestaudio[ext=webm]/bestaudio',  // prefer WebM (Opus) stream
+        '--no-playlist',
+        '-g',
+        youtubeUrl,
+      ],
       (error, stdout) => {
         if (error) {
           return reject(new Error(`yt-dlp stream URL fetch failed: ${error.message}`));
@@ -115,7 +120,7 @@ export function getStreamUrl(youtubeUrl: string): Promise<string> {
 // skip or stop).
 // ---------------------------------------------------------------------------
 export interface AudioStreamHandle {
-  /** OGG Opus stream encoded by FFmpeg at 96 kbps. */
+  /** WebM Opus stream (passthrough) or OGG Opus stream (re-encoded fallback). */
   stream: Readable;
   /** Kill the underlying FFmpeg process. Safe to call more than once. */
   kill: () => void;
@@ -142,13 +147,19 @@ export interface AudioStreamHandle {
 // -fpsprobesize 0                Disable frame rate probing (not needed for audio).
 // -probesize 32                  Minimal probe size to speed up startup.
 //
-// Key FFmpeg output / encoding flags:
-// -ar 48000    Force 48 kHz sample rate. Opus requires 48 kHz input.
-// -ac 2        Force stereo output. Discord renders stereo and most music is stereo.
-// -vn          Discard any video stream.
-// -c:a libopus Encode to Opus codec.
-// -b:a 96k     96 kbps bitrate — same codec Discord uses natively.
-// -f ogg       Wrap in an OGG container.
+// Key FFmpeg output flags — two modes:
+//
+// isWebmOpus = true (default, ~99% of YouTube tracks):
+//   YouTube's "bestaudio" is already a WebM container with an Opus stream at
+//   ~160 kbps. FFmpeg remuxes (copies) the Opus packets directly into a new
+//   WebM container — no decode/encode step, negligible CPU.
+//   Use StreamType.WebmOpus in createAudioResource.
+//
+// isWebmOpus = false (fallback for M4A/MP4 sources):
+//   Some age-restricted or region-locked videos only offer AAC in an M4A
+//   container, which can't be put into WebM. FFmpeg re-encodes to Opus at
+//   96 kbps inside an OGG container.
+//   Use StreamType.OggOpus in createAudioResource.
 //
 // Node.js-side output buffer:
 // FFmpeg's stdout is piped into an fs-capacitor WriteStream, which spills
@@ -167,20 +178,21 @@ export interface AudioStreamHandle {
 // (AudioPlayer) by buffering to disk:
 //
 // 1. CDN reconnect gaps: FFmpeg pre-fills the temp file as fast as it can
-//    encode — there is no back-pressure from the read side to slow it down.
+//    (or just remuxes) — there is no back-pressure from the read side to
+//    slow it down.
 // 2. Silent choppiness: variable network throughput, encoding jitter, or
 //    brief Node.js event-loop pauses cause irregular spacing between encoded
 //    packets. Because the disk buffer is decoupled, these micro-gaps never
 //    reach the AudioPlayer.
 // 3. Unlimited buffer depth: unlike a fixed-size in-memory highWaterMark,
 //    the disk buffer can grow as large as needed.
-//
-// The caller should use StreamType.OggOpus when passing the resulting stream
-// to createAudioResource. prism-media will demux the OGG container and hand
-// the Opus packets to Discord directly — no Node.js Opus encoder library
-// (@discordjs/opus / opusscript) is required.
 // ---------------------------------------------------------------------------
-export function createAudioStream(cdnUrl: string): AudioStreamHandle {
+export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStreamHandle {
+  // Choose output flags based on whether the source is already WebM/Opus.
+  const outputArgs = isWebmOpus
+    ? ['-vn', '-c:a', 'copy', '-f', 'webm', 'pipe:1']
+    : ['-vn', '-ar', '48000', '-ac', '2', '-c:a', 'libopus', '-b:a', '96k', '-f', 'ogg', 'pipe:1'];
+
   const ffmpeg: ChildProcess = spawn(
     'ffmpeg',
     [
@@ -189,19 +201,12 @@ export function createAudioStream(cdnUrl: string): AudioStreamHandle {
       '-reconnect_streamed', '1',
       '-reconnect_on_network_error', '1',
       '-reconnect_delay_max', '2',
-      // Disable input analysis to speed up startup and avoid format misdetection
       '-analyzeduration', '0',
       '-probesize', '32',
       '-fpsprobesize', '0',
       '-i', cdnUrl,
-      // ---- Output encoding ------------------------------------------------
-      '-vn',
-      '-ar', '48000',
-      '-ac', '2',
-      '-c:a', 'libopus',
-      '-b:a', '96k',
-      '-f', 'ogg',
-      'pipe:1',
+      // ---- Output ---------------------------------------------------------
+      ...outputArgs,
     ],
     { stdio: ['ignore', 'pipe', 'pipe'] }
   );
@@ -218,7 +223,9 @@ export function createAudioStream(cdnUrl: string): AudioStreamHandle {
   const benignErrorPatterns = [
     /Error parsing Opus packet header/,
     /Invalid packet header/,
-    /out#0\/ogg.*muxing overhead/,
+    /out#0\/webm.*muxing overhead/,   // WebM passthrough mode
+    /out#0\/ogg.*muxing overhead/,    // OGG re-encode fallback mode
+    /moov atom not found/,
   ];
 
   ffmpeg.stderr?.on('data', (chunk: Buffer) => {
@@ -274,4 +281,28 @@ export function isValidYouTubeUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function getStreamFormat(youtubeUrl: string): Promise<{ url: string; isWebmOpus: boolean }> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      'yt-dlp',
+      [
+        '-f', 'bestaudio[ext=webm]/bestaudio',
+        '--no-playlist',
+        '--print', '%(ext)s',    // line 0: container extension
+        '--print', '%(urls)s',   // line 1: direct CDN URL (same as -g but via --print)
+        youtubeUrl,
+      ],
+      (error, stdout) => {
+        if (error) {
+          return reject(new Error(`yt-dlp stream URL fetch failed: ${error.message}`));
+        }
+        const lines = stdout.trim().split('\n');
+        const ext = lines[0].trim();
+        const url = lines[1].trim();
+        resolve({ url, isWebmOpus: ext === 'webm' });
+      }
+    );
+  });
 }
