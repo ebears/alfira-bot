@@ -55,6 +55,7 @@ export interface QueueState {
   loopMode: LoopMode;
   currentSong: QueuedSong | null;
   queue: QueuedSong[];
+  trackStartedAt: number | null; // Unix ms timestamp, null when not playing
 }
 
 // ---------------------------------------------------------------------------

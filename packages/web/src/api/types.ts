@@ -46,6 +46,7 @@ export interface QueueState {
   loopMode: LoopMode;
   currentSong: QueuedSong | null;
   queue: QueuedSong[];
+  trackStartedAt: number | null;
 }
 
 export interface User {

@@ -54,6 +54,10 @@ export class GuildPlayer {
   private paused = false;
   private stopping = false;
 
+  private trackStartedAt: number | null = null;
+  private pausedAt: number | null = null;       // wall-clock ms when pause began
+  private pausedElapsed: number = 0;            // ms already elapsed before this pause
+
   // Set to true by skip() so onTrackEnd() knows to advance regardless of
   // loop mode. Without this, skipping in 'song' mode would just replay.
   private skipping = false;
@@ -350,8 +354,10 @@ export class GuildPlayer {
     this.stopping = true;
     this.audioPlayer.stop(true);
     this.paused = false;
+    this.trackStartedAt = null;
     broadcastQueueUpdate(this.getQueueState());
   }
+
   /**
    * Clears the song queue.
    */
@@ -387,9 +393,19 @@ export class GuildPlayer {
     if (!this.currentSong) return false;
 
     if (this.paused) {
+      // Resuming — shift trackStartedAt forward by the pause duration
+      if (this.pausedAt !== null) {
+        const pauseDuration = Date.now() - this.pausedAt;
+        if (this.trackStartedAt !== null) {
+          this.trackStartedAt += pauseDuration;
+        }
+        this.pausedAt = null;
+      }
       this.audioPlayer.unpause();
       this.paused = false;
     } else {
+      // Pausing
+      this.pausedAt = Date.now();
       this.audioPlayer.pause(true);
       this.paused = true;
     }
@@ -436,6 +452,7 @@ export class GuildPlayer {
       loopMode: this.loopMode,
       currentSong: this.currentSong,
       queue: [...this.queue],
+      trackStartedAt: this.trackStartedAt,
     };
   }
 
@@ -531,6 +548,10 @@ export class GuildPlayer {
       return;
     }
 
+    this.trackStartedAt = Date.now();
+    this.pausedAt = null;
+    this.pausedElapsed = 0;
+
     // Broadcast after confirming playback has actually started.
     broadcastQueueUpdate(this.getQueueState());
 
@@ -542,6 +563,9 @@ export class GuildPlayer {
    * Applies loop logic and advances the queue.
    */
   private async onTrackEnd(): Promise<void> {
+    this.trackStartedAt = null;
+    this.pausedAt = null;
+    this.pausedElapsed = 0;
     if (this.stopping) {
        this.stopping = false;
        return; // don't advance, don't replay
