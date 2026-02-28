@@ -14,9 +14,9 @@ function formatDuration(seconds: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// PlayerPage
+// QueuePage
 // ---------------------------------------------------------------------------
-export default function PlayerPage() {
+export default function QueuePage() {
   const { state, loading, elapsed, setLoop, shuffle, refetch, clear } = usePlayer();
   const { isAdminView: isAdmin } = useAdminView();
 
@@ -63,7 +63,7 @@ export default function PlayerPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Player</h1>
+      <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Queue</h1>
 
       {/* ------------------------------------------------------------------ */}
       {/* Now Playing card                                                    */}

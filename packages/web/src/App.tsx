@@ -8,7 +8,7 @@ import LoginPage from './pages/LoginPage';
 import SongsPage from './pages/SongsPage';
 import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
-import PlayerPage from './pages/PlayerPage';
+import QueuePage from './pages/QueuePage';
 
 export default function App() {
   return (
@@ -32,7 +32,7 @@ export default function App() {
             <Route path="songs" element={<SongsPage />} />
             <Route path="playlists" element={<PlaylistsPage />} />
             <Route path="playlists/:id" element={<PlaylistDetailPage />} />
-            <Route path="player" element={<PlayerPage />} />
+            <Route path="queue" element={<QueuePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

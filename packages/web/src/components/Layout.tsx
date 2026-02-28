@@ -5,9 +5,9 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 
 const NAV_ITEMS = [
-  { to: '/songs',     label: 'Songs',     icon: IconMusic },
+  { to: '/songs', label: 'Songs', icon: IconMusic },
   { to: '/playlists', label: 'Playlists', icon: IconList },
-  { to: '/player',    label: 'Player',    icon: IconPlay },
+  { to: '/queue', label: 'Queue', icon: IconQueue },
 ];
 
 export default function Layout() {
@@ -304,8 +304,7 @@ function IconMusic({ size = 20, className = '' }: { size?: number; className?: s
 
 function IconList({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <line x1="8" y1="6" x2="21" y2="6" />
       <line x1="8" y1="12" x2="21" y2="12" />
       <line x1="8" y1="18" x2="21" y2="18" />
@@ -315,7 +314,16 @@ function IconList({ size = 20, className = '' }: { size?: number; className?: st
     </svg>
   );
 }
-
+function IconQueue({ size = 20, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polygon points="5 3 15 10 5 17 5 3" />
+      <line x1="18" y1="6" x2="21" y2="6" />
+      <line x1="18" y1="12" x2="21" y2="12" />
+      <line x1="18" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
 function IconPlay({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
