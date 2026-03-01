@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist } from '../api/api';
+import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist, startPlayback } from '../api/api';
 import type { Song, Playlist } from '../api/types';
 import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
+import { usePlayer } from '../context/PlayerContext';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
   const socket = useSocket();
+  const { state: queueState } = usePlayer();
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -27,18 +31,9 @@ export default function SongsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ---------------------------------------------------------------------------
-  // Real-time socket wiring
-  //
-  // songs:added   — prepend the new song so it appears at the top (newest first,
-  //                 matching the GET /api/songs orderBy: createdAt desc order).
-  // songs:deleted — remove the card immediately without a round-trip.
-  // ---------------------------------------------------------------------------
   useEffect(() => {
     const handleSongAdded = (song: Song) => {
       setSongs((prev) => {
-        // Guard against duplicates (e.g. the admin who added it already has it
-        // in state from the optimistic update in the modal's onAdded callback).
         if (prev.some((s) => s.id === song.id)) return prev;
         return [song, ...prev];
       });
@@ -65,6 +60,31 @@ export default function SongsPage() {
     await deleteSong(id);
     setSongs((prev) => prev.filter((s) => s.id !== id));
     setDeleteId(null);
+  };
+
+  // ---------------------------------------------------------------------------
+  // Play from song — replaces the queue with the full library starting from
+  // the clicked song, then continues sequentially through the rest.
+  // ---------------------------------------------------------------------------
+  const handlePlayFromSong = async (songId: string) => {
+    setPlayingId(songId);
+    try {
+      await startPlayback({
+        // No playlistId = whole library
+        mode: 'sequential',
+        loop: queueState.loopMode,
+        startFromSongId: songId,
+      });
+      setNotification({ message: 'Started playback', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
+      setNotification({ message: errorMsg, type: 'error' });
+      setTimeout(() => setNotification(null), 5000);
+    } finally {
+      setPlayingId(null);
+    }
   };
 
   return (
@@ -111,6 +131,8 @@ export default function SongsPage() {
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
               onDelete={() => setDeleteId(song.id)}
               onAddedToPlaylist={() => {/* optimistic — no refresh needed */}}
+              onPlay={() => handlePlayFromSong(song.id)}
+              isPlaying={playingId === song.id}
             />
           ))}
         </div>
@@ -122,8 +144,6 @@ export default function SongsPage() {
           onClose={() => setShowAddModal(false)}
           onAdded={(song) => {
             setSongs((prev) => {
-              // The socket event will also fire for this add, so guard against
-              // duplicates here too.
               if (prev.some((s) => s.id === song.id)) return prev;
               return [song, ...prev];
             });
@@ -137,6 +157,17 @@ export default function SongsPage() {
           onConfirm={() => handleDelete(deleteId)}
           onCancel={() => setDeleteId(null)}
         />
+      )}
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-mono text-xs animate-fade-up ${
+          notification.type === 'success'
+            ? 'bg-accent/20 border border-accent/40 text-accent'
+            : 'bg-danger/20 border border-danger/40 text-danger'
+        }`}>
+          {notification.message}
+        </div>
       )}
     </div>
   );
@@ -152,6 +183,8 @@ function SongCard({
   style,
   onDelete,
   onAddedToPlaylist,
+  onPlay,
+  isPlaying,
 }: {
   song: Song;
   isAdmin: boolean;
@@ -159,6 +192,8 @@ function SongCard({
   style?: React.CSSProperties;
   onDelete: () => void;
   onAddedToPlaylist: () => void;
+  onPlay: () => void;
+  isPlaying: boolean;
 }) {
   const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
@@ -199,7 +234,7 @@ function SongCard({
                  hover:bg-elevated transition-colors duration-150"
       style={style}
     >
-      {/* Thumbnail */}
+      {/* Thumbnail with play overlay */}
       <div className="relative aspect-video bg-elevated overflow-hidden">
         <img
           src={song.thumbnailUrl}
@@ -211,6 +246,26 @@ function SongCard({
         <span className="absolute bottom-2 right-2 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
           {formatDuration(song.duration)}
         </span>
+
+        {/* Play button overlay — visible on hover or while loading */}
+        <button
+          onClick={onPlay}
+          disabled={isPlaying}
+          className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200
+                     ${isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+                     disabled:cursor-default`}
+          title="Play from this song"
+        >
+          <div className={`w-12 h-12 rounded-full bg-black/60 border border-white/20 backdrop-blur-sm
+                          flex items-center justify-center shadow-xl
+                          transition-transform duration-150
+                          ${isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'}`}>
+            {isPlaying
+              ? <SpinnerIcon size={20} className="text-accent" />
+              : <PlayIcon size={20} className="text-white" />
+            }
+          </div>
+        </button>
       </div>
 
       {/* Info */}
@@ -465,6 +520,31 @@ function SearchIcon({ size = 16, className = '' }: { size?: number; className?: 
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function PlayIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  );
+}
+
+function SpinnerIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      className={`animate-spin ${className}`}
+    >
+      <path d="M12 2a10 10 0 0 1 10 10" />
     </svg>
   );
 }
