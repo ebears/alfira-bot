@@ -7,18 +7,15 @@
 # - Web image: ~30MB (reduced from ~694MB)
 # - Migrate: separate lightweight image (~150MB)
 #
-# Required environment variables (can be set in .env file):
-# - POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
-# - DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
-# - JWT_SECRET, GUILD_ID, ADMIN_ROLE_IDS
-# - Optional: DISCORD_REDIRECT_URI, WEB_UI_ORIGIN, TRUSTED_PROXY_IP
+# Setup:
+#   1. Copy .env.example to .env and fill in your values
+#   2. Run: docker compose -f docker-compose.prod.yml up -d
 #
 # Usage:
 #   docker compose -f docker-compose.prod.yml up -d
 #   docker compose -f docker-compose.prod.yml logs -f
 #   docker compose -f docker-compose.prod.yml down
 # ---------------------------------------------------------------------------
-
 services:
   db:
     image: postgres:16-alpine
