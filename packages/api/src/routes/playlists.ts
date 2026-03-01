@@ -7,6 +7,8 @@ import { emitPlaylistUpdated } from '../lib/socket';
 
 const router = Router();
 
+const MAX_NAME_LENGTH = 200;
+
 // ---------------------------------------------------------------------------
 // GET /api/playlists
 //
@@ -18,9 +20,7 @@ router.get(
   asyncHandler(async (_req, res) => {
     const playlists = await prisma.playlist.findMany({
       orderBy: { createdAt: 'asc' },
-      include: {
-        _count: { select: { songs: true } },
-      },
+      include: { _count: { select: { songs: true } } },
     });
     res.json(playlists);
   })
@@ -43,6 +43,11 @@ router.post(
       return;
     }
 
+    if (name.length > MAX_NAME_LENGTH) {
+      res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
+      return;
+    }
+
     const playlist = await prisma.playlist.create({
       data: {
         name: name.trim(),
@@ -51,7 +56,6 @@ router.post(
     });
 
     emitPlaylistUpdated({ ...playlist, _count: { songs: 0 } });
-
     res.status(201).json(playlist);
   })
 );
@@ -101,7 +105,15 @@ router.patch(
       return;
     }
 
-    const existing = await prisma.playlist.findUnique({ where: { id: req.params.id as string } });
+    if (name.length > MAX_NAME_LENGTH) {
+      res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
+      return;
+    }
+
+    const existing = await prisma.playlist.findUnique({
+      where: { id: req.params.id as string }
+    });
+
     if (!existing) {
       res.status(404).json({ error: 'Playlist not found.' });
       return;
@@ -114,7 +126,6 @@ router.patch(
     });
 
     emitPlaylistUpdated(playlist);
-
     res.json(playlist);
   })
 );
@@ -130,7 +141,10 @@ router.delete(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const existing = await prisma.playlist.findUnique({ where: { id: req.params.id as string } });
+    const existing = await prisma.playlist.findUnique({
+      where: { id: req.params.id as string }
+    });
+
     if (!existing) {
       res.status(404).json({ error: 'Playlist not found.' });
       return;
@@ -143,7 +157,6 @@ router.delete(
     // is gone on the next fetch triggered by the event. A dedicated
     // playlists:deleted event with just the ID could be added later for
     // instant optimistic removal, but it is not in scope for Phase 8.
-
     res.status(204).send();
   })
 );
@@ -175,6 +188,7 @@ router.post(
       res.status(404).json({ error: 'Playlist not found.' });
       return;
     }
+
     if (!song) {
       res.status(404).json({ error: 'Song not found.' });
       return;
@@ -182,8 +196,11 @@ router.post(
 
     // Check for duplicate.
     const existing = await prisma.playlistSong.findUnique({
-      where: { playlistId_songId: { playlistId: playlist.id, songId: song.id } },
+      where: {
+        playlistId_songId: { playlistId: playlist.id, songId: song.id }
+      },
     });
+
     if (existing) {
       res.status(409).json({ error: 'This song is already in the playlist.' });
       return;
@@ -194,6 +211,7 @@ router.post(
       where: { playlistId: playlist.id },
       orderBy: { position: 'desc' },
     });
+
     const nextPosition = (lastEntry?.position ?? -1) + 1;
 
     const playlistSong = await prisma.playlistSong.create({
@@ -210,8 +228,8 @@ router.post(
       where: { id: playlist.id },
       include: { _count: { select: { songs: true } } },
     });
-    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
 
+    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
     res.status(201).json(playlistSong);
   })
 );
@@ -228,8 +246,14 @@ router.delete(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const { id: playlistId, songId } = req.params;
+
     const entry = await prisma.playlistSong.findUnique({
-      where: { playlistId_songId: { playlistId: playlistId as string, songId: songId as string } },
+      where: {
+        playlistId_songId: {
+          playlistId: playlistId as string,
+          songId: songId as string
+        }
+      },
     });
 
     if (!entry) {
@@ -238,7 +262,12 @@ router.delete(
     }
 
     await prisma.playlistSong.delete({
-      where: { playlistId_songId: { playlistId: playlistId as string, songId: songId as string } },
+      where: {
+        playlistId_songId: {
+          playlistId: playlistId as string,
+          songId: songId as string
+        }
+      },
     });
 
     // Re-index remaining songs to close the gap in positions.
@@ -261,8 +290,8 @@ router.delete(
       where: { id: playlistId as string },
       include: { _count: { select: { songs: true } } },
     });
-    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
 
+    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
     res.status(204).send();
   })
 );

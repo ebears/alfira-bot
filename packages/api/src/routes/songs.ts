@@ -8,6 +8,8 @@ import { emitSongAdded, emitSongDeleted } from '../lib/socket';
 
 const router = Router();
 
+const MAX_URL_LENGTH = 2000;
+
 // ---------------------------------------------------------------------------
 // GET /api/songs
 //
@@ -30,7 +32,7 @@ router.get(
 // Adds a new song by YouTube URL. Admin only.
 //
 // Flow:
-// 1. Validate the URL format.
+// 1. Validate the URL format and length.
 // 2. Fetch metadata via yt-dlp (title, duration, youtubeId).
 // 3. Check for duplicates by youtubeId.
 // 4. Save to the database.
@@ -49,6 +51,11 @@ router.post(
     }
 
     const url = youtubeUrl.trim();
+
+    if (url.length > MAX_URL_LENGTH) {
+      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+      return;
+    }
 
     if (!isValidYouTubeUrl(url)) {
       res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
@@ -92,6 +99,7 @@ router.post(
 
     // Notify all connected clients so the Songs page updates in real time.
     emitSongAdded(song);
+
     res.status(201).json(song);
   })
 );
@@ -108,6 +116,7 @@ router.delete(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const id = req.params.id as string;
+
     const existing = await prisma.song.findUnique({ where: { id } });
 
     if (!existing) {
@@ -119,6 +128,7 @@ router.delete(
 
     // Notify all connected clients so the Songs page removes the card in real time.
     emitSongDeleted(id);
+
     res.status(204).send();
   })
 );
