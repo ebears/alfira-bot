@@ -6,11 +6,10 @@
 # - Better layer caching
 # - Removing unnecessary build tools from final image
 # ---------------------------------------------------------------------------
-
 # ---------------------------------------------------------------------------
 # Dependencies stage - install system deps and npm packages
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 
 # Install system dependencies needed for build and runtime
 # ffmpeg: audio processing for the bot
@@ -43,7 +42,7 @@ RUN npm ci
 # ---------------------------------------------------------------------------
 # Development stage - for local development with hot reload
 # ---------------------------------------------------------------------------
-FROM deps AS dev
+FROM node:24-alpine AS dev
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY prisma.config.ts ./prisma.config.ts
 # Copy all source files (needed for building bot)
@@ -65,7 +64,7 @@ CMD ["npm", "run", "dev"]
 # ---------------------------------------------------------------------------
 # Builder stage - compile TypeScript and prepare production assets
 # ---------------------------------------------------------------------------
-FROM deps AS builder
+FROM node:24-alpine AS builder
 
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY prisma.config.ts ./prisma.config.ts
@@ -89,7 +88,7 @@ RUN npm prune --production && \
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 # Install only runtime dependencies (no build tools)
 RUN apk add --no-cache \
