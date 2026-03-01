@@ -30,7 +30,7 @@ export default function Layout() {
         className={`${
           collapsed ? 'w-16' : 'w-56'
         } flex-shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden${
-          user?.isAdmin ? ' border-t-2 border-t-accent' : ''
+          isAdminView ? ' border-t-2 border-t-accent' : ''
         }`}
       >
         {/* Wordmark + collapse toggle */}
@@ -44,14 +44,14 @@ export default function Layout() {
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
-              {user?.isAdmin && (
+              {isAdminView && (
                 <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
                   admin
                 </span>
               )}
             </div>
           )}
-          {collapsed && user?.isAdmin && (
+          {collapsed && isAdminView && (
             <div
               className="w-7 h-7 flex items-center justify-center text-accent"
               title="Admin mode"
@@ -91,6 +91,28 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Admin view toggle */}
+        {user?.isAdmin && (
+          <div className={`px-3 pb-2 ${collapsed ? 'flex justify-center' : ''}`}>
+            <button
+              onClick={toggleAdminView}
+              title={isAdminView ? 'Switch to user view' : 'Switch to admin view'}
+              className={`flex items-center rounded border transition-colors duration-150 ${
+                collapsed
+                  ? 'w-7 h-7 justify-center'
+                  : 'w-full gap-1.5 px-3 py-1.5 font-mono text-[11px]'
+              } ${
+                isAdminView
+                  ? 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/20'
+                  : 'border-border text-muted hover:text-fg hover:border-muted'
+              }`}
+            >
+              <IconShield size={12} />
+              {!collapsed && (isAdminView ? 'admin view' : 'user view')}
+            </button>
+          </div>
+        )}
 
         {/* User section */}
         <div className="p-3 border-t border-border">
@@ -157,26 +179,6 @@ export default function Layout() {
       {/* Main content + now playing bar                                      */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <div className="flex-shrink-0 h-11 flex items-center justify-end px-5 border-b border-border/50">
-          <button
-            onClick={user?.isAdmin ? toggleAdminView : undefined}
-            disabled={!user?.isAdmin}
-            title={!user?.isAdmin ? 'Admin only' : isAdminView ? 'Switch to user view' : 'Switch to admin view'}
-            className={`flex items-center gap-1.5 font-mono text-[11px] px-3 py-1 rounded border
-                       transition-colors duration-150 ${
-                         !user?.isAdmin
-                           ? 'border-border/40 text-faint cursor-not-allowed'
-                           : isAdminView
-                             ? 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/20'
-                             : 'border-border text-muted hover:text-fg hover:border-muted'
-                       }`}
-          >
-            <IconShield size={12} />
-            {isAdminView ? 'admin view' : 'user view'}
-          </button>
-        </div>
-
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
@@ -283,7 +285,6 @@ function NowPlayingBar() {
         {/* Playback controls */}
         {currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Pause / Resume */}
             <BarButton
               onClick={handlePauseResume}
               busy={pauseBusy}
@@ -294,7 +295,6 @@ function NowPlayingBar() {
               {isPaused || isStopped ? <IconPlay size={16} /> : <IconPause size={16} />}
             </BarButton>
 
-            {/* Skip */}
             <BarButton
               onClick={handleSkip}
               busy={skipBusy}
@@ -305,7 +305,6 @@ function NowPlayingBar() {
               <IconSkip size={16} />
             </BarButton>
 
-            {/* Leave — no loading state, fires and forgets */}
             <button
               onClick={handleLeave}
               title="Leave voice channel"
@@ -322,12 +321,7 @@ function NowPlayingBar() {
 }
 
 // ---------------------------------------------------------------------------
-// BarButton — icon button with a dim + spinner loading state
-//
-// While busy: the button fades to ~40% opacity and the icon is replaced by
-// a small spinner, giving instant feedback that the action registered.
-// The button is also pointer-events-none while busy so rapid double-clicks
-// can't queue a second action before the first resolves.
+// BarButton
 // ---------------------------------------------------------------------------
 function BarButton({
   children,
@@ -387,6 +381,7 @@ function IconList({ size = 20, className = '' }: { size?: number; className?: st
     </svg>
   );
 }
+
 function IconQueue({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -397,6 +392,7 @@ function IconQueue({ size = 20, className = '' }: { size?: number; className?: s
     </svg>
   );
 }
+
 function IconPlay({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -416,7 +412,6 @@ function IconSkip({ size = 20, className = '' }: { size?: number; className?: st
   );
 }
 
-/** Door-with-arrow icon representing "leave voice channel" */
 function IconLeave({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -470,7 +465,6 @@ function IconPause({ size = 20, className = '' }: { size?: number; className?: s
   );
 }
 
-// Spinning loader — used as the busy-state icon inside BarButton
 function IconSpinner({ size = 16, className = '' }: { size?: number; className?: string }) {
   return (
     <svg
