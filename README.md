@@ -20,12 +20,6 @@
 
 > **Status:** This project is actively maintained but considered **experimental** and **pre-release**. Expect rough edges and potential breaking changes. Built primarily for personal use — YMMV.
 
-## Screenshots
-
-![Song Library](.github/screenshots/songs.png)
-![Playlist View](.github/screenshots/playlists.png)
-![Player View](.github/screenshots/player.png)
-
 ## Features
 
 - **Discord bot**
@@ -41,6 +35,12 @@
   - `Socket.io` events keep the UI in sync with the in-memory player state and library changes (no polling).
 - **Single-guild focus**
   - Scoped to a single Discord server (guild), with admin status determined by Discord role IDs.
+
+## Screenshots
+
+![Song Library](.github/screenshots/songs.png)
+![Playlist View](.github/screenshots/playlists.png)
+![Player View](.github/screenshots/player.png)
 
 ## Tech Stack
 
