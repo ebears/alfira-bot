@@ -192,7 +192,6 @@ export default function Layout() {
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
   const { state, elapsed, skip, leave, pause, resume } = usePlayer();
-  const { isAdminView } = useAdminView();
   const { currentSong, isPlaying, isPaused } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
@@ -248,8 +247,8 @@ function NowPlayingBar() {
           </div>
         </div>
 
-        {/* Admin controls */}
-        {isAdminView && currentSong && (
+        {/* Playback controls - available to all users */}
+        {currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => {

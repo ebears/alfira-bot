@@ -49,7 +49,7 @@ router.get(
 // POST /api/player/play
 //
 // Loads songs into the queue and starts playback.
-// Admin only.
+// Member accessible.
 //
 // Body:
 //   playlistId?      — if provided, load songs from this playlist; otherwise
@@ -66,7 +66,6 @@ router.get(
 router.post(
   '/play',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { playlistId, mode, loop, startFromSongId } = req.body as {
       playlistId?: string;
@@ -166,15 +165,13 @@ router.post(
 
 // ---------------------------------------------------------------------------
 // POST /api/player/skip
-// Admin only.
+// Member accessible.
 // ---------------------------------------------------------------------------
 router.post(
   '/skip',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
-
     if (!player || !player.isPlaying()) {
       res.status(409).json({ error: 'Nothing is currently playing.' });
       return;
@@ -190,16 +187,14 @@ router.post(
 //
 // Stops playback, clears the queue, and disconnects the bot from the voice
 // channel. This is the web UI equivalent of the /leave slash command.
-// Admin only.
+// Member accessible.
 // ---------------------------------------------------------------------------
 router.post(
   '/leave',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
     const connection = getVoiceConnection(GUILD_ID);
-
     if (!player && !connection) {
       res.status(409).json({ error: 'The bot is not in a voice channel.' });
       return;
@@ -227,18 +222,16 @@ router.post(
 //
 // Alias for /leave — stops playback and disconnects the bot.
 // Kept for backwards compatibility.
-// Admin only.
+// Member accessible.
 // ---------------------------------------------------------------------------
 router.post(
   '/stop',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     // Delegate to the leave handler by forwarding internally.
     // We re-use the same logic rather than duplicating it.
     const player = getPlayer(GUILD_ID);
     const connection = getVoiceConnection(GUILD_ID);
-
     if (!player && !connection) {
       res.status(409).json({ error: 'The bot is not in a voice channel.' });
       return;
@@ -260,15 +253,13 @@ router.post(
 
 // ---------------------------------------------------------------------------
 // POST /api/player/loop
-// Admin only.
+// Member accessible.
 // ---------------------------------------------------------------------------
 router.post(
   '/loop',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { mode } = req.body as { mode?: LoopMode };
-
     if (!mode || !['off', 'song', 'queue'].includes(mode)) {
       res.status(400).json({ error: 'mode must be "off", "song", or "queue".' });
       return;
@@ -308,18 +299,16 @@ router.post(
 // POST /api/player/quick-add
 //
 // Adds a song to the queue without saving it to the library.
-// Admin only.
+// Member accessible.
 //
 // Body:
-// youtubeUrl — YouTube URL to fetch and queue
+//   youtubeUrl — YouTube URL to fetch and queue
 // ---------------------------------------------------------------------------
 router.post(
   '/quick-add',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { youtubeUrl } = req.body as { youtubeUrl?: string };
-
     if (!youtubeUrl || typeof youtubeUrl !== 'string') {
       res.status(400).json({ error: 'youtubeUrl is required.' });
       return;
@@ -376,15 +365,13 @@ router.post(
 
 // ---------------------------------------------------------------------------
 // POST /api/player/pause-toggle
-// Admin only.
+// Member accessible.
 // ---------------------------------------------------------------------------
 router.post(
   '/pause-toggle',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
-
     if (!player || !player.getCurrentSong()) {
       res.status(409).json({ error: 'Nothing is currently playing.' });
       return;
@@ -418,12 +405,11 @@ router.post(
 
 // ---------------------------------------------------------------------------
 // POST /api/player/resume
-// Admin only.
+// Member accessible.
 // ---------------------------------------------------------------------------
 router.post(
   '/resume',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
     if (!player) {
