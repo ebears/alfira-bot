@@ -14,11 +14,11 @@ function formatDuration(seconds: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// PlayerPage
+// QueuePage
 // ---------------------------------------------------------------------------
-export default function PlayerPage() {
+export default function QueuePage() {
   const { state, loading, elapsed, setLoop, shuffle, refetch, clear } = usePlayer();
-  const { isAdminView: isAdmin } = useAdminView();
+  const { isAdminView } = useAdminView();
 
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -63,7 +63,7 @@ export default function PlayerPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Player</h1>
+      <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Queue</h1>
 
       {/* ------------------------------------------------------------------ */}
       {/* Now Playing card                                                    */}
@@ -80,69 +80,70 @@ export default function PlayerPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Admin Controls                                                      */}
+      {/* Controls */}
       {/* ------------------------------------------------------------------ */}
-      {isAdmin && (
-        <section className="mt-6 space-y-4">
-          {/* Playback controls row */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={handleShuffle}
-              disabled={shuffleBusy || queue.length === 0}
-              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <IconShuffle size={14} />
-              <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
-            </button>
+      <section className="mt-6 space-y-4">
+      {/* First row: Loop (left) and Load Playlist/Quick Add (right) */}
+      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2">
+      <span className="font-mono text-xs text-muted uppercase tracking-widest mr-1">
+      Loop
+      </span>
+      {(['off', 'song', 'queue'] as const).map((mode) => (
+      <button
+      key={mode}
+      disabled={loopBusy}
+      onClick={() => handleLoop(mode)}
+      className={`px-3 py-1.5 text-xs font-mono rounded border transition-colors duration-150 disabled:opacity-50 ${
+      loopMode === mode
+      ? 'bg-accent/10 border-accent/40 text-accent'
+      : 'border-border text-muted hover:border-muted hover:text-fg'
+      }`}
+      >
+      {mode === 'off' ? '⬛ off' : mode === 'song' ? '🔂 song' : '🔁 queue'}
+      </button>
+      ))}
+      </div>
+      <button
+      onClick={() => setShowLoadPlaylist(true)}
+      className="flex items-center gap-2 btn-primary ml-auto"
+      >
+      <IconList size={14} />
+      <span>Load Playlist</span>
+      </button>
+      <button
+      onClick={() => setShowQuickAdd(true)}
+      className="flex items-center gap-2 btn-primary"
+      >
+      <IconPlus size={14} />
+      <span>Quick Add</span>
+      </button>
+      </div>
 
-            <button
-              onClick={handleClear}
-              disabled={clearBusy || (queue.length === 0 && !currentSong)}
-              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <IconTrash size={14} />
-              <span>Clear Queue</span>
-            </button>
-
-            <button
-              onClick={() => setShowLoadPlaylist(true)}
-              className="flex items-center gap-2 btn-primary ml-auto"
-            >
-              <IconList size={14} />
-              <span>Load Playlist</span>
-            </button>
-            <button
-              onClick={() => setShowQuickAdd(true)}
-              className="flex items-center gap-2 btn-primary"
-            >
-              <IconPlus size={14} />
-              <span>Quick Add</span>
-            </button>
-          </div>
-
-          {/* Loop mode selector */}
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-muted uppercase tracking-widest mr-1">
-              Loop
-            </span>
-            {(['off', 'song', 'queue'] as const).map((mode) => (
-              <button
-                key={mode}
-                disabled={loopBusy}
-                onClick={() => handleLoop(mode)}
-                className={`px-3 py-1.5 text-xs font-mono rounded border transition-colors duration-150
-                  disabled:opacity-50 ${
-                    loopMode === mode
-                      ? 'bg-accent/10 border-accent/40 text-accent'
-                      : 'border-border text-muted hover:border-muted hover:text-fg'
-                  }`}
-              >
-                {mode === 'off' ? '⬛ off' : mode === 'song' ? '🔂 song' : '🔁 queue'}
-              </button>
-            ))}
-          </div>
-        </section>
+      {/* Second row: Admin-only controls (Shuffle and Clear Queue) */}
+      {isAdminView && (
+      <div className="flex items-center gap-3 flex-wrap">
+      <button
+      onClick={handleShuffle}
+      disabled={shuffleBusy || queue.length === 0}
+      className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+      <IconShuffle size={14} />
+      <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
+      </button>
+      			<button
+      				onClick={handleClear}
+      				disabled={clearBusy || (queue.length === 0 && !currentSong)}
+      				className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+      					queue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
+      				}`}
+      			>
+      				<IconTrash size={14} />
+      				<span>Clear Queue</span>
+      			</button>
+      </div>
       )}
+      </section>
 
       {/* ------------------------------------------------------------------ */}
       {/* Queue                                                               */}
@@ -162,14 +163,12 @@ export default function PlayerPage() {
         {queue.length === 0 ? (
           <div className="py-12 text-center border border-dashed border-border rounded-xl">
             <p className="font-mono text-xs text-faint">queue is empty</p>
-            {isAdmin && (
-              <button
-                onClick={() => setShowLoadPlaylist(true)}
-                className="mt-3 font-mono text-xs text-accent hover:underline"
-              >
-                load a playlist to get started
-              </button>
-            )}
+            <button
+              onClick={() => setShowLoadPlaylist(true)}
+              className="mt-3 font-mono text-xs text-accent hover:underline"
+            >
+              load a playlist to get started
+            </button>
           </div>
         ) : (
           <div className="space-y-1">

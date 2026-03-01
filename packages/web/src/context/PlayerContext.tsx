@@ -36,7 +36,7 @@ interface PlayerContextValue {
   resume: () => Promise<void>;
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
-  // Force an immediate REST refetch (e.g. after starting playback from PlayerPage).
+  // Force an immediate REST refetch (e.g. after starting playback from QueuePage).
   refetch: () => Promise<void>;
 }
 
