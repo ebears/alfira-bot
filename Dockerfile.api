@@ -42,7 +42,7 @@ RUN npm ci
 # ---------------------------------------------------------------------------
 # Development stage - for local development with hot reload
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS dev
+FROM deps AS dev
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY prisma.config.ts ./prisma.config.ts
 # Copy all source files (needed for building bot)
@@ -64,11 +64,9 @@ CMD ["npm", "run", "dev"]
 # ---------------------------------------------------------------------------
 # Builder stage - compile TypeScript and prepare production assets
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS builder
-
+FROM deps AS builder
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY prisma.config.ts ./prisma.config.ts
-
 # Copy all package source files
 COPY packages ./packages
 
