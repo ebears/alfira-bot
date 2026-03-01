@@ -191,13 +191,6 @@ https://alfira.website.com {
 
 ---
 
-### Further Reading
-
-- `docs/OUTLINE.md` – Complete architecture and build phases, including detailed type definitions, endpoint contracts, and real-time event flows.
-- `docs/OPERATIONS.md` – Operational runbooks for production, including how to apply Prisma migrations.
-
----
-
 ## Acknowledgements
 
 The use of `fs-capacitor` for audio streaming was inspired by [muse](https://github.com/museofficial/muse), a self-hosted Discord music bot.
