@@ -29,18 +29,8 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 | Requirement | Version | Notes |
 |-------------|---------|-------|
 | Docker | 20.10+ | With Docker Compose plugin |
-| Reverse Proxy | Any | Caddy (recommended), Nginx, or Traefik |
+| Reverse Proxy | Any | Caddy (recommended), Nginx, Traefik, etc. |
 | Domain (optional) | — | For HTTPS/TLS termination |
-
-### Hardware Recommendations
-
-| Environment | CPU | RAM | Disk |
-|-------------|-----|-----|------|
-| Development | 2 cores | 4 GB | 10 GB |
-| Production (small) | 2 cores | 4 GB | 20 GB |
-| Production (recommended) | 4 cores | 8 GB | 50 GB |
-
-> **Note:** Audio processing can be CPU-intensive. More cores = better performance with multiple concurrent streams.
 
 ---
 
@@ -202,58 +192,64 @@ docker compose up -d api
 
 ## Production Setup
 
-### Using Pre-built Images
-
-Alfira publishes container images to GitHub Container Registry (GHCR):
-
-- `ghcr.io/ebears/alfira-bot-api`
-- `ghcr.io/ebears/alfira-bot-web`
+Alfira uses pre-built Docker images from GitHub Container Registry (GHCR), making deployment simple.
 
 ### Quick Start
 
 ```bash
-# 1. Clone the repository (for docker-compose.prod.yml)
+# 1. Clone the repository
 git clone https://github.com/ebears/alfira-bot.git
 cd alfira-bot
 
-# 2. Create environment files
-cp packages/api/.env.example packages/api/.env
-# Edit packages/api/.env with production values:
-# - Set WEB_UI_ORIGIN to your public domain
-# - Set DISCORD_REDIRECT_URI to your public callback URL
+# 2. Create your environment file
+cp .env.example .env
 
-# 3. Start all services
-docker compose -f docker-compose.prod.yml up --build -d
+# 3. Edit .env with your values
+#    - Discord credentials (from Developer Portal)
+#    - Your Guild ID and Admin Role ID
+#    - A secure JWT_SECRET (generate with: openssl rand -hex 32)
+#    - Your domain for WEB_UI_ORIGIN and DISCORD_REDIRECT_URI
+
+# 4. Start all services
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-This starts:
+That's it! The stack will pull the pre-built images and start:
 
 | Service | Description |
 |---------|-------------|
 | `db` | PostgreSQL 16 with healthcheck |
-| `api` | API + bot from GHCR image |
-| `web` | Static build served by nginx on port 80 |
+| `migrate` | Runs database migrations on startup |
+| `api` | API + Discord bot from GHCR image |
+| `web` | Static web UI served by nginx on port 80 |
 
-### Production Environment Variables
+### Environment Variables
 
-Ensure these are set correctly in `packages/api/.env`:
+All configuration is handled through a single `.env` file in the project root. Copy `.env.example` and fill in your values:
 
-```env
-DISCORD_CLIENT_ID=your-client-id
-DISCORD_CLIENT_SECRET=your-client-secret
-DISCORD_BOT_TOKEN=your-bot-token
-GUILD_ID=your-guild-id
-ADMIN_ROLE_ID=your-admin-role-id
-JWT_SECRET=your-secure-random-string
-WEB_UI_ORIGIN=https://your-domain.com
-DISCORD_REDIRECT_URI=https://your-domain.com/auth/callback
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DISCORD_CLIENT_ID` | ✅ | Discord application client ID |
+| `DISCORD_CLIENT_SECRET` | ✅ | Discord application client secret |
+| `DISCORD_BOT_TOKEN` | ✅ | Discord bot token |
+| `GUILD_ID` | ✅ | Your Discord server ID |
+| `ADMIN_ROLE_IDS` | ✅ | Admin role ID(s), comma-separated |
+| `JWT_SECRET` | ✅ | Secret for signing JWT tokens |
+| `POSTGRES_USER` | ✅ | Database username |
+| `POSTGRES_PASSWORD` | ✅ | Database password |
+| `POSTGRES_DB` | ✅ | Database name |
+| `WEB_UI_ORIGIN` | ⚪ | Public URL of the web UI |
+| `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
 
 > **Security:** Use a strong, random `JWT_SECRET`. Generate one with: `openssl rand -hex 32`
 
-### Reverse Proxy Configuration
+### Reverse Proxy (Optional)
 
-We recommend using **Caddy** for automatic HTTPS. Here's an example `Caddyfile`:
+For production with a custom domain, use a reverse proxy like **Caddy** or **Nginx** for HTTPS.
+
+#### Caddy (Recommended)
+
+Create a `Caddyfile`:
 
 ```Caddy
 your-domain.com {
@@ -264,90 +260,30 @@ your-domain.com {
 }
 ```
 
-#### Alternative: Nginx
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location /api {
-        proxy_pass http://api:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-    location /auth {
-        proxy_pass http://api:3001;
-    }
-
-    location /socket.io {
-        proxy_pass http://api:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-    location / {
-        proxy_pass http://web:80;
-    }
-}
-```
-
-### Locking Down Internal Services
-
-For production, remove port mappings from `docker-compose.prod.yml` so services are only accessible via the reverse proxy:
-
-```yaml
-services:
-  db:
-    # Remove: ports: - "5432:5432"
-
-  api:
-    # Remove: ports: - "3001:3001"
-
-  web:
-    # Remove: ports: - "8080:80"
-```
-
-Only your reverse proxy container should expose ports (80/443).
-
-### Running Behind the Reverse Proxy
+Then run both stacks:
 
 ```bash
-# Start Alfira services (internal only)
 docker compose -f docker-compose.prod.yml up -d
-
-# Start Caddy (or your reverse proxy)
 docker compose -f docker-compose.caddy.yml up -d
 ```
+
+For internal-only access, you can remove the port mappings from `docker-compose.prod.yml` so only your reverse proxy exposes ports.
 
 ---
 
 ## Upgrading
 
-### Updating to the Latest Version
+Pull the latest images and restart:
 
 ```bash
-# Pull latest changes
-git pull origin main
-
-# Rebuild and restart
-docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-### Database Migrations
-
-Migrations run automatically when the API starts. If you encounter migration issues:
+Database migrations run automatically on startup. If you encounter issues:
 
 ```bash
-# Check migration status
-docker compose exec api npx prisma migrate status
-
-# Manually apply migrations
-docker compose exec api npx prisma migrate deploy
+docker compose -f docker-compose.prod.yml logs -f migrate
 ```
 
 ---

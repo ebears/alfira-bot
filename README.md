@@ -59,21 +59,22 @@ Built with Node.js, TypeScript, Discord.js, React, PostgreSQL, and more. See the
 ```bash
 git clone https://github.com/ebears/alfira-bot.git
 cd alfira-bot
-cp packages/api/.env.example packages/api/.env
+cp .env.example .env
 ```
 
 ### 2. Set Required Environment Variables
 
-Edit `packages/api/.env` with values from the [Discord Developer Portal](https://discord.com/developers/applications):
+Edit `.env` with values from the [Discord Developer Portal](https://discord.com/developers/applications):
 
-| Variable | Description |
-|----------|-------------|
-| `DISCORD_CLIENT_ID` | Discord application client ID |
-| `DISCORD_CLIENT_SECRET` | Discord application client secret |
-| `DISCORD_BOT_TOKEN` | Discord bot token |
-| `GUILD_ID` | Your Discord server ID |
-| `ADMIN_ROLE_ID` | Role ID for admin permissions |
-| `JWT_SECRET` | Random secret string for JWT signing |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DISCORD_CLIENT_ID` | ✅ | Discord application client ID |
+| `DISCORD_CLIENT_SECRET` | ✅ | Discord application client secret |
+| `DISCORD_BOT_TOKEN` | ✅ | Discord bot token |
+| `GUILD_ID` | ✅ | Your Discord server ID |
+| `ADMIN_ROLE_IDS` | ✅ | Role ID(s) for admin permissions |
+| `JWT_SECRET` | ✅ | Random secret string for JWT signing |
+| `POSTGRES_PASSWORD` | ✅ | Database password |
 
 ### 3. Start the Stack
 
@@ -81,7 +82,7 @@ Edit `packages/api/.env` with values from the [Discord Developer Portal](https:/
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-This starts PostgreSQL, the API + bot, and the web UI served by nginx.
+This pulls the pre-built images and starts PostgreSQL, the API + bot, and the web UI.
 
 ### 4. Access the Web UI
 
