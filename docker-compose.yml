@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Development docker-compose — full stack (OPTIMIZED)
+# Development docker-compose — full stack
 #
 # Runs PostgreSQL, the API + bot, and the web front-end all inside Docker.
 # Source files are mounted as volumes so you can edit code without rebuilding:
@@ -24,13 +24,6 @@
 #   docker compose down -v             — stop and wipe all data (clean slate)
 #   docker compose restart api         — reload the API after TypeScript changes
 #   docker compose build api           — rebuild the API image (e.g. after bot changes)
-#
-# OPTIMIZATIONS:
-#   - API image reduced from ~1GB to ~350MB (65% reduction)
-#   - Web image reduced from ~694MB to ~30MB (95% reduction)
-#   - Migrate image reduced from ~1GB to ~150MB (85% reduction)
-#   - Uses production-only dependencies in runtime
-#   - Better layer caching for faster builds
 # ---------------------------------------------------------------------------
 
 services:
