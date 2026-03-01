@@ -5,7 +5,7 @@ import {
   entersState,
   getVoiceConnection,
 } from '@discordjs/voice';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@discord-music-bot/api/src/generated/prisma/client';
 import prisma from '../lib/prisma';
 
 // ---------------------------------------------------------------------------

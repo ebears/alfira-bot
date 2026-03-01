@@ -66,7 +66,7 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const playlist = await prisma.playlist.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         songs: {
           orderBy: { position: 'asc' },
@@ -101,14 +101,14 @@ router.patch(
       return;
     }
 
-    const existing = await prisma.playlist.findUnique({ where: { id: req.params.id } });
+    const existing = await prisma.playlist.findUnique({ where: { id: req.params.id as string } });
     if (!existing) {
       res.status(404).json({ error: 'Playlist not found.' });
       return;
     }
 
     const playlist = await prisma.playlist.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { name: name.trim() },
       include: { _count: { select: { songs: true } } },
     });
@@ -130,13 +130,13 @@ router.delete(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const existing = await prisma.playlist.findUnique({ where: { id: req.params.id } });
+    const existing = await prisma.playlist.findUnique({ where: { id: req.params.id as string } });
     if (!existing) {
       res.status(404).json({ error: 'Playlist not found.' });
       return;
     }
 
-    await prisma.playlist.delete({ where: { id: req.params.id } });
+    await prisma.playlist.delete({ where: { id: req.params.id as string } });
 
     // No playlist:deleted event needed — the web UI uses the playlists:updated
     // event to re-fetch the list. For deletions, clients will notice the item
@@ -167,7 +167,7 @@ router.post(
     }
 
     const [playlist, song] = await Promise.all([
-      prisma.playlist.findUnique({ where: { id: req.params.id } }),
+      prisma.playlist.findUnique({ where: { id: req.params.id as string } }),
       prisma.song.findUnique({ where: { id: songId } }),
     ]);
 
@@ -228,9 +228,8 @@ router.delete(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const { id: playlistId, songId } = req.params;
-
     const entry = await prisma.playlistSong.findUnique({
-      where: { playlistId_songId: { playlistId, songId } },
+      where: { playlistId_songId: { playlistId: playlistId as string, songId: songId as string } },
     });
 
     if (!entry) {
@@ -239,12 +238,12 @@ router.delete(
     }
 
     await prisma.playlistSong.delete({
-      where: { playlistId_songId: { playlistId, songId } },
+      where: { playlistId_songId: { playlistId: playlistId as string, songId: songId as string } },
     });
 
     // Re-index remaining songs to close the gap in positions.
     const remaining = await prisma.playlistSong.findMany({
-      where: { playlistId },
+      where: { playlistId: playlistId as string },
       orderBy: { position: 'asc' },
     });
 
@@ -259,7 +258,7 @@ router.delete(
 
     // Broadcast the updated playlist with the new song count.
     const updatedPlaylist = await prisma.playlist.findUnique({
-      where: { id: playlistId },
+      where: { id: playlistId as string },
       include: { _count: { select: { songs: true } } },
     });
     if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);

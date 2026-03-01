@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -52,10 +52,10 @@ const COOKIE_NAME = 'session';
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20,
-  standardHeaders: true,    // Return rate limit info in RateLimit-* headers
-  legacyHeaders: false,     // Disable the X-RateLimit-* headers
+  standardHeaders: true, // Return rate limit info in RateLimit-* headers
+  legacyHeaders: false, // Disable the X-RateLimit-* headers
   skipSuccessfulRequests: true,
-  keyGenerator: (req) => req.ip ?? 'unknown',
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
   message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
 });
 

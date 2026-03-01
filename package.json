@@ -11,5 +11,9 @@
     "db:migrate": "npm run -w packages/api db:migrate",
     "db:generate": "npm run -w packages/api db:generate",
     "db:studio": "npm run -w packages/api db:studio"
+  },
+  "overrides": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   }
 }

@@ -15,17 +15,19 @@
     "build": "tsc"
   },
   "dependencies": {
-  "@discord-music-bot/shared": "*",
-  "@discordjs/voice": "^0.19.0",
-  "@prisma/client": "^5.13.0",
-  "@snazzah/davey": "latest",
-  "discord.js": "^14.14.1",
-  "dotenv": "^16.4.5",
-  "fs-capacitor": "^8.0.0",
-  "tweetnacl": "^1.0.3"
+    "@discord-music-bot/api": "*",
+    "@discord-music-bot/shared": "*",
+    "@discordjs/voice": "^0.19.0",
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "@snazzah/davey": "latest",
+    "discord.js": "^14.14.1",
+    "dotenv": "^17.3.1",
+    "fs-capacitor": "^8.0.0",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@types/node": "^20.12.7",
+    "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }
