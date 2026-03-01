@@ -2,13 +2,13 @@
   "name": "@discord-music-bot/bot",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/bot/src/index.js",
+  "types": "dist/bot/src/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./src/utils/ytdlp": "./dist/utils/ytdlp.js",
-    "./src/player/manager": "./dist/player/manager.js",
-    "./src/lib/broadcast": "./dist/lib/broadcast.js"
+    ".": "./dist/bot/src/index.js",
+    "./src/utils/ytdlp": "./dist/bot/src/utils/ytdlp.js",
+    "./src/player/manager": "./dist/bot/src/player/manager.js",
+    "./src/lib/broadcast": "./dist/bot/src/lib/broadcast.js"
   },
   "scripts": {
     "deploy": "ts-node src/deploy-commands.ts",
