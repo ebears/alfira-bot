@@ -4,7 +4,7 @@
 
 | Component | Technology |
 |-----------|------------|
-| **Runtime** | Node.js 18+ |
+| **Runtime** | Node.js 24 (LTS) |
 | **Language** | TypeScript |
 | **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
 | **Audio** | `yt-dlp`, `ffmpeg` |
