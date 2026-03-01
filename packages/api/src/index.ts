@@ -94,12 +94,14 @@ const httpServer = http.createServer(app);
 // ---------------------------------------------------------------------------
 async function main(): Promise<void> {
   // 1. Verify database connectivity.
+  // Prisma's $connect() is lazy and doesn't actually validate the connection.
+  // Use a raw query to ensure the database is reachable before proceeding.
   try {
-    await prisma.$connect();
-    console.log('✅  Connected to database.');
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Connected to database.');
   } catch (error) {
-    console.error('❌  Could not connect to the database:', error);
-    console.error('    Is PostgreSQL running? Try: docker compose up -d');
+    console.error('❌ Could not connect to the database:', error);
+    console.error(' Is PostgreSQL running? Try: docker compose up -d');
     process.exit(1);
   }
 
