@@ -1,11 +1,5 @@
 # ---------------------------------------------------------------------------
-# Production docker-compose — full stack (OPTIMIZED)
-#
-# Uses pre-built images from GitHub Container Registry.
-# Image sizes optimized:
-# - API image: ~350MB (reduced from ~1GB)
-# - Web image: ~30MB (reduced from ~694MB)
-# - Migrate: separate lightweight image (~150MB)
+# Production docker-compose — full stack
 #
 # Setup:
 #   1. Copy .env.example to .env and fill in your values

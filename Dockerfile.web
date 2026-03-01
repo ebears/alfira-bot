@@ -1,16 +1,7 @@
 # ---------------------------------------------------------------------------
-# Optimized Dockerfile for Web Frontend
-# Reduces image size from ~694MB to ~30MB by:
-# - Using multi-stage build
-# - Installing only production dependencies
-# - Using minimal nginx:alpine image
-# - Excluding unnecessary files
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
 # Dependencies stage - install npm packages
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 

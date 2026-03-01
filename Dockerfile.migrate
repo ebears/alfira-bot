@@ -1,12 +1,7 @@
 # ---------------------------------------------------------------------------
 # Lightweight Dockerfile for database migrations only
-# Reduces image size from ~1GB to ~150MB by:
-# - Installing only Prisma CLI and dependencies
-# - No ffmpeg, yt-dlp, or other bot dependencies
-# - Minimal Alpine image
 # ---------------------------------------------------------------------------
-
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 
 # Install only what's needed for Prisma
 RUN apk add --no-cache \
@@ -37,7 +32,7 @@ RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma gene
 # ---------------------------------------------------------------------------
 # Runtime stage
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 # Install only runtime dependencies for Prisma
 RUN apk add --no-cache \
