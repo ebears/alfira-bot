@@ -30,7 +30,7 @@ export default function Layout() {
         className={`${
           collapsed ? 'w-16' : 'w-56'
         } flex-shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden${
-          user?.isAdmin ? ' border-t-2 border-t-accent' : ''
+          isAdminView ? ' border-t-2 border-t-accent' : ''
         }`}
       >
         {/* Wordmark + collapse toggle */}
@@ -44,14 +44,14 @@ export default function Layout() {
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
-              {user?.isAdmin && (
+              {isAdminView && (
                 <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
                   admin
                 </span>
               )}
             </div>
           )}
-          {collapsed && user?.isAdmin && (
+          {collapsed && isAdminView && (
             <div
               className="w-7 h-7 flex items-center justify-center text-accent"
               title="Admin mode"
@@ -91,6 +91,28 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Admin view toggle */}
+        {user?.isAdmin && (
+          <div className={`px-3 pb-2 ${collapsed ? 'flex justify-center' : ''}`}>
+            <button
+              onClick={toggleAdminView}
+              title={isAdminView ? 'Switch to user view' : 'Switch to admin view'}
+              className={`flex items-center rounded border transition-colors duration-150 ${
+                collapsed
+                  ? 'w-7 h-7 justify-center'
+                  : 'w-full gap-1.5 px-3 py-1.5 font-mono text-[11px]'
+              } ${
+                isAdminView
+                  ? 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/20'
+                  : 'border-border text-muted hover:text-fg hover:border-muted'
+              }`}
+            >
+              <IconShield size={12} />
+              {!collapsed && (isAdminView ? 'admin view' : 'user view')}
+            </button>
+          </div>
+        )}
 
         {/* User section */}
         <div className="p-3 border-t border-border">
@@ -157,26 +179,6 @@ export default function Layout() {
       {/* Main content + now playing bar                                      */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <div className="flex-shrink-0 h-11 flex items-center justify-end px-5 border-b border-border/50">
-          <button
-            onClick={user?.isAdmin ? toggleAdminView : undefined}
-            disabled={!user?.isAdmin}
-            title={!user?.isAdmin ? 'Admin only' : isAdminView ? 'Switch to user view' : 'Switch to admin view'}
-            className={`flex items-center gap-1.5 font-mono text-[11px] px-3 py-1 rounded border
-                       transition-colors duration-150 ${
-                         !user?.isAdmin
-                           ? 'border-border/40 text-faint cursor-not-allowed'
-                           : isAdminView
-                             ? 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/20'
-                             : 'border-border text-muted hover:text-fg hover:border-muted'
-                       }`}
-          >
-            <IconShield size={12} />
-            {isAdminView ? 'admin view' : 'user view'}
-          </button>
-        </div>
-
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
@@ -195,9 +197,42 @@ function NowPlayingBar() {
   const { currentSong, isPlaying, isPaused } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
+  const [pauseBusy, setPauseBusy] = useState(false);
+  const [skipBusy, setSkipBusy] = useState(false);
+
   const progress = currentSong
     ? Math.min((elapsed / currentSong.duration) * 100, 100)
     : 0;
+
+  const handlePauseResume = async () => {
+    setPauseBusy(true);
+    try {
+      if (isStopped) {
+        await resume();
+      } else {
+        await pause();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPauseBusy(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setSkipBusy(true);
+    try {
+      await skip();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSkipBusy(false);
+    }
+  };
+
+  const handleLeave = () => {
+    leave().catch(console.error);
+  };
 
   return (
     <div className="flex-shrink-0 border-t border-border bg-surface">
@@ -247,36 +282,34 @@ function NowPlayingBar() {
           </div>
         </div>
 
-        {/* Playback controls - available to all users */}
+        {/* Playback controls */}
         {currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => {
-                if (isStopped) {
-                  resume().catch(console.error);
-                } else {
-                  pause().catch(console.error);
-                }
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded text-muted
-                         hover:text-fg hover:bg-elevated transition-colors duration-150"
+            <BarButton
+              onClick={handlePauseResume}
+              busy={pauseBusy}
+              disabled={pauseBusy || skipBusy}
               title={isPaused || isStopped ? 'Resume' : 'Pause'}
+              hoverColor="hover:text-fg"
             >
               {isPaused || isStopped ? <IconPlay size={16} /> : <IconPause size={16} />}
-            </button>
-            <button
-              onClick={() => skip().catch(console.error)}
-              className="w-8 h-8 flex items-center justify-center rounded text-muted
-                         hover:text-fg hover:bg-elevated transition-colors duration-150"
+            </BarButton>
+
+            <BarButton
+              onClick={handleSkip}
+              busy={skipBusy}
+              disabled={pauseBusy || skipBusy}
               title="Skip"
+              hoverColor="hover:text-fg"
             >
               <IconSkip size={16} />
-            </button>
+            </BarButton>
+
             <button
-              onClick={() => leave().catch(console.error)}
+              onClick={handleLeave}
+              title="Leave voice channel"
               className="w-8 h-8 flex items-center justify-center rounded text-muted
                          hover:text-danger hover:bg-elevated transition-colors duration-150"
-              title="Leave voice channel"
             >
               <IconLeave size={16} />
             </button>
@@ -284,6 +317,41 @@ function NowPlayingBar() {
         )}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// BarButton
+// ---------------------------------------------------------------------------
+function BarButton({
+  children,
+  onClick,
+  busy,
+  disabled,
+  title,
+  hoverColor,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  busy: boolean;
+  disabled: boolean;
+  title: string;
+  hoverColor: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`w-8 h-8 flex items-center justify-center rounded transition-all duration-150
+                 ${busy
+                   ? 'opacity-40 cursor-not-allowed text-muted'
+                   : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
+                 }
+                 disabled:pointer-events-none`}
+    >
+      {busy ? <IconSpinner size={15} /> : children}
+    </button>
   );
 }
 
@@ -313,6 +381,7 @@ function IconList({ size = 20, className = '' }: { size?: number; className?: st
     </svg>
   );
 }
+
 function IconQueue({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -323,6 +392,7 @@ function IconQueue({ size = 20, className = '' }: { size?: number; className?: s
     </svg>
   );
 }
+
 function IconPlay({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -342,7 +412,6 @@ function IconSkip({ size = 20, className = '' }: { size?: number; className?: st
   );
 }
 
-/** Door-with-arrow icon representing "leave voice channel" */
 function IconLeave({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -392,6 +461,23 @@ function IconPause({ size = 20, className = '' }: { size?: number; className?: s
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect x="6" y="4" width="4" height="16" />
       <rect x="14" y="4" width="4" height="16" />
+    </svg>
+  );
+}
+
+function IconSpinner({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      className={`animate-spin ${className}`}
+    >
+      <path d="M12 2a10 10 0 0 1 10 10" />
     </svg>
   );
 }
