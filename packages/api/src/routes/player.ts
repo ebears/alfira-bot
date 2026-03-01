@@ -10,6 +10,8 @@ import type { LoopMode, QueuedSong, Song } from '@discord-music-bot/shared';
 
 const router = Router();
 
+const MAX_URL_LENGTH = 2000;
+
 // ---------------------------------------------------------------------------
 // Resolve the guild ID once at startup.
 // The player is looked up by guild ID on every request. Since this is a
@@ -315,6 +317,11 @@ router.post(
     }
 
     const url = youtubeUrl.trim();
+
+    if (url.length > MAX_URL_LENGTH) {
+      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+      return;
+    }
 
     if (!isValidYouTubeUrl(url)) {
       res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
