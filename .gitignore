@@ -30,6 +30,7 @@ build/
 # -----------------------------------------------
 packages/api/prisma/generated/
 packages/shared/prisma/generated/
+packages/api/src/generated/
 
 # -----------------------------------------------
 # Logs

@@ -4,7 +4,6 @@
     "module": "commonjs",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,6 +12,6 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "src/types.ts", "tsconfig.json"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
