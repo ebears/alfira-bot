@@ -195,9 +195,42 @@ function NowPlayingBar() {
   const { currentSong, isPlaying, isPaused } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
+  const [pauseBusy, setPauseBusy] = useState(false);
+  const [skipBusy, setSkipBusy] = useState(false);
+
   const progress = currentSong
     ? Math.min((elapsed / currentSong.duration) * 100, 100)
     : 0;
+
+  const handlePauseResume = async () => {
+    setPauseBusy(true);
+    try {
+      if (isStopped) {
+        await resume();
+      } else {
+        await pause();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPauseBusy(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setSkipBusy(true);
+    try {
+      await skip();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSkipBusy(false);
+    }
+  };
+
+  const handleLeave = () => {
+    leave().catch(console.error);
+  };
 
   return (
     <div className="flex-shrink-0 border-t border-border bg-surface">
@@ -247,36 +280,37 @@ function NowPlayingBar() {
           </div>
         </div>
 
-        {/* Playback controls - available to all users */}
+        {/* Playback controls */}
         {currentSong && (
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => {
-                if (isStopped) {
-                  resume().catch(console.error);
-                } else {
-                  pause().catch(console.error);
-                }
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded text-muted
-                         hover:text-fg hover:bg-elevated transition-colors duration-150"
+            {/* Pause / Resume */}
+            <BarButton
+              onClick={handlePauseResume}
+              busy={pauseBusy}
+              disabled={pauseBusy || skipBusy}
               title={isPaused || isStopped ? 'Resume' : 'Pause'}
+              hoverColor="hover:text-fg"
             >
               {isPaused || isStopped ? <IconPlay size={16} /> : <IconPause size={16} />}
-            </button>
-            <button
-              onClick={() => skip().catch(console.error)}
-              className="w-8 h-8 flex items-center justify-center rounded text-muted
-                         hover:text-fg hover:bg-elevated transition-colors duration-150"
+            </BarButton>
+
+            {/* Skip */}
+            <BarButton
+              onClick={handleSkip}
+              busy={skipBusy}
+              disabled={pauseBusy || skipBusy}
               title="Skip"
+              hoverColor="hover:text-fg"
             >
               <IconSkip size={16} />
-            </button>
+            </BarButton>
+
+            {/* Leave — no loading state, fires and forgets */}
             <button
-              onClick={() => leave().catch(console.error)}
+              onClick={handleLeave}
+              title="Leave voice channel"
               className="w-8 h-8 flex items-center justify-center rounded text-muted
                          hover:text-danger hover:bg-elevated transition-colors duration-150"
-              title="Leave voice channel"
             >
               <IconLeave size={16} />
             </button>
@@ -284,6 +318,46 @@ function NowPlayingBar() {
         )}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// BarButton — icon button with a dim + spinner loading state
+//
+// While busy: the button fades to ~40% opacity and the icon is replaced by
+// a small spinner, giving instant feedback that the action registered.
+// The button is also pointer-events-none while busy so rapid double-clicks
+// can't queue a second action before the first resolves.
+// ---------------------------------------------------------------------------
+function BarButton({
+  children,
+  onClick,
+  busy,
+  disabled,
+  title,
+  hoverColor,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  busy: boolean;
+  disabled: boolean;
+  title: string;
+  hoverColor: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`w-8 h-8 flex items-center justify-center rounded transition-all duration-150
+                 ${busy
+                   ? 'opacity-40 cursor-not-allowed text-muted'
+                   : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
+                 }
+                 disabled:pointer-events-none`}
+    >
+      {busy ? <IconSpinner size={15} /> : children}
+    </button>
   );
 }
 
@@ -392,6 +466,24 @@ function IconPause({ size = 20, className = '' }: { size?: number; className?: s
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect x="6" y="4" width="4" height="16" />
       <rect x="14" y="4" width="4" height="16" />
+    </svg>
+  );
+}
+
+// Spinning loader — used as the busy-state icon inside BarButton
+function IconSpinner({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      className={`animate-spin ${className}`}
+    >
+      <path d="M12 2a10 10 0 0 1 10 10" />
     </svg>
   );
 }
