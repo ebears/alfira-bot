@@ -1,6 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@discord-music-bot/api/src/generated/prisma/client';
-
+import { PrismaClient, type Prisma } from '../../../api/src/generated/prisma/client';
 // ---------------------------------------------------------------------------
 // Prisma client singleton for the bot package.
 //
@@ -13,12 +12,19 @@ import { PrismaClient } from '@discord-music-bot/api/src/generated/prisma/client
 // Prisma's connection pool means this does not open a second physical socket.
 //
 // Prisma 7 requires a driver adapter for database connections.
+//
+// NOTE: We import directly from the API's generated Prisma client using a
+// relative path. This avoids the circular build dependency that would occur
+// if we imported from @discord-music-bot/api/prisma (which requires the API
+// to be built first). The relative path works in both development and Docker
+// production because the directory structure is preserved.
 // ---------------------------------------------------------------------------
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 });
 
-const prisma = new PrismaClient({ adapter });
+const prisma: PrismaClient = new PrismaClient({ adapter });
 
 export default prisma;
+export type { Prisma };
