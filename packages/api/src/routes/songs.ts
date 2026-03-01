@@ -30,11 +30,11 @@ router.get(
 // Adds a new song by YouTube URL. Admin only.
 //
 // Flow:
-//   1. Validate the URL format.
-//   2. Fetch metadata via yt-dlp (title, duration, youtubeId).
-//   3. Check for duplicates by youtubeId.
-//   4. Save to the database.
-//   5. Emit songs:added so all connected clients update in real time.
+// 1. Validate the URL format.
+// 2. Fetch metadata via yt-dlp (title, duration, youtubeId).
+// 3. Check for duplicates by youtubeId.
+// 4. Save to the database.
+// 5. Emit songs:added so all connected clients update in real time.
 // ---------------------------------------------------------------------------
 router.post(
   '/',
@@ -92,7 +92,6 @@ router.post(
 
     // Notify all connected clients so the Songs page updates in real time.
     emitSongAdded(song);
-
     res.status(201).json(song);
   })
 );
@@ -108,9 +107,9 @@ router.delete(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
+    const id = req.params.id as string;
     const existing = await prisma.song.findUnique({ where: { id } });
+
     if (!existing) {
       res.status(404).json({ error: 'Song not found.' });
       return;
@@ -120,7 +119,6 @@ router.delete(
 
     // Notify all connected clients so the Songs page removes the card in real time.
     emitSongDeleted(id);
-
     res.status(204).send();
   })
 );

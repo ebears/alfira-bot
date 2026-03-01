@@ -12,13 +12,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       v7_relativeSplatPath — fixes relative route resolution inside splat routes
       Both are safe no-ops for this app's routing structure.
     */}
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <App />
+    <BrowserRouter>
+    <App />
     </BrowserRouter>
   </React.StrictMode>
 );

@@ -10,8 +10,8 @@ FROM node:22-alpine AS deps
 
 # Install only what's needed for Prisma
 RUN apk add --no-cache \
-    openssl \
-    libc6-compat
+  openssl \
+  libc6-compat
 
 WORKDIR /app
 
@@ -24,24 +24,25 @@ COPY packages/shared/package.json ./packages/shared/
 # This ensures prisma CLI is available in node_modules/.bin at root
 RUN npm install --include=dev
 
+# Copy prisma.config.ts (Prisma 7 requires it at project root)
+COPY prisma.config.ts ./prisma.config.ts
+
 # Copy Prisma schema (required for generating client)
 COPY packages/api/prisma ./packages/api/prisma
 
-# Generate Prisma client - prisma CLI is now in root node_modules/.bin
-RUN npx prisma generate --schema=packages/api/prisma/schema.prisma && \
-    cp -r node_modules/.prisma packages/api/node_modules/ 2>/dev/null || true && \
-    cp -r node_modules/@prisma packages/api/node_modules/ 2>/dev/null || true
+# Generate Prisma client (Prisma 7 outputs to src/generated/prisma)
+# Provide dummy DATABASE_URL for generate (actual URL used at runtime)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate --schema=packages/api/prisma/schema.prisma
 
 # ---------------------------------------------------------------------------
 # Runtime stage
 # ---------------------------------------------------------------------------
-
 FROM node:22-alpine AS runtime
 
 # Install only runtime dependencies for Prisma
 RUN apk add --no-cache \
-    openssl \
-    libc6-compat
+  openssl \
+  libc6-compat
 
 WORKDIR /app
 
@@ -52,9 +53,11 @@ ENV NODE_ENV=production
 # Copy node_modules with Prisma CLI
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy Prisma client (try both locations)
-COPY --from=deps /app/packages/api/node_modules/.prisma ./packages/api/node_modules/.prisma
-COPY --from=deps /app/packages/api/node_modules/@prisma ./packages/api/node_modules/@prisma
+# Copy Prisma client (Prisma 7 outputs to src/generated/prisma)
+COPY --from=deps /app/packages/api/src/generated ./packages/api/src/generated
+
+# Copy prisma.config.ts (Prisma 7 requires it at project root)
+COPY prisma.config.ts ./prisma.config.ts
 
 # Copy Prisma schema and migrations
 COPY packages/api/prisma ./packages/api/prisma

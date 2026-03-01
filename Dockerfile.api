@@ -44,14 +44,14 @@ RUN npm ci
 # Development stage - for local development with hot reload
 # ---------------------------------------------------------------------------
 FROM deps AS dev
-
+# Copy prisma.config.ts (Prisma 7 requires it at project root)
+COPY prisma.config.ts ./prisma.config.ts
 # Copy all source files (needed for building bot)
 COPY packages ./packages
 
-# Generate Prisma client
-RUN npm run db:generate && \
-    cp -r node_modules/.prisma packages/api/node_modules/ && \
-    cp -r node_modules/.prisma packages/bot/node_modules/
+# Generate Prisma client (required before building bot, since bot imports from api)
+# Provide dummy DATABASE_URL for generate (actual URL used at runtime)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
 
 # Build the bot package (required by API)
 RUN npm run -w packages/bot build
@@ -67,13 +67,15 @@ CMD ["npm", "run", "dev"]
 # ---------------------------------------------------------------------------
 FROM deps AS builder
 
+# Copy prisma.config.ts (Prisma 7 requires it at project root)
+COPY prisma.config.ts ./prisma.config.ts
+
 # Copy all package source files
 COPY packages ./packages
 
-# Generate Prisma client
-RUN npm run db:generate && \
-    cp -r node_modules/.prisma packages/api/node_modules/ && \
-    cp -r node_modules/.prisma packages/bot/node_modules/
+# Generate Prisma client (Prisma 7 outputs to src/generated/prisma)
+# Provide dummy DATABASE_URL for generate (actual URL used at runtime)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
 
 # Build bot and API
 RUN npm run -w packages/bot build && \
@@ -81,8 +83,8 @@ RUN npm run -w packages/bot build && \
 
 # Install only production dependencies
 RUN npm prune --production && \
-    # Prisma client needs to be in production node_modules
-    npm run db:generate
+  # Regenerate Prisma client for production
+  DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
@@ -115,8 +117,11 @@ COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 
-# Copy Prisma client
-COPY --from=builder --chown=nodejs:nodejs /app/packages/api/node_modules/.prisma ./packages/api/node_modules/.prisma
+# Copy Prisma client (Prisma 7 outputs to src/generated/prisma)
+COPY --from=builder --chown=nodejs:nodejs /app/packages/api/src/generated ./packages/api/src/generated
+
+# Copy prisma.config.ts (Prisma 7 requires it at project root)
+COPY --from=builder --chown=nodejs:nodejs /app/prisma.config.ts ./prisma.config.ts
 
 # Copy package.json files (needed for runtime)
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
