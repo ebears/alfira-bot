@@ -1,5 +1,4 @@
 <h1 align="center">Alfira</h1>
-
 <p align="center">
   <img width="250" height="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/logo.png" alt="Alfira Logo">
   <br>
@@ -29,52 +28,23 @@
 
 ## Features
 
-- **Discord bot** - Slash commands: `/join`, `/leave`, `/play`, `/skip`, `/stop`, `/queue`, `/loop`, `/shuffle`, `/playlist play`, `/nowplaying`.
+- **Discord bot**
+  - Slash commands: `/join`, `/leave`, `/play`, `/skip`, `/stop`, `/queue`, `/loop`, `/shuffle`, `/playlist play`, `/nowplaying`.
   - Queue management with loop modes (`off`, `song`, `queue`) and shuffle.
   - Audio playback via `yt-dlp` + `ffmpeg` + `@discordjs/voice`.
-
-- **Web UI** - Discord OAuth2 login with role-based permissions (Admin vs Member).
+- **Web UI**
+  - Discord OAuth2 login with role-based permissions (Admin vs Member).
   - Song library: add-by-URL via YouTube, delete, add to playlists (admins only).
   - Playlists: create/delete/rename, add/remove songs, play into the queue with sequential/random order and loop mode.
   - Player page + global Now Playing bar with live progress, queue view, and admin controls.
+- **Real-time sync**
+  - `Socket.io` events keep the UI in sync with the in-memory player state and library changes (no polling).
+- **Single-guild focus**
+  - Scoped to a single Discord server (guild), with admin status determined by Discord role IDs.
 
-- **Real-time sync** - `Socket.io` events keep the UI in sync with the in-memory player state and library changes (no polling).
+## Tech Stack
 
-- **Single-guild focus** - Scoped to a single Discord server (guild), with admin status determined by Discord role IDs.
-
-## Tech stack
-
-| Component | Technology |
-|-----------|------------|
-| **Runtime** | Node.js 18+ |
-| **Language** | TypeScript |
-| **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
-| **Audio** | `yt-dlp`, `ffmpeg` |
-| **API** | Express.js |
-| **Real-time** | Socket.io |
-| **Database** | PostgreSQL + Prisma |
-| **Frontend** | React (Vite) + Tailwind CSS |
-
-### Structure
-
-The project is an npm workspaces monorepo:
-
-```
-packages/
-├── shared   # Shared TypeScript types (Song, QueueState, Playlist, etc.)
-├── bot      # Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
-├── api      # Express API, Prisma, Socket.io server
-└── web      # Vite + React + Tailwind web UI
-```
-
-Top-level scripts:
-
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start the API + bot |
-| `npm run web:dev` | Start the Vite dev server for the web UI |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:migrate` | Run Prisma migrations |
+Built with Node.js, TypeScript, Discord.js, React, PostgreSQL, and more. See the **[Tech Stack Documentation](docs/tech-stack.md)** for details.
 
 <p align="center">
   <img width="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/icon.png">
@@ -128,6 +98,7 @@ For production deployment with a reverse proxy and HTTPS, see the **[Full Instal
 |----------|-------------|
 | **[Installation Guide](docs/installation.md)** | Development and production setup, Discord configuration, reverse proxy setup |
 | **[Configuration Reference](docs/configuration.md)** | Complete environment variables reference |
+| **[Tech Stack](docs/tech-stack.md)** | Technology stack and project structure |
 | **[Troubleshooting](docs/troubleshooting.md)** | Common issues and solutions |
 
 ---
