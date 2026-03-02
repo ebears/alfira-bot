@@ -53,7 +53,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: "no"
+    restart: on-failure
     environment:
       DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
 
