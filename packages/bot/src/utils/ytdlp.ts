@@ -74,45 +74,6 @@ export function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
 }
 
 // ---------------------------------------------------------------------------
-// getStreamUrl
-//
-// Asks yt-dlp for the direct CDN URL of the best available audio format,
-// then returns that URL as a string without downloading anything.
-//
-// Previously we piped yt-dlp's stdout directly into FFmpeg, but YouTube's
-// CDN throttles that connection inconsistently, causing the buffer to run
-// dry and producing choppy audio every 30 seconds or so.
-//
-// By using -g instead, yt-dlp resolves and exits immediately. FFmpeg then
-// opens its own direct HTTP connection to the CDN and manages buffering
-// itself — which it handles far more reliably.
-//
-// Key flags:
-// -f bestaudio    Pick the best audio-only format available.
-// --no-playlist   Only process the first video if given a playlist URL.
-// -g              Print the direct media URL to stdout and exit.
-// ---------------------------------------------------------------------------
-export function getStreamUrl(youtubeUrl: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile(
-      'yt-dlp',
-      [
-        '-f', 'bestaudio[ext=webm]/bestaudio',  // prefer WebM (Opus) stream
-        '--no-playlist',
-        '-g',
-        youtubeUrl,
-      ],
-      (error, stdout) => {
-        if (error) {
-          return reject(new Error(`yt-dlp stream URL fetch failed: ${error.message}`));
-        }
-        resolve(stdout.trim());
-      }
-    );
-  });
-}
-
-// ---------------------------------------------------------------------------
 // AudioStreamHandle
 //
 // Returned by createAudioStream so the caller can both read the audio data

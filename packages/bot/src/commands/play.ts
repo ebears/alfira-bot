@@ -130,7 +130,7 @@ export const playCommand: Command = {
     // that id and addedBy are real values. If not, fall back to metadata-only
     // values with empty placeholder strings for id and addedBy.
     //
-    // Note: getStreamUrl() is NOT called here. The GuildPlayer calls it at
+    // Note: getStreamFormat() is NOT called here. The GuildPlayer calls it at
     // playback time so CDN URLs are always fresh for songs in long queues.
     // ---------------------------------------------------------------------------
     const song: QueuedSong = dbSong
