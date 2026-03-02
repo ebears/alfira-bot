@@ -13,6 +13,56 @@
 | **Database** | PostgreSQL + Prisma |
 | **Frontend** | React (Vite) + Tailwind CSS |
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph User
+        WEB[Web UI<br/>React + Vite]
+        DISC[Discord Client]
+    end
+
+    subgraph Server["Node.js Server"]
+        API[Express API<br/>:3001]
+        BOT[Discord Bot<br/>@discordjs/voice]
+        SOCKET[Socket.io<br/>Real-time Events]
+    end
+
+    subgraph Audio["Audio Pipeline"]
+        YTDLP[yt-dlp<br/>YouTube Metadata]
+        FF[FFmpeg<br/>Audio Transcode]
+        VOICE[@discordjs/voice<br/>Voice Connection]
+    end
+
+    subgraph Data["Data Layer"]
+        PRISMA[Prisma ORM]
+        PG[(PostgreSQL)]
+    end
+
+    %% User interactions
+    WEB -->|OAuth2 Login| API
+    WEB -->|REST API| API
+    WEB <-->|WebSocket| SOCKET
+    DISC -->|Slash Commands| BOT
+    DISC <-->|Voice Channel| VOICE
+
+    %% Server internal
+    API <--> PRISMA
+    BOT <--> SOCKET
+    API <--> SOCKET
+
+    %% Audio pipeline
+    YTDLP -->|Metadata| BOT
+    YTDLP -->|Audio URL| FF
+    FF -->|PCM Stream| VOICE
+    BOT --> YTDLP
+
+    %% Database
+    PRISMA --> PG
+```
+
+The bot and API run in a **single Node.js process**, sharing the same memory for the player state. This allows Socket.io to broadcast real-time updates directly from the bot's playback events without any additional infrastructure.
+
 ## Project Structure
 
 The project is an npm workspaces monorepo:
