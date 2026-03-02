@@ -45,3 +45,13 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/alfira-bot-web:latest
             ghcr.io/${{ github.repository_owner }}/alfira-bot-web:${{ github.sha }}
+
+      - name: Build migrate image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.migrate
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/alfira-bot-migrate:latest
+            ghcr.io/${{ github.repository_owner }}/alfira-bot-migrate:${{ github.sha }}
