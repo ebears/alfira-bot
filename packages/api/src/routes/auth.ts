@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/requireAuth';
+import prisma from '../lib/prisma';
 
 const router = Router();
 
@@ -25,13 +27,140 @@ const ADMIN_ROLE_ID_SET = new Set(
   (ADMIN_ROLE_IDS ?? '').split(',').map((id) => id.trim()).filter(Boolean)
 );
 
-const JWT_EXPIRES_IN = '7d';
-const COOKIE_NAME = 'session';
+// ---------------------------------------------------------------------------
+// Token configuration
+//
+// Access tokens are short-lived (1 hour) and contain the user's info including
+// isAdmin status. This limits the window where a revoked admin can still
+// access admin features.
+//
+// Refresh tokens are long-lived (7 days) and stored in the database as a
+// SHA-256 hash. They can be revoked by deleting them from the database.
+// When a user refreshes, we re-fetch their roles from Discord to ensure
+// admin status is up-to-date.
+// ---------------------------------------------------------------------------
+const ACCESS_TOKEN_EXPIRES_IN = '1h';
+const REFRESH_TOKEN_EXPIRES_IN = '7d';
+const ACCESS_COOKIE_NAME = 'session';
+const REFRESH_COOKIE_NAME = 'refresh_token';
+
+// ---------------------------------------------------------------------------
+// Helper: Hash a token using SHA-256
+//
+// We store only the hash of refresh tokens in the database.
+// This means even if the database is compromised, the tokens cannot be used.
+// ---------------------------------------------------------------------------
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Generate access token
+//
+// Contains user info including isAdmin. Short-lived so role changes take
+// effect within 1 hour maximum.
+// ---------------------------------------------------------------------------
+function generateAccessToken(payload: {
+  discordId: string;
+  username: string;
+  avatar: string | null;
+  isAdmin: boolean;
+}): string {
+  return jwt.sign(payload, JWT_SECRET!, {
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Generate refresh token
+//
+// Contains only the discord ID. Long-lived and stored in DB for revocation.
+// ---------------------------------------------------------------------------
+function generateRefreshToken(discordId: string): string {
+  return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET!, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Set auth cookies
+// ---------------------------------------------------------------------------
+function setAuthCookies(
+  res: import('express').Response,
+  accessToken: string,
+  refreshToken: string
+): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Access token cookie - short-lived
+  res.cookie(ACCESS_COOKIE_NAME, accessToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+    maxAge: 60 * 60 * 1000, // 1 hour
+  });
+
+  // Refresh token cookie - long-lived
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Clear auth cookies
+// ---------------------------------------------------------------------------
+function clearAuthCookies(res: import('express').Response): void {
+  res.clearCookie(ACCESS_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
+  res.clearCookie(REFRESH_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Fetch user's admin status from Discord
+//
+// Returns null if the user is not in the guild or Discord is unreachable.
+// ---------------------------------------------------------------------------
+async function fetchUserAdminStatus(
+  discordId: string
+): Promise<{ isAdmin: boolean; username: string; avatar: string | null } | null> {
+  try {
+    // Fetch user's current username/avatar
+    const userRes = await axios.get(
+      `https://discord.com/api/users/${discordId}`,
+      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
+    );
+    const { username, avatar } = userRes.data;
+
+    // Fetch member roles to determine admin status
+    const memberRes = await axios.get(
+      `https://discord.com/api/guilds/${GUILD_ID}/members/${discordId}`,
+      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
+    );
+    const memberRoles: string[] = memberRes.data.roles ?? [];
+    const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
+
+    const avatarUrl = avatar
+      ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png`
+      : null;
+
+    return { isAdmin, username, avatar: avatarUrl };
+  } catch (err: any) {
+    // User not in guild
+    if (err?.response?.status === 404) {
+      return null;
+    }
+    // Discord error - log and return null
+    console.error('Failed to fetch user info from Discord:', err?.message);
+    return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Rate limiting
 //
-// Applied to /auth/login and /auth/callback.
+// Applied to /auth/login, /auth/callback, and /auth/refresh.
 //
 // Why: without rate limiting, an attacker can hammer the OAuth flow to probe
 // for valid guild members or attempt to enumerate users. The callback is
@@ -69,7 +198,6 @@ router.get('/login', authLimiter, (_req, res) => {
     response_type: 'code',
     scope: 'identify',
   });
-
   res.redirect(`https://discord.com/oauth2/authorize?${params}`);
 });
 
@@ -81,7 +209,6 @@ router.get(
   authLimiter,
   asyncHandler(async (req, res) => {
     const { code } = req.query;
-
     if (!code || typeof code !== 'string') {
       res.status(400).json({ error: 'Missing authorization code.' });
       return;
@@ -122,13 +249,13 @@ router.get(
     // 3. Fetch guild member roles via bot token.
     //
     // Three outcomes:
-    //   - Success (2xx): proceed with the real role list.
-    //   - 404: user is not in the guild — deny login.
-    //   - Anything else (network error, rate limit, 5xx from Discord): fail
-    //     closed. We do not know the user's roles, so we cannot safely issue
-    //     a token. Logging in with an assumed role list would mean a Discord
-    //     outage silently grants or revokes admin access depending on which
-    //     direction we default. Refusing is the only safe option.
+    // - Success (2xx): proceed with the real role list.
+    // - 404: user is not in the guild — deny login.
+    // - Anything else (network error, rate limit, 5xx from Discord): fail
+    //   closed. We do not know the user's roles, so we cannot safely issue
+    //   a token. Logging in with an assumed role list would mean a Discord
+    //   outage silently grants or revokes admin access depending on which
+    //   direction we default. Refusing is the only safe option.
     let memberRoles: string[];
     try {
       const memberRes = await axios.get(
@@ -141,7 +268,6 @@ router.get(
         res.status(403).json({ error: 'You must be a member of the server to use this app.' });
         return;
       }
-
       // Discord is unreachable or returned an unexpected error.
       // Log the detail server-side; return a generic message to the client.
       console.error(
@@ -150,9 +276,9 @@ router.get(
         '— denying login.',
         err?.message
       );
-      res.status(503).json({
-        error: 'Could not verify your server membership. Please try again in a moment.',
-      });
+      res
+        .status(503)
+        .json({ error: 'Could not verify your server membership. Please try again in a moment.' });
       return;
     }
 
@@ -164,25 +290,133 @@ router.get(
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : null;
 
-    // 6. Issue JWT.
+    // 6. Generate tokens.
     const payload = {
       discordId: discordUser.id,
       username: discordUser.username,
       avatar: avatarUrl,
       isAdmin,
     };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(discordUser.id);
 
-    const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: JWT_EXPIRES_IN });
-
-    res.cookie(COOKIE_NAME, token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+    // 7. Store refresh token hash in database.
+    const refreshTokenHash = hashToken(refreshToken);
+    const refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await prisma.refreshToken.create({
+      data: {
+        tokenHash: refreshTokenHash,
+        discordId: discordUser.id,
+        expiresAt: refreshTokenExpiry,
+      },
     });
 
-    // 7. Redirect to the web UI. The cookie travels with this redirect.
+    // 8. Set cookies and redirect.
+    setAuthCookies(res, accessToken, refreshToken);
     res.redirect(WEB_UI_ORIGIN);
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /auth/refresh
+//
+// Exchange a refresh token for a new access token.
+// This also re-fetches the user's admin status from Discord to ensure
+// role changes take effect quickly.
+// ---------------------------------------------------------------------------
+router.post(
+  '/refresh',
+  asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (!refreshToken) {
+      res.status(401).json({ error: 'No refresh token provided.' });
+      return;
+    }
+
+    // 1. Verify the refresh token signature and expiration.
+    let decoded: { discordId: string; type: string };
+    try {
+      decoded = jwt.verify(refreshToken, JWT_SECRET!) as { discordId: string; type: string };
+      if (decoded.type !== 'refresh') {
+        res.status(401).json({ error: 'Invalid token type.' });
+        return;
+      }
+    } catch {
+      clearAuthCookies(res);
+      res.status(401).json({ error: 'Invalid or expired refresh token.' });
+      return;
+    }
+
+    // 2. Check if the refresh token exists in the database (not revoked).
+    const tokenHash = hashToken(refreshToken);
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!storedToken) {
+      clearAuthCookies(res);
+      res.status(401).json({ error: 'Refresh token has been revoked.' });
+      return;
+    }
+
+    // 3. Check if the refresh token has expired.
+    if (storedToken.expiresAt < new Date()) {
+      await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+      clearAuthCookies(res);
+      res.status(401).json({ error: 'Refresh token has expired.' });
+      return;
+    }
+
+    // 4. Delete the used refresh token (single-use for security).
+    await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+
+    // 5. Clean up expired tokens for this user (lazy cleanup).
+    await prisma.refreshToken.deleteMany({
+      where: {
+        discordId: decoded.discordId,
+        expiresAt: { lt: new Date() },
+      },
+    });
+
+    // 6. Re-fetch user info from Discord (including admin status).
+    const userInfo = await fetchUserAdminStatus(decoded.discordId);
+
+    if (!userInfo) {
+      // User is no longer in the guild or Discord is unreachable.
+      // Clear all refresh tokens for this user for security.
+      await prisma.refreshToken.deleteMany({
+        where: { discordId: decoded.discordId },
+      });
+      clearAuthCookies(res);
+      res.status(401).json({ error: 'Unable to verify user membership. Please log in again.' });
+      return;
+    }
+
+    // 7. Generate new tokens.
+    const payload = {
+      discordId: decoded.discordId,
+      username: userInfo.username,
+      avatar: userInfo.avatar,
+      isAdmin: userInfo.isAdmin,
+    };
+    const newAccessToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(decoded.discordId);
+
+    // 8. Store new refresh token.
+    const newTokenHash = hashToken(newRefreshToken);
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await prisma.refreshToken.create({
+      data: {
+        tokenHash: newTokenHash,
+        discordId: decoded.discordId,
+        expiresAt: newExpiry,
+      },
+    });
+
+    // 9. Set cookies and return user info.
+    setAuthCookies(res, newAccessToken, newRefreshToken);
+    res.json({ user: payload });
   })
 );
 
@@ -200,9 +434,20 @@ router.get(
 // ---------------------------------------------------------------------------
 // POST /auth/logout
 // ---------------------------------------------------------------------------
-router.post('/logout', (_req, res) => {
-  res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
+router.post('/logout', asyncHandler(async (req, res) => {
+  // Try to revoke the refresh token if present.
+  const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+  if (refreshToken) {
+    try {
+      const tokenHash = hashToken(refreshToken);
+      await prisma.refreshToken.deleteMany({ where: { tokenHash } });
+    } catch {
+      // Ignore errors - just clear cookies anyway.
+    }
+  }
+
+  clearAuthCookies(res);
   res.json({ message: 'Logged out.' });
-});
+}));
 
 export default router;
