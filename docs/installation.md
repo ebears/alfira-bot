@@ -83,7 +83,7 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 
 1. Enable **Developer Mode** in Discord: Settings → Advanced → Developer Mode.
 2. Right-click your server icon and select **"Copy Server ID"** — this is your `GUILD_ID`.
-3. Right-click the admin role and select **"Copy Role ID"** — this is your `ADMIN_ROLE_ID`.
+3. Right-click the admin role and select **"Copy Role ID"** — this is your `ADMIN_ROLE_IDS`.
 
 ---
 
@@ -107,7 +107,7 @@ cp packages/bot/.env.example packages/bot/.env
 | `DISCORD_BOT_TOKEN` | Discord bot token | `MTAwMC4...` |
 | `GUILD_ID` | Discord server ID | `987654321098765432` |
 | `JWT_SECRET` | Secret for signing JWT tokens | `your-secure-random-string` |
-| `ADMIN_ROLE_ID` | Discord role ID for admin permissions | `123456789012345678` |
+| `ADMIN_ROLE_IDS` | Discord role ID(s) for admin permissions (comma-separated) | `123456789012345678` |
 
 #### Required (Bot)
 

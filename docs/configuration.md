@@ -30,7 +30,7 @@ cp packages/bot/.env.example packages/bot/.env
 | `DISCORD_CLIENT_SECRET` | Discord application client secret | `abc123def456...` |
 | `DISCORD_BOT_TOKEN` | Discord bot token | `MTAwMC4xMjM0NTY3ODkw...` |
 | `GUILD_ID` | Discord server ID where the bot operates | `987654321098765432` |
-| `ADMIN_ROLE_ID` | Discord role ID for admin users | `123456789012345678` |
+| `ADMIN_ROLE_IDS` | Discord role ID(s) for admin users (comma-separated) | `123456789012345678` |
 | `JWT_SECRET` | Secret key for signing JWT tokens | `your-secure-random-string` |
 
 ### Optional Variables
@@ -136,7 +136,7 @@ DISCORD_CLIENT_ID=123456789012345678
 DISCORD_CLIENT_SECRET=your-client-secret
 DISCORD_BOT_TOKEN=your-bot-token
 GUILD_ID=987654321098765432
-ADMIN_ROLE_ID=123456789012345678
+ADMIN_ROLE_IDS=123456789012345678
 JWT_SECRET=dev-secret-change-in-production
 # DATABASE_URL is set by Docker Compose
 ```
@@ -157,7 +157,7 @@ DISCORD_CLIENT_ID=123456789012345678
 DISCORD_CLIENT_SECRET=your-client-secret
 DISCORD_BOT_TOKEN=your-bot-token
 GUILD_ID=987654321098765432
-ADMIN_ROLE_ID=123456789012345678
+ADMIN_ROLE_IDS=123456789012345678
 JWT_SECRET=a1b2c3d4e5f6...your-secure-64-char-hex-string
 WEB_UI_ORIGIN=https://alfira.example.com
 DISCORD_REDIRECT_URI=https://alfira.example.com/auth/callback
