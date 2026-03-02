@@ -24,14 +24,14 @@ flowchart TB
 
     subgraph Server["Node.js Server"]
         API[Express API<br/>:3001]
-        BOT[Discord Bot<br/>@discordjs/voice]
+        BOT[Discord Bot<br/>discord.js Voice]
         SOCKET[Socket.io<br/>Real-time Events]
     end
 
     subgraph Audio["Audio Pipeline"]
         YTDLP[yt-dlp<br/>YouTube Metadata]
         FF[FFmpeg<br/>Audio Transcode]
-        VOICE[@discordjs/voice<br/>Voice Connection]
+        VOICE[discord.js Voice<br/>Voice Connection]
     end
 
     subgraph Data["Data Layer"]
