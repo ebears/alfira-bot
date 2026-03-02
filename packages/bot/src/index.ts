@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Collection, Interaction, InteractionReplyOptions } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, Interaction, InteractionReplyOptions, REST, Routes } from 'discord.js';
 import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
 import { playCommand } from './commands/play';
@@ -11,6 +11,29 @@ import { queueCommand } from './commands/queue';
 import { nowplayingCommand } from './commands/nowplaying';
 import { playlistCommand } from './commands/playlist';
 import type { Command } from './types';
+
+// ---------------------------------------------------------------------------
+// deployCommands
+//
+// Registers slash commands with Discord. Called automatically on startup when
+// AUTO_DEPLOY_COMMANDS is enabled (default: true in production).
+// ---------------------------------------------------------------------------
+async function deployCommands(clientId: string, guildId: string, token: string, commands: Command[]): Promise<void> {
+  const rest = new REST().setToken(token);
+  const commandData = commands.map((c) => c.data.toJSON());
+
+  try {
+    console.log(`🔄 Auto-registering ${commandData.length} slash command(s)...`);
+    await rest.put(
+      Routes.applicationGuildCommands(clientId, guildId),
+      { body: commandData }
+    );
+    console.log('✅ Slash commands registered successfully.');
+  } catch (error) {
+    console.error('❌ Failed to register commands:', error);
+    // Don't throw - the bot can still function, commands just won't work until deployed
+  }
+}
 
 // ---------------------------------------------------------------------------
 // startBot
@@ -26,10 +49,17 @@ import type { Command } from './types';
 // calling startBot(), so they are already on process.env by the time this runs.
 // ---------------------------------------------------------------------------
 export async function startBot(): Promise<void> {
-  const { DISCORD_BOT_TOKEN } = process.env;
+  const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID, AUTO_DEPLOY_COMMANDS } = process.env;
 
+  // Validate required environment variables
   if (!DISCORD_BOT_TOKEN) {
     throw new Error('DISCORD_BOT_TOKEN is not set.');
+  }
+  if (!DISCORD_CLIENT_ID) {
+    throw new Error('DISCORD_CLIENT_ID is not set.');
+  }
+  if (!GUILD_ID) {
+    throw new Error('GUILD_ID is not set.');
   }
 
   const client = new Client({
@@ -59,8 +89,17 @@ export async function startBot(): Promise<void> {
     client.commands.set(command.data.name, command);
   }
 
-  client.once('clientReady', (readyClient) => {
-    console.log(`✅  Bot logged in as ${readyClient.user.tag}`);
+  client.once('clientReady', async (readyClient) => {
+    console.log(`✅ Bot logged in as ${readyClient.user.tag}`);
+
+    // Auto-deploy commands if enabled (default: true for convenience)
+    // Set AUTO_DEPLOY_COMMANDS=false to disable (e.g., for advanced use cases)
+    const shouldAutoDeploy = AUTO_DEPLOY_COMMANDS !== 'false';
+    if (shouldAutoDeploy) {
+      await deployCommands(DISCORD_CLIENT_ID!, GUILD_ID!, DISCORD_BOT_TOKEN!, commands);
+    } else {
+      console.log('ℹ️  Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.');
+    }
   });
 
   client.on('interactionCreate', async (interaction: Interaction) => {
