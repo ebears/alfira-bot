@@ -31,15 +31,30 @@ model Playlist {
 }
 
 model PlaylistSong {
-  id         String   @id @default(cuid())
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  playlist  Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   playlistId String
-  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
-  songId     String
-  position   Int
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  songId    String
+  position  Int
 
   // A song can only appear once per playlist.
   @@unique([playlistId, songId])
+
   // Index on (playlistId, position) makes ordered playlist queries fast.
   @@index([playlistId, position])
+}
+
+// Refresh tokens for JWT authentication.
+// Stored as SHA-256 hash for security - the raw token is never stored.
+// This allows tokens to be revoked by deleting them from the database.
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique // SHA-256 hash of the refresh token
+  discordId String   // Discord user ID this token belongs to
+  expiresAt DateTime // When the refresh token expires
+  createdAt DateTime @default(now())
+
+  // Index for quick lookup by discordId (e.g., when revoking all tokens for a user)
+  @@index([discordId])
 }
