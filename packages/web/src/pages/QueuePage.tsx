@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
 import { startPlayback, getPlaylists, quickAddToQueue } from '../api/api';
@@ -178,20 +178,20 @@ export default function QueuePage() {
                 className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-elevated
                            transition-colors duration-100 group"
               >
-                <span className="font-mono text-xs text-faint w-5 text-right flex-shrink-0">
+                <span className="font-mono text-xs text-faint w-5 text-right shrink-0">
                   {i + 1}
                 </span>
                 <img
                   src={song.thumbnailUrl}
                   alt={song.title}
-                  className="w-10 h-7 object-cover rounded border border-border flex-shrink-0"
+                  className="w-10 h-7 object-cover rounded border border-border shrink-0"
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-body text-sm font-medium text-fg truncate">{song.title}</p>
                   <p className="font-mono text-[10px] text-muted">req. {song.requestedBy}</p>
                 </div>
-                <span className="font-mono text-xs text-muted flex-shrink-0">
+                <span className="font-mono text-xs text-muted shrink-0">
                   {formatDuration(song.duration)}
                 </span>
               </div>
@@ -257,7 +257,7 @@ function NowPlayingCard({
           className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-30"
           aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface/90" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface/90" />
 
         {/* Centred thumbnail */}
         <div className="relative h-full flex items-center justify-center">
@@ -280,7 +280,7 @@ function NowPlayingCard({
 
       {/* Info + progress */}
       <div className="px-5 py-4">
-        <p className="font-body font-bold text-base text-fg truncate leading-tight">
+        <p className="font-body font-bold  text-fg truncate leading-tight">
           {song.title}
         </p>
         <p className="font-mono text-[10px] text-muted mt-0.5">
@@ -354,7 +354,7 @@ function LoadPlaylistModal({
     }
   }, []);
 
-  useState(() => { loadPlaylists(); });
+  useEffect(() => { loadPlaylists(); }, [loadPlaylists]);
 
   const handlePlay = async () => {
     if (!selectedId) return;
