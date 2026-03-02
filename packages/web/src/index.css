@@ -15,8 +15,10 @@
   --color-surface: #111111;
   --color-elevated: #191919;
   --color-border: #252525;
-  --color-accent: #c8f135;
-  --color-accent-muted: #8aaa22;
+  	--color-accent: #c8f135;
+  	--color-accent-muted: #8aaa22;
+  	--color-member: #3b82f6;
+  	--color-member-muted: #1d4ed8;
   --color-fg: #f0f0f0;
   --color-muted: #7a7a7a;
   --color-faint: #333333;
