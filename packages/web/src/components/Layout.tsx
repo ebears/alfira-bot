@@ -27,11 +27,11 @@ export default function Layout() {
       {/* Sidebar                                                             */}
       {/* ------------------------------------------------------------------ */}
       <aside
-        className={`${
-          collapsed ? 'w-16' : 'w-56'
-        } flex-shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden${
-          isAdminView ? ' border-t-2 border-t-accent' : ''
-        }`}
+      className={`${
+      collapsed ? 'w-16' : 'w-56'
+      } shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 ${
+      isAdminView ? 'border-t-accent' : 'border-t-member'
+      }`}
       >
         {/* Wordmark + collapse toggle */}
         <div
@@ -42,26 +42,26 @@ export default function Layout() {
           }`}
         >
           {!collapsed && (
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
-              {isAdminView && (
-                <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
-                  admin
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-2 min-w-0">
+          <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
+          {isAdminView && (
+          <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
+          admin
+          </span>
           )}
-          {collapsed && isAdminView && (
-            <div
-              className="w-7 h-7 flex items-center justify-center text-accent"
-              title="Admin mode"
-            >
-              <IconShield size={18} />
-            </div>
+          </div>
+          )}
+          {collapsed && (
+          <div
+          className={`w-7 h-7 flex items-center justify-center ${isAdminView ? 'text-accent' : 'text-member'}`}
+          title={isAdminView ? 'Admin mode' : 'Member mode'}
+          >
+          {isAdminView ? <IconShield size={18} /> : <IconMusic size={18} />}
+          </div>
           )}
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded text-muted
+            className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted
                        hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -235,7 +235,7 @@ function NowPlayingBar() {
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-border bg-surface">
+    <div className="shrink-0 border-t border-border bg-surface">
       {/* Progress bar — sits flush at the very top of the bar */}
       <div className="h-px w-full bg-elevated relative overflow-hidden">
         <div
@@ -247,7 +247,7 @@ function NowPlayingBar() {
       <div className="h-16 flex items-center px-6 gap-4">
         {/* Thumbnail + song info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-9 h-9 rounded bg-elevated border border-border flex-shrink-0 overflow-hidden">
+          <div className="w-9 h-9 rounded bg-elevated border border-border shrink-0 overflow-hidden">
             {currentSong ? (
               <img
                 src={currentSong.thumbnailUrl}
@@ -284,7 +284,7 @@ function NowPlayingBar() {
 
         {/* Playback controls */}
         {currentSong && (
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <BarButton
               onClick={handlePauseResume}
               busy={pauseBusy}
