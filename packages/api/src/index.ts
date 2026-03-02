@@ -3,6 +3,7 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import prisma from './lib/prisma';
 import { initSocket, emitPlayerUpdate } from './lib/socket';
 import { errorHandler } from './middleware/errorHandler';
@@ -48,6 +49,13 @@ const app = express();
 // Trust X-Forwarded-For only from the Caddy machine.
 // Replace with your actual Caddy machine's LAN IP.
 app.set('trust proxy', process.env.TRUSTED_PROXY_IP ?? false);
+
+// Security headers middleware.
+// CSP is disabled since this is an API-only server; the web frontend
+// should set its own Content-Security-Policy.
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 
 app.use(cors({
   origin: process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173',
