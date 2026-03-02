@@ -1,3 +1,7 @@
+# yt-dlp version pin — update both ARGs together when upgrading
+ARG YTDLP_VERSION=2026.02.21
+ARG YTDLP_SHA256=057098b1390e8d4931e143eb889e9bbe088f17e40a2936f31ee218909f806f5f
+
 # ---------------------------------------------------------------------------
 # Dependencies stage - install system deps and npm packages
 # ---------------------------------------------------------------------------
@@ -7,6 +11,8 @@ FROM node:24-alpine AS deps
 # ffmpeg: audio processing for the bot
 # python3: required for yt-dlp
 # openssl, libc6-compat: required for Prisma
+ARG YTDLP_VERSION
+ARG YTDLP_SHA256
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
@@ -14,7 +20,9 @@ RUN apk add --no-cache \
     openssl \
     libc6-compat \
     curl && \
-    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    curl -L "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
+      -o /usr/local/bin/yt-dlp && \
+    echo "${YTDLP_SHA256}  /usr/local/bin/yt-dlp" | sha256sum -c && \
     chmod a+rx /usr/local/bin/yt-dlp && \
     # Clean up curl after use (not needed at runtime)
     apk del curl
@@ -81,16 +89,20 @@ RUN npm prune --production && \
 FROM node:24-alpine AS runtime
 
 # Install only runtime dependencies (no build tools)
+ARG YTDLP_VERSION
+ARG YTDLP_SHA256
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
     ca-certificates \
     openssl \
-    libc6-compat && \
-    # Download yt-dlp
-    wget -q https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp && \
+    libc6-compat \
+    curl && \
+    curl -L "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
+      -o /usr/local/bin/yt-dlp && \
+    echo "${YTDLP_SHA256}  /usr/local/bin/yt-dlp" | sha256sum -c && \
     chmod a+rx /usr/local/bin/yt-dlp && \
-    # Clean up wget
+    apk del curl && \
     rm -rf /var/cache/apk/*
 
 WORKDIR /app
