@@ -1,7 +1,3 @@
-# yt-dlp version pin — update both ARGs together when upgrading
-ARG YTDLP_VERSION=2026.02.21
-ARG YTDLP_SHA256=057098b1390e8d4931e143eb889e9bbe088f17e40a2936f31ee218909f806f5f
-
 # ---------------------------------------------------------------------------
 # Dependencies stage - install system deps and npm packages
 # ---------------------------------------------------------------------------
@@ -11,8 +7,7 @@ FROM node:24-alpine AS deps
 # ffmpeg: audio processing for the bot
 # python3: required for yt-dlp
 # openssl, libc6-compat: required for Prisma
-ARG YTDLP_VERSION
-ARG YTDLP_SHA256
+ARG YTDLP_VERSION=2026.02.21
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
@@ -20,9 +15,12 @@ RUN apk add --no-cache \
     openssl \
     libc6-compat \
     curl && \
-    curl -L "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
+    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
       -o /usr/local/bin/yt-dlp && \
-    echo "${YTDLP_SHA256}  /usr/local/bin/yt-dlp" | sha256sum -c && \
+    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/SHA2-256SUMS" \
+      -o /tmp/yt-dlp-sums && \
+    grep " yt-dlp$" /tmp/yt-dlp-sums | sed 's| yt-dlp$| /usr/local/bin/yt-dlp|' | sha256sum -c - && \
+    rm /tmp/yt-dlp-sums && \
     chmod a+rx /usr/local/bin/yt-dlp && \
     # Clean up curl after use (not needed at runtime)
     apk del curl
@@ -89,8 +87,7 @@ RUN npm prune --production && \
 FROM node:24-alpine AS runtime
 
 # Install only runtime dependencies (no build tools)
-ARG YTDLP_VERSION
-ARG YTDLP_SHA256
+ARG YTDLP_VERSION=2026.02.21
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
@@ -98,9 +95,12 @@ RUN apk add --no-cache \
     openssl \
     libc6-compat \
     curl && \
-    curl -L "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
+    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
       -o /usr/local/bin/yt-dlp && \
-    echo "${YTDLP_SHA256}  /usr/local/bin/yt-dlp" | sha256sum -c && \
+    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/SHA2-256SUMS" \
+      -o /tmp/yt-dlp-sums && \
+    grep " yt-dlp$" /tmp/yt-dlp-sums | sed 's| yt-dlp$| /usr/local/bin/yt-dlp|' | sha256sum -c - && \
+    rm /tmp/yt-dlp-sums && \
     chmod a+rx /usr/local/bin/yt-dlp && \
     apk del curl && \
     rm -rf /var/cache/apk/*
