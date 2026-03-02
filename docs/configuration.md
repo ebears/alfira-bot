@@ -60,6 +60,14 @@ cp packages/bot/.env.example packages/bot/.env
 | `DISCORD_BOT_TOKEN` | Discord bot token (same as API) | `MTAwMC4xMjM0NTY3ODkw...` |
 | `DISCORD_CLIENT_ID` | Discord application client ID (same as API) | `123456789012345678` |
 
+### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AUTO_DEPLOY_COMMANDS` | Auto-register slash commands on startup | `true` |
+
+> **Note:** Set `AUTO_DEPLOY_COMMANDS=false` if you want to manually control when slash commands are registered. This is useful for advanced use cases where you want to test command changes before deploying them.
+
 ---
 
 ## Database Configuration

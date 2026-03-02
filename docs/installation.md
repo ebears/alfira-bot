@@ -186,7 +186,26 @@ docker compose restart api
 # Rebuild a specific service
 docker compose build api
 docker compose up -d api
+
+# Manually register slash commands with Discord
+docker compose exec api npm run bot:deploy
 ```
+
+### Slash Commands Registration
+
+Slash commands must be registered with Discord before the bot will respond to them. By default, commands are auto-registered on startup.
+
+**Automatic Registration (Default):**
+Commands are automatically registered when the bot starts. Set `AUTO_DEPLOY_COMMANDS=false` to disable this behavior.
+
+**Manual Registration:**
+If you add, remove, or rename commands while the bot is running, run this to update Discord:
+
+```bash
+docker compose exec api npm run bot:deploy
+```
+
+> **Note:** Guild commands update instantly (no propagation delay). Without registered commands, slash commands won't appear in Discord.
 
 ---
 
@@ -212,6 +231,9 @@ cp .env.example .env
 
 # 4. Start all services
 docker compose -f docker-compose.prod.yml up -d
+
+# 5. Register slash commands (automatic on startup, but can be run manually)
+docker compose -f docker-compose.prod.yml exec api npm run bot:deploy
 ```
 
 That's it! The stack will pull the pre-built images and start:
@@ -242,6 +264,22 @@ All configuration is handled through a single `.env` file in the project root. C
 | `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
 
 > **Security:** Use a strong, random `JWT_SECRET`. Generate one with: `openssl rand -hex 32`
+
+### Slash Commands Registration
+
+Slash commands must be registered with Discord before the bot will respond to them. By default, commands are auto-registered on startup.
+
+**Automatic Registration (Default):**
+Commands are automatically registered when the bot starts. Set `AUTO_DEPLOY_COMMANDS=false` to disable this behavior.
+
+**Manual Registration:**
+If you add, remove, or rename commands, run this to update Discord:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api npm run bot:deploy
+```
+
+> **Important:** Without registered commands, slash commands won't appear in Discord. Guild commands update instantly (no propagation delay).
 
 ### Reverse Proxy (Optional)
 
