@@ -18,6 +18,7 @@ export interface Playlist {
   id: string;
   name: string;
   createdBy: string;
+  createdByDisplayName?: string;
   isPrivate: boolean;
   createdAt: string;
   _count?: { songs: number };

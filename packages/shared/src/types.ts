@@ -68,6 +68,7 @@ export interface Playlist {
   id: string;
   name: string;
   createdBy: string;
+  createdByDisplayName?: string;
   isPrivate: boolean;
   createdAt: Date;
   songs?: PlaylistSong[];
