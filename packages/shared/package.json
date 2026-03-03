@@ -2,5 +2,7 @@
   "name": "@discord-music-bot/shared",
   "version": "0.1.0",
   "private": true,
-  "main": "src/types.ts"
+  "main": "src/types.ts",
+  "types": "src/types.ts",
+  "_note": "Source-only package. Consumed directly by ts-node (api/bot) and Vite (web). No build step. All imports use 'import type' so types are erased at compile time."
 }
