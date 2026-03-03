@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # Dependencies stage - install system deps and npm packages
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS deps
+FROM node:25-alpine AS deps
 
 # Install system dependencies needed for build and runtime
 # ffmpeg: audio processing for the bot
@@ -84,7 +84,7 @@ RUN npm prune --production && \
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS runtime
+FROM node:25-alpine AS runtime
 
 # Install only runtime dependencies (no build tools)
 ARG YTDLP_VERSION=2026.03.03
