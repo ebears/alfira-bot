@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      discord:
+        patterns:
+          - "discord.js"
+          - "@discordjs/*"
+      prisma:
+        patterns:
+          - "prisma"
+          - "@prisma/*"
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
