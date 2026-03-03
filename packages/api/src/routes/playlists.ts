@@ -4,10 +4,31 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { emitPlaylistUpdated } from '../lib/socket';
+import { getClient } from '@discord-music-bot/bot/src/lib/client';
 
 const router = Router();
-
 const MAX_NAME_LENGTH = 200;
+
+// ---------------------------------------------------------------------------
+// Helper: Fetch user's display name from Discord
+// Returns nickname if set, otherwise username
+// ---------------------------------------------------------------------------
+async function getUserDisplayName(discordId: string): Promise<string> {
+  const client = getClient();
+  if (!client) return discordId;
+
+  try {
+    // Use the configured guild ID from environment
+    const guildId = process.env.GUILD_ID;
+    if (!guildId) return discordId;
+
+    const guild = await client.guilds.fetch(guildId);
+    const member = await guild.members.fetch(discordId);
+    return member.displayName || member.user.username || discordId;
+  } catch {
+    return discordId;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // GET /api/playlists
@@ -29,7 +50,15 @@ router.get(
       return pl.createdBy === req.user!.discordId || req.user!.isAdmin;
     });
 
-    res.json(filteredPlaylists);
+    // Fetch creator display names for each playlist
+    const playlistsWithCreator = await Promise.all(
+      filteredPlaylists.map(async (pl) => ({
+        ...pl,
+        createdByDisplayName: await getUserDisplayName(pl.createdBy),
+      }))
+    );
+
+    res.json(playlistsWithCreator);
   })
 );
 
@@ -101,9 +130,12 @@ router.get(
       }
     }
 
-    res.json(playlist);
-  })
-);
+    		res.json({
+    			...playlist,
+    			createdByDisplayName: await getUserDisplayName(playlist.createdBy),
+    		});
+    	})
+    );
 
 // ---------------------------------------------------------------------------
 // PATCH /api/playlists/:id/visibility

@@ -235,7 +235,7 @@ export default function PlaylistDetailPage() {
             {' • '}
             {user?.discordId === playlist.createdBy
               ? 'Created by you'
-              : `Created by ${playlist.createdBy}`}
+              : `Created by ${playlist.createdByDisplayName || playlist.createdBy}`}
           </p>
         </div>
 
