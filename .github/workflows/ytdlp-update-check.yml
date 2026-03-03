@@ -42,7 +42,7 @@ jobs:
 
       - name: Create issue for yt-dlp update
         if: steps.check.outputs.update_available == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const currentVersion = '${{ steps.check.outputs.current_version }}';
