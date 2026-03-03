@@ -15,14 +15,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '25'
-          cache: 'npm'
+          node-version: "25"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Generate Prisma client
         run: DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
+
+      - name: Build bot package
+        run: npm run -w packages/bot build
 
       - name: Typecheck API
         run: npx tsc --noEmit -p packages/api/tsconfig.json
