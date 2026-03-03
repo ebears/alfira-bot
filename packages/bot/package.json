@@ -8,7 +8,8 @@
     ".": "./dist/bot/src/index.js",
     "./src/utils/ytdlp": "./dist/bot/src/utils/ytdlp.js",
     "./src/player/manager": "./dist/bot/src/player/manager.js",
-    "./src/lib/broadcast": "./dist/bot/src/lib/broadcast.js"
+    "./src/lib/broadcast": "./dist/bot/src/lib/broadcast.js",
+    "./src/lib/client": "./dist/bot/src/lib/client.js"
   },
   "scripts": {
     "deploy": "ts-node src/deploy-commands.ts",
