@@ -39,15 +39,18 @@ router.get(
   '/',
   requireAuth,
   asyncHandler(async (req, res) => {
+    const adminView = req.query.adminView === 'true';
     const playlists = await prisma.playlist.findMany({
       orderBy: { createdAt: 'asc' },
       include: { _count: { select: { songs: true } } },
     });
 
-    // Filter private playlists: only visible to creator and admins
+    // Filter private playlists: only visible to creator and admins (in Admin View)
     const filteredPlaylists = playlists.filter((pl) => {
       if (!pl.isPrivate) return true;
-      return pl.createdBy === req.user!.discordId || req.user!.isAdmin;
+      const isCreator = pl.createdBy === req.user!.discordId;
+      const isAdminInAdminView = req.user!.isAdmin && adminView;
+      return isCreator || isAdminInAdminView;
     });
 
     // Fetch creator display names for each playlist
@@ -105,6 +108,7 @@ router.get(
   '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
+    const adminView = req.query.adminView === 'true';
     const playlist = await prisma.playlist.findUnique({
       where: { id: req.params.id as string },
       include: {
@@ -123,8 +127,8 @@ router.get(
     // Check access for private playlists
     if (playlist.isPrivate) {
       const isCreator = playlist.createdBy === req.user!.discordId;
-      const isAdmin = req.user!.isAdmin;
-      if (!isCreator && !isAdmin) {
+      const isAdminInAdminView = req.user!.isAdmin && adminView;
+      if (!isCreator && !isAdminInAdminView) {
         res.status(403).json({ error: 'Access denied. This playlist is private.' });
         return;
       }
@@ -147,8 +151,7 @@ router.patch(
   '/:id/visibility',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const { isPrivate } = req.body as { isPrivate?: boolean };
-
+    const { isPrivate, adminView } = req.body as { isPrivate?: boolean; adminView?: boolean };
     if (typeof isPrivate !== 'boolean') {
       res.status(400).json({ error: 'isPrivate (boolean) is required.' });
       return;
@@ -163,12 +166,11 @@ router.patch(
       return;
     }
 
-    // Check permissions: creator or admin
+    // Check permissions: creator or admin (in Admin View)
     const isCreator = existing.createdBy === req.user!.discordId;
-    const isAdmin = req.user!.isAdmin;
-
-    if (!isCreator && !isAdmin) {
-      res.status(403).json({ error: 'Only the creator or admins can change visibility.' });
+    const isAdminInAdminView = req.user!.isAdmin && adminView;
+    if (!isCreator && !isAdminInAdminView) {
+      res.status(403).json({ error: 'Only the creator or admins (in Admin View) can change visibility.' });
       return;
     }
 

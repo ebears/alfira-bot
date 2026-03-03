@@ -18,14 +18,20 @@ export const deleteSong = (id: string) => client.delete(`/api/songs/${id}`);
 // ---------------------------------------------------------------------------
 // Playlists
 // ---------------------------------------------------------------------------
-export const getPlaylists = () => client.get<Playlist[]>('/api/playlists').then((r) => r.data);
+export const getPlaylists = (adminView?: boolean) => {
+  const params = adminView ? '?adminView=true' : '';
+  return client.get<Playlist[]>(`/api/playlists${params}`).then((r) => r.data);
+};
 export const createPlaylist = (name: string) => client.post<Playlist>('/api/playlists', { name }).then((r) => r.data);
-export const getPlaylist = (id: string) => client.get<PlaylistDetail>(`/api/playlists/${id}`).then((r) => r.data);
+export const getPlaylist = (id: string, adminView?: boolean) => {
+  const params = adminView ? '?adminView=true' : '';
+  return client.get<PlaylistDetail>(`/api/playlists/${id}${params}`).then((r) => r.data);
+};
 export const renamePlaylist = (id: string, name: string) => client.patch<Playlist>(`/api/playlists/${id}`, { name }).then((r) => r.data);
 export const deletePlaylist = (id: string) => client.delete(`/api/playlists/${id}`);
 export const addSongToPlaylist = (playlistId: string, songId: string) => client.post(`/api/playlists/${playlistId}/songs`, { songId });
 export const removeSongFromPlaylist = (playlistId: string, songId: string) => client.delete(`/api/playlists/${playlistId}/songs/${songId}`);
-export const togglePlaylistVisibility = (playlistId: string, isPrivate: boolean) => client.patch<Playlist>(`/api/playlists/${playlistId}/visibility`, { isPrivate }).then((r) => r.data);
+export const togglePlaylistVisibility = (playlistId: string, isPrivate: boolean, adminView?: boolean) => client.patch<Playlist>(`/api/playlists/${playlistId}/visibility`, { isPrivate, adminView }).then((r) => r.data);
 
 // ---------------------------------------------------------------------------
 // Player
