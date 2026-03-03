@@ -158,16 +158,23 @@ function PlaylistRow({
       onClick={onClick}
     >
       {/* Icon */}
-      <div className="w-10 h-10 rounded bg-accent/10 border border-accent/20 flex-shrink-0
+      <div className="w-10 h-10 rounded bg-accent/10 border border-accent/20 shrink-0
                       flex items-center justify-center">
         <ListIcon size={16} className="text-accent" />
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="font-body font-semibold text-fg group-hover:text-accent transition-colors duration-150">
-          {playlist.name}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="font-body font-semibold text-fg group-hover:text-accent transition-colors duration-150">
+            {playlist.name}
+          </p>
+          {playlist.isPrivate && (
+            <span className="text-muted" title="Private playlist">
+              👻
+            </span>
+          )}
+        </div>
         <p className="font-mono text-xs text-muted mt-0.5">
           {count} {count === 1 ? 'song' : 'songs'}
         </p>

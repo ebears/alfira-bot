@@ -134,22 +134,32 @@ router.post(
     // Fetch songs from the database.
     let dbSongs: Song[];
     if (playlistId) {
-      const playlist = await prisma.playlist.findUnique({
-        where: { id: playlistId },
-        include: {
-          songs: {
-            orderBy: { position: 'asc' },
-            include: { song: true },
-          },
-        },
-      });
+    const playlist = await prisma.playlist.findUnique({
+    where: { id: playlistId },
+    include: {
+    songs: {
+    orderBy: { position: 'asc' },
+    include: { song: true },
+    },
+    },
+    });
 
-      if (!playlist) {
-        res.status(404).json({ error: 'Playlist not found.' });
-        return;
-      }
+    if (!playlist) {
+    res.status(404).json({ error: 'Playlist not found.' });
+    return;
+    }
 
-      dbSongs = playlist.songs.map((ps: { song: Song }): Song => ps.song);
+    // Check access for private playlists
+    if (playlist.isPrivate) {
+    const isCreator = playlist.createdBy === req.user!.discordId;
+    const isAdmin = req.user!.isAdmin;
+    if (!isCreator && !isAdmin) {
+    res.status(403).json({ error: 'Access denied. This playlist is private.' });
+    return;
+    }
+    }
+
+    dbSongs = playlist.songs.map((ps: { song: Song }): Song => ps.song);
     } else {
       dbSongs = await prisma.song.findMany({ orderBy: { createdAt: 'asc' } });
     }

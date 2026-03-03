@@ -25,6 +25,7 @@ export const renamePlaylist = (id: string, name: string) => client.patch<Playlis
 export const deletePlaylist = (id: string) => client.delete(`/api/playlists/${id}`);
 export const addSongToPlaylist = (playlistId: string, songId: string) => client.post(`/api/playlists/${playlistId}/songs`, { songId });
 export const removeSongFromPlaylist = (playlistId: string, songId: string) => client.delete(`/api/playlists/${playlistId}/songs/${songId}`);
+export const togglePlaylistVisibility = (playlistId: string, isPrivate: boolean) => client.patch<Playlist>(`/api/playlists/${playlistId}/visibility`, { isPrivate }).then((r) => r.data);
 
 // ---------------------------------------------------------------------------
 // Player

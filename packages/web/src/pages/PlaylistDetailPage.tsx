@@ -3,15 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   getPlaylist, renamePlaylist, removeSongFromPlaylist,
   addSongToPlaylist, getSongs, startPlayback, deletePlaylist,
+  togglePlaylistVisibility,
 } from '../api/api';
 import type { PlaylistDetail, Song, LoopMode, Playlist } from '../api/types';
 import { useAdminView } from '../context/AdminViewContext';
+import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
 import { usePlayer } from '../context/PlayerContext';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isAdminView } = useAdminView();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const socket = useSocket();
 
@@ -115,6 +118,24 @@ export default function PlaylistDetailPage() {
     navigate('/playlists');
   };
 
+  const handleToggleVisibility = async () => {
+    if (!playlist) return;
+    try {
+      const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate);
+      setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
+      setNotification({
+        message: updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public',
+        type: 'success',
+      });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not toggle visibility.';
+      setNotification({ message: errorMsg, type: 'error' });
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
+
   const handlePlayFromSong = async (
     songId: string,
     mode: 'sequential' | 'random' = 'sequential',
@@ -192,22 +213,33 @@ export default function PlaylistDetailPage() {
               style={{ fontSize: '3rem', lineHeight: 1 }}
             />
           ) : (
-            <h1
-              className={`font-display text-5xl text-fg tracking-wider ${
-                canEdit ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
-              }`}
-              onClick={() => canEdit && setEditingName(true)}
-              title={canEdit ? 'Click to rename' : undefined}
-            >
-              {playlist.name}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1
+                className={`font-display text-5xl text-fg tracking-wider ${
+                  canEdit ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
+                }`}
+                onClick={() => canEdit && setEditingName(true)}
+                title={canEdit ? 'Click to rename' : undefined}
+              >
+                {playlist.name}
+              </h1>
+              {playlist.isPrivate && (
+                <span className="text-muted text-sm" title="Private playlist">
+                  👻 private
+                </span>
+              )}
+            </div>
           )}
           <p className="font-mono text-xs text-muted mt-1">
             {playlist.songs.length} {playlist.songs.length === 1 ? 'track' : 'tracks'}
+            {' • '}
+            {user?.discordId === playlist.createdBy
+              ? 'Created by you'
+              : `Created by ${playlist.createdBy}`}
           </p>
         </div>
 
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 shrink-0">
           <button
             className="btn-ghost text-xs flex items-center gap-1.5"
             onClick={() => handleAddPlaylistToQueue()}
@@ -216,14 +248,22 @@ export default function PlaylistDetailPage() {
           >
             <PlusIcon size={14} /> Add to Queue
           </button>
-          <button
-            className="btn-primary text-xs flex items-center gap-1.5"
+          <button className="btn-primary text-xs flex items-center gap-1.5"
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
-          >
+            >
             <PlayIcon size={14} /> Play
-          </button>
-          {isAdminView && (
+            </button>
+            {(user?.discordId === playlist.createdBy || isAdminView) && (
+            <button
+            className="btn-ghost text-xs flex items-center gap-1.5"
+            onClick={handleToggleVisibility}
+            title={playlist.isPrivate ? 'Make playlist public' : 'Make playlist private'}
+            >
+            {playlist.isPrivate ? '🔓 Make Public' : '🔒 Make Private'}
+            </button>
+            )}
+            {isAdminView && (
             <>
               {isEditMode && (
                 <>
@@ -323,7 +363,7 @@ function SongRow({
   return (
     <div className="flex items-center gap-4 px-4 py-3 rounded-lg group
                     hover:bg-elevated transition-colors duration-100">
-      <div className="w-6 flex-shrink-0 flex justify-end">
+      <div className="w-6 shrink-0 flex justify-end">
         <span className={`font-mono text-xs text-faint text-right ${isPlaying ? 'hidden' : 'group-hover:hidden'}`}>
           {position}
         </span>
@@ -345,13 +385,13 @@ function SongRow({
       <img
         src={song.thumbnailUrl}
         alt={song.title}
-        className="w-10 h-7 object-cover rounded border border-border flex-shrink-0"
+        className="w-10 h-7 object-cover rounded border border-border shrink-0"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
         <p className="font-body text-sm font-medium text-fg truncate">{song.title}</p>
       </div>
-      <span className="font-mono text-xs text-muted flex-shrink-0">
+      <span className="font-mono text-xs text-muted shrink-0">
         {formatDuration(song.duration)}
       </span>
       {isAdmin && (
@@ -449,7 +489,7 @@ function AddSongsModal({
                   <img
                     src={song.thumbnailUrl}
                     alt={song.title}
-                    className="w-10 h-7 object-cover rounded border border-border flex-shrink-0"
+                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
                     loading="lazy"
                   />
                   <span className="flex-1 font-body text-sm text-fg truncate">{song.title}</span>

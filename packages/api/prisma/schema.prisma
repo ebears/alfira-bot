@@ -23,11 +23,12 @@ model Song {
 }
 
 model Playlist {
-  id        String         @id @default(cuid())
-  name      String
-  createdBy String         // Discord user ID (or 'system' before Phase 5)
-  createdAt DateTime       @default(now())
-  songs     PlaylistSong[]
+  id          String   @id @default(cuid())
+  name        String
+  createdBy   String   // Discord user ID (or 'system' before Phase 5)
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  songs       PlaylistSong[]
 }
 
 model PlaylistSong {
