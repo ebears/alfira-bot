@@ -15,13 +15,13 @@ export default function PlaylistsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setPlaylists(await getPlaylists());
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setLoading(true);
+      try {
+        setPlaylists(await getPlaylists(isAdminView));
+      } finally {
+        setLoading(false);
+      }
+    }, [isAdminView]);
 
   useEffect(() => { load(); }, [load]);
 

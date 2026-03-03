@@ -39,7 +39,7 @@ export default function PlaylistDetailPage() {
     if (!id) return;
     setLoading(true);
     try {
-      const pl = await getPlaylist(id);
+      const pl = await getPlaylist(id, isAdminView);
       setPlaylist(pl);
       setNameValue(pl.name);
     } catch {
@@ -47,7 +47,7 @@ export default function PlaylistDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id, navigate]);
+  }, [id, navigate, isAdminView]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -119,9 +119,9 @@ export default function PlaylistDetailPage() {
   };
 
   const handleToggleVisibility = async () => {
-    if (!playlist) return;
-    try {
-      const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate);
+  if (!playlist) return;
+  try {
+  const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate, isAdminView);
       setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
       setNotification({
         message: updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public',
