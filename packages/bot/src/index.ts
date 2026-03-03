@@ -1,4 +1,5 @@
 import { Client, GatewayIntentBits, Collection, Interaction, InteractionReplyOptions, REST, Routes } from 'discord.js';
+import { setClient } from './lib/client';
 import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
 import { playCommand } from './commands/play';
@@ -62,12 +63,15 @@ export async function startBot(): Promise<void> {
     throw new Error('GUILD_ID is not set.');
   }
 
-  const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildVoiceStates,
-    ],
-  });
+  	const client = new Client({
+  		intents: [
+  			GatewayIntentBits.Guilds,
+  			GatewayIntentBits.GuildVoiceStates,
+  		],
+  	});
+
+  	// Expose the client so the API can access it for auto-join functionality.
+  	setClient(client);
 
   client.commands = new Collection<string, Command>();
 

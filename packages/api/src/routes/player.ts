@@ -1,6 +1,9 @@
 import { Router } from 'express';
-import { getVoiceConnection } from '@discordjs/voice';
+import { getVoiceConnection, joinVoiceChannel, VoiceConnectionStatus, entersState } from '@discordjs/voice';
+import { TextChannel } from 'discord.js';
 import prisma from '../lib/prisma';
+import { getClient } from '@discord-music-bot/bot/src/lib/client';
+import { createPlayer } from '@discord-music-bot/bot/src/player/manager';
 import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -76,13 +79,56 @@ router.post(
       startFromSongId?: string;
     };
 
-    const player = getPlayer(GUILD_ID);
-
+    let player = getPlayer(GUILD_ID);
     if (!player) {
-      res.status(409).json({
-        error: 'The bot is not in a voice channel. Use /join in Discord first.',
-      });
-      return;
+      // Auto-join: Find the user's voice channel and join it.
+      const discordClient = getClient();
+      if (!discordClient) {
+        res.status(503).json({ error: 'Discord bot is not ready yet.' });
+        return;
+      }
+
+      try {
+        const guild = await discordClient.guilds.fetch(GUILD_ID);
+        const member = await guild.members.fetch(req.user!.discordId);
+        const voiceChannel = member.voice.channel;
+
+        if (!voiceChannel) {
+          res.status(409).json({
+            error: 'You are not in a voice channel. Join a voice channel in Discord first.',
+          });
+          return;
+        }
+
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: GUILD_ID,
+          adapterCreator: guild.voiceAdapterCreator,
+        });
+
+        await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+
+        // Use DEFAULT_TEXT_CHANNEL_ID if set, otherwise fall back to system channel.
+        const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
+        const textChannel = textChannelId
+          ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
+          : (guild.systemChannel as TextChannel | null);
+
+        if (!textChannel) {
+          res.status(503).json({
+            error: 'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+          });
+          return;
+        }
+
+        player = createPlayer(GUILD_ID, connection, textChannel);
+      } catch (error) {
+        console.error('Failed to auto-join voice channel:', error);
+        res.status(503).json({
+          error: 'Could not connect to your voice channel. Try using /join in Discord first.',
+        });
+        return;
+      }
     }
 
     // Fetch songs from the database.
@@ -328,12 +374,55 @@ router.post(
       return;
     }
 
-    const player = getPlayer(GUILD_ID);
+    let player = getPlayer(GUILD_ID);
     if (!player) {
-      res.status(409).json({
-        error: 'The bot is not in a voice channel. Use /join in Discord first.',
-      });
-      return;
+      // Auto-join: Find the user's voice channel and join it.
+      const discordClient = getClient();
+      if (!discordClient) {
+        res.status(503).json({ error: 'Discord bot is not ready yet.' });
+        return;
+      }
+
+      try {
+        const guild = await discordClient.guilds.fetch(GUILD_ID);
+        const member = await guild.members.fetch(req.user!.discordId);
+        const voiceChannel = member.voice.channel;
+
+        if (!voiceChannel) {
+          res.status(409).json({
+            error: 'You are not in a voice channel. Join a voice channel in Discord first.',
+          });
+          return;
+        }
+
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: GUILD_ID,
+          adapterCreator: guild.voiceAdapterCreator,
+        });
+
+        await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+
+        const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
+        const textChannel = textChannelId
+          ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
+          : (guild.systemChannel as TextChannel | null);
+
+        if (!textChannel) {
+          res.status(503).json({
+            error: 'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+          });
+          return;
+        }
+
+        player = createPlayer(GUILD_ID, connection, textChannel);
+      } catch (error) {
+        console.error('Failed to auto-join voice channel:', error);
+        res.status(503).json({
+          error: 'Could not connect to your voice channel. Try using /join in Discord first.',
+        });
+        return;
+      }
     }
 
     // Fetch metadata from YouTube
