@@ -207,7 +207,7 @@ export default function PlaylistDetailPage() {
           </p>
         </div>
 
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 shrink-0">
           <button
             className="btn-ghost text-xs flex items-center gap-1.5"
             onClick={() => handleAddPlaylistToQueue()}
@@ -323,7 +323,7 @@ function SongRow({
   return (
     <div className="flex items-center gap-4 px-4 py-3 rounded-lg group
                     hover:bg-elevated transition-colors duration-100">
-      <div className="w-6 flex-shrink-0 flex justify-end">
+      <div className="w-6 shrink-0 flex justify-end">
         <span className={`font-mono text-xs text-faint text-right ${isPlaying ? 'hidden' : 'group-hover:hidden'}`}>
           {position}
         </span>
@@ -345,13 +345,13 @@ function SongRow({
       <img
         src={song.thumbnailUrl}
         alt={song.title}
-        className="w-10 h-7 object-cover rounded border border-border flex-shrink-0"
+        className="w-10 h-7 object-cover rounded border border-border shrink-0"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
         <p className="font-body text-sm font-medium text-fg truncate">{song.title}</p>
       </div>
-      <span className="font-mono text-xs text-muted flex-shrink-0">
+      <span className="font-mono text-xs text-muted shrink-0">
         {formatDuration(song.duration)}
       </span>
       {isAdmin && (
@@ -449,7 +449,7 @@ function AddSongsModal({
                   <img
                     src={song.thumbnailUrl}
                     alt={song.title}
-                    className="w-10 h-7 object-cover rounded border border-border flex-shrink-0"
+                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
                     loading="lazy"
                   />
                   <span className="flex-1 font-body text-sm text-fg truncate">{song.title}</span>

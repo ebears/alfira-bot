@@ -17,12 +17,19 @@ const MAX_NAME_LENGTH = 200;
 router.get(
   '/',
   requireAuth,
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     const playlists = await prisma.playlist.findMany({
       orderBy: { createdAt: 'asc' },
       include: { _count: { select: { songs: true } } },
     });
-    res.json(playlists);
+
+    // Filter private playlists: only visible to creator and admins
+    const filteredPlaylists = playlists.filter((pl) => {
+      if (!pl.isPrivate) return true;
+      return pl.createdBy === req.user!.discordId || req.user!.isAdmin;
+    });
+
+    res.json(filteredPlaylists);
   })
 );
 
@@ -84,6 +91,62 @@ router.get(
       return;
     }
 
+    // Check access for private playlists
+    if (playlist.isPrivate) {
+      const isCreator = playlist.createdBy === req.user!.discordId;
+      const isAdmin = req.user!.isAdmin;
+      if (!isCreator && !isAdmin) {
+        res.status(403).json({ error: 'Access denied. This playlist is private.' });
+        return;
+      }
+    }
+
+    res.json(playlist);
+  })
+);
+
+// ---------------------------------------------------------------------------
+// PATCH /api/playlists/:id/visibility
+//
+// Toggles playlist visibility (public/private).
+// Creator always, admins in Admin View.
+// ---------------------------------------------------------------------------
+router.patch(
+  '/:id/visibility',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { isPrivate } = req.body as { isPrivate?: boolean };
+
+    if (typeof isPrivate !== 'boolean') {
+      res.status(400).json({ error: 'isPrivate (boolean) is required.' });
+      return;
+    }
+
+    const existing = await prisma.playlist.findUnique({
+      where: { id: req.params.id as string },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Playlist not found.' });
+      return;
+    }
+
+    // Check permissions: creator or admin
+    const isCreator = existing.createdBy === req.user!.discordId;
+    const isAdmin = req.user!.isAdmin;
+
+    if (!isCreator && !isAdmin) {
+      res.status(403).json({ error: 'Only the creator or admins can change visibility.' });
+      return;
+    }
+
+    const playlist = await prisma.playlist.update({
+      where: { id: req.params.id as string },
+      data: { isPrivate },
+      include: { _count: { select: { songs: true } } },
+    });
+
+    emitPlaylistUpdated(playlist);
     res.json(playlist);
   })
 );
