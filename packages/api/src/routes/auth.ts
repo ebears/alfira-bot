@@ -34,15 +34,40 @@ const ADMIN_ROLE_ID_SET = new Set(
 // isAdmin status. This limits the window where a revoked admin can still
 // access admin features.
 //
-// Refresh tokens are long-lived (7 days) and stored in the database as a
-// SHA-256 hash. They can be revoked by deleting them from the database.
+// Refresh tokens are long-lived (7 days by default) and stored in the database
+// as a SHA-256 hash. They can be revoked by deleting them from the database.
 // When a user refreshes, we re-fetch their roles from Discord to ensure
 // admin status is up-to-date.
 // ---------------------------------------------------------------------------
 const ACCESS_TOKEN_EXPIRES_IN = '1h';
-const REFRESH_TOKEN_EXPIRES_IN = '7d';
+const REFRESH_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN ?? '7d';
 const ACCESS_COOKIE_NAME = 'session';
 const REFRESH_COOKIE_NAME = 'refresh_token';
+
+// ---------------------------------------------------------------------------
+// Helper: Parse duration string to milliseconds
+//
+// Parses strings like '7d', '1h', '30m' into milliseconds.
+// This is used to sync cookie maxAge and database expiry with JWT expiry.
+// ---------------------------------------------------------------------------
+function parseDuration(duration: string): number {
+  const match = duration.match(/^(\d+)([dhms])$/);
+  if (!match) {
+    console.warn(`Invalid JWT_EXPIRES_IN format "${duration}", defaulting to 7d`);
+    return 7 * 24 * 60 * 60 * 1000;
+  }
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case 'd': return value * 24 * 60 * 60 * 1000;
+    case 'h': return value * 60 * 60 * 1000;
+    case 'm': return value * 60 * 1000;
+    case 's': return value * 1000;
+    default: return 7 * 24 * 60 * 60 * 1000;
+  }
+}
+
+const REFRESH_TOKEN_MAX_AGE = parseDuration(REFRESH_TOKEN_EXPIRES_IN);
 
 // ---------------------------------------------------------------------------
 // Helper: Hash a token using SHA-256
@@ -78,7 +103,7 @@ function generateAccessToken(payload: {
 // ---------------------------------------------------------------------------
 function generateRefreshToken(discordId: string): string {
   return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET!, {
-    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
 }
 
@@ -105,7 +130,7 @@ function setAuthCookies(
     httpOnly: true,
     sameSite: 'lax',
     secure: isProduction,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: REFRESH_TOKEN_MAX_AGE,
   });
 }
 
@@ -129,14 +154,18 @@ async function fetchUserAdminStatus(
     // Fetch user's current username/avatar
     const userRes = await axios.get(
       `https://discord.com/api/users/${discordId}`,
-      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
+      {
+        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` }
+      }
     );
     const { username, avatar } = userRes.data;
 
     // Fetch member roles to determine admin status
     const memberRes = await axios.get(
       `https://discord.com/api/guilds/${GUILD_ID}/members/${discordId}`,
-      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
+      {
+        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` }
+      }
     );
     const memberRoles: string[] = memberRes.data.roles ?? [];
     const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
@@ -252,10 +281,10 @@ router.get(
     // - Success (2xx): proceed with the real role list.
     // - 404: user is not in the guild — deny login.
     // - Anything else (network error, rate limit, 5xx from Discord): fail
-    //   closed. We do not know the user's roles, so we cannot safely issue
-    //   a token. Logging in with an assumed role list would mean a Discord
-    //   outage silently grants or revokes admin access depending on which
-    //   direction we default. Refusing is the only safe option.
+    // closed. We do not know the user's roles, so we cannot safely issue
+    // a token. Logging in with an assumed role list would mean a Discord
+    // outage silently grants or revokes admin access depending on which
+    // direction we default. Refusing is the only safe option.
     let memberRoles: string[];
     try {
       const memberRes = await axios.get(
@@ -302,7 +331,7 @@ router.get(
 
     // 7. Store refresh token hash in database.
     const refreshTokenHash = hashToken(refreshToken);
-    const refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
     await prisma.refreshToken.create({
       data: {
         tokenHash: refreshTokenHash,
@@ -328,7 +357,6 @@ router.post(
   '/refresh',
   asyncHandler(async (req, res) => {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-
     if (!refreshToken) {
       res.status(401).json({ error: 'No refresh token provided.' });
       return;
@@ -353,7 +381,6 @@ router.post(
     const storedToken = await prisma.refreshToken.findUnique({
       where: { tokenHash },
     });
-
     if (!storedToken) {
       clearAuthCookies(res);
       res.status(401).json({ error: 'Refresh token has been revoked.' });
@@ -381,13 +408,10 @@ router.post(
 
     // 6. Re-fetch user info from Discord (including admin status).
     const userInfo = await fetchUserAdminStatus(decoded.discordId);
-
     if (!userInfo) {
       // User is no longer in the guild or Discord is unreachable.
       // Clear all refresh tokens for this user for security.
-      await prisma.refreshToken.deleteMany({
-        where: { discordId: decoded.discordId },
-      });
+      await prisma.refreshToken.deleteMany({ where: { discordId: decoded.discordId } });
       clearAuthCookies(res);
       res.status(401).json({ error: 'Unable to verify user membership. Please log in again.' });
       return;
@@ -405,7 +429,7 @@ router.post(
 
     // 8. Store new refresh token.
     const newTokenHash = hashToken(newRefreshToken);
-    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
     await prisma.refreshToken.create({
       data: {
         tokenHash: newTokenHash,
@@ -445,7 +469,6 @@ router.post('/logout', asyncHandler(async (req, res) => {
       // Ignore errors - just clear cookies anyway.
     }
   }
-
   clearAuthCookies(res);
   res.json({ message: 'Logged out.' });
 }));

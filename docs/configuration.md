@@ -34,13 +34,13 @@ cp packages/bot/.env.example packages/bot/.env
 | `JWT_SECRET` | Secret key for signing JWT tokens | `your-secure-random-string` |
 
 ### Optional Variables
-
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Set by Docker Compose |
 | `PORT` | API server port | `3001` |
 | `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | `http://localhost:5173` |
 | `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:3001/auth/callback` |
+| `JWT_EXPIRES_IN` | JWT refresh token expiry duration (supports `d`, `h`, `m`, `s` suffixes) | `7d` |
 
 ### Production-Specific
 
