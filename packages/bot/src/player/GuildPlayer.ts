@@ -507,9 +507,13 @@ export class GuildPlayer {
         `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
         error,
       );
-      await this.textChannel.send(
-        `⚠️ Skipping **${next.title}** — could not resolve the audio stream.`,
-      );
+      try {
+        await this.textChannel.send(
+          `⚠️ Skipping **${next.title}** — could not resolve the audio stream.`,
+        );
+      } catch (e) {
+        console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, e);
+      }
       // Try the next song instead.
       await this.playNext();
       return;
@@ -538,9 +542,13 @@ export class GuildPlayer {
       console.error(
         `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`,
       );
-      await this.textChannel.send(
-        `⚠️ Skipping **${next.title}** — audio failed to start.`,
-      );
+      try {
+        await this.textChannel.send(
+          `⚠️ Skipping **${next.title}** — audio failed to start.`,
+        );
+      } catch (e) {
+        console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, e);
+      }
       await this.playNext();
       return;
     }
@@ -552,7 +560,11 @@ export class GuildPlayer {
     // Broadcast after confirming playback has actually started.
     broadcastQueueUpdate(this.getQueueState());
 
-    await this.textChannel.send({ embeds: [this.buildNowPlayingEmbed(next)] });
+    try {
+      await this.textChannel.send({ embeds: [this.buildNowPlayingEmbed(next)] });
+    } catch (e) {
+      console.error(`[GuildPlayer:${this.guildId}] Failed to send "Now Playing" embed:`, e);
+    }
   }
 
   /**
