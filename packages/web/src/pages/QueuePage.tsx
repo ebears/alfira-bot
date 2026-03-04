@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
-import { startPlayback, getPlaylists, quickAddToQueue } from '../api/api';
+import { startPlayback, getPlaylists, quickAddToQueue, quickAddPlaylistToQueue } from '../api/api';
 import type { LoopMode, Playlist, QueuedSong } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -19,7 +19,6 @@ function formatDuration(seconds: number): string {
 export default function QueuePage() {
   const { state, loading, elapsed, setLoop, shuffle, refetch, clear } = usePlayer();
   const { isAdminView } = useAdminView();
-
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
@@ -28,24 +27,34 @@ export default function QueuePage() {
 
   const { currentSong, queue, isPlaying, loopMode } = state;
 
-  const progress = currentSong
-    ? Math.min((elapsed / currentSong.duration) * 100, 100)
-    : 0;
+  const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
 
   const handleLoop = async (mode: LoopMode) => {
     if (mode === loopMode) return;
     setLoopBusy(true);
-    try { await setLoop(mode); } finally { setLoopBusy(false); }
+    try {
+      await setLoop(mode);
+    } finally {
+      setLoopBusy(false);
+    }
   };
 
   const handleShuffle = async () => {
     setShuffleBusy(true);
-    try { await shuffle(); } finally { setShuffleBusy(false); }
+    try {
+      await shuffle();
+    } finally {
+      setShuffleBusy(false);
+    }
   };
 
   const handleClear = async () => {
     setClearBusy(true);
-    try { await clear(); } finally { setClearBusy(false); }
+    try {
+      await clear();
+    } finally {
+      setClearBusy(false);
+    }
   };
 
   // Loading skeleton
@@ -66,7 +75,7 @@ export default function QueuePage() {
       <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Queue</h1>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Now Playing card                                                    */}
+      {/* Now Playing card */}
       {/* ------------------------------------------------------------------ */}
       {currentSong ? (
         <NowPlayingCard
@@ -83,70 +92,73 @@ export default function QueuePage() {
       {/* Controls */}
       {/* ------------------------------------------------------------------ */}
       <section className="mt-6 space-y-4">
-      {/* First row: Loop (left) and Load Playlist/Quick Add (right) */}
-      <div className="flex items-center gap-3 flex-wrap">
-      <div className="flex items-center gap-2">
-      <span className="font-mono text-xs text-muted uppercase tracking-widest mr-1">
-      Loop
-      </span>
-      {(['off', 'song', 'queue'] as const).map((mode) => (
-      <button
-      key={mode}
-      disabled={loopBusy}
-      onClick={() => handleLoop(mode)}
-      className={`px-3 py-1.5 text-xs font-mono rounded border transition-colors duration-150 disabled:opacity-50 ${
-      loopMode === mode
-      ? 'bg-accent/10 border-accent/40 text-accent'
-      : 'border-border text-muted hover:border-muted hover:text-fg'
-      }`}
-      >
-      {mode === 'off' ? '⬛ off' : mode === 'song' ? '🔂 song' : '🔁 queue'}
-      </button>
-      ))}
-      </div>
-      <button
-      onClick={() => setShowLoadPlaylist(true)}
-      className="flex items-center gap-2 btn-primary ml-auto"
-      >
-      <IconList size={14} />
-      <span>Load Playlist</span>
-      </button>
-      <button
-      onClick={() => setShowQuickAdd(true)}
-      className="flex items-center gap-2 btn-primary"
-      >
-      <IconPlus size={14} />
-      <span>Quick Add</span>
-      </button>
-      </div>
+        {/* First row: Loop (left) and Load Playlist/Quick Add (right) */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-muted uppercase tracking-widest mr-1">
+              Loop
+            </span>
+            {(['off', 'song', 'queue'] as const).map((mode) => (
+              <button
+                key={mode}
+                disabled={loopBusy}
+                onClick={() => handleLoop(mode)}
+                className={`px-3 py-1.5 text-xs font-mono rounded border transition-colors duration-150 disabled:opacity-50 ${
+                  loopMode === mode
+                    ? 'bg-accent/10 border-accent/40 text-accent'
+                    : 'border-border text-muted hover:border-muted hover:text-fg'
+                }`}
+              >
+                {mode === 'off' ? '⬛ off' : mode === 'song' ? '🔂 song' : '🔁 queue'}
+              </button>
+            ))}
+          </div>
 
-      {/* Second row: Admin-only controls (Shuffle and Clear Queue) */}
-      {isAdminView && (
-      <div className="flex items-center gap-3 flex-wrap">
-      <button
-      onClick={handleShuffle}
-      disabled={shuffleBusy || queue.length === 0}
-      className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-      <IconShuffle size={14} />
-      <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
-      </button>
-      			<button
-      				onClick={handleClear}
-      				disabled={clearBusy || (queue.length === 0 && !currentSong)}
-      				className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-      					queue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
-      				}`}
-      			>
-      				<IconTrash size={14} />
-      				<span>Clear Queue</span>
-      			</button>
-      </div>
-      )}
+          <button
+            onClick={() => setShowLoadPlaylist(true)}
+            className="flex items-center gap-2 btn-primary ml-auto"
+          >
+            <IconList size={14} />
+            <span>Load Playlist</span>
+          </button>
+
+          <button
+            onClick={() => setShowQuickAdd(true)}
+            className="flex items-center gap-2 btn-primary"
+          >
+            <IconPlus size={14} />
+            <span>Quick Add</span>
+          </button>
+        </div>
+
+        {/* Second row: Admin-only controls (Shuffle and Clear Queue) */}
+        {isAdminView && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={handleShuffle}
+              disabled={shuffleBusy || queue.length === 0}
+              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <IconShuffle size={14} />
+              <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
+            </button>
+
+            <button
+              onClick={handleClear}
+              disabled={clearBusy || (queue.length === 0 && !currentSong)}
+              className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                queue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
+              }`}
+            >
+              <IconTrash size={14} />
+              <span>Clear Queue</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Queue                                                               */}
+      {/* Queue */}
       {/* ------------------------------------------------------------------ */}
       <section className="mt-8">
         <div className="flex items-center justify-between mb-4">
@@ -175,8 +187,7 @@ export default function QueuePage() {
             {queue.map((song, i) => (
               <div
                 key={`${song.id}-${i}`}
-                className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-elevated
-                           transition-colors duration-100 group"
+                className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-elevated transition-colors duration-100 group"
               >
                 <span className="font-mono text-xs text-faint w-5 text-right shrink-0">
                   {i + 1}
@@ -269,8 +280,7 @@ function NowPlayingCard({
             />
             {/* Playing indicator */}
             {isPlaying && (
-              <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-accent
-                              flex items-center justify-center shadow-lg">
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg">
                 <span className="text-base text-[8px]">▶</span>
               </div>
             )}
@@ -280,7 +290,7 @@ function NowPlayingCard({
 
       {/* Info + progress */}
       <div className="px-5 py-4">
-        <p className="font-body font-bold  text-fg truncate leading-tight">
+        <p className="font-body font-bold text-fg truncate leading-tight">
           {song.nickname || song.title}
         </p>
         <p className="font-mono text-[10px] text-muted mt-0.5">
@@ -312,8 +322,7 @@ function IdleCard() {
   return (
     <div className="card flex items-center justify-center py-16 border-dashed">
       <div className="text-center">
-        <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center
-                        justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-4">
           <IconMusic size={24} className="text-faint" />
         </div>
         <p className="font-display text-3xl text-faint tracking-wider mb-1">Nothing Playing</p>
@@ -354,20 +363,25 @@ function LoadPlaylistModal({
     }
   }, []);
 
-  useEffect(() => { loadPlaylists(); }, [loadPlaylists]);
+  useEffect(() => {
+    loadPlaylists();
+  }, [loadPlaylists]);
 
   const handlePlay = async () => {
     if (!selectedId) return;
     setSubmitting(true);
     setError('');
     try {
-      await startPlayback({ playlistId: selectedId, mode, loop });
+      await startPlayback({
+        playlistId: selectedId,
+        mode,
+        loop,
+      });
       onLoaded();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
       setError(
-        e?.response?.data?.error ??
-          'Could not start playback. Is the bot in a voice channel?'
+        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?'
       );
       setSubmitting(false);
     }
@@ -376,7 +390,9 @@ function LoadPlaylistModal({
   return (
     <div
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Load Playlist</h2>
@@ -404,8 +420,7 @@ function LoadPlaylistModal({
               >
                 {playlists.map((pl) => (
                   <option key={pl.id} value={pl.id}>
-                    {pl.name}
-                    {pl._count ? ` (${pl._count.songs} songs)` : ''}
+                    {pl.name} {pl._count ? ` (${pl._count.songs} songs)` : ''}
                   </option>
                 ))}
               </select>
@@ -489,21 +504,38 @@ function QuickAddModal({
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [isPlaylist, setIsPlaylist] = useState(false);
+  const [importFullPlaylist, setImportFullPlaylist] = useState(false);
+
+  // Detect playlist URLs
+  useEffect(() => {
+    const hasListParam = youtubeUrl.includes('list=');
+    setIsPlaylist(hasListParam);
+    if (!hasListParam) {
+      setImportFullPlaylist(false);
+    }
+  }, [youtubeUrl]);
 
   const handleSubmit = async () => {
     if (!youtubeUrl.trim()) return;
-
     setSubmitting(true);
     setError('');
+    setSuccessMsg('');
     try {
-      await quickAddToQueue(youtubeUrl.trim());
-      onAdded();
+      if (importFullPlaylist) {
+        const result = await quickAddPlaylistToQueue(youtubeUrl.trim());
+        setSuccessMsg(result.message);
+        setTimeout(() => {
+          onAdded();
+        }, 1500);
+      } else {
+        await quickAddToQueue(youtubeUrl.trim());
+        onAdded();
+      }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      setError(
-        e?.response?.data?.error ??
-          'Could not add song to queue. Is the bot in a voice channel?'
-      );
+      setError(e?.response?.data?.error ?? 'Could not add song to queue. Is the bot in a voice channel?');
       setSubmitting(false);
     }
   };
@@ -529,7 +561,11 @@ function QuickAddModal({
             <input
               type="text"
               value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
+              onChange={(e) => {
+                setYoutubeUrl(e.target.value);
+                setError('');
+                setSuccessMsg('');
+              }}
               placeholder="https://youtube.com/watch?v=..."
               className="input font-body w-full"
               disabled={submitting}
@@ -539,10 +575,30 @@ function QuickAddModal({
                 }
               }}
             />
+            {isPlaylist && (
+              <label className="flex items-center gap-2 cursor-pointer mt-2">
+                <input
+                  type="checkbox"
+                  checked={importFullPlaylist}
+                  onChange={(e) => setImportFullPlaylist(e.target.checked)}
+                  disabled={submitting}
+                  className="w-4 h-4 rounded border-border bg-surface accent-accent"
+                />
+                <span className="font-mono text-xs text-fg">Add all songs from playlist</span>
+              </label>
+            )}
           </div>
         </div>
 
+        {successMsg && <p className="font-mono text-xs text-success mb-4">{successMsg}</p>}
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
+
+        {submitting && (
+          <p className="font-mono text-xs text-muted mb-4 flex items-center gap-2">
+            <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
+            {importFullPlaylist ? 'Adding playlist...' : 'Adding...'}
+          </p>
+        )}
 
         <div className="flex gap-2 justify-end">
           <button className="btn-ghost" onClick={onClose} disabled={submitting}>
@@ -553,7 +609,7 @@ function QuickAddModal({
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}
           >
-            {submitting ? 'Adding...' : 'Add to Queue'}
+            {submitting ? 'Adding...' : importFullPlaylist ? 'Add Playlist' : 'Add to Queue'}
           </button>
         </div>
       </div>
@@ -566,8 +622,17 @@ function QuickAddModal({
 // ---------------------------------------------------------------------------
 function IconMusic({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M9 18V5l12-2v13" />
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
@@ -577,8 +642,17 @@ function IconMusic({ size = 20, className = '' }: { size?: number; className?: s
 
 function IconShuffle({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <polyline points="16 3 21 3 21 8" />
       <line x1="4" y1="20" x2="21" y2="3" />
       <polyline points="21 16 21 21 16 21" />
@@ -590,7 +664,17 @@ function IconShuffle({ size = 20, className = '' }: { size?: number; className?:
 
 function IconList({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <line x1="8" y1="6" x2="21" y2="6" />
       <line x1="8" y1="12" x2="21" y2="12" />
       <line x1="8" y1="18" x2="21" y2="18" />
@@ -603,7 +687,17 @@ function IconList({ size = 20, className = '' }: { size?: number; className?: st
 
 function IconPlus({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -612,8 +706,17 @@ function IconPlus({ size = 20, className = '' }: { size?: number; className?: st
 
 function IconTrash({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6" />

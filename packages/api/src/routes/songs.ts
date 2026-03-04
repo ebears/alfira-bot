@@ -3,7 +3,7 @@ import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
-import { isValidYouTubeUrl, getMetadata } from '@discord-music-bot/bot/src/utils/ytdlp';
+import { isValidYouTubeUrl, getMetadata, isYouTubePlaylistUrl, getPlaylistMetadataWithVideos } from '@discord-music-bot/bot/src/utils/ytdlp';
 import { emitSongAdded, emitSongDeleted } from '../lib/socket';
 
 const router = Router();
@@ -102,6 +102,120 @@ router.post(
     emitSongAdded(song);
 
     res.status(201).json(song);
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/songs/import-playlist
+//
+// Imports all songs from a YouTube playlist into the library. Admin only.
+//
+// Flow:
+// 1. Validate the URL is a YouTube playlist URL.
+// 2. Fetch playlist metadata via yt-dlp (title, videos).
+// 3. For each video, check for duplicates by youtubeId AND youtubeUrl.
+// 4. Create songs in the database (batch insert).
+// 5. Emit songs:added for each new song.
+// ---------------------------------------------------------------------------
+router.post(
+  '/import-playlist',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { youtubeUrl, maxVideos } = req.body as { youtubeUrl?: string; maxVideos?: number };
+
+    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
+      res.status(400).json({ error: 'youtubeUrl is required.' });
+      return;
+    }
+
+    const url = youtubeUrl.trim();
+
+    if (url.length > MAX_URL_LENGTH) {
+      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+      return;
+    }
+
+    if (!isYouTubePlaylistUrl(url)) {
+      res.status(400).json({ error: 'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.' });
+      return;
+    }
+
+    	// Fetch playlist metadata with videos
+    	let playlistMetadata;
+    	try {
+    		playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
+    	} catch {
+    		res.status(422).json({ error: 'Could not fetch playlist info. The playlist may be private or unavailable.' });
+    		return;
+    	}
+
+    // Build the canonical URL format for each video
+    const videosWithUrls = playlistMetadata.videos.map((v) => ({
+      ...v,
+      canonicalUrl: `https://www.youtube.com/watch?v=${v.id}`,
+    }));
+
+    // Get existing songs that match either by youtubeId OR youtubeUrl
+    const existingSongs = await prisma.song.findMany({
+      where: {
+        OR: [
+          { youtubeId: { in: videosWithUrls.map((v) => v.id) } },
+          { youtubeUrl: { in: videosWithUrls.map((v) => v.canonicalUrl) } },
+        ],
+      },
+      select: { youtubeId: true, youtubeUrl: true },
+    });
+
+    // Create sets for quick lookup
+    const existingYoutubeIds = new Set(existingSongs.map((s) => s.youtubeId));
+    const existingYoutubeUrls = new Set(existingSongs.map((s) => s.youtubeUrl));
+
+    // Filter out duplicates (check both youtubeId and youtubeUrl)
+    const newVideos = videosWithUrls.filter(
+      (v) => !existingYoutubeIds.has(v.id) && !existingYoutubeUrls.has(v.canonicalUrl)
+    );
+
+    if (newVideos.length === 0) {
+      res.status(200).json({
+        message: 'All songs from this playlist are already in your library.',
+        playlistTitle: playlistMetadata.title,
+        totalVideos: playlistMetadata.videoCount,
+        importedCount: 0,
+        skippedCount: playlistMetadata.videos.length,
+      });
+      return;
+    }
+
+    // Create songs
+    const createdSongs = await prisma.$transaction(
+      newVideos.map((video) =>
+        prisma.song.create({
+          data: {
+            title: video.title,
+            youtubeUrl: video.canonicalUrl,
+            youtubeId: video.id,
+            duration: video.duration,
+            thumbnailUrl: video.thumbnailUrl,
+            addedBy: req.user!.discordId,
+          },
+        })
+      )
+    );
+
+    // Emit socket events for each new song
+    for (const song of createdSongs) {
+      emitSongAdded(song);
+    }
+
+    res.status(201).json({
+      message: `Successfully imported ${createdSongs.length} song(s) from "${playlistMetadata.title}".`,
+      playlistTitle: playlistMetadata.title,
+      totalVideos: playlistMetadata.videoCount,
+      importedCount: createdSongs.length,
+      skippedCount: playlistMetadata.videos.length - newVideos.length,
+      songs: createdSongs,
+    });
   })
 );
 

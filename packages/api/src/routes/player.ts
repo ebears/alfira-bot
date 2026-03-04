@@ -8,7 +8,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { getPlayer, removePlayer } from '@discord-music-bot/bot/src/player/manager';
-import { isValidYouTubeUrl, getMetadata } from '@discord-music-bot/bot/src/utils/ytdlp';
+import { isValidYouTubeUrl, getMetadata, isYouTubePlaylistUrl, getPlaylistMetadataWithVideos } from '@discord-music-bot/bot/src/utils/ytdlp';
 import type { LoopMode, QueuedSong, Song } from '@discord-music-bot/shared';
 
 const router = Router();
@@ -463,16 +463,133 @@ router.post(
     await player.addToQueue(queuedSong);
 
     res.json({
-      message: `Added "${metadata.title}" to the queue.`,
-      song: queuedSong,
-    });
-  })
-);
+        message: `Added "${metadata.title}" to the queue.`,
+        song: queuedSong,
+      });
+    })
+    );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/pause-toggle
-// Member accessible.
-// ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // POST /api/player/quick-add-playlist
+    //
+    // Adds all songs from a YouTube playlist to the queue without saving to library.
+    // Member accessible.
+    //
+    // Body:
+    // youtubeUrl — YouTube playlist URL to fetch and queue
+    // maxVideos — Optional limit on number of videos to queue
+    // ---------------------------------------------------------------------------
+    router.post(
+      '/quick-add-playlist',
+      requireAuth,
+      asyncHandler(async (req, res) => {
+        const { youtubeUrl, maxVideos } = req.body as { youtubeUrl?: string; maxVideos?: number };
+
+        if (!youtubeUrl || typeof youtubeUrl !== 'string') {
+          res.status(400).json({ error: 'youtubeUrl is required.' });
+          return;
+        }
+
+        const url = youtubeUrl.trim();
+
+        if (url.length > MAX_URL_LENGTH) {
+          res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+          return;
+        }
+
+        if (!isYouTubePlaylistUrl(url)) {
+          res.status(400).json({ error: 'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.' });
+          return;
+        }
+
+        let player = getPlayer(GUILD_ID);
+        if (!player) {
+          // Auto-join: Find the user's voice channel and join it.
+          const discordClient = getClient();
+          if (!discordClient) {
+            res.status(503).json({ error: 'Discord bot is not ready yet.' });
+            return;
+          }
+          try {
+            const guild = await discordClient.guilds.fetch(GUILD_ID);
+            const member = await guild.members.fetch(req.user!.discordId);
+            const voiceChannel = member.voice.channel;
+            if (!voiceChannel) {
+              res.status(409).json({
+                error: 'You are not in a voice channel. Join a voice channel in Discord first.',
+              });
+              return;
+            }
+            const connection = joinVoiceChannel({
+              channelId: voiceChannel.id,
+              guildId: GUILD_ID,
+              adapterCreator: guild.voiceAdapterCreator,
+            });
+            await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+
+            const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
+            const textChannel = textChannelId
+              ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
+              : (guild.systemChannel as TextChannel | null);
+            if (!textChannel) {
+              res.status(503).json({
+                error: 'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+              });
+              return;
+            }
+            player = createPlayer(GUILD_ID, connection, textChannel);
+          } catch (error) {
+            console.error('Failed to auto-join voice channel:', error);
+            res.status(503).json({
+              error: 'Could not connect to your voice channel. Try using /join in Discord first.',
+            });
+            return;
+          }
+        }
+
+        // Fetch playlist metadata with videos
+            let playlistMetadata;
+            try {
+              playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
+            } catch {
+          res.status(422).json({ error: 'Could not fetch playlist info. The playlist may be private or unavailable.' });
+          return;
+        }
+
+        // Queue all songs from the playlist
+        const requestedBy = req.user!.username;
+        const queuedSongs: QueuedSong[] = [];
+
+        for (const video of playlistMetadata.videos) {
+          const queuedSong: QueuedSong = {
+            id: `temp-${Date.now()}-${video.id}`,
+            title: video.title,
+            youtubeUrl: `https://www.youtube.com/watch?v=${video.id}`,
+            youtubeId: video.id,
+            duration: video.duration,
+            thumbnailUrl: video.thumbnailUrl,
+            addedBy: req.user!.discordId,
+            createdAt: new Date(),
+            requestedBy,
+          };
+          await player.addToQueue(queuedSong);
+          queuedSongs.push(queuedSong);
+        }
+
+        res.json({
+          message: `Added ${queuedSongs.length} song(s) from "${playlistMetadata.title}" to the queue.`,
+          playlistTitle: playlistMetadata.title,
+          totalVideos: playlistMetadata.videoCount,
+          queuedCount: queuedSongs.length,
+          songs: queuedSongs,
+        });
+      })
+    );
+
+    // ---------------------------------------------------------------------------
+    // POST /api/player/pause-toggle
+    // Member accessible.
+    // ---------------------------------------------------------------------------
 router.post(
   '/pause-toggle',
   requireAuth,
