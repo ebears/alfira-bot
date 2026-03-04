@@ -14,6 +14,21 @@ export interface SongMetadata {
 }
 
 // ---------------------------------------------------------------------------
+// Metadata returned from yt-dlp for a YouTube playlist.
+// ---------------------------------------------------------------------------
+export interface PlaylistMetadata {
+  title: string;
+  playlistId: string;
+  videoCount: number;
+  videos: {
+    id: string;
+    title: string;
+    duration: number;
+    thumbnailUrl: string;
+  }[];
+}
+
+// ---------------------------------------------------------------------------
 // getMetadata
 //
 // Fetches title, duration, and id for a YouTube URL by running:
@@ -242,6 +257,160 @@ export function isValidYouTubeUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// isYouTubePlaylistUrl
+//
+// Detects if a URL is a YouTube playlist URL. Supports:
+// - youtube.com/playlist?list=PLAYLIST_ID
+// - youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
+// - youtu.be/VIDEO_ID?list=PLAYLIST_ID
+// ---------------------------------------------------------------------------
+export function isYouTubePlaylistUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const validHosts = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
+    if (!validHosts.includes(parsed.hostname)) {
+      return false;
+    }
+    // Check for 'list' query parameter
+    return parsed.searchParams.has('list');
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getPlaylistId
+//
+// Extracts the playlist ID from a YouTube playlist URL.
+// Returns null if not a playlist URL or no playlist ID found.
+// ---------------------------------------------------------------------------
+export function getPlaylistId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.searchParams.get('list');
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getPlaylistMetadata
+//
+// Fetches metadata for a YouTube playlist using yt-dlp.
+// Uses --flat-playlist to avoid fetching info for each video individually
+// (much faster for large playlists).
+//
+// Output format:
+// - Line 0: playlist title
+// - Line 1: playlist id
+// - Line 2: number of entries
+// - Remaining lines: video_id, title, duration (one per line, separated by \t)
+// ---------------------------------------------------------------------------
+export function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata> {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '--flat-playlist',
+      '-I', `1:${maxVideos || 'inf'}`,
+      '--print', '%(playlist_title)s',
+      '--print', '%(playlist_id)s',
+      '--print', '%(playlist_count)s',
+      playlistUrl,
+    ];
+
+    execFile(
+      'yt-dlp',
+      args,
+      (error, stdout) => {
+        if (error) {
+          return reject(
+            new Error(`yt-dlp playlist metadata fetch failed: ${error.message}`)
+          );
+        }
+
+        const lines = stdout.trimEnd().split('\n');
+        if (lines.length < 3) {
+        return reject(new Error('yt-dlp returned unexpected output for playlist'));
+        }
+
+        const title = lines[0].trim();
+        const playlistId = lines[1].trim();
+        const videoCount = parseInt(lines[2].trim(), 10) || 0;
+
+        resolve({
+          title,
+          playlistId,
+          videoCount,
+          videos: [], // Will be fetched separately
+        });
+      }
+    );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// getPlaylistVideos
+//
+// Fetches the list of videos in a YouTube playlist using yt-dlp.
+// Uses --flat-playlist with --dump-json for reliable parsing.
+// ---------------------------------------------------------------------------
+export function getPlaylistVideos(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata['videos']> {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '--flat-playlist',
+      '--dump-json',
+      '-I', `1:${maxVideos || 'inf'}`,
+      playlistUrl,
+    ];
+
+    execFile(
+      'yt-dlp',
+      args,
+      (error, stdout) => {
+        if (error) {
+          return reject(
+            new Error(`yt-dlp playlist videos fetch failed: ${error.message}`)
+          );
+        }
+
+        const lines = stdout.trimEnd().split('\n');
+        const videos = lines.map((line) => {
+          try {
+            const data = JSON.parse(line);
+            return {
+              id: data.id || '',
+              title: data.title || 'Unknown',
+              duration: Math.round(data.duration) || 0,
+              thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
+            };
+          } catch {
+            return null;
+          }
+        }).filter((v): v is NonNullable<typeof v> => v !== null);
+
+        resolve(videos);
+      }
+    );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// getPlaylistMetadataWithVideos
+//
+// Convenience function that fetches both playlist metadata and videos.
+// ---------------------------------------------------------------------------
+export async function getPlaylistMetadataWithVideos(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata> {
+  const [metadata, videos] = await Promise.all([
+    getPlaylistMetadata(playlistUrl, maxVideos),
+    getPlaylistVideos(playlistUrl, maxVideos),
+  ]);
+
+  return {
+    ...metadata,
+    videos,
+  };
 }
 
 export function getStreamFormat(youtubeUrl: string): Promise<{ url: string; isWebmOpus: boolean }> {
