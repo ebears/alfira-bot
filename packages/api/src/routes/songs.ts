@@ -43,7 +43,7 @@ router.post(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { youtubeUrl } = req.body as { youtubeUrl?: string };
+    const { youtubeUrl, nickname } = req.body as { youtubeUrl?: string; nickname?: string };
 
     if (!youtubeUrl || typeof youtubeUrl !== 'string') {
       res.status(400).json({ error: 'youtubeUrl is required.' });
@@ -94,6 +94,7 @@ router.post(
         duration: metadata.duration,
         thumbnailUrl: metadata.thumbnailUrl,
         addedBy: req.user!.discordId,
+        nickname: nickname?.trim() || null,
       },
     });
 

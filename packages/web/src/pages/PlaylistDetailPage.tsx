@@ -384,12 +384,15 @@ function SongRow({
       </div>
       <img
         src={song.thumbnailUrl}
-        alt={song.title}
+        alt={song.nickname || song.title}
         className="w-10 h-7 object-cover rounded border border-border shrink-0"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        <p className="font-body text-sm font-medium text-fg truncate">{song.title}</p>
+        <p className="font-body text-sm font-medium text-fg truncate">{song.nickname || song.title}</p>
+                      {song.nickname && (
+                        <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
+                      )}
       </div>
       <span className="font-mono text-xs text-muted shrink-0">
         {formatDuration(song.duration)}
@@ -488,11 +491,11 @@ function AddSongsModal({
                                                hover:bg-elevated transition-colors duration-100">
                   <img
                     src={song.thumbnailUrl}
-                    alt={song.title}
+                    alt={song.nickname || song.title}
                     className="w-10 h-7 object-cover rounded border border-border shrink-0"
                     loading="lazy"
                   />
-                  <span className="flex-1 font-body text-sm text-fg truncate">{song.title}</span>
+                  <span className="flex-1 font-body text-sm text-fg truncate">{song.nickname || song.title}</span>
                   <span className="font-mono text-xs text-muted">{formatDuration(song.duration)}</span>
                   <button
                     disabled={isAdded || isAdding}

@@ -238,7 +238,7 @@ function SongCard({
       <div className="relative aspect-video bg-elevated overflow-hidden">
         <img
           src={song.thumbnailUrl}
-          alt={song.title}
+          alt={song.nickname || song.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -271,7 +271,7 @@ function SongCard({
       {/* Info */}
       <div className="p-3 flex-1 flex flex-col gap-2">
         <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
-          {song.title}
+          {song.nickname || song.title}
         </p>
 
         {isAdmin && (
@@ -338,6 +338,7 @@ function AddSongModal({
   onAdded: (song: Song) => void;
 }) {
   const [url, setUrl] = useState('');
+  const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -349,7 +350,7 @@ function AddSongModal({
     setLoading(true);
     setError('');
     try {
-      const song = await addSong(url.trim());
+      const song = await addSong(url.trim(), nickname.trim() || undefined);
       onAdded(song);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
@@ -378,6 +379,13 @@ function AddSongModal({
           onChange={(e) => { setUrl(e.target.value); setError(''); }}
           onKeyDown={handleKeyDown}
           disabled={loading}
+      />
+      <input
+        className="input mb-3"
+        placeholder="Nickname (optional)"
+        value={nickname}
+        onChange={(e) => setNickname(e.target.value)}
+        disabled={loading}
         />
 
         {error && (
@@ -421,7 +429,7 @@ function ConfirmDeleteModal({
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Delete Song</h2>
         <p className="font-body text-sm text-muted mb-2">
-          Remove <span className="text-fg font-semibold">"{song.title}"</span> from the library?
+          Remove <span className="text-fg font-semibold">"{song.nickname || song.title}"</span> from the library?
         </p>
         <p className="font-mono text-xs text-danger/70 mb-6">
           this will remove it from all playlists too.

@@ -11,6 +11,7 @@ export interface Song {
   duration: number;
   thumbnailUrl: string;
   addedBy: string;
+  nickname?: string | null;
   createdAt: string;
 }
 
