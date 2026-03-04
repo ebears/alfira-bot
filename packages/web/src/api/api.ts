@@ -12,7 +12,8 @@ export const refresh = () => client.post<{ user: User }>('/auth/refresh').then((
 // Songs
 // ---------------------------------------------------------------------------
 export const getSongs = () => client.get<Song[]>('/api/songs').then((r) => r.data);
-export const addSong = (youtubeUrl: string) => client.post<Song>('/api/songs', { youtubeUrl }).then((r) => r.data);
+export const addSong = (youtubeUrl: string, nickname?: string) => client.post<Song>('/api/songs', { youtubeUrl, ...(nickname && { nickname }) }).then((r) => r.data);
+
 export const deleteSong = (id: string) => client.delete(`/api/songs/${id}`);
 
 // ---------------------------------------------------------------------------

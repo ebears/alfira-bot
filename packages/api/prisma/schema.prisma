@@ -18,6 +18,7 @@ model Song {
   duration      Int            // seconds
   thumbnailUrl  String
   addedBy       String         // Discord user ID (or 'system' before Phase 5)
+  nickname String?
   createdAt     DateTime       @default(now())
   playlistSongs PlaylistSong[]
 }

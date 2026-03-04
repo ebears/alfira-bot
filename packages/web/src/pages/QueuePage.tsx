@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
 import { startPlayback, getPlaylists, quickAddToQueue } from '../api/api';
-import type { LoopMode, Playlist } from '../api/types';
+import type { LoopMode, Playlist, QueuedSong } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -183,12 +183,12 @@ export default function QueuePage() {
                 </span>
                 <img
                   src={song.thumbnailUrl}
-                  alt={song.title}
+                  alt={song.nickname || song.title}
                   className="w-10 h-7 object-cover rounded border border-border shrink-0"
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="font-body text-sm font-medium text-fg truncate">{song.title}</p>
+                  <p className="font-body text-sm font-medium text-fg truncate">{song.nickname || song.title}</p>
                   <p className="font-mono text-[10px] text-muted">req. {song.requestedBy}</p>
                 </div>
                 <span className="font-mono text-xs text-muted shrink-0">
@@ -242,7 +242,7 @@ function NowPlayingCard({
   elapsed,
   progress,
 }: {
-  song: { title: string; thumbnailUrl: string; duration: number; requestedBy: string };
+  song: QueuedSong;
   isPlaying: boolean;
   elapsed: number;
   progress: number;
@@ -264,7 +264,7 @@ function NowPlayingCard({
           <div className="relative">
             <img
               src={song.thumbnailUrl}
-              alt={song.title}
+              alt={song.nickname || song.title}
               className="h-36 w-auto rounded-lg border border-border shadow-2xl object-cover"
             />
             {/* Playing indicator */}
@@ -281,7 +281,7 @@ function NowPlayingCard({
       {/* Info + progress */}
       <div className="px-5 py-4">
         <p className="font-body font-bold  text-fg truncate leading-tight">
-          {song.title}
+          {song.nickname || song.title}
         </p>
         <p className="font-mono text-[10px] text-muted mt-0.5">
           requested by {song.requestedBy}

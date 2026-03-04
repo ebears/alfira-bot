@@ -13,14 +13,15 @@
 // requestedBy — use QueuedSong for that.
 // ---------------------------------------------------------------------------
 export interface Song {
-  id: string;
-  title: string;
-  youtubeUrl: string;
-  youtubeId: string;
-  duration: number;       // seconds
-  thumbnailUrl: string;
-  addedBy: string;        // Discord user ID
-  createdAt: Date;
+ id: string;
+ title: string;
+ youtubeUrl: string;
+ youtubeId: string;
+ duration: number; // seconds
+ thumbnailUrl: string;
+ addedBy: string; // Discord user ID
+ nickname?: string | null; // Custom display name for the song
+ createdAt: Date;
 }
 
 // ---------------------------------------------------------------------------
