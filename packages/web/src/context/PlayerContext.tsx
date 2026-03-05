@@ -18,6 +18,7 @@ const EMPTY_STATE: QueueState = {
   isPaused: false,
   loopMode: 'off',
   currentSong: null,
+  priorityQueue: [],
   queue: [],
   trackStartedAt: null,
 };
