@@ -113,3 +113,19 @@ export const quickAddPlaylistToQueue = (youtubeUrl: string, maxVideos?: number) 
       ...(maxVideos && { maxVideos }),
     })
     .then((r) => r.data);
+
+export const addToPriorityQueue = (songId: string) =>
+  client
+    .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(
+      '/api/player/add-to-priority',
+      { songId }
+    )
+    .then((r) => r.data);
+
+export const overridePlay = (youtubeUrl: string) =>
+  client
+    .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(
+      '/api/player/override',
+      { youtubeUrl }
+    )
+    .then((r) => r.data);

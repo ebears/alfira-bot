@@ -36,13 +36,14 @@ router.get(
 
     if (!player) {
       res.json({
-        isPlaying: false,
-        isPaused: false,
-        loopMode: 'off',
-        currentSong: null,
-        queue: [],
-        trackStartedAt: null,
-      });
+            isPlaying: false,
+            isPaused: false,
+            loopMode: 'off',
+            currentSong: null,
+            priorityQueue: [],
+            queue: [],
+            trackStartedAt: null,
+          });
       return;
     }
 
@@ -460,7 +461,7 @@ router.post(
       requestedBy,
     };
 
-    await player.addToQueue(queuedSong);
+    await player.addToPriorityQueue(queuedSong);
 
     res.json({
         message: `Added "${metadata.title}" to the queue.`,
@@ -641,6 +642,207 @@ router.post(
     }
     await player.resume();
     res.json({ message: 'Resumed.' });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/player/add-to-priority
+// Member accessible.
+//
+// Adds a song from the library to the priority queue (Up Next).
+//
+// Body:
+// songId — ID of the song from the library
+// ---------------------------------------------------------------------------
+router.post(
+  '/add-to-priority',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { songId } = req.body as { songId?: string };
+
+    if (!songId || typeof songId !== 'string') {
+      res.status(400).json({ error: 'songId is required.' });
+      return;
+    }
+
+    // Fetch the song from the database
+    const song = await prisma.song.findUnique({ where: { id: songId } });
+    if (!song) {
+      res.status(404).json({ error: 'Song not found.' });
+      return;
+    }
+
+    let player = getPlayer(GUILD_ID);
+    if (!player) {
+      // Auto-join: Find the user's voice channel and join it.
+      const discordClient = getClient();
+      if (!discordClient) {
+        res.status(503).json({ error: 'Discord bot is not ready yet.' });
+        return;
+      }
+      try {
+        const guild = await discordClient.guilds.fetch(GUILD_ID);
+        const member = await guild.members.fetch(req.user!.discordId);
+        const voiceChannel = member.voice.channel;
+        if (!voiceChannel) {
+          res.status(409).json({
+            error: 'You are not in a voice channel. Join a voice channel in Discord first.',
+          });
+          return;
+        }
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: GUILD_ID,
+          adapterCreator: guild.voiceAdapterCreator,
+        });
+        await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+        const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
+        const textChannel = textChannelId
+          ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
+          : (guild.systemChannel as TextChannel | null);
+        if (!textChannel) {
+          res.status(503).json({
+            error: 'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+          });
+          return;
+        }
+        player = createPlayer(GUILD_ID, connection, textChannel);
+      } catch (error) {
+        console.error('Failed to auto-join voice channel:', error);
+        res.status(503).json({ error: 'Could not connect to your voice channel. Try using /join in Discord first.' });
+        return;
+      }
+    }
+
+    // Create a QueuedSong from the database song
+    const requestedBy = req.user!.username;
+    const queuedSong: QueuedSong = {
+      id: song.id,
+      title: song.title,
+      youtubeUrl: song.youtubeUrl,
+      youtubeId: song.youtubeId,
+      duration: song.duration,
+      thumbnailUrl: song.thumbnailUrl,
+      addedBy: song.addedBy,
+      nickname: song.nickname,
+      createdAt: song.createdAt,
+      requestedBy,
+    };
+
+    await player.addToPriorityQueue(queuedSong);
+
+    res.json({
+      message: `Added "${song.nickname || song.title}" to Up Next.`,
+      song: queuedSong,
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/player/override
+// Admin only.
+//
+// Immediately stops current song, clears both queues, and plays the
+// requested song. Does NOT save the song to the library.
+//
+// Body:
+// youtubeUrl — YouTube URL to fetch and play immediately
+// ---------------------------------------------------------------------------
+router.post(
+  '/override',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { youtubeUrl } = req.body as { youtubeUrl?: string };
+
+    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
+      res.status(400).json({ error: 'youtubeUrl is required.' });
+      return;
+    }
+
+    const url = youtubeUrl.trim();
+    if (url.length > MAX_URL_LENGTH) {
+      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+      return;
+    }
+
+    if (!isValidYouTubeUrl(url)) {
+      res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
+      return;
+    }
+
+    let player = getPlayer(GUILD_ID);
+    if (!player) {
+      // Auto-join: Find the user's voice channel and join it.
+      const discordClient = getClient();
+      if (!discordClient) {
+        res.status(503).json({ error: 'Discord bot is not ready yet.' });
+        return;
+      }
+      try {
+        const guild = await discordClient.guilds.fetch(GUILD_ID);
+        const member = await guild.members.fetch(req.user!.discordId);
+        const voiceChannel = member.voice.channel;
+        if (!voiceChannel) {
+          res.status(409).json({
+            error: 'You are not in a voice channel. Join a voice channel in Discord first.',
+          });
+          return;
+        }
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: GUILD_ID,
+          adapterCreator: guild.voiceAdapterCreator,
+        });
+        await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+        const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
+        const textChannel = textChannelId
+          ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
+          : (guild.systemChannel as TextChannel | null);
+        if (!textChannel) {
+          res.status(503).json({
+            error: 'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+          });
+          return;
+        }
+        player = createPlayer(GUILD_ID, connection, textChannel);
+      } catch (error) {
+        console.error('Failed to auto-join voice channel:', error);
+        res.status(503).json({ error: 'Could not connect to your voice channel. Try using /join in Discord first.' });
+        return;
+      }
+    }
+
+    // Fetch metadata from YouTube
+    let metadata;
+    try {
+      metadata = await getMetadata(url);
+    } catch {
+      res.status(422).json({ error: 'Could not fetch video info. The video may be private, age-restricted, or unavailable.' });
+      return;
+    }
+
+    // Create a QueuedSong without saving to database
+    const requestedBy = req.user!.username;
+    const queuedSong: QueuedSong = {
+      id: `temp-${Date.now()}`,
+      title: metadata.title,
+      youtubeUrl: url,
+      youtubeId: metadata.youtubeId,
+      duration: metadata.duration,
+      thumbnailUrl: metadata.thumbnailUrl,
+      addedBy: req.user!.discordId,
+      createdAt: new Date(),
+      requestedBy,
+    };
+
+    // Clear both queues and play immediately
+    await player.replaceQueueAndPlay([queuedSong]);
+
+    res.json({
+      message: `Now playing "${metadata.title}".`,
+      song: queuedSong,
+    });
   })
 );
 

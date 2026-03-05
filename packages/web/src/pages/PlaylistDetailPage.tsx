@@ -4,6 +4,7 @@ import {
   getPlaylist, renamePlaylist, removeSongFromPlaylist,
   addSongToPlaylist, getSongs, startPlayback, deletePlaylist,
   togglePlaylistVisibility,
+  addToPriorityQueue,
 } from '../api/api';
 import type { PlaylistDetail, Song, LoopMode, Playlist } from '../api/types';
 import { useAdminView } from '../context/AdminViewContext';
@@ -163,20 +164,33 @@ export default function PlaylistDetailPage() {
     }
   };
 
-  const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
-    if (!playlist) return;
-    try {
-      await startPlayback({
-        playlistId: playlist.id,
-        mode,
-        loop: queueState.loopMode,
-      });
-      setNotification({ message: `Added "${playlist.name}" to queue`, type: 'success' });
-      setTimeout(() => setNotification(null), 3000);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
-      setNotification({ message: errorMsg, type: 'error' });
+  const handleAddToQueue = async (songId: string) => {
+      try {
+        await addToPriorityQueue(songId);
+        setNotification({ message: 'Added to Up Next', type: 'success' });
+        setTimeout(() => setNotification(null), 3000);
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string } } };
+        const errorMsg = e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
+        setNotification({ message: errorMsg, type: 'error' });
+        setTimeout(() => setNotification(null), 5000);
+      }
+    };
+
+    const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
+      if (!playlist) return;
+      try {
+        await startPlayback({
+          playlistId: playlist.id,
+          mode,
+          loop: queueState.loopMode,
+        });
+        setNotification({ message: `Added "${playlist.name}" to queue`, type: 'success' });
+        setTimeout(() => setNotification(null), 3000);
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string } } };
+        const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
+        setNotification({ message: errorMsg, type: 'error' });
       setTimeout(() => setNotification(null), 5000);
     }
   };
@@ -303,6 +317,7 @@ export default function PlaylistDetailPage() {
               onRemove={() => setRemoveId(ps.songId)}
               onPlay={() => handlePlayFromSong(ps.songId)}
               isPlaying={playingSongId === ps.songId}
+              onAddToQueue={() => handleAddToQueue(ps.songId)}
             />
           ))}
         </div>
@@ -352,6 +367,7 @@ function SongRow({
   onRemove,
   onPlay,
   isPlaying,
+  onAddToQueue,
 }: {
   position: number;
   song: Song;
@@ -359,12 +375,16 @@ function SongRow({
   onRemove: () => void;
   onPlay: () => void;
   isPlaying?: boolean;
+  onAddToQueue: () => void;
 }) {
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-lg group
-                    hover:bg-elevated transition-colors duration-100">
+    <div className="flex items-center gap-4 px-4 py-3 rounded-lg group hover:bg-elevated transition-colors duration-100">
       <div className="w-6 shrink-0 flex justify-end">
-        <span className={`font-mono text-xs text-faint text-right ${isPlaying ? 'hidden' : 'group-hover:hidden'}`}>
+        <span
+          className={`font-mono text-xs text-faint text-right ${
+            isPlaying ? 'hidden' : 'group-hover:hidden'
+          }`}
+        >
           {position}
         </span>
         {isPlaying ? (
@@ -374,8 +394,7 @@ function SongRow({
         ) : (
           <button
             onClick={onPlay}
-            className="hidden group-hover:flex items-center justify-center
-                       text-accent hover:text-accent/80 transition-colors duration-150"
+            className="hidden group-hover:flex items-center justify-center text-accent hover:text-accent/80 transition-colors duration-150"
             title="Play from this song"
           >
             <PlayIcon size={14} />
@@ -390,21 +409,28 @@ function SongRow({
       />
       <div className="flex-1 min-w-0">
         <p className="font-body text-sm font-medium text-fg truncate">{song.nickname || song.title}</p>
-                      {song.nickname && (
-                        <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
-                      )}
+        {song.nickname && (
+          <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
+        )}
       </div>
       <span className="font-mono text-xs text-muted shrink-0">
         {formatDuration(song.duration)}
       </span>
+      {/* Add to Queue - available to all members */}
+      <button
+        onClick={onAddToQueue}
+        className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent transition-all duration-150 p-1"
+        title="Add to Up Next"
+      >
+        <IconQueueAdd size={14} />
+      </button>
       {isAdmin && (
         <button
           onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 font-mono text-xs text-faint
-                     hover:text-danger transition-all duration-150 px-2 py-1"
+          className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger transition-all duration-150 p-1"
           title="Remove from playlist"
         >
-          rem
+          <IconTrash size={14} />
         </button>
       )}
     </div>
@@ -713,6 +739,28 @@ function PlusIcon({ size = 16, className = '' }: { size?: number; className?: st
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+function IconQueueAdd({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <path d="M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+    </svg>
+  );
+}
+
+function IconTrash({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
     </svg>
   );
 }
