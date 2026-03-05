@@ -49,6 +49,7 @@ export class GuildPlayer {
   // State
   // ---------------------------------------------------------------------------
   private queue: QueuedSong[] = [];
+  private priorityQueue: QueuedSong[] = []; // Songs added via Quick Add or "Add to Queue" - play before regular queue
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
   private paused = false;
@@ -287,13 +288,36 @@ export class GuildPlayer {
    * starting playback and only broadcasts a single queue-update event.
    */
   async addManyToQueue(songs: QueuedSong[]): Promise<void> {
-    this.queue.push(...songs);
-    if (this.currentSong === null) {
-      await this.playNext();
-    } else {
+      this.queue.push(...songs);
+      if (this.currentSong === null) {
+        await this.playNext();
+      } else {
+        broadcastQueueUpdate(this.getQueueState());
+      }
+    }
+
+    /**
+     * Add a song to the priority queue (Up Next).
+     * Priority queue songs play before regular queue songs.
+     * If nothing is currently playing, playback starts immediately.
+     */
+    async addToPriorityQueue(song: QueuedSong): Promise<void> {
+      this.priorityQueue.push(song);
+      if (this.currentSong === null) {
+        await this.playNext();
+      } else {
+        broadcastQueueUpdate(this.getQueueState());
+      }
+    }
+
+    /**
+     * Clear both priority queue and regular queue.
+     */
+    clearAllQueues(): void {
+      this.priorityQueue = [];
+      this.queue = [];
       broadcastQueueUpdate(this.getQueueState());
     }
-  }
 
   /**
    * Replace the entire queue with new songs and immediately start playback.
@@ -445,16 +469,17 @@ export class GuildPlayer {
   // Returns a QueueState snapshot. Used by GET /api/player/queue and as the
   // payload for the Socket.io player:update event.
   // ---------------------------------------------------------------------------
-  getQueueState(): QueueState {
-    return {
-      isPlaying: this.isPlaying(),
-      isPaused: this.paused,
-      loopMode: this.loopMode,
-      currentSong: this.currentSong,
-      queue: [...this.queue],
-      trackStartedAt: this.trackStartedAt,
-    };
-  }
+  	getQueueState(): QueueState {
+  		return {
+  			isPlaying: this.isPlaying(),
+  			isPaused: this.paused,
+  			loopMode: this.loopMode,
+  			currentSong: this.currentSong,
+  			priorityQueue: [...this.priorityQueue],
+  			queue: [...this.queue],
+  			trackStartedAt: this.trackStartedAt,
+  		};
+  	}
 
   // ---------------------------------------------------------------------------
   // Private methods
@@ -480,15 +505,16 @@ export class GuildPlayer {
       return;
     }
 
-    const next = this.queue.shift();
 
+
+    // Check priority queue first, then regular queue
+    const next = this.priorityQueue.shift() || this.queue.shift();
     if (!next) {
       this.currentSong = null;
       // Queue exhausted — broadcast the idle state.
       broadcastQueueUpdate(this.getQueueState());
       return;
     }
-
     this.currentSong = next;
     this.paused = false;
 

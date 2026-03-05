@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
-import { startPlayback, getPlaylists, quickAddToQueue, quickAddPlaylistToQueue } from '../api/api';
+import { startPlayback, getPlaylists, quickAddToQueue, quickAddPlaylistToQueue, overridePlay } from '../api/api';
 import type { LoopMode, Playlist, QueuedSong } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -21,12 +21,12 @@ export default function QueuePage() {
   const { isAdminView } = useAdminView();
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showOverride, setShowOverride] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
 
-  const { currentSong, queue, isPlaying, loopMode } = state;
-
+  const { currentSong, queue, priorityQueue, isPlaying, loopMode } = state;
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
 
   const handleLoop = async (mode: LoopMode) => {
@@ -75,6 +75,24 @@ export default function QueuePage() {
       <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Queue</h1>
 
       {/* ------------------------------------------------------------------ */}
+      {/* Admin Override Button */}
+      {/* ------------------------------------------------------------------ */}
+      {isAdminView && (
+        <section className="mb-6">
+          <button
+            onClick={() => setShowOverride(true)}
+            className="flex items-center gap-2 btn-danger"
+          >
+            <IconOverride size={14} />
+            <span>Override</span>
+          </button>
+          <p className="font-mono text-[10px] text-muted mt-1">
+            Immediately play a song, clearing all queues
+          </p>
+        </section>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
       {/* Now Playing card */}
       {/* ------------------------------------------------------------------ */}
       {currentSong ? (
@@ -113,7 +131,6 @@ export default function QueuePage() {
               </button>
             ))}
           </div>
-
           <button
             onClick={() => setShowLoadPlaylist(true)}
             className="flex items-center gap-2 btn-primary ml-auto"
@@ -121,7 +138,6 @@ export default function QueuePage() {
             <IconList size={14} />
             <span>Load Playlist</span>
           </button>
-
           <button
             onClick={() => setShowQuickAdd(true)}
             className="flex items-center gap-2 btn-primary"
@@ -142,12 +158,11 @@ export default function QueuePage() {
               <IconShuffle size={14} />
               <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
             </button>
-
             <button
               onClick={handleClear}
-              disabled={clearBusy || (queue.length === 0 && !currentSong)}
+              disabled={clearBusy || (queue.length === 0 && priorityQueue.length === 0 && !currentSong)}
               className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                queue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
+                queue.length === 0 && priorityQueue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
               }`}
             >
               <IconTrash size={14} />
@@ -158,12 +173,58 @@ export default function QueuePage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
+      {/* Up Next (Priority Queue) */}
+      {/* ------------------------------------------------------------------ */}
+      {priorityQueue.length > 0 && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-2xl text-fg tracking-wider">
+              ⚡ Up Next
+              <span className="ml-2 font-mono text-sm text-accent normal-case tracking-normal">
+                {priorityQueue.length} {priorityQueue.length === 1 ? 'song' : 'songs'}
+              </span>
+            </h2>
+            <span className="font-mono text-[10px] text-muted uppercase tracking-widest">
+              Priority Queue
+            </span>
+          </div>
+          <div className="space-y-1 border-l-2 border-accent/40 pl-3">
+            {priorityQueue.map((song, i) => (
+              <div
+                key={`priority-${song.id}-${i}`}
+                className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-elevated transition-colors duration-100 group"
+              >
+                <span className="font-mono text-xs text-accent w-5 text-right shrink-0">
+                  {i + 1}
+                </span>
+                <img
+                  src={song.thumbnailUrl}
+                  alt={song.nickname || song.title}
+                  className="w-10 h-7 object-cover rounded border border-border shrink-0"
+                  loading="lazy"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-sm font-medium text-fg truncate">
+                    {song.nickname || song.title}
+                  </p>
+                  <p className="font-mono text-[10px] text-muted">req. {song.requestedBy}</p>
+                </div>
+                <span className="font-mono text-xs text-muted shrink-0">
+                  {formatDuration(song.duration)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
       {/* Queue */}
       {/* ------------------------------------------------------------------ */}
       <section className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-2xl text-fg tracking-wider">
-            Up Next
+            Queue
             {queue.length > 0 && (
               <span className="ml-2 font-mono text-sm text-muted normal-case tracking-normal">
                 {queue.length} {queue.length === 1 ? 'song' : 'songs'}
@@ -171,16 +232,17 @@ export default function QueuePage() {
             )}
           </h2>
         </div>
-
         {queue.length === 0 ? (
           <div className="py-12 text-center border border-dashed border-border rounded-xl">
             <p className="font-mono text-xs text-faint">queue is empty</p>
-            <button
-              onClick={() => setShowLoadPlaylist(true)}
-              className="mt-3 font-mono text-xs text-accent hover:underline"
-            >
-              load a playlist to get started
-            </button>
+            {priorityQueue.length === 0 && (
+              <button
+                onClick={() => setShowLoadPlaylist(true)}
+                className="mt-3 font-mono text-xs text-accent hover:underline"
+              >
+                load a playlist to get started
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-1">
@@ -199,7 +261,9 @@ export default function QueuePage() {
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="font-body text-sm font-medium text-fg truncate">{song.nickname || song.title}</p>
+                  <p className="font-body text-sm font-medium text-fg truncate">
+                    {song.nickname || song.title}
+                  </p>
                   <p className="font-mono text-[10px] text-muted">req. {song.requestedBy}</p>
                 </div>
                 <span className="font-mono text-xs text-muted shrink-0">
@@ -240,12 +304,26 @@ export default function QueuePage() {
           }}
         />
       )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Override modal */}
+      {/* ------------------------------------------------------------------ */}
+      {showOverride && (
+        <OverrideModal
+          onClose={() => setShowOverride(false)}
+          onOverride={async () => {
+            setShowOverride(false);
+            await new Promise((r) => setTimeout(r, 600));
+            await refetch();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Now Playing card
+// Now Playing card - Redesigned
 // ---------------------------------------------------------------------------
 function NowPlayingCard({
   song,
@@ -260,54 +338,51 @@ function NowPlayingCard({
 }) {
   return (
     <div className="card overflow-hidden">
-      {/* Blurred thumbnail banner */}
-      <div className="relative h-48 overflow-hidden">
-        <img
-          src={song.thumbnailUrl}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-30"
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface/90" />
-
-        {/* Centred thumbnail */}
-        <div className="relative h-full flex items-center justify-center">
-          <div className="relative">
-            <img
-              src={song.thumbnailUrl}
-              alt={song.nickname || song.title}
-              className="h-36 w-auto rounded-lg border border-border shadow-2xl object-cover"
-            />
-            {/* Playing indicator */}
-            {isPlaying && (
-              <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg">
-                <span className="text-base text-[8px]">▶</span>
-              </div>
-            )}
-          </div>
+      <div className="flex flex-col sm:flex-row gap-4 p-5">
+        {/* Large square album art */}
+        <div className="relative shrink-0">
+          <img
+            src={song.thumbnailUrl}
+            alt={song.nickname || song.title}
+            className="w-40 h-40 rounded-lg border border-border shadow-lg object-cover"
+          />
+          {/* Playing indicator */}
+          {isPlaying && (
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-lg">
+              <span className="text-white text-xs">▶</span>
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Info + progress */}
-      <div className="px-5 py-4">
-        <p className="font-body font-bold text-fg truncate leading-tight">
-          {song.nickname || song.title}
-        </p>
-        <p className="font-mono text-[10px] text-muted mt-0.5">
-          requested by {song.requestedBy}
-        </p>
+        {/* Info */}
+        <div className="flex-1 flex flex-col justify-center">
+          {/* Song title as YouTube link */}
+          <a
+            href={song.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-body font-bold text-lg text-fg hover:text-accent transition-colors duration-150 line-clamp-2"
+          >
+            {song.nickname || song.title}
+          </a>
 
-        {/* Progress bar */}
-        <div className="mt-4">
-          <div className="relative h-1 w-full bg-elevated rounded-full overflow-hidden">
-            <div
-              className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-1.5">
-            <span className="font-mono text-[10px] text-muted">{formatDuration(elapsed)}</span>
-            <span className="font-mono text-[10px] text-muted">{formatDuration(song.duration)}</span>
+          {/* Requester */}
+          <p className="font-mono text-xs text-muted mt-1">
+            requested by {song.requestedBy}
+          </p>
+
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="relative h-2 w-full bg-elevated rounded-full overflow-hidden">
+              <div
+                className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="font-mono text-xs text-muted">{formatDuration(elapsed)}</span>
+              <span className="font-mono text-xs text-muted">{formatDuration(song.duration)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -550,7 +625,7 @@ function QuickAddModal({
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Quick Add</h2>
         <p className="font-mono text-xs text-muted mb-6">
-          add a song to the queue without saving to library
+          add a song to Up Next without saving to library
         </p>
 
         <div className="space-y-4 mb-6">
@@ -609,7 +684,102 @@ function QuickAddModal({
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}
           >
-            {submitting ? 'Adding...' : importFullPlaylist ? 'Add Playlist' : 'Add to Queue'}
+            {submitting
+              ? 'Adding...'
+              : importFullPlaylist
+              ? 'Add Playlist'
+              : 'Add to Up Next'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Override Modal (Admin only)
+// ---------------------------------------------------------------------------
+function OverrideModal({
+  onClose,
+  onOverride,
+}: {
+  onClose: () => void;
+  onOverride: () => void;
+}) {
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    if (!youtubeUrl.trim()) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await overridePlay(youtubeUrl.trim());
+      onOverride();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e?.response?.data?.error ?? 'Could not override playback. Is the bot in a voice channel?');
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
+        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Override</h2>
+        <p className="font-mono text-xs text-danger mb-6">
+          ⚠️ This will stop current playback, clear all queues, and play the requested song immediately.
+        </p>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">
+              YouTube URL
+            </p>
+            <input
+              type="text"
+              value={youtubeUrl}
+              onChange={(e) => {
+                setYoutubeUrl(e.target.value);
+                setError('');
+              }}
+              placeholder="https://youtube.com/watch?v=..."
+              className="input font-body w-full"
+              disabled={submitting}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && youtubeUrl.trim()) {
+                  handleSubmit();
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
+
+        {submitting && (
+          <p className="font-mono text-xs text-muted mb-4 flex items-center gap-2">
+            <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
+            Overriding...
+          </p>
+        )}
+
+        <div className="flex gap-2 justify-end">
+          <button className="btn-ghost" onClick={onClose} disabled={submitting}>
+            Cancel
+          </button>
+          <button
+            className="btn-danger"
+            onClick={handleSubmit}
+            disabled={submitting || !youtubeUrl.trim()}
+          >
+            {submitting ? 'Overriding...' : 'Override & Play'}
           </button>
         </div>
       </div>
@@ -722,6 +892,24 @@ function IconTrash({ size = 20, className = '' }: { size?: number; className?: s
       <path d="M10 11v6" />
       <path d="M14 11v6" />
       <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  );
+}
+
+function IconOverride({ size = 20, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polygon points="5 3 19 12 5 21 5 3" />
     </svg>
   );
 }

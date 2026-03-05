@@ -48,6 +48,7 @@ export interface QueueState {
   isPaused: boolean;
   loopMode: LoopMode;
   currentSong: QueuedSong | null;
+  priorityQueue: QueuedSong[]; // Songs added via Quick Add or "Add to Queue" - play before regular queue
   queue: QueuedSong[];
   trackStartedAt: number | null;
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist, startPlayback, importPlaylist } from '../api/api';
+import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist, startPlayback, importPlaylist, addToPriorityQueue } from '../api/api';
 import type { Song, Playlist } from '../api/types';
 import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
@@ -71,11 +71,12 @@ export default function SongsPage() {
   // Play from song — replaces the queue with the full library starting from
   // the clicked song, then continues sequentially through the rest.
   // ---------------------------------------------------------------------------
+
+
   const handlePlayFromSong = async (songId: string) => {
     setPlayingId(songId);
     try {
       await startPlayback({
-        // No playlistId = whole library
         mode: 'sequential',
         loop: queueState.loopMode,
         startFromSongId: songId,
@@ -84,12 +85,24 @@ export default function SongsPage() {
       setTimeout(() => setNotification(null), 3000);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg =
-        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
+      const errorMsg = e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
       setNotification({ message: errorMsg, type: 'error' });
       setTimeout(() => setNotification(null), 5000);
     } finally {
       setPlayingId(null);
+    }
+  };
+
+  const handleAddToQueue = async (songId: string) => {
+    try {
+      await addToPriorityQueue(songId);
+      setNotification({ message: 'Added to Up Next', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
+      setNotification({ message: errorMsg, type: 'error' });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -134,15 +147,16 @@ export default function SongsPage() {
         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
           {filtered.map((song, i) => (
             <SongCard
-              key={song.id}
-              song={song}
-              isAdmin={isAdminView}
-              playlists={playlists}
-              style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
-              onDelete={() => setDeleteId(song.id)}
-              onAddedToPlaylist={() => {/* optimistic — no refresh needed */}}
-              onPlay={() => handlePlayFromSong(song.id)}
-              isPlaying={playingId === song.id}
+            key={song.id}
+            song={song}
+            isAdmin={isAdminView}
+            playlists={playlists}
+            style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+            onDelete={() => setDeleteId(song.id)}
+            onAddedToPlaylist={() => {/* optimistic — no refresh needed */}}
+            onPlay={() => handlePlayFromSong(song.id)}
+            isPlaying={playingId === song.id}
+            onAddToQueue={() => handleAddToQueue(song.id)}
             />
           ))}
         </div>
@@ -203,6 +217,7 @@ function SongCard({
   onAddedToPlaylist,
   onPlay,
   isPlaying,
+  onAddToQueue,
 }: {
   song: Song;
   isAdmin: boolean;
@@ -212,10 +227,12 @@ function SongCard({
   onAddedToPlaylist: () => void;
   onPlay: () => void;
   isPlaying: boolean;
+  onAddToQueue: () => void;
 }) {
   const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
+  const [addingToQueue, setAddingToQueue] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close playlist menu when clicking outside
@@ -243,6 +260,15 @@ function SongCard({
       }
     } finally {
       setAddingToPlaylist(null);
+    }
+  };
+
+  const handleAddToQueue = async () => {
+    setAddingToQueue(true);
+    try {
+      await onAddToQueue();
+    } finally {
+      setAddingToQueue(false);
     }
   };
 
@@ -292,51 +318,64 @@ function SongCard({
         <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
           {song.nickname || song.title}
         </p>
-
-        {isAdmin && (
-          <div className="flex gap-1.5 mt-auto pt-1">
-            {/* Add to playlist */}
-            <div className="relative flex-1" ref={menuRef}>
+        <div className="flex gap-1.5 mt-auto pt-1">
+          {/* Add to Queue - available to all members */}
+          <button
+            onClick={handleAddToQueue}
+            disabled={addingToQueue}
+            className="flex items-center justify-center w-8 h-8 text-muted hover:text-accent border border-border hover:border-accent/30 rounded transition-colors duration-150 disabled:opacity-50"
+            title="Add to Up Next"
+          >
+            {addingToQueue ? (
+              <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
+            ) : (
+              <IconQueueAdd size={16} />
+            )}
+          </button>
+          {isAdmin && (
+            <>
+              {/* Add to playlist */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setShowPlaylistMenu((p) => !p)}
+                  className="flex items-center justify-center w-8 h-8 text-muted hover:text-fg border border-border hover:border-accent/30 rounded transition-colors duration-150"
+                  title="Add to playlist"
+                >
+                  <IconPlaylistAdd size={16} />
+                </button>
+                {showPlaylistMenu && (
+                  <div className="absolute bottom-full left-0 mb-1 w-44 bg-elevated border border-border rounded shadow-xl z-20 overflow-hidden">
+                    {playlists.length === 0 ? (
+                      <p className="px-3 py-2 text-xs font-mono text-muted">no playlists yet</p>
+                    ) : (
+                      playlists.map((pl) => (
+                        <button
+                          key={pl.id}
+                          disabled={addingToPlaylist === pl.id || addedTo.has(pl.id)}
+                          onClick={() => handleAddToPlaylist(pl.id)}
+                          className="w-full text-left px-3 py-2 text-xs font-body text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center justify-between"
+                        >
+                          <span className="truncate">{pl.name}</span>
+                          {addedTo.has(pl.id) && (
+                            <span className="text-accent text-[10px] ml-1">✓</span>
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* Delete */}
               <button
-                onClick={() => setShowPlaylistMenu((p) => !p)}
-                className="w-full text-xs font-mono text-muted hover:text-fg border border-border hover:border-accent/30 rounded px-2 py-1 transition-colors duration-150"
+                onClick={onDelete}
+                className="flex items-center justify-center w-8 h-8 text-faint hover:text-danger border border-border hover:border-danger/30 rounded transition-colors duration-150"
+                title="Delete song"
               >
-                + playlist
+                <IconTrash size={16} />
               </button>
-
-              {showPlaylistMenu && (
-                <div className="absolute bottom-full left-0 mb-1 w-44 bg-elevated border border-border rounded shadow-xl z-20 overflow-hidden">
-                  {playlists.length === 0 ? (
-                    <p className="px-3 py-2 text-xs font-mono text-muted">no playlists yet</p>
-                  ) : (
-                    playlists.map((pl) => (
-                      <button
-                        key={pl.id}
-                        disabled={addingToPlaylist === pl.id || addedTo.has(pl.id)}
-                        onClick={() => handleAddToPlaylist(pl.id)}
-                        className="w-full text-left px-3 py-2 text-xs font-body text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center justify-between"
-                      >
-                        <span className="truncate">{pl.name}</span>
-                        {addedTo.has(pl.id) && (
-                          <span className="text-accent text-[10px] ml-1">✓</span>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Delete */}
-            <button
-              onClick={onDelete}
-              className="text-xs font-mono text-faint hover:text-danger border border-border hover:border-danger/30 rounded px-2 py-1 transition-colors duration-150"
-              title="Delete song"
-            >
-              del
-            </button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -643,6 +682,72 @@ function SpinnerIcon({ size = 16, className = '' }: { size?: number; className?:
       className={`animate-spin ${className}`}
     >
       <path d="M12 2a10 10 0 0 1 10 10" />
+    </svg>
+  );
+}
+
+function IconQueueAdd({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <path d="M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+    </svg>
+  );
+}
+
+function IconPlaylistAdd({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <path d="M19 19h2v2h-2z" />
+      <path d="M19 15h2v2h-2z" />
+      <path d="M19 11h2v2h-2z" />
+      <path d="M19 7h2v2h-2z" />
+      <path d="M19 3h2v2h-2z" />
+    </svg>
+  );
+}
+
+function IconTrash({ size = 16, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
     </svg>
   );
 }
