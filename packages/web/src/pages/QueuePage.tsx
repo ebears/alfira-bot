@@ -1,3 +1,4 @@
+import { Music, Shuffle, List, Plus, Trash2, Play, Square, Repeat1, Repeat, CirclePlay, AlertTriangle, Zap } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
@@ -83,7 +84,7 @@ export default function QueuePage() {
             onClick={() => setShowOverride(true)}
             className="flex items-center gap-2 btn-danger"
           >
-            <IconOverride size={14} />
+            <Play size={14} />
             <span>Override</span>
           </button>
           <p className="font-mono text-[10px] text-muted mt-1">
@@ -127,7 +128,7 @@ export default function QueuePage() {
                     : 'border-border text-muted hover:border-muted hover:text-fg'
                 }`}
               >
-                {mode === 'off' ? '⬛ off' : mode === 'song' ? '🔂 song' : '🔁 queue'}
+                {mode === "off" ? <> <Square size={12} className="inline mr-1" /> off </> : mode === "song" ? <> <Repeat1 size={12} className="inline mr-1" /> song </> : <> <Repeat size={12} className="inline mr-1" /> queue </>}
               </button>
             ))}
           </div>
@@ -135,14 +136,14 @@ export default function QueuePage() {
             onClick={() => setShowLoadPlaylist(true)}
             className="flex items-center gap-2 btn-primary ml-auto"
           >
-            <IconList size={14} />
+            <List size={14} />
             <span>Load Playlist</span>
           </button>
           <button
             onClick={() => setShowQuickAdd(true)}
             className="flex items-center gap-2 btn-primary"
           >
-            <IconPlus size={14} />
+            <Plus size={14} />
             <span>Quick Add</span>
           </button>
         </div>
@@ -155,7 +156,7 @@ export default function QueuePage() {
               disabled={shuffleBusy || queue.length === 0}
               className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <IconShuffle size={14} />
+              <Shuffle size={14} />
               <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
             </button>
             <button
@@ -165,7 +166,7 @@ export default function QueuePage() {
                 queue.length === 0 && priorityQueue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
               }`}
             >
-              <IconTrash size={14} />
+              <Trash2 size={14} />
               <span>Clear Queue</span>
             </button>
           </div>
@@ -179,7 +180,7 @@ export default function QueuePage() {
         <section className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-2xl text-fg tracking-wider">
-              ⚡ Up Next
+              <Zap size={18} className="inline mr-1" /> Up Next
               <span className="ml-2 font-mono text-sm text-accent normal-case tracking-normal">
                 {priorityQueue.length} {priorityQueue.length === 1 ? 'song' : 'songs'}
               </span>
@@ -349,7 +350,7 @@ function NowPlayingCard({
           {/* Playing indicator */}
           {isPlaying && (
             <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-lg">
-              <span className="text-white text-xs">▶</span>
+              <CirclePlay size={14} className="text-white" />
             </div>
           )}
         </div>
@@ -398,7 +399,7 @@ function IdleCard() {
     <div className="card flex items-center justify-center py-16 border-dashed">
       <div className="text-center">
         <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-4">
-          <IconMusic size={24} className="text-faint" />
+          <Music size={24} className="text-faint" />
         </div>
         <p className="font-display text-3xl text-faint tracking-wider mb-1">Nothing Playing</p>
         <p className="font-mono text-xs text-faint">
@@ -558,7 +559,7 @@ function LoadPlaylistModal({
             onClick={handlePlay}
             disabled={submitting || !selectedId || loadingPlaylists}
           >
-            {submitting ? 'Starting...' : '▶ Play'}
+            {submitting ? 'Starting...' : <> <CirclePlay size={12} className="inline mr-1" /> Play </>}
           </button>
         </div>
       </div>
@@ -734,7 +735,7 @@ function OverrideModal({
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Override</h2>
         <p className="font-mono text-xs text-danger mb-6">
-          ⚠️ This will stop current playback, clear all queues, and play the requested song immediately.
+          <AlertTriangle size={14} className="inline mr-1" /> This will stop current playback, clear all queues, and play the requested song immediately.
         </p>
 
         <div className="space-y-4 mb-6">
@@ -784,132 +785,5 @@ function OverrideModal({
         </div>
       </div>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Icons
-// ---------------------------------------------------------------------------
-function IconMusic({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M9 18V5l12-2v13" />
-      <circle cx="6" cy="18" r="3" />
-      <circle cx="18" cy="16" r="3" />
-    </svg>
-  );
-}
-
-function IconShuffle({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polyline points="16 3 21 3 21 8" />
-      <line x1="4" y1="20" x2="21" y2="3" />
-      <polyline points="21 16 21 21 16 21" />
-      <line x1="15" y1="15" x2="21" y2="21" />
-      <line x1="4" y1="4" x2="9" y2="9" />
-    </svg>
-  );
-}
-
-function IconList({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="8" y1="6" x2="21" y2="6" />
-      <line x1="8" y1="12" x2="21" y2="12" />
-      <line x1="8" y1="18" x2="21" y2="18" />
-      <line x1="3" y1="6" x2="3.01" y2="6" />
-      <line x1="3" y1="12" x2="3.01" y2="12" />
-      <line x1="3" y1="18" x2="3.01" y2="18" />
-    </svg>
-  );
-}
-
-function IconPlus({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function IconTrash({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function IconOverride({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polygon points="5 3 19 12 5 21 5 3" />
-    </svg>
   );
 }

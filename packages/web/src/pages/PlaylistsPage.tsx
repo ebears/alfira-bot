@@ -1,3 +1,4 @@
+import { Ghost } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylists, createPlaylist, deletePlaylist } from '../api/api';
@@ -171,7 +172,7 @@ function PlaylistRow({
           </p>
           {playlist.isPrivate && (
             <span className="text-muted" title="Private playlist">
-              👻
+              <Ghost size={14} />
             </span>
           )}
         </div>

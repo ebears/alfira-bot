@@ -1,3 +1,4 @@
+import { Music, Disc3, ListMusic, SquarePlay, Play, SkipForward, LogOut, ChevronLeft, ShieldUser, Shield, Pause, Loader2, CirclePlay, CirclePause } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -5,9 +6,9 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 
 const NAV_ITEMS = [
-  { to: '/songs', label: 'Songs', icon: IconMusic },
-  { to: '/playlists', label: 'Playlists', icon: IconList },
-  { to: '/queue', label: 'Queue', icon: IconQueue },
+  { to: '/songs', label: 'Songs', icon: Disc3 },
+  { to: '/playlists', label: 'Playlists', icon: ListMusic },
+  { to: '/queue', label: 'Queue', icon: SquarePlay },
 ];
 
 export default function Layout() {
@@ -56,7 +57,7 @@ export default function Layout() {
           className={`w-7 h-7 flex items-center justify-center ${isAdminView ? 'text-accent' : 'text-member'}`}
           title={isAdminView ? 'Admin mode' : 'Member mode'}
           >
-          {isAdminView ? <IconShield size={18} /> : <IconMusic size={18} />}
+          {isAdminView ? <ShieldUser size={18} /> : <Music size={18} />}
           </div>
           )}
           <button
@@ -65,7 +66,7 @@ export default function Layout() {
                        hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <IconChevron size={16} pointRight={collapsed} />
+            <ChevronLeft size={16} className={collapsed ? 'rotate-180' : ''} />
           </button>
         </div>
 
@@ -108,7 +109,7 @@ export default function Layout() {
                   : 'border-border text-muted hover:text-fg hover:border-muted'
               }`}
             >
-              <IconShield size={12} />
+              <Shield size={12} />
               {!collapsed && (isAdminView ? 'admin view' : 'user view')}
             </button>
           </div>
@@ -140,7 +141,7 @@ export default function Layout() {
                            hover:text-danger hover:bg-elevated transition-colors duration-150"
                 title="Log out"
               >
-                <IconLogout size={14} />
+                <LogOut size={14} />
               </button>
             </div>
           ) : (
@@ -256,7 +257,7 @@ function NowPlayingBar() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <IconMusic size={14} className="text-faint" />
+                <Music size={14} className="text-faint" />
               </div>
             )}
           </div>
@@ -270,9 +271,9 @@ function NowPlayingBar() {
                 <p className="font-mono text-[10px] text-muted leading-tight">
                   {formatDuration(elapsed)} / {formatDuration(currentSong.duration)}
                   {isPlaying ? (
-                    <span className="ml-2 text-accent">▶</span>
+                    <CirclePlay size={12} className="ml-2 text-accent" />
                   ) : (
-                    <span className="ml-2 text-muted">⏸</span>
+                    <CirclePause size={12} className="ml-2 text-muted" />
                   )}
                 </p>
               </>
@@ -292,7 +293,7 @@ function NowPlayingBar() {
               title={isPaused || isStopped ? 'Resume' : 'Pause'}
               hoverColor="hover:text-fg"
             >
-              {isPaused || isStopped ? <IconPlay size={16} /> : <IconPause size={16} />}
+              {isPaused || isStopped ? <Play size={16} /> : <Pause size={16} />}
             </BarButton>
 
             <BarButton
@@ -302,7 +303,7 @@ function NowPlayingBar() {
               title="Skip"
               hoverColor="hover:text-fg"
             >
-              <IconSkip size={16} />
+              <SkipForward size={16} />
             </BarButton>
 
             <button
@@ -311,7 +312,7 @@ function NowPlayingBar() {
               className="w-8 h-8 flex items-center justify-center rounded text-muted
                          hover:text-danger hover:bg-elevated transition-colors duration-150"
             >
-              <IconLeave size={16} />
+              <LogOut size={16} />
             </button>
           </div>
         )}
@@ -350,137 +351,11 @@ function BarButton({
                  }
                  disabled:pointer-events-none`}
     >
-      {busy ? <IconSpinner size={15} /> : children}
+      {busy ? <Loader2 size={15} /> : children}
     </button>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Icons
-// ---------------------------------------------------------------------------
-function IconMusic({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M9 18V5l12-2v13" />
-      <circle cx="6" cy="18" r="3" />
-      <circle cx="18" cy="16" r="3" />
-    </svg>
-  );
-}
-
-function IconList({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="8" y1="6" x2="21" y2="6" />
-      <line x1="8" y1="12" x2="21" y2="12" />
-      <line x1="8" y1="18" x2="21" y2="18" />
-      <line x1="3" y1="6" x2="3.01" y2="6" />
-      <line x1="3" y1="12" x2="3.01" y2="12" />
-      <line x1="3" y1="18" x2="3.01" y2="18" />
-    </svg>
-  );
-}
-
-function IconQueue({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="5 3 15 10 5 17 5 3" />
-      <line x1="18" y1="6" x2="21" y2="6" />
-      <line x1="18" y1="12" x2="21" y2="12" />
-      <line x1="18" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
-
-function IconPlay({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="5 3 19 12 5 21 5 3" />
-    </svg>
-  );
-}
-
-function IconSkip({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="5 4 15 12 5 20 5 4" />
-      <line x1="19" y1="5" x2="19" y2="19" />
-    </svg>
-  );
-}
-
-function IconLeave({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-  );
-}
-
-function IconChevron({ size = 20, pointRight = false, className = '' }: { size?: number; pointRight?: boolean; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      {pointRight
-        ? <polyline points="9 18 15 12 9 6" />
-        : <polyline points="15 18 9 12 15 6" />
-      }
-    </svg>
-  );
-}
-
-function IconLogout({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-  );
-}
-
-function IconShield({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-
-function IconPause({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="6" y="4" width="4" height="16" />
-      <rect x="14" y="4" width="4" height="16" />
-    </svg>
-  );
-}
-
-function IconSpinner({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      className={`animate-spin ${className}`}
-    >
-      <path d="M12 2a10 10 0 0 1 10 10" />
-    </svg>
-  );
-}
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
