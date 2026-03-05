@@ -1,3 +1,4 @@
+import { Search, Play, Loader2, ListVideo, ListPlus, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist, startPlayback, importPlaylist, addToPriorityQueue } from '../api/api';
 import type { Song, Playlist } from '../api/types';
@@ -125,7 +126,7 @@ export default function SongsPage() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={15} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={15} />
         <input
           className="input pl-9"
           placeholder="Search by title..."
@@ -305,9 +306,9 @@ function SongCard({
             }`}
           >
             {isPlaying ? (
-              <SpinnerIcon size={20} className="text-accent" />
+              <Loader2 size={20} className="text-accent" />
             ) : (
-              <PlayIcon size={20} className="text-white" />
+              <Play size={20} className="text-white" />
             )}
           </div>
         </button>
@@ -329,7 +330,7 @@ function SongCard({
             {addingToQueue ? (
               <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
             ) : (
-              <IconQueueAdd size={16} />
+              <ListVideo size={16} />
             )}
           </button>
           {isAdmin && (
@@ -341,7 +342,7 @@ function SongCard({
                   className="flex items-center justify-center w-8 h-8 text-muted hover:text-fg border border-border hover:border-accent/30 rounded transition-colors duration-150"
                   title="Add to playlist"
                 >
-                  <IconPlaylistAdd size={16} />
+                  <ListPlus size={16} />
                 </button>
                 {showPlaylistMenu && (
                   <div className="absolute bottom-full left-0 mb-1 w-44 bg-elevated border border-border rounded shadow-xl z-20 overflow-hidden">
@@ -371,7 +372,7 @@ function SongCard({
                 className="flex items-center justify-center w-8 h-8 text-faint hover:text-danger border border-border hover:border-danger/30 rounded transition-colors duration-150"
                 title="Delete song"
               >
-                <IconTrash size={16} />
+                <Trash2 size={16} />
               </button>
             </>
           )}
@@ -636,118 +637,9 @@ function EmptyState({
 // ---------------------------------------------------------------------------
 // Helpers / icons
 // ---------------------------------------------------------------------------
+
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function SearchIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function PlayIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <polygon points="5 3 19 12 5 21 5 3" />
-    </svg>
-  );
-}
-
-function SpinnerIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      className={`animate-spin ${className}`}
-    >
-      <path d="M12 2a10 10 0 0 1 10 10" />
-    </svg>
-  );
-}
-
-function IconQueueAdd({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <path d="M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
-    </svg>
-  );
-}
-
-function IconPlaylistAdd({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <path d="M19 19h2v2h-2z" />
-      <path d="M19 15h2v2h-2z" />
-      <path d="M19 11h2v2h-2z" />
-      <path d="M19 7h2v2h-2z" />
-      <path d="M19 3h2v2h-2z" />
-    </svg>
-  );
-}
-
-function IconTrash({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
 }

@@ -1,3 +1,4 @@
+import { ChevronLeft, Play, Plus, ListVideo, Trash2, CirclePlay, Ghost, Lock, Unlock } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -206,7 +207,7 @@ export default function PlaylistDetailPage() {
         className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg
                    transition-colors duration-150 mb-6"
       >
-        <ChevronLeftIcon size={14} /> playlists
+        <ChevronLeft size={14} /> playlists
       </button>
 
       {/* Header */}
@@ -239,7 +240,7 @@ export default function PlaylistDetailPage() {
               </h1>
               {playlist.isPrivate && (
                 <span className="text-muted text-sm" title="Private playlist">
-                  👻 private
+                  <Ghost size={14} className="inline mr-1" /> private
                 </span>
               )}
             </div>
@@ -260,13 +261,13 @@ export default function PlaylistDetailPage() {
             disabled={playlist.songs.length === 0}
             title="Add playlist to current queue"
           >
-            <PlusIcon size={14} /> Add to Queue
+            <Plus size={14} /> Add to Queue
           </button>
           <button className="btn-primary text-xs flex items-center gap-1.5"
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
             >
-            <PlayIcon size={14} /> Play
+            <Play size={14} /> Play
             </button>
             {(user?.discordId === playlist.createdBy || isAdminView) && (
             <button
@@ -274,7 +275,7 @@ export default function PlaylistDetailPage() {
             onClick={handleToggleVisibility}
             title={playlist.isPrivate ? 'Make playlist public' : 'Make playlist private'}
             >
-            {playlist.isPrivate ? '🔓 Make Public' : '🔒 Make Private'}
+            {playlist.isPrivate ? <> <Unlock size={14} className="inline mr-1" /> Make Public </> : <> <Lock size={14} className="inline mr-1" /> Make Private </>}
             </button>
             )}
             {isAdminView && (
@@ -397,7 +398,7 @@ function SongRow({
             className="hidden group-hover:flex items-center justify-center text-accent hover:text-accent/80 transition-colors duration-150"
             title="Play from this song"
           >
-            <PlayIcon size={14} />
+            <Play size={14} />
           </button>
         )}
       </div>
@@ -422,7 +423,7 @@ function SongRow({
         className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent transition-all duration-150 p-1"
         title="Add to Up Next"
       >
-        <IconQueueAdd size={14} />
+        <ListVideo size={14} />
       </button>
       {isAdmin && (
         <button
@@ -430,7 +431,7 @@ function SongRow({
           className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger transition-all duration-150 p-1"
           title="Remove from playlist"
         >
-          <IconTrash size={14} />
+          <Trash2 size={14} />
         </button>
       )}
     </div>
@@ -630,7 +631,7 @@ function PlayModal({
         <div className="flex gap-2 justify-end">
           <button className="btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
           <button className="btn-primary" onClick={handlePlay} disabled={loading}>
-            {loading ? 'Starting...' : '▶ Play'}
+            {loading ? 'Starting...' : <> <CirclePlay size={12} className="inline mr-1" /> Play </>}
           </button>
         </div>
       </div>
@@ -714,53 +715,4 @@ function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function ChevronLeftIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function PlayIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <polygon points="5 3 19 12 5 21 5 3" />
-    </svg>
-  );
-}
-
-function PlusIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function IconQueueAdd({ size = 16, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <path d="M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
-    </svg>
-  );
-}
-
-function IconTrash({ size = 16, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
 }
