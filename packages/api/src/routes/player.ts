@@ -238,12 +238,10 @@ router.post(
 
     // If starting from a specific song, clear the queue and interrupt current playback
     if (startFromSongId) {
-      await player.replaceQueueAndPlay(queuedSongs);
+    await player.replaceQueueAndPlay(queuedSongs);
     } else {
-      // Add songs to existing queue
-      for (const song of queuedSongs) {
-        await player.addToQueue(song);
-      }
+    // Add songs to existing queue
+    await player.addToQueue(queuedSongs);
     }
 
     res.json({ message: `Queued ${queuedSongs.length} song(s).` });

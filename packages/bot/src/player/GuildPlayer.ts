@@ -272,23 +272,9 @@ export class GuildPlayer {
    * If nothing is currently playing, playback starts immediately.
    * Broadcasts the updated state after the queue is modified.
    */
-  async addToQueue(song: QueuedSong): Promise<void> {
-    this.queue.push(song);
-    if (this.currentSong === null) {
-      await this.playNext();
-    } else {
-      // Already playing — just broadcast the new queue length.
-      broadcastQueueUpdate(this.getQueueState());
-    }
-  }
-
-  /**
-   * Add multiple songs to the end of the queue in one operation.
-   * Compared to calling addToQueue() in a loop, this pushes all songs before
-   * starting playback and only broadcasts a single queue-update event.
-   */
-  async addManyToQueue(songs: QueuedSong[]): Promise<void> {
-      this.queue.push(...songs);
+  async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
+      const arr = Array.isArray(songs) ? songs : [songs];
+      this.queue.push(...arr);
       if (this.currentSong === null) {
         await this.playNext();
       } else {
