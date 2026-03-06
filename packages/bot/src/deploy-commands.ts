@@ -19,7 +19,6 @@ import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
 import { playCommand } from './commands/play';
 import { skipCommand } from './commands/skip';
-import { stopCommand } from './commands/stop';
 import { pauseCommand } from './commands/pause';
 import { loopCommand } from './commands/loop';
 import { shuffleCommand } from './commands/shuffle';
@@ -41,7 +40,6 @@ const commands = [
   leaveCommand,
   playCommand,
   skipCommand,
-  stopCommand,
   pauseCommand,
   loopCommand,
   shuffleCommand,

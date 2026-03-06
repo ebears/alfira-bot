@@ -77,11 +77,7 @@ export const skipTrack = () => client.post('/api/player/skip');
  * channel. This is the primary "leave" action for the web UI.
  */
 export const leaveVoice = () => client.post('/api/player/leave');
-/**
- * Alias for leaveVoice — kept for any call sites that used stopPlayback.
- * Both stop playback AND disconnect the bot.
- */
-export const stopPlayback = leaveVoice;
+
 export const setLoopMode = (mode: LoopMode) =>
   client.post('/api/player/loop', { mode });
 export const shuffleQueue = () => client.post('/api/player/shuffle');

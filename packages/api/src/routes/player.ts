@@ -304,40 +304,7 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/stop
-//
-// Alias for /leave — stops playback and disconnects the bot.
-// Kept for backwards compatibility.
-// Member accessible.
-// ---------------------------------------------------------------------------
-router.post(
-  '/stop',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    // Delegate to the leave handler by forwarding internally.
-    // We re-use the same logic rather than duplicating it.
-    const player = getPlayer(GUILD_ID);
-    const connection = getVoiceConnection(GUILD_ID);
 
-    if (!player && !connection) {
-      res.status(409).json({ error: 'The bot is not in a voice channel.' });
-      return;
-    }
-
-    if (player) {
-      player.stop();
-    }
-
-    if (connection) {
-      connection.destroy();
-    }
-
-    removePlayer(GUILD_ID);
-
-    res.json({ message: 'Left the voice channel.' });
-  })
-);
 
 // ---------------------------------------------------------------------------
 // POST /api/player/loop
