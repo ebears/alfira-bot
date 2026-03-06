@@ -351,7 +351,7 @@ function BarButton({
                  }
                  disabled:pointer-events-none`}
     >
-      {busy ? <Loader2 size={15} /> : children}
+      {busy ? <Loader2 size={15} className="animate-spin" /> : children}
     </button>
   );
 }

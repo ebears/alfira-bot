@@ -306,7 +306,7 @@ function SongCard({
             }`}
           >
             {isPlaying ? (
-              <Loader2 size={20} className="text-accent" />
+              <Loader2 size={20} className="text-accent animate-spin" />
             ) : (
               <Play size={20} className="text-white" />
             )}
