@@ -33,8 +33,9 @@ export default function PlaylistDetailPage() {
 
   // Allow editing when:
   // - User is admin AND edit mode is enabled, OR
-  // - User is the playlist owner (can remove songs from their own playlists)
-  const canEdit = (isAdminView && isEditMode) || (user?.discordId === playlist?.createdBy);
+  // - User is the playlist owner AND edit mode is enabled
+  const isOwner = user?.discordId === playlist?.createdBy;
+  const canEdit = (isAdminView || isOwner) && isEditMode;
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const { state: queueState } = usePlayer();
@@ -280,29 +281,27 @@ export default function PlaylistDetailPage() {
             {playlist.isPrivate ? <> <Unlock size={14} className="inline mr-1" /> Make Public </> : <> <Lock size={14} className="inline mr-1" /> Make Private </>}
             </button>
             )}
-            {isAdminView && (
-            <>
-              {isEditMode && (
-                <>
-                  <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
-                    + Add Songs
-                  </button>
-                  <button
-                    className="btn-danger text-xs"
-                    onClick={handleDeletePlaylist}
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
-              <button
-                className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
-                onClick={toggleEditMode}
-              >
-                {isEditMode ? '✎ Editing' : '✎ Edit'}
-              </button>
-            </>
-          )}
+            {(isAdminView || isOwner) && (
+                    <>
+                      {isEditMode && (
+                        <>
+                          <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
+                            + Add Songs
+                          </button>
+                          <button className="btn-danger text-xs" onClick={handleDeletePlaylist}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                      <button
+                        className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
+                        onClick={toggleEditMode}
+                      >
+                        {isEditMode ? '✎ Editing' : '✎ Edit'}
+                      </button>
+                    </>
+                  )}
         </div>
       </div>
 

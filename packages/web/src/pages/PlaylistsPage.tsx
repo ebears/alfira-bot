@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { getPlaylists, createPlaylist, deletePlaylist } from '../api/api';
 import type { Playlist } from '../api/types';
 import { useAdminView } from '../context/AdminViewContext';
+import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
 
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const socket = useSocket();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -88,11 +90,9 @@ export default function PlaylistsPage() {
             {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        {isAdminView && (
-          <button className="btn-primary" onClick={() => setShowCreate(true)}>
-            + New Playlist
-          </button>
-        )}
+        <button className="btn-primary" onClick={() => setShowCreate(true)}>
+          + New Playlist
+        </button>
       </div>
 
       {/* List */}
@@ -107,6 +107,7 @@ export default function PlaylistsPage() {
               key={pl.id}
               playlist={pl}
               isAdmin={isAdminView}
+ isOwner={user?.discordId === pl.createdBy}
               style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
               onClick={() => navigate(`/playlists/${pl.id}`)}
               onDelete={(e) => { e.stopPropagation(); setDeleteTarget(pl); }}
@@ -135,19 +136,14 @@ export default function PlaylistsPage() {
 // ---------------------------------------------------------------------------
 // Playlist row
 // ---------------------------------------------------------------------------
-function PlaylistRow({
-  playlist,
-  isAdmin,
-  style,
-  onClick,
-  onDelete,
-}: {
-  playlist: Playlist;
-  isAdmin: boolean;
-  style?: React.CSSProperties;
-  onClick: () => void;
-  onDelete: (e: React.MouseEvent) => void;
-}) {
+  function PlaylistRow({ playlist, isAdmin, isOwner, style, onClick, onDelete }: {
+    playlist: Playlist;
+    isAdmin: boolean;
+    isOwner: boolean;
+    style?: React.CSSProperties;
+    onClick: () => void;
+    onDelete: (e: React.MouseEvent) => void;
+  }) {
   const count = playlist._count?.songs ?? 0;
 
   return (
@@ -181,12 +177,12 @@ function PlaylistRow({
         </p>
       </div>
 
-      {/* Admin actions */}
-      {isAdmin && (
+      {/* Admin/Owner actions */}
+      {(isAdmin || isOwner) && (
         <button
           onClick={onDelete}
           className="opacity-0 group-hover:opacity-100 font-mono text-xs text-faint
-                     hover:text-danger transition-all duration-150 px-2 py-1"
+            hover:text-danger transition-all duration-150 px-2 py-1"
           title="Delete playlist"
         >
           del

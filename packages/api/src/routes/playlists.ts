@@ -68,12 +68,11 @@ router.get(
 // ---------------------------------------------------------------------------
 // POST /api/playlists
 //
-// Creates a new empty playlist. Admin only.
+// Creates a new empty playlist. All authenticated users can create playlists.
 // ---------------------------------------------------------------------------
 router.post(
   '/',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { name } = req.body as { name?: string };
 
@@ -188,12 +187,11 @@ router.patch(
 // ---------------------------------------------------------------------------
 // PATCH /api/playlists/:id
 //
-// Renames a playlist. Admin only.
+// Renames a playlist. Playlist owner or admin.
 // ---------------------------------------------------------------------------
 router.patch(
   '/:id',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { name } = req.body as { name?: string };
 
@@ -216,6 +214,14 @@ router.patch(
       return;
     }
 
+    // Check permissions: playlist owner or admin
+    const isOwner = existing.createdBy === req.user!.discordId;
+    const isAdmin = req.user!.isAdmin;
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: 'Only the playlist owner or admins can rename this playlist.' });
+      return;
+    }
+
     const playlist = await prisma.playlist.update({
       where: { id: req.params.id as string },
       data: { name: name.trim() },
@@ -231,12 +237,11 @@ router.patch(
 // DELETE /api/playlists/:id
 //
 // Deletes a playlist. Songs in the library are NOT deleted — only the
-// PlaylistSong associations are removed (via cascade). Admin only.
+// PlaylistSong associations are removed (via cascade). Playlist owner or admin.
 // ---------------------------------------------------------------------------
 router.delete(
   '/:id',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const existing = await prisma.playlist.findUnique({
       where: { id: req.params.id as string }
@@ -244,6 +249,16 @@ router.delete(
 
     if (!existing) {
       res.status(404).json({ error: 'Playlist not found.' });
+      return;
+    }
+
+    // Check permissions: playlist owner or admin
+    const isOwner = existing.createdBy === req.user!.discordId;
+
+    const isAdmin = req.user!.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: 'Only the playlist owner or admins can delete this playlist.' });
       return;
     }
 
@@ -262,12 +277,11 @@ router.delete(
 // POST /api/playlists/:id/songs
 //
 // Adds a song to a playlist. The song must already exist in the library.
-// It is appended at the end (highest existing position + 1). Admin only.
+// It is appended at the end (highest existing position + 1). Playlist owner or admin.
 // ---------------------------------------------------------------------------
 router.post(
   '/:id/songs',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { songId } = req.body as { songId?: string };
 
@@ -288,6 +302,14 @@ router.post(
 
     if (!song) {
       res.status(404).json({ error: 'Song not found.' });
+      return;
+    }
+
+    // Check permissions: playlist owner or admin
+    const isOwner = playlist.createdBy === req.user!.discordId;
+    const isAdmin = req.user!.isAdmin;
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: 'Only the playlist owner or admins can add songs to this playlist.' });
       return;
     }
 
