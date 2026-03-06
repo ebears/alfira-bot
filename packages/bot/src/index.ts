@@ -4,7 +4,7 @@ import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
 import { playCommand } from './commands/play';
 import { skipCommand } from './commands/skip';
-import { stopCommand } from './commands/stop';
+
 import { pauseCommand } from './commands/pause';
 import { loopCommand } from './commands/loop';
 import { shuffleCommand } from './commands/shuffle';
@@ -76,17 +76,16 @@ export async function startBot(): Promise<void> {
   client.commands = new Collection<string, Command>();
 
   const commands: Command[] = [
-    joinCommand,
-    leaveCommand,
-    playCommand,
-    skipCommand,
-    stopCommand,
-    pauseCommand,
-    loopCommand,
-    shuffleCommand,
-    queueCommand,
-    nowplayingCommand,
-    playlistCommand,
+  	joinCommand,
+  	leaveCommand,
+  	playCommand,
+  	skipCommand,
+  	pauseCommand,
+  	loopCommand,
+  	shuffleCommand,
+  	queueCommand,
+  	nowplayingCommand,
+  	playlistCommand,
   ];
 
   for (const command of commands) {
