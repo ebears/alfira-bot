@@ -31,8 +31,10 @@ export default function PlaylistDetailPage() {
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Only allow editing when user is admin AND edit mode is enabled
-  const canEdit = isAdminView && isEditMode;
+  // Allow editing when:
+  // - User is admin AND edit mode is enabled, OR
+  // - User is the playlist owner (can remove songs from their own playlists)
+  const canEdit = (isAdminView && isEditMode) || (user?.discordId === playlist?.createdBy);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const { state: queueState } = usePlayer();

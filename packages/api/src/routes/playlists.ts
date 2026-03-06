@@ -335,21 +335,39 @@ router.post(
 // DELETE /api/playlists/:id/songs/:songId
 //
 // Removes a song from a playlist. Does not delete the song from the library.
-// Admin only.
+// Playlist owner or admin.
 // ---------------------------------------------------------------------------
 router.delete(
   '/:id/songs/:songId',
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req, res) => {
     const { id: playlistId, songId } = req.params;
+
+    // Fetch the playlist to check ownership
+    const playlist = await prisma.playlist.findUnique({
+      where: { id: playlistId as string },
+    });
+
+    if (!playlist) {
+      res.status(404).json({ error: 'Playlist not found.' });
+      return;
+    }
+
+    // Check permissions: playlist owner or admin
+    const isOwner = playlist.createdBy === req.user!.discordId;
+    const isAdmin = req.user!.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: 'Only the playlist owner or admins can remove songs.' });
+      return;
+    }
 
     const entry = await prisma.playlistSong.findUnique({
       where: {
         playlistId_songId: {
           playlistId: playlistId as string,
-          songId: songId as string
-        }
+          songId: songId as string,
+        },
       },
     });
 
@@ -362,8 +380,8 @@ router.delete(
       where: {
         playlistId_songId: {
           playlistId: playlistId as string,
-          songId: songId as string
-        }
+          songId: songId as string,
+        },
       },
     });
 
