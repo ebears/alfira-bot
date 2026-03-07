@@ -118,36 +118,38 @@ export class CircularBuffer<T> {
   /**
    * Shuffle the playback order using Fisher-Yates algorithm.
    * The buffer contents remain unchanged; only the access order is randomized.
-   * Resets the read pointer to the beginning.
+   * Only shuffles unplayed items (after current position), keeping already-played
+   * items in their original order. Preserves the current read position.
    */
   shuffle(): void {
     if (this.buffer.length <= 1) {
       return;
     }
 
-    // Create an array of indices [0, 1, 2, ..., n-1]
-    this.playbackOrder = Array.from({ length: this.buffer.length }, (_, i) => i);
+    // Keep played items in original order (if any)
+    const played = Array.from({ length: this.readIndex }, (_, i) => i);
 
-    // Fisher-Yates shuffle
-    for (let i = this.playbackOrder.length - 1; i > 0; i--) {
+    // Create array of remaining indices to shuffle
+    const remaining = Array.from(
+      { length: this.buffer.length - this.readIndex },
+      (_, i) => this.readIndex + i
+    );
+
+    // Fisher-Yates shuffle only the remaining items
+    for (let i = remaining.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [this.playbackOrder[i], this.playbackOrder[j]] = [
-        this.playbackOrder[j],
-        this.playbackOrder[i],
-      ];
+      [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
     }
 
-    // Reset read pointer so shuffle takes effect immediately
-    this.readIndex = 0;
+    this.playbackOrder = [...played, ...remaining];
   }
 
   /**
    * Remove shuffle and return to original order.
-   * Resets the read pointer to the beginning.
+   * Preserves the current read position.
    */
   unshuffle(): void {
     this.playbackOrder = null;
-    this.readIndex = 0;
   }
 
   // ---------------------------------------------------------------------------
