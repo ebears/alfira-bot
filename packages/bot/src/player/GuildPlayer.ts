@@ -282,10 +282,12 @@ export class GuildPlayer {
     const existingItems = this.queue.toOriginalArray();
     const remaining = this.queue.toArray();
     const played = existingItems.slice(0, this.queue.position);
+    // Capture position BEFORE replace() since replace() resets readIndex to 0
+    const currentPosition = this.queue.position;
     this.queue.replace([...played, ...remaining, ...arr]);
     // Restore read position
-    for (let i = 0; i < this.queue.position; i++) {
-      this.queue.advance();
+    for (let i = 0; i < currentPosition; i++) {
+    	this.queue.advance();
     }
     if (this.currentSong === null) {
       await this.playNext();
