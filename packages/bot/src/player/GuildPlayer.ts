@@ -14,6 +14,8 @@ import { getStreamFormat, createAudioStream } from '../utils/ytdlp';
 import { formatDuration, formatLoopMode } from '../utils/format';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
+import { CircularBuffer } from './CircularBuffer';
+import { SinglyLinkedList } from './SinglyLinkedList';
 
 // ---------------------------------------------------------------------------
 // Retry helper
@@ -48,8 +50,10 @@ export class GuildPlayer {
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  private queue: QueuedSong[] = [];
-  private priorityQueue: QueuedSong[] = []; // Songs added via Quick Add or "Add to Queue" - play before regular queue
+  // Main queue using CircularBuffer for O(1) operations and efficient looping
+  private queue: CircularBuffer<QueuedSong> = new CircularBuffer();
+  // Priority queue using SinglyLinkedList for O(1) push/shift
+  private priorityQueue: SinglyLinkedList<QueuedSong> = new SinglyLinkedList();
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
   private paused = false;
@@ -238,8 +242,8 @@ export class GuildPlayer {
         this.killCurrentFfmpeg = null;
 
         // Reset in-memory state and push it to the web UI.
-        this.queue = [];
-        this.currentSong = null;
+            this.queue.clear();
+            this.currentSong = null;
         broadcastQueueUpdate(this.getQueueState());
 
         // Notify the text channel. fire-and-forget; don't let a channel error
@@ -273,14 +277,22 @@ export class GuildPlayer {
    * Broadcasts the updated state after the queue is modified.
    */
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
-      const arr = Array.isArray(songs) ? songs : [songs];
-      this.queue.push(...arr);
-      if (this.currentSong === null) {
-        await this.playNext();
-      } else {
-        broadcastQueueUpdate(this.getQueueState());
-      }
+    const arr = Array.isArray(songs) ? songs : [songs];
+    // Rebuild the queue with existing items plus new items
+    const existingItems = this.queue.toOriginalArray();
+    const remaining = this.queue.toArray();
+    const played = existingItems.slice(0, this.queue.position);
+    this.queue.replace([...played, ...remaining, ...arr]);
+    // Restore read position
+    for (let i = 0; i < this.queue.position; i++) {
+      this.queue.advance();
     }
+    if (this.currentSong === null) {
+      await this.playNext();
+    } else {
+      broadcastQueueUpdate(this.getQueueState());
+    }
+  }
 
     /**
      * Add a song to the priority queue (Up Next).
@@ -300,8 +312,8 @@ export class GuildPlayer {
      * Clear both priority queue and regular queue.
      */
     clearAllQueues(): void {
-      this.priorityQueue = [];
-      this.queue = [];
+      this.priorityQueue.clear();
+      this.queue.clear();
       broadcastQueueUpdate(this.getQueueState());
     }
 
@@ -312,7 +324,8 @@ export class GuildPlayer {
    */
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
     // Clear the current queue and stop playback
-    this.queue = [];
+    this.queue.clear();
+    this.priorityQueue.clear();
 
     // Kill any current FFmpeg process
     this.killCurrentFfmpeg?.();
@@ -322,7 +335,7 @@ export class GuildPlayer {
     this.audioPlayer.stop(true); // true = force-stop, suppresses Idle event
 
     // Set the new queue
-    this.queue = [...songs];
+    this.queue.replace(songs);
 
     // Start playing the first song
     await this.playNext();
@@ -361,9 +374,7 @@ export class GuildPlayer {
    */
   async resume(): Promise<void> {
     if (!this.currentSong) return;
-    // Re-queue the current song at the front and play it
-    this.queue.unshift(this.currentSong);
-    this.currentSong = null;
+    // Play the current song again
     await this.playNext();
   }
 
@@ -382,20 +393,17 @@ export class GuildPlayer {
   /**
    * Clears the song queue.
    */
-   clearQueue(): void {
-     this.queue = [];
-     broadcastQueueUpdate(this.getQueueState());
-   }
+  clearQueue(): void {
+    this.queue.clear();
+    broadcastQueueUpdate(this.getQueueState());
+  }
 
   /**
-   * Shuffle the upcoming queue in place using Fisher-Yates.
+   * Shuffle the upcoming queue using the CircularBuffer's shuffle method.
    * The currently playing song is not affected.
    */
   shuffle(): void {
-    for (let i = this.queue.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
-    }
+    this.queue.shuffle();
     broadcastQueueUpdate(this.getQueueState());
   }
 
@@ -444,8 +452,8 @@ export class GuildPlayer {
   }
 
   getQueue(): QueuedSong[] {
-    // Return a shallow copy so callers can't accidentally mutate the queue.
-    return [...this.queue];
+    // Return remaining items in the queue (current playback order)
+    return this.queue.toArray();
   }
 
   getLoopMode(): LoopMode {
@@ -466,17 +474,17 @@ export class GuildPlayer {
   // Returns a QueueState snapshot. Used by GET /api/player/queue and as the
   // payload for the Socket.io player:update event.
   // ---------------------------------------------------------------------------
-  	getQueueState(): QueueState {
-  		return {
-  			isPlaying: this.isPlaying(),
-  			isPaused: this.paused,
-  			loopMode: this.loopMode,
-  			currentSong: this.currentSong,
-  			priorityQueue: [...this.priorityQueue],
-  			queue: [...this.queue],
-  			trackStartedAt: this.trackStartedAt,
-  		};
-  	}
+	  getQueueState(): QueueState {
+	    return {
+	      isPlaying: this.isPlaying(),
+	      isPaused: this.paused,
+	      loopMode: this.loopMode,
+	      currentSong: this.currentSong,
+	      priorityQueue: this.priorityQueue.toArray(),
+	      queue: this.queue.toArray(),
+	      trackStartedAt: this.trackStartedAt,
+	    };
+	  }
 
   // ---------------------------------------------------------------------------
   // Private methods
@@ -502,17 +510,56 @@ export class GuildPlayer {
       return;
     }
 
+    // Check priority queue first
+    const prioritySong = this.priorityQueue.shift();
+    if (prioritySong) {
+      this.currentSong = prioritySong;
+      this.paused = false;
+      await this.playSong(prioritySong);
+      return;
+    }
 
+    // Check if main queue is at end
+    if (this.queue.isAtEnd) {
+      if (this.loopMode === 'queue' && !this.queue.isEmpty) {
+        // Wrap around for queue loop
+        this.queue.reset();
+      } else if (this.loopMode === 'song' && this.currentSong) {
+        // Song loop: replay current song
+        await this.playSong(this.currentSong);
+        return;
+      } else {
+        // Queue exhausted and not looping
+        this.currentSong = null;
+        this.queue.clear();
+        broadcastQueueUpdate(this.getQueueState());
+        return;
+      }
+    }
 
-    // Check priority queue first, then regular queue
-    const next = this.priorityQueue.shift() || this.queue.shift();
+    // Get current song from queue
+    const next = this.queue.current();
     if (!next) {
       this.currentSong = null;
-      // Queue exhausted — broadcast the idle state.
       broadcastQueueUpdate(this.getQueueState());
       return;
     }
+
     this.currentSong = next;
+
+    // Advance the read pointer ONLY if not in song loop mode
+    if (this.loopMode !== 'song') {
+      this.queue.advance();
+    }
+
+    await this.playSong(next);
+  }
+
+  /**
+   * Internal method to play a specific song.
+   * Handles stream fetching, FFmpeg process management, and error handling.
+   */
+  private async playSong(next: QueuedSong): Promise<void> {
     this.paused = false;
 
     let streamUrl: string;
@@ -523,7 +570,8 @@ export class GuildPlayer {
       // without immediately skipping a song the user wanted to hear.
       ({ url: streamUrl, isWebmOpus } = await withRetry(
         () => getStreamFormat(next.youtubeUrl),
-        2, 1_000,
+        2,
+        1_000,
       ));
     } catch (error) {
       console.error(
@@ -598,23 +646,21 @@ export class GuildPlayer {
     this.trackStartedAt = null;
     this.pausedAt = null;
     this.pausedElapsed = 0;
+
     if (this.stopping) {
-       this.stopping = false;
-       return; // don't advance, don't replay
+      this.stopping = false;
+      return; // don't advance, don't replay
     }
+
     const finished = this.currentSong;
     const wasSkipping = this.skipping;
     this.skipping = false;
 
     if (!finished) return;
 
-    if (this.loopMode === 'song' && !wasSkipping) {
-      // Re-queue the same song at the front.
-      this.queue.unshift(finished);
-    } else if (this.loopMode === 'queue') {
-      // Append the finished song to the back so the queue cycles continuously.
-      this.queue.push(finished);
-    }
+    // Handle song loop: if we're in song loop mode and not skipping,
+    // the playNext method will handle replaying (read pointer stayed in place)
+    // No need to re-add the song - the circular buffer handles this naturally
 
     await this.playNext();
   }
