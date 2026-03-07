@@ -259,7 +259,7 @@ router.post(
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
 
-    if (!player || !player.isPlaying()) {
+    if (!player || !player.getCurrentSong()) {
       res.status(409).json({ error: 'Nothing is currently playing.' });
       return;
     }

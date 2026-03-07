@@ -336,14 +336,25 @@ export class GuildPlayer {
    * Works regardless of loop mode.
    */
   async skip(): Promise<void> {
-    if (this.currentSong === null) return;
-    this.skipping = true;
-    // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
-    // which calls onTrackEnd(). The skipping flag tells it to advance.
-    // The old FFmpeg process will be killed at the top of the next playNext()
-    // call. broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
-    this.audioPlayer.stop();
-  }
+      if (this.currentSong === null) return;
+
+      this.skipping = true;
+
+      // If paused, unpause first so that .stop() triggers the Idle event correctly.
+      // Calling .stop() on a paused AudioPlayer does not trigger the Idle event,
+      // which would prevent onTrackEnd() from being called and the queue wouldn't advance.
+      if (this.paused) {
+        this.audioPlayer.unpause();
+        this.paused = false;
+        this.pausedAt = null;
+      }
+
+      // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
+      // which calls onTrackEnd(). The skipping flag tells it to advance.
+      // The old FFmpeg process will be killed at the top of the next playNext()
+      // call. broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
+      this.audioPlayer.stop();
+    }
 
   /**
    * Resume playback (after stopping, NOT pausing).
