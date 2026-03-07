@@ -15,7 +15,7 @@ export const skipCommand: Command = {
 
     const player = getPlayer(interaction.guild.id);
 
-    if (!player || !player.isPlaying()) {
+    if (!player || !player.getCurrentSong()) {
       await interaction.reply({ content: 'Nothing is currently playing.', flags: 'Ephemeral' });
       return;
     }
