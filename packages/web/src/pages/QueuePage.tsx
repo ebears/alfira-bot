@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
 import { startPlayback, getPlaylists, quickAddToQueue, quickAddPlaylistToQueue, overridePlay } from '../api/api';
-import type { LoopMode, Playlist, QueuedSong } from '../api/types';
+import type { LoopMode, Playlist, QueuedSong } from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
 // Helpers

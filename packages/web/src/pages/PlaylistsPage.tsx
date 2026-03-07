@@ -2,7 +2,7 @@ import { Ghost } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylists, createPlaylist, deletePlaylist } from '../api/api';
-import type { Playlist } from '../api/types';
+import type { Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';

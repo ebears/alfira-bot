@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { getQueueState, skipTrack, leaveVoice, resumePlayback, setLoopMode, shuffleQueue, clearQueue, togglePause } from '../api/api';
 import { useSocket } from '../hooks/useSocket';
-import type { QueueState, LoopMode } from '../api/types';
+import type { QueueState, LoopMode } from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
 // Default empty state — used before the first fetch completes.
