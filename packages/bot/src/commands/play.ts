@@ -134,18 +134,18 @@ export const playCommand: Command = {
     // playback time so CDN URLs are always fresh for songs in long queues.
     // ---------------------------------------------------------------------------
     const song: QueuedSong = dbSong
-      ? { ...dbSong, requestedBy: member.displayName }
-      : {
-          id: '',
-          title: metadata.title,
-          youtubeUrl: url,
-          youtubeId: metadata.youtubeId,
-          duration: metadata.duration,
-          thumbnailUrl: metadata.thumbnailUrl,
-          addedBy: '',
-          createdAt: new Date(),
-          requestedBy: member.displayName,
-        };
+          ? { ...dbSong, createdAt: dbSong.createdAt.toISOString(), requestedBy: member.displayName }
+          : {
+              id: '',
+              title: metadata.title,
+              youtubeUrl: url,
+              youtubeId: metadata.youtubeId,
+              duration: metadata.duration,
+              thumbnailUrl: metadata.thumbnailUrl,
+              addedBy: '',
+              createdAt: new Date().toISOString(),
+              requestedBy: member.displayName,
+            };
 
     const queueLength = player.getQueue().length;
     const isPlaying = player.isPlaying();

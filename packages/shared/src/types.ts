@@ -13,15 +13,15 @@
 // requestedBy — use QueuedSong for that.
 // ---------------------------------------------------------------------------
 export interface Song {
- id: string;
- title: string;
- youtubeUrl: string;
- youtubeId: string;
- duration: number; // seconds
- thumbnailUrl: string;
- addedBy: string; // Discord user ID
- nickname?: string | null; // Custom display name for the song
- createdAt: Date;
+  id: string;
+  title: string;
+  youtubeUrl: string;
+  youtubeId: string;
+  duration: number; // seconds
+  thumbnailUrl: string;
+  addedBy: string; // Discord user ID
+  nickname?: string | null; // Custom display name for the song
+  createdAt: string; // ISO 8601 string (JSON wire format)
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ export interface Playlist {
   createdBy: string;
   createdByDisplayName?: string;
   isPrivate: boolean;
-  createdAt: Date;
+  createdAt: string; // ISO 8601 string (JSON wire format)
   songs?: PlaylistSong[];
   _count?: { songs: number };
 }
@@ -83,4 +83,35 @@ export interface PlaylistSong {
   songId: string;
   position: number;
   song?: Song;
+}
+
+// ---------------------------------------------------------------------------
+// PlaylistDetail
+//
+// A Playlist with its songs fully populated. Used by GET /api/playlists/:id
+// ---------------------------------------------------------------------------
+export interface PlaylistDetail extends Omit<Playlist, 'songs'> {
+  songs: PlaylistSongWithSong[];
+}
+
+// ---------------------------------------------------------------------------
+// User
+//
+// Represents an authenticated Discord user. Returned by GET /auth/me
+// ---------------------------------------------------------------------------
+export interface User {
+  discordId: string;
+  username: string;
+  avatar: string | null;
+  isAdmin: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// PlaylistSongWithSong
+//
+// A PlaylistSong where the song is guaranteed to be present.
+// Used when fetching playlist details with include: { song: true }
+// ---------------------------------------------------------------------------
+export interface PlaylistSongWithSong extends Omit<PlaylistSong, "song"> {
+  song: Song;
 }

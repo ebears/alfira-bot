@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import { getMe, logout as apiLogout } from '../api/api';
-import type { User } from '../api/types';
+import type { User } from '@discord-music-bot/shared';
 
 interface AuthContextValue {
   user: User | null;

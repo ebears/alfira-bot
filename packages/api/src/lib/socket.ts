@@ -4,6 +4,27 @@ import jwt from 'jsonwebtoken';
 import type { QueueState, Song, Playlist } from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
+// Helper functions to convert Prisma objects (with Date) to wire format (string)
+// ---------------------------------------------------------------------------
+
+type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
+type PrismaPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
+
+function songToWire(song: PrismaSong): Song {
+  return {
+    ...song,
+    createdAt: song.createdAt.toISOString(),
+  };
+}
+
+function playlistToWire(playlist: PrismaPlaylist): Playlist {
+  return {
+    ...playlist,
+    createdAt: playlist.createdAt.toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // socket.ts
 //
 // Socket.io server singleton.
@@ -140,8 +161,8 @@ export function emitPlayerUpdate(state: QueueState): void {
  * Emit a newly added song to all connected clients.
  * Allows the Songs page to append the card in real time.
  */
-export function emitSongAdded(song: Song): void {
-  _io?.emit('songs:added', song);
+export function emitSongAdded(song: PrismaSong): void {
+  _io?.emit('songs:added', songToWire(song));
 }
 
 /**
@@ -156,6 +177,6 @@ export function emitSongDeleted(id: string): void {
  * Emit an updated playlist object to all connected clients.
  * Covers: create, rename, song added, song removed.
  */
-export function emitPlaylistUpdated(playlist: Playlist): void {
-  _io?.emit('playlists:updated', playlist);
+export function emitPlaylistUpdated(playlist: PrismaPlaylist): void {
+  _io?.emit('playlists:updated', playlistToWire(playlist));
 }

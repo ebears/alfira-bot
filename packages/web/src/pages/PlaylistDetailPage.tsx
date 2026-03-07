@@ -7,7 +7,7 @@ import {
   togglePlaylistVisibility,
   addToPriorityQueue,
 } from '../api/api';
-import type { PlaylistDetail, Song, LoopMode, Playlist } from '../api/types';
+import type { PlaylistDetail, Song, LoopMode, Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';

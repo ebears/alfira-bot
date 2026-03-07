@@ -1,7 +1,7 @@
 import { Search, Play, Loader2, ListVideo, ListPlus, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist, startPlayback, importPlaylist, addToPriorityQueue } from '../api/api';
-import type { Song, Playlist } from '../api/types';
+import type { Song, Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
 import { usePlayer } from '../context/PlayerContext';

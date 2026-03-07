@@ -138,9 +138,10 @@ export const playlistCommand: Command = {
       // /play command there are no placeholder fields here.
       // ---------------------------------------------------------------------------
       const queuedSongs: QueuedSong[] = playlist.songs.map((ps: PlaylistSongWithSong) => ({
-        ...ps.song,
-        requestedBy: member.displayName,
-      }));
+      		...ps.song,
+      		createdAt: ps.song.createdAt.toISOString(),
+      		requestedBy: member.displayName,
+      	}));
 
       await player.addToQueue(queuedSongs);
 

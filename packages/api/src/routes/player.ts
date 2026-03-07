@@ -155,7 +155,7 @@ router.post(
     if (!player) return; // Response already sent by helper
 
     // Fetch songs from the database.
-    let dbSongs: Song[];
+    let dbSongs: Awaited<ReturnType<typeof prisma.song.findMany>>;
 
     if (playlistId) {
       const playlist = await prisma.playlist.findUnique({
@@ -184,7 +184,7 @@ router.post(
         }
       }
 
-      dbSongs = playlist.songs.map((ps: { song: Song }): Song => ps.song);
+      dbSongs = playlist.songs.map((ps) => ps.song);
     } else {
       dbSongs = await prisma.song.findMany({
         orderBy: { createdAt: 'asc' },
@@ -233,6 +233,7 @@ router.post(
 
     const queuedSongs: QueuedSong[] = dbSongs.map((song) => ({
       ...song,
+      createdAt: song.createdAt.toISOString(),
       requestedBy,
     }));
 
@@ -414,7 +415,7 @@ router.post(
       duration: metadata.duration,
       thumbnailUrl: metadata.thumbnailUrl,
       addedBy: req.user!.discordId,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       requestedBy,
     };
 
@@ -490,7 +491,7 @@ router.post(
         duration: video.duration,
         thumbnailUrl: video.thumbnailUrl,
         addedBy: req.user!.discordId,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         requestedBy,
       };
 
@@ -617,7 +618,7 @@ router.post(
       thumbnailUrl: song.thumbnailUrl,
       addedBy: song.addedBy,
       nickname: song.nickname,
-      createdAt: song.createdAt,
+      createdAt: song.createdAt.toISOString(),
       requestedBy,
     };
 
@@ -690,7 +691,7 @@ router.post(
       duration: metadata.duration,
       thumbnailUrl: metadata.thumbnailUrl,
       addedBy: req.user!.discordId,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       requestedBy,
     };
 
