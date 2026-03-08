@@ -371,18 +371,9 @@ export class GuildPlayer {
       this.audioPlayer.stop();
     }
 
-  /**
-   * Resume playback (after stopping, NOT pausing).
-   */
-  async resume(): Promise<void> {
-    if (!this.currentSong) return;
-    // Play the current song again
-    await this.playNext();
-  }
-
-  /**
-   * Stop playback.
-   */
+  	/**
+  	 * Stop playback.
+  	 */
   stop(): void {
     this.intentionallyStopped = true;
     this.stopping = true;
