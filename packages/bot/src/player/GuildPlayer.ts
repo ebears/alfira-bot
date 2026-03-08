@@ -14,7 +14,7 @@ import { getStreamFormat, createAudioStream } from '../utils/ytdlp';
 import { formatDuration, formatLoopMode } from '../utils/format';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
-import { CircularBuffer } from './CircularBuffer';
+import { PlaybackCursor } from './PlaybackCursor';
 import { SinglyLinkedList } from './SinglyLinkedList';
 
 // ---------------------------------------------------------------------------
@@ -50,8 +50,8 @@ export class GuildPlayer {
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  // Main queue using CircularBuffer for O(1) operations and efficient looping
-  private queue: CircularBuffer<QueuedSong> = new CircularBuffer();
+  // Main queue using PlaybackCursor for O(1) operations and efficient looping
+  private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
   // Priority queue using SinglyLinkedList for O(1) push/shift
   private priorityQueue: SinglyLinkedList<QueuedSong> = new SinglyLinkedList();
   private currentSong: QueuedSong | null = null;
@@ -401,7 +401,7 @@ export class GuildPlayer {
   }
 
   /**
-   * Shuffle the upcoming queue using the CircularBuffer's shuffle method.
+   * Shuffle the upcoming queue using the PlaybackCursor's shuffle method.
    * The currently playing song is not affected.
    */
   shuffle(): void {
