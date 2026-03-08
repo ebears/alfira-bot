@@ -169,6 +169,27 @@ export class PlaybackCursor<T> {
   }
 
   /**
+   * Append items to the end of the buffer without affecting the read position.
+   * This is useful for adding songs to a queue that's currently being played.
+   *
+   * If the buffer is shuffled, new items are added to the end of the playback order,
+   * ensuring they play after all existing items.
+   */
+  append(...items: T[]): void {
+    if (items.length === 0) return;
+
+    const startIndex = this.buffer.length;
+    this.buffer.push(...items);
+
+    // If shuffled, add new indices to the end of playbackOrder
+    if (this.playbackOrder !== null) {
+      for (let i = 0; i < items.length; i++) {
+        this.playbackOrder.push(startIndex + i);
+      }
+    }
+  }
+
+  /**
    * Clear all items from the buffer.
    */
   clear(): void {
