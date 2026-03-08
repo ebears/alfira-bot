@@ -278,17 +278,10 @@ export class GuildPlayer {
    */
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
     const arr = Array.isArray(songs) ? songs : [songs];
-    // Rebuild the queue with existing items plus new items
-    const existingItems = this.queue.toOriginalArray();
-    const remaining = this.queue.toArray();
-    const played = existingItems.slice(0, this.queue.position);
-    // Capture position BEFORE replace() since replace() resets readIndex to 0
-    const currentPosition = this.queue.position;
-    this.queue.replace([...played, ...remaining, ...arr]);
-    // Restore read position
-    for (let i = 0; i < currentPosition; i++) {
-    	this.queue.advance();
-    }
+
+    // Simply append new items without affecting read position
+    this.queue.append(...arr);
+
     if (this.currentSong === null) {
       await this.playNext();
     } else {
