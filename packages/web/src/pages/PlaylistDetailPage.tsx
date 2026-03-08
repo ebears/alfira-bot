@@ -12,6 +12,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
 import { usePlayer } from '../context/PlayerContext';
+import { useNotification } from '../hooks/useNotification';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +30,7 @@ export default function PlaylistDetailPage() {
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { notification, notify } = useNotification();
 
   // Allow editing when:
   // - User is admin AND edit mode is enabled, OR
@@ -126,19 +127,17 @@ export default function PlaylistDetailPage() {
   const handleToggleVisibility = async () => {
   if (!playlist) return;
   try {
-  const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate, isAdminView);
-      setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
-      setNotification({
-        message: updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public',
-        type: 'success',
-      });
-      setTimeout(() => setNotification(null), 3000);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not toggle visibility.';
-      setNotification({ message: errorMsg, type: 'error' });
-      setTimeout(() => setNotification(null), 5000);
-    }
+        const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate, isAdminView);
+        setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
+        notify(
+          updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public',
+          'success'
+        );
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string } } };
+        const errorMsg = e?.response?.data?.error ?? 'Could not toggle visibility.';
+        notify(errorMsg, 'error', 5000);
+      }
   };
 
   const handlePlayFromSong = async (
@@ -159,10 +158,9 @@ export default function PlaylistDetailPage() {
       const e = err as { response?: { data?: { error?: string } } };
       const errorMsg = e?.response?.data?.error ?? 'Could not start playback.';
       if (throwErrors) {
-        throw err;
-      }
-      setNotification({ message: errorMsg, type: 'error' });
-      setTimeout(() => setNotification(null), 5000);
+              throw err;
+            }
+            notify(errorMsg, 'error', 5000);
     } finally {
       setPlayingSongId(null);
     }
@@ -171,33 +169,29 @@ export default function PlaylistDetailPage() {
   const handleAddToQueue = async (songId: string) => {
       try {
         await addToPriorityQueue(songId);
-        setNotification({ message: 'Added to Up Next', type: 'success' });
-        setTimeout(() => setNotification(null), 3000);
+        notify('Added to Up Next', 'success');
       } catch (err: unknown) {
         const e = err as { response?: { data?: { error?: string } } };
         const errorMsg = e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
-        setNotification({ message: errorMsg, type: 'error' });
-        setTimeout(() => setNotification(null), 5000);
+        notify(errorMsg, 'error', 5000);
       }
     };
 
     const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
-      if (!playlist) return;
-      try {
-        await startPlayback({
-          playlistId: playlist.id,
-          mode,
-          loop: queueState.loopMode,
-        });
-        setNotification({ message: `Added "${playlist.name}" to queue`, type: 'success' });
-        setTimeout(() => setNotification(null), 3000);
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { error?: string } } };
-        const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
-        setNotification({ message: errorMsg, type: 'error' });
-      setTimeout(() => setNotification(null), 5000);
-    }
-  };
+        if (!playlist) return;
+        try {
+          await startPlayback({
+            playlistId: playlist.id,
+            mode,
+            loop: queueState.loopMode,
+          });
+          notify(`Added "${playlist.name}" to queue`, 'success');
+        } catch (err: unknown) {
+          const e = err as { response?: { data?: { error?: string } } };
+          const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
+          notify(errorMsg, 'error', 5000);
+        }
+      };
 
   if (loading) return <DetailSkeleton />;
   if (!playlist) return null;

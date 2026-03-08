@@ -5,12 +5,12 @@ import type { Song, Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
 import { usePlayer } from '../context/PlayerContext';
+import { useNotification } from '../hooks/useNotification';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
   const socket = useSocket();
   const { state: queueState } = usePlayer();
-
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ export default function SongsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { notification, notify } = useNotification();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,13 +82,11 @@ export default function SongsPage() {
         loop: queueState.loopMode,
         startFromSongId: songId,
       });
-      setNotification({ message: 'Started playback', type: 'success' });
-      setTimeout(() => setNotification(null), 3000);
+      notify('Started playback', 'success');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
       const errorMsg = e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
-      setNotification({ message: errorMsg, type: 'error' });
-      setTimeout(() => setNotification(null), 5000);
+      notify(errorMsg, 'error', 5000);
     } finally {
       setPlayingId(null);
     }
@@ -97,13 +95,11 @@ export default function SongsPage() {
   const handleAddToQueue = async (songId: string) => {
     try {
       await addToPriorityQueue(songId);
-      setNotification({ message: 'Added to Up Next', type: 'success' });
-      setTimeout(() => setNotification(null), 3000);
+      notify('Added to Up Next', 'success');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
       const errorMsg = e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
-      setNotification({ message: errorMsg, type: 'error' });
-      setTimeout(() => setNotification(null), 5000);
+      notify(errorMsg, 'error', 5000);
     }
   };
 
