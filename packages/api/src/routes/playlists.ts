@@ -133,12 +133,12 @@ router.get(
       }
     }
 
-    		res.json({
-    			...playlist,
-    			createdByDisplayName: await getUserDisplayName(playlist.createdBy),
-    		});
-    	})
-    );
+    res.json({
+      ...playlist,
+      createdByDisplayName: await getUserDisplayName(playlist.createdBy),
+    });
+  })
+);
 
 // ---------------------------------------------------------------------------
 // PATCH /api/playlists/:id/visibility
@@ -169,7 +169,9 @@ router.patch(
     const isCreator = existing.createdBy === req.user!.discordId;
     const isAdminInAdminView = req.user!.isAdmin && adminView;
     if (!isCreator && !isAdminInAdminView) {
-      res.status(403).json({ error: 'Only the creator or admins (in Admin View) can change visibility.' });
+      res
+        .status(403)
+        .json({ error: 'Only the creator or admins (in Admin View) can change visibility.' });
       return;
     }
 
@@ -206,7 +208,7 @@ router.patch(
     }
 
     const existing = await prisma.playlist.findUnique({
-      where: { id: req.params.id as string }
+      where: { id: req.params.id as string },
     });
 
     if (!existing) {
@@ -218,7 +220,9 @@ router.patch(
     const isOwner = existing.createdBy === req.user!.discordId;
     const isAdmin = req.user!.isAdmin;
     if (!isOwner && !isAdmin) {
-      res.status(403).json({ error: 'Only the playlist owner or admins can rename this playlist.' });
+      res
+        .status(403)
+        .json({ error: 'Only the playlist owner or admins can rename this playlist.' });
       return;
     }
 
@@ -244,7 +248,7 @@ router.delete(
   requireAuth,
   asyncHandler(async (req, res) => {
     const existing = await prisma.playlist.findUnique({
-      where: { id: req.params.id as string }
+      where: { id: req.params.id as string },
     });
 
     if (!existing) {
@@ -258,7 +262,9 @@ router.delete(
     const isAdmin = req.user!.isAdmin;
 
     if (!isOwner && !isAdmin) {
-      res.status(403).json({ error: 'Only the playlist owner or admins can delete this playlist.' });
+      res
+        .status(403)
+        .json({ error: 'Only the playlist owner or admins can delete this playlist.' });
       return;
     }
 
@@ -309,14 +315,16 @@ router.post(
     const isOwner = playlist.createdBy === req.user!.discordId;
     const isAdmin = req.user!.isAdmin;
     if (!isOwner && !isAdmin) {
-      res.status(403).json({ error: 'Only the playlist owner or admins can add songs to this playlist.' });
+      res
+        .status(403)
+        .json({ error: 'Only the playlist owner or admins can add songs to this playlist.' });
       return;
     }
 
     // Check for duplicate.
     const existing = await prisma.playlistSong.findUnique({
       where: {
-        playlistId_songId: { playlistId: playlist.id, songId: song.id }
+        playlistId_songId: { playlistId: playlist.id, songId: song.id },
       },
     });
 

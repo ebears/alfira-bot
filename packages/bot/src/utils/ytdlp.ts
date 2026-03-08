@@ -57,9 +57,7 @@ export function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
       ],
       (error, stdout) => {
         if (error) {
-          return reject(
-            new Error(`yt-dlp metadata fetch failed: ${error.message}`)
-          );
+          return reject(new Error(`yt-dlp metadata fetch failed: ${error.message}`));
         }
 
         const lines = stdout.trimEnd().split('\n');
@@ -214,7 +212,7 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
     if (!msg) return;
 
     // Skip benign errors that occur at stream end
-    const isBenign = benignErrorPatterns.some(pattern => pattern.test(msg));
+    const isBenign = benignErrorPatterns.some((pattern) => pattern.test(msg));
     if (isBenign) return;
 
     console.warn('[FFmpeg]', msg);
@@ -314,33 +312,27 @@ function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Promise<P
       playlistUrl,
     ];
 
-    execFile(
-      'yt-dlp',
-      args,
-      (error, stdout) => {
-        if (error) {
-          return reject(
-            new Error(`yt-dlp playlist metadata fetch failed: ${error.message}`)
-          );
-        }
-
-        const lines = stdout.trimEnd().split('\n');
-        if (lines.length < 3) {
-          return reject(new Error('yt-dlp returned unexpected output for playlist'));
-        }
-
-        const title = lines[0].trim();
-        const playlistId = lines[1].trim();
-        const videoCount = parseInt(lines[2].trim(), 10) || 0;
-
-        resolve({
-          title,
-          playlistId,
-          videoCount,
-          videos: [], // Will be fetched separately
-        });
+    execFile('yt-dlp', args, (error, stdout) => {
+      if (error) {
+        return reject(new Error(`yt-dlp playlist metadata fetch failed: ${error.message}`));
       }
-    );
+
+      const lines = stdout.trimEnd().split('\n');
+      if (lines.length < 3) {
+        return reject(new Error('yt-dlp returned unexpected output for playlist'));
+      }
+
+      const title = lines[0].trim();
+      const playlistId = lines[1].trim();
+      const videoCount = parseInt(lines[2].trim(), 10) || 0;
+
+      resolve({
+        title,
+        playlistId,
+        videoCount,
+        videos: [], // Will be fetched separately
+      });
+    });
   });
 }
 
@@ -350,46 +342,37 @@ function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Promise<P
 // Fetches the list of videos in a YouTube playlist using yt-dlp.
 // Uses --flat-playlist with --dump-json for reliable parsing.
 // ---------------------------------------------------------------------------
-function getPlaylistVideos(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata['videos']> {
+function getPlaylistVideos(
+  playlistUrl: string,
+  maxVideos?: number
+): Promise<PlaylistMetadata['videos']> {
   return new Promise((resolve, reject) => {
-    const args = [
-      '--flat-playlist',
-      '--dump-json',
-      '-I',
-      `1:${maxVideos || 'inf'}`,
-      playlistUrl,
-    ];
+    const args = ['--flat-playlist', '--dump-json', '-I', `1:${maxVideos || 'inf'}`, playlistUrl];
 
-    execFile(
-      'yt-dlp',
-      args,
-      (error, stdout) => {
-        if (error) {
-          return reject(
-            new Error(`yt-dlp playlist videos fetch failed: ${error.message}`)
-          );
-        }
-
-        const lines = stdout.trimEnd().split('\n');
-        const videos = lines
-          .map((line) => {
-            try {
-              const data = JSON.parse(line);
-              return {
-                id: data.id || '',
-                title: data.title || 'Unknown',
-                duration: Math.round(data.duration) || 0,
-                thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
-              };
-            } catch {
-              return null;
-            }
-          })
-          .filter((v): v is NonNullable<typeof v> => v !== null);
-
-        resolve(videos);
+    execFile('yt-dlp', args, (error, stdout) => {
+      if (error) {
+        return reject(new Error(`yt-dlp playlist videos fetch failed: ${error.message}`));
       }
-    );
+
+      const lines = stdout.trimEnd().split('\n');
+      const videos = lines
+        .map((line) => {
+          try {
+            const data = JSON.parse(line);
+            return {
+              id: data.id || '',
+              title: data.title || 'Unknown',
+              duration: Math.round(data.duration) || 0,
+              thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter((v): v is NonNullable<typeof v> => v !== null);
+
+      resolve(videos);
+    });
   });
 }
 
@@ -398,7 +381,10 @@ function getPlaylistVideos(playlistUrl: string, maxVideos?: number): Promise<Pla
 //
 // Convenience function that fetches both playlist metadata and videos.
 // ---------------------------------------------------------------------------
-export async function getPlaylistMetadataWithVideos(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata> {
+export async function getPlaylistMetadataWithVideos(
+  playlistUrl: string,
+  maxVideos?: number
+): Promise<PlaylistMetadata> {
   const [metadata, videos] = await Promise.all([
     getPlaylistMetadata(playlistUrl, maxVideos),
     getPlaylistVideos(playlistUrl, maxVideos),

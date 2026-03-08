@@ -1,5 +1,12 @@
 import client from './client';
-import type { Song, Playlist, PlaylistDetail, QueueState, LoopMode, User } from '@discord-music-bot/shared';
+import type {
+  Song,
+  Playlist,
+  PlaylistDetail,
+  QueueState,
+  LoopMode,
+  User,
+} from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -55,7 +62,11 @@ export const addSongToPlaylist = (playlistId: string, songId: string) =>
   client.post(`/api/playlists/${playlistId}/songs`, { songId });
 export const removeSongFromPlaylist = (playlistId: string, songId: string) =>
   client.delete(`/api/playlists/${playlistId}/songs/${songId}`);
-export const togglePlaylistVisibility = (playlistId: string, isPrivate: boolean, adminView?: boolean) =>
+export const togglePlaylistVisibility = (
+  playlistId: string,
+  isPrivate: boolean,
+  adminView?: boolean
+) =>
   client
     .patch<Playlist>(`/api/playlists/${playlistId}/visibility`, { isPrivate, adminView })
     .then((r) => r.data);
@@ -63,8 +74,7 @@ export const togglePlaylistVisibility = (playlistId: string, isPrivate: boolean,
 // ---------------------------------------------------------------------------
 // Player
 // ---------------------------------------------------------------------------
-export const getQueueState = () =>
-  client.get<QueueState>('/api/player/queue').then((r) => r.data);
+export const getQueueState = () => client.get<QueueState>('/api/player/queue').then((r) => r.data);
 export const startPlayback = (opts: {
   playlistId?: string;
   mode: 'sequential' | 'random';
@@ -78,8 +88,7 @@ export const skipTrack = () => client.post('/api/player/skip');
  */
 export const leaveVoice = () => client.post('/api/player/leave');
 
-export const setLoopMode = (mode: LoopMode) =>
-  client.post('/api/player/loop', { mode });
+export const setLoopMode = (mode: LoopMode) => client.post('/api/player/loop', { mode });
 export const shuffleQueue = () => client.post('/api/player/shuffle');
 export const clearQueue = () => client.post('/api/player/clear');
 
@@ -88,10 +97,10 @@ export const togglePause = () =>
 
 export const quickAddToQueue = (youtubeUrl: string) =>
   client
-    .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(
-      '/api/player/quick-add',
-      { youtubeUrl }
-    )
+    .post<{
+      message: string;
+      song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
+    }>('/api/player/quick-add', { youtubeUrl })
     .then((r) => r.data);
 
 export interface QuickAddPlaylistResult {
@@ -112,16 +121,16 @@ export const quickAddPlaylistToQueue = (youtubeUrl: string, maxVideos?: number) 
 
 export const addToPriorityQueue = (songId: string) =>
   client
-    .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(
-      '/api/player/add-to-priority',
-      { songId }
-    )
+    .post<{
+      message: string;
+      song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
+    }>('/api/player/add-to-priority', { songId })
     .then((r) => r.data);
 
 export const overridePlay = (youtubeUrl: string) =>
   client
-    .post<{ message: string; song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string } }>(
-      '/api/player/override',
-      { youtubeUrl }
-    )
+    .post<{
+      message: string;
+      song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
+    }>('/api/player/override', { youtubeUrl })
     .then((r) => r.data);

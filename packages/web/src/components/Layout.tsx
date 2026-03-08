@@ -1,4 +1,19 @@
-import { Music, Disc3, ListMusic, SquarePlay, Play, SkipForward, LogOut, ChevronLeft, ShieldUser, Shield, Pause, Loader2, CirclePlay, CirclePause } from 'lucide-react';
+import {
+  Music,
+  Disc3,
+  ListMusic,
+  SquarePlay,
+  Play,
+  SkipForward,
+  LogOut,
+  ChevronLeft,
+  ShieldUser,
+  Shield,
+  Pause,
+  Loader2,
+  CirclePlay,
+  CirclePause,
+} from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -28,11 +43,11 @@ export default function Layout() {
       {/* Sidebar                                                             */}
       {/* ------------------------------------------------------------------ */}
       <aside
-      className={`${
-      collapsed ? 'w-16' : 'w-56'
-      } shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 ${
-      isAdminView ? 'border-t-accent' : 'border-t-member'
-      }`}
+        className={`${
+          collapsed ? 'w-16' : 'w-56'
+        } shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 ${
+          isAdminView ? 'border-t-accent' : 'border-t-member'
+        }`}
       >
         {/* Wordmark + collapse toggle */}
         <div
@@ -43,25 +58,25 @@ export default function Layout() {
           }`}
         >
           {!collapsed && (
-          <div className="flex items-center gap-2 min-w-0">
-          <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
-          {isAdminView && (
-          <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
-          admin
-          </span>
-          )}
-          </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
+              {isAdminView && (
+                <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
+                  admin
+                </span>
+              )}
+            </div>
           )}
           {collapsed && (
-          <div
-          className={`w-7 h-7 flex items-center justify-center ${isAdminView ? 'text-accent' : 'text-member'}`}
-          title={isAdminView ? 'Admin mode' : 'Member mode'}
-          >
-          {isAdminView ? <ShieldUser size={18} /> : <Music size={18} />}
-          </div>
+            <div
+              className={`w-7 h-7 flex items-center justify-center ${isAdminView ? 'text-accent' : 'text-member'}`}
+              title={isAdminView ? 'Admin mode' : 'Member mode'}
+            >
+              {isAdminView ? <ShieldUser size={18} /> : <Music size={18} />}
+            </div>
           )}
           <button
-            onClick={() => setCollapsed(c => !c)}
+            onClick={() => setCollapsed((c) => !c)}
             className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted
                        hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -160,9 +175,7 @@ export default function Layout() {
                     </span>
                   </div>
                 )}
-                <span className="text-sm font-body text-fg truncate flex-1">
-                  {user?.username}
-                </span>
+                <span className="text-sm font-body text-fg truncate flex-1">{user?.username}</span>
               </div>
               <button
                 onClick={handleLogout}
@@ -201,20 +214,18 @@ function NowPlayingBar() {
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
 
-  const progress = currentSong
-    ? Math.min((elapsed / currentSong.duration) * 100, 100)
-    : 0;
+  const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
 
   const handlePauseResume = async () => {
-      setPauseBusy(true);
-      try {
-        await pause();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setPauseBusy(false);
-      }
-    };
+    setPauseBusy(true);
+    try {
+      await pause();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPauseBusy(false);
+    }
+  };
 
   const handleSkip = async () => {
     setSkipBusy(true);
@@ -341,9 +352,10 @@ function BarButton({
       disabled={disabled}
       title={title}
       className={`w-8 h-8 flex items-center justify-center rounded transition-all duration-150
-                 ${busy
-                   ? 'opacity-40 cursor-not-allowed text-muted'
-                   : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
+                 ${
+                   busy
+                     ? 'opacity-40 cursor-not-allowed text-muted'
+                     : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
                  }
                  disabled:pointer-events-none`}
     >
@@ -351,7 +363,6 @@ function BarButton({
     </button>
   );
 }
-
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);

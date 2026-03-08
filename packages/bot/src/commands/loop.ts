@@ -21,7 +21,10 @@ export const loopCommand: Command = {
 
   async execute(interaction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: 'This command can only be used inside a server.', flags: 'Ephemeral' });
+      await interaction.reply({
+        content: 'This command can only be used inside a server.',
+        flags: 'Ephemeral',
+      });
       return;
     }
 
@@ -36,8 +39,8 @@ export const loopCommand: Command = {
     player.setLoopMode(mode);
 
     const confirmations: Record<LoopMode, string> = {
-      off:   `${formatLoopMode('off')} Loop is now **off**.`,
-      song:  `${formatLoopMode('song')} Looping the **current song**.`,
+      off: `${formatLoopMode('off')} Loop is now **off**.`,
+      song: `${formatLoopMode('song')} Looping the **current song**.`,
       queue: `${formatLoopMode('queue')} Looping the **entire queue**.`,
     };
 

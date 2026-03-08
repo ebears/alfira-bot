@@ -3,13 +3,14 @@ import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 
 export const pauseCommand: Command = {
-  data: new SlashCommandBuilder()
-    .setName('pause')
-    .setDescription('Pause or resume playback.'),
+  data: new SlashCommandBuilder().setName('pause').setDescription('Pause or resume playback.'),
 
   async execute(interaction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: 'This command can only be used inside a server.', flags: 'Ephemeral' });
+      await interaction.reply({
+        content: 'This command can only be used inside a server.',
+        flags: 'Ephemeral',
+      });
       return;
     }
 

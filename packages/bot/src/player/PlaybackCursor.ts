@@ -73,9 +73,7 @@ export class PlaybackCursor<T> {
       return undefined;
     }
 
-    const idx = this.playbackOrder
-      ? this.playbackOrder[this.readIndex]
-      : this.readIndex;
+    const idx = this.playbackOrder ? this.playbackOrder[this.readIndex] : this.readIndex;
     return this.buffer[idx];
   }
 
@@ -89,9 +87,7 @@ export class PlaybackCursor<T> {
       return undefined;
     }
 
-    const idx = this.playbackOrder
-      ? this.playbackOrder[nextIndex]
-      : nextIndex;
+    const idx = this.playbackOrder ? this.playbackOrder[nextIndex] : nextIndex;
     return this.buffer[idx];
   }
 

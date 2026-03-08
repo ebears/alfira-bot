@@ -1,9 +1,24 @@
-import { ChevronLeft, Play, Plus, ListVideo, Trash2, CirclePlay, Ghost, Lock, Unlock } from 'lucide-react';
+import {
+  ChevronLeft,
+  Play,
+  Plus,
+  ListVideo,
+  Trash2,
+  CirclePlay,
+  Ghost,
+  Lock,
+  Unlock,
+} from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  getPlaylist, renamePlaylist, removeSongFromPlaylist,
-  addSongToPlaylist, getSongs, startPlayback, deletePlaylist,
+  getPlaylist,
+  renamePlaylist,
+  removeSongFromPlaylist,
+  addSongToPlaylist,
+  getSongs,
+  startPlayback,
+  deletePlaylist,
   togglePlaylistVisibility,
   addToPriorityQueue,
 } from '../api/api';
@@ -55,7 +70,9 @@ export default function PlaylistDetailPage() {
     }
   }, [id, navigate, isAdminView]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
     if (editingName) nameInputRef.current?.focus();
@@ -95,7 +112,7 @@ export default function PlaylistDetailPage() {
       return;
     }
     const updated = await renamePlaylist(playlist.id, nameValue.trim());
-    setPlaylist((p) => p ? { ...p, name: updated.name } : p);
+    setPlaylist((p) => (p ? { ...p, name: updated.name } : p));
     setEditingName(false);
     // The socket event from the rename will also arrive and trigger a refetch,
     // but the optimistic update above means the user sees the change instantly.
@@ -111,10 +128,14 @@ export default function PlaylistDetailPage() {
     await removeSongFromPlaylist(playlist.id, songId);
     // Optimistic update — the socket event will also arrive and trigger a
     // refetch, which will reconcile any inconsistency.
-    setPlaylist((p) => p ? {
-      ...p,
-      songs: p.songs.filter((ps) => ps.songId !== songId),
-    } : p);
+    setPlaylist((p) =>
+      p
+        ? {
+            ...p,
+            songs: p.songs.filter((ps) => ps.songId !== songId),
+          }
+        : p
+    );
     setRemoveId(null);
   };
 
@@ -125,19 +146,16 @@ export default function PlaylistDetailPage() {
   };
 
   const handleToggleVisibility = async () => {
-  if (!playlist) return;
-  try {
-        const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate, isAdminView);
-        setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
-        notify(
-          updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public',
-          'success'
-        );
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { error?: string } } };
-        const errorMsg = e?.response?.data?.error ?? 'Could not toggle visibility.';
-        notify(errorMsg, 'error', 5000);
-      }
+    if (!playlist) return;
+    try {
+      const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate, isAdminView);
+      setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
+      notify(updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public', 'success');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not toggle visibility.';
+      notify(errorMsg, 'error', 5000);
+    }
   };
 
   const handlePlayFromSong = async (
@@ -158,40 +176,41 @@ export default function PlaylistDetailPage() {
       const e = err as { response?: { data?: { error?: string } } };
       const errorMsg = e?.response?.data?.error ?? 'Could not start playback.';
       if (throwErrors) {
-              throw err;
-            }
-            notify(errorMsg, 'error', 5000);
+        throw err;
+      }
+      notify(errorMsg, 'error', 5000);
     } finally {
       setPlayingSongId(null);
     }
   };
 
   const handleAddToQueue = async (songId: string) => {
-      try {
-        await addToPriorityQueue(songId);
-        notify('Added to Up Next', 'success');
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { error?: string } } };
-        const errorMsg = e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
-        notify(errorMsg, 'error', 5000);
-      }
-    };
+    try {
+      await addToPriorityQueue(songId);
+      notify('Added to Up Next', 'success');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg =
+        e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
+      notify(errorMsg, 'error', 5000);
+    }
+  };
 
-    const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
-        if (!playlist) return;
-        try {
-          await startPlayback({
-            playlistId: playlist.id,
-            mode,
-            loop: queueState.loopMode,
-          });
-          notify(`Added "${playlist.name}" to queue`, 'success');
-        } catch (err: unknown) {
-          const e = err as { response?: { data?: { error?: string } } };
-          const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
-          notify(errorMsg, 'error', 5000);
-        }
-      };
+  const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
+    if (!playlist) return;
+    try {
+      await startPlayback({
+        playlistId: playlist.id,
+        mode,
+        loop: queueState.loopMode,
+      });
+      notify(`Added "${playlist.name}" to queue`, 'success');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
+      notify(errorMsg, 'error', 5000);
+    }
+  };
 
   if (loading) return <DetailSkeleton />;
   if (!playlist) return null;
@@ -218,7 +237,10 @@ export default function PlaylistDetailPage() {
               onBlur={handleRename}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleRename();
-                if (e.key === 'Escape') { setEditingName(false); setNameValue(playlist.name); }
+                if (e.key === 'Escape') {
+                  setEditingName(false);
+                  setNameValue(playlist.name);
+                }
               }}
               className="font-display text-5xl bg-transparent text-fg tracking-wider
                          border-b-2 border-accent outline-none w-full"
@@ -228,7 +250,9 @@ export default function PlaylistDetailPage() {
             <div className="flex items-center gap-2">
               <h1
                 className={`font-display text-5xl text-fg tracking-wider ${
-                  canEdit ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150' : ''
+                  canEdit
+                    ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150'
+                    : ''
                 }`}
                 onClick={() => canEdit && setEditingName(true)}
                 title={canEdit ? 'Click to rename' : undefined}
@@ -260,42 +284,52 @@ export default function PlaylistDetailPage() {
           >
             <Plus size={14} /> Add to Queue
           </button>
-          <button className="btn-primary text-xs flex items-center gap-1.5"
+          <button
+            className="btn-primary text-xs flex items-center gap-1.5"
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
-            >
+          >
             <Play size={14} /> Play
-            </button>
-            {(user?.discordId === playlist.createdBy || isAdminView) && (
+          </button>
+          {(user?.discordId === playlist.createdBy || isAdminView) && (
             <button
-            className="btn-ghost text-xs flex items-center gap-1.5"
-            onClick={handleToggleVisibility}
-            title={playlist.isPrivate ? 'Make playlist public' : 'Make playlist private'}
+              className="btn-ghost text-xs flex items-center gap-1.5"
+              onClick={handleToggleVisibility}
+              title={playlist.isPrivate ? 'Make playlist public' : 'Make playlist private'}
             >
-            {playlist.isPrivate ? <> <Unlock size={14} className="inline mr-1" /> Make Public </> : <> <Lock size={14} className="inline mr-1" /> Make Private </>}
+              {playlist.isPrivate ? (
+                <>
+                  {' '}
+                  <Unlock size={14} className="inline mr-1" /> Make Public{' '}
+                </>
+              ) : (
+                <>
+                  {' '}
+                  <Lock size={14} className="inline mr-1" /> Make Private{' '}
+                </>
+              )}
             </button>
-            )}
-            {(isAdminView || isOwner) && (
-                    <>
-                      {isEditMode && (
-                        <>
-                          <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
-                            + Add Songs
-                          </button>
-                          <button className="btn-danger text-xs" onClick={handleDeletePlaylist}
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                      <button
-                        className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
-                        onClick={toggleEditMode}
-                      >
-                        {isEditMode ? '✎ Editing' : '✎ Edit'}
-                      </button>
-                    </>
-                  )}
+          )}
+          {(isAdminView || isOwner) && (
+            <>
+              {isEditMode && (
+                <>
+                  <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
+                    + Add Songs
+                  </button>
+                  <button className="btn-danger text-xs" onClick={handleDeletePlaylist}>
+                    Delete
+                  </button>
+                </>
+              )}
+              <button
+                className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
+                onClick={toggleEditMode}
+              >
+                {isEditMode ? '✎ Editing' : '✎ Edit'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -324,21 +358,30 @@ export default function PlaylistDetailPage() {
         <AddSongsModal
           playlist={playlist}
           onClose={() => setShowAddSongs(false)}
-          onAdded={() => { load(); setShowAddSongs(false); }}
+          onAdded={() => {
+            load();
+            setShowAddSongs(false);
+          }}
         />
       )}
       {showPlay && (
         <PlayModal
           onClose={() => setShowPlay(false)}
-          onPlay={(mode) => handlePlayFromSong(playlist.songs[0]?.songId, mode, { throwErrors: true })}
+          onPlay={(mode) =>
+            handlePlayFromSong(playlist.songs[0]?.songId, mode, { throwErrors: true })
+          }
         />
       )}
 
       {/* Notification Toast */}
       {notification && (
-        <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-mono text-xs animate-fade-up ${
-          notification.type === 'success' ? 'bg-accent/20 border border-accent/40 text-accent' : 'bg-danger/20 border border-danger/40 text-danger'
-        }`}>
+        <div
+          className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-mono text-xs animate-fade-up ${
+            notification.type === 'success'
+              ? 'bg-accent/20 border border-accent/40 text-accent'
+              : 'bg-danger/20 border border-danger/40 text-danger'
+          }`}
+        >
           {notification.message}
         </div>
       )}
@@ -404,14 +447,12 @@ function SongRow({
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        <p className="font-body text-sm font-medium text-fg truncate">{song.nickname || song.title}</p>
-        {song.nickname && (
-          <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
-        )}
+        <p className="font-body text-sm font-medium text-fg truncate">
+          {song.nickname || song.title}
+        </p>
+        {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
       </div>
-      <span className="font-mono text-xs text-muted shrink-0">
-        {formatDuration(song.duration)}
-      </span>
+      <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
       {/* Add to Queue - available to all members */}
       <button
         onClick={onAddToQueue}
@@ -448,18 +489,17 @@ function AddSongsModal({
   const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<Set<string>>(new Set());
-  const [added, setAdded] = useState<Set<string>>(
-    new Set(playlist.songs.map((ps) => ps.songId))
-  );
+  const [added, setAdded] = useState<Set<string>>(new Set(playlist.songs.map((ps) => ps.songId)));
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    getSongs().then((s) => { setAllSongs(s); setLoading(false); });
+    getSongs().then((s) => {
+      setAllSongs(s);
+      setLoading(false);
+    });
   }, []);
 
-  const filtered = allSongs.filter((s) =>
-    s.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = allSongs.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
 
   const handleAdd = async (song: Song) => {
     setAdding((prev) => new Set([...prev, song.id]));
@@ -470,7 +510,11 @@ function AddSongsModal({
       /* already added — mark as added */
       setAdded((prev) => new Set([...prev, song.id]));
     } finally {
-      setAdding((prev) => { const n = new Set(prev); n.delete(song.id); return n; });
+      setAdding((prev) => {
+        const n = new Set(prev);
+        n.delete(song.id);
+        return n;
+      });
     }
   };
 
@@ -478,8 +522,10 @@ function AddSongsModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl
-                      flex flex-col max-h-[80vh] animate-fade-up">
+      <div
+        className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl
+                      flex flex-col max-h-[80vh] animate-fade-up"
+      >
         <div className="p-5 border-b border-border">
           <h2 className="font-display text-3xl text-fg tracking-wider">Add Songs</h2>
           <p className="font-mono text-xs text-muted mt-0.5">to "{playlist.name}"</p>
@@ -509,16 +555,23 @@ function AddSongsModal({
               const isAdded = added.has(song.id);
               const isAdding = adding.has(song.id);
               return (
-                <div key={song.id} className="flex items-center gap-3 px-5 py-3
-                                               hover:bg-elevated transition-colors duration-100">
+                <div
+                  key={song.id}
+                  className="flex items-center gap-3 px-5 py-3
+                                               hover:bg-elevated transition-colors duration-100"
+                >
                   <img
                     src={song.thumbnailUrl}
                     alt={song.nickname || song.title}
                     className="w-10 h-7 object-cover rounded border border-border shrink-0"
                     loading="lazy"
                   />
-                  <span className="flex-1 font-body text-sm text-fg truncate">{song.nickname || song.title}</span>
-                  <span className="font-mono text-xs text-muted">{formatDuration(song.duration)}</span>
+                  <span className="flex-1 font-body text-sm text-fg truncate">
+                    {song.nickname || song.title}
+                  </span>
+                  <span className="font-mono text-xs text-muted">
+                    {formatDuration(song.duration)}
+                  </span>
                   <button
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
@@ -570,7 +623,9 @@ function PlayModal({
       onClose();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      setError(e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?');
+      setError(
+        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?'
+      );
       setLoading(false);
     }
   };
@@ -624,9 +679,18 @@ function PlayModal({
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
+          <button className="btn-ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </button>
           <button className="btn-primary" onClick={handlePlay} disabled={loading}>
-            {loading ? 'Starting...' : <> <CirclePlay size={12} className="inline mr-1" /> Play </>}
+            {loading ? (
+              'Starting...'
+            ) : (
+              <>
+                {' '}
+                <CirclePlay size={12} className="inline mr-1" /> Play{' '}
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -647,8 +711,12 @@ function ConfirmRemoveModal({
   onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Remove Song</h2>
         <p className="font-body text-sm text-muted mb-6">
@@ -656,8 +724,12 @@ function ConfirmRemoveModal({
           The song won't be deleted from the library.
         </p>
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-          <button className="btn-danger border-danger/50" onClick={onConfirm}>Remove</button>
+          <button className="btn-ghost" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="btn-danger border-danger/50" onClick={onConfirm}>
+            Remove
+          </button>
         </div>
       </div>
     </div>

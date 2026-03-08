@@ -112,6 +112,6 @@ export interface User {
 // A PlaylistSong where the song is guaranteed to be present.
 // Used when fetching playlist details with include: { song: true }
 // ---------------------------------------------------------------------------
-export interface PlaylistSongWithSong extends Omit<PlaylistSong, "song"> {
+export interface PlaylistSongWithSong extends Omit<PlaylistSong, 'song'> {
   song: Song;
 }

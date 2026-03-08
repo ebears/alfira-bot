@@ -3,7 +3,12 @@ import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
-import { isValidYouTubeUrl, getMetadata, isYouTubePlaylistUrl, getPlaylistMetadataWithVideos } from '@discord-music-bot/bot/src/utils/ytdlp';
+import {
+  isValidYouTubeUrl,
+  getMetadata,
+  isYouTubePlaylistUrl,
+  getPlaylistMetadataWithVideos,
+} from '@discord-music-bot/bot/src/utils/ytdlp';
 import { emitSongAdded, emitSongDeleted } from '../lib/socket';
 
 const router = Router();
@@ -68,7 +73,8 @@ router.post(
       metadata = await getMetadata(url);
     } catch {
       res.status(422).json({
-        error: 'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
+        error:
+          'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
       });
       return;
     }
@@ -137,18 +143,27 @@ router.post(
     }
 
     if (!isYouTubePlaylistUrl(url)) {
-      res.status(400).json({ error: 'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.' });
+      res
+        .status(400)
+        .json({
+          error:
+            'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
+        });
       return;
     }
 
-    	// Fetch playlist metadata with videos
-    	let playlistMetadata;
-    	try {
-    		playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
-    	} catch {
-    		res.status(422).json({ error: 'Could not fetch playlist info. The playlist may be private or unavailable.' });
-    		return;
-    	}
+    // Fetch playlist metadata with videos
+    let playlistMetadata;
+    try {
+      playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
+    } catch {
+      res
+        .status(422)
+        .json({
+          error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
+        });
+      return;
+    }
 
     // Build the canonical URL format for each video
     const videosWithUrls = playlistMetadata.videos.map((v) => ({

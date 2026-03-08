@@ -9,7 +9,10 @@ export const shuffleCommand: Command = {
 
   async execute(interaction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: 'This command can only be used inside a server.', flags: 'Ephemeral' });
+      await interaction.reply({
+        content: 'This command can only be used inside a server.',
+        flags: 'Ephemeral',
+      });
       return;
     }
 
@@ -17,12 +20,17 @@ export const shuffleCommand: Command = {
     const queue = player?.getQueue() ?? [];
 
     if (!player || queue.length === 0) {
-      await interaction.reply({ content: 'There are no queued songs to shuffle.', flags: 'Ephemeral' });
+      await interaction.reply({
+        content: 'There are no queued songs to shuffle.',
+        flags: 'Ephemeral',
+      });
       return;
     }
 
     player.shuffle();
 
-    await interaction.reply(`🔀 Shuffled ${queue.length} song${queue.length === 1 ? '' : 's'} in the queue.`);
+    await interaction.reply(
+      `🔀 Shuffled ${queue.length} song${queue.length === 1 ? '' : 's'} in the queue.`
+    );
   },
 };

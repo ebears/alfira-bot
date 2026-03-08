@@ -28,10 +28,7 @@ export const playlistCommand: Command = {
         .setName('play')
         .setDescription('Load a saved playlist into the queue and start playing.')
         .addStringOption((opt) =>
-          opt
-            .setName('name')
-            .setDescription('The name of the playlist to play.')
-            .setRequired(true)
+          opt.setName('name').setDescription('The name of the playlist to play.').setRequired(true)
         )
     ),
 
@@ -96,9 +93,7 @@ export const playlistCommand: Command = {
       }
 
       if (playlist.songs.length === 0) {
-        await interaction.editReply(
-          `❌ **${playlist.name}** exists but has no songs in it yet.`
-        );
+        await interaction.editReply(`❌ **${playlist.name}** exists but has no songs in it yet.`);
         return;
       }
 
@@ -138,10 +133,10 @@ export const playlistCommand: Command = {
       // /play command there are no placeholder fields here.
       // ---------------------------------------------------------------------------
       const queuedSongs: QueuedSong[] = playlist.songs.map((ps: PlaylistSongWithSong) => ({
-      		...ps.song,
-      		createdAt: ps.song.createdAt.toISOString(),
-      		requestedBy: member.displayName,
-      	}));
+        ...ps.song,
+        createdAt: ps.song.createdAt.toISOString(),
+        requestedBy: member.displayName,
+      }));
 
       await player.addToQueue(queuedSongs);
 

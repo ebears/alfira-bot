@@ -13,7 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       Both are safe no-ops for this app's routing structure.
     */}
     <BrowserRouter>
-    <App />
+      <App />
     </BrowserRouter>
   </React.StrictMode>
 );

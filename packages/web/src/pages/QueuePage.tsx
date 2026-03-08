@@ -1,8 +1,27 @@
-import { Music, Shuffle, List, Plus, Trash2, Play, Square, Repeat1, Repeat, CirclePlay, AlertTriangle, Zap } from 'lucide-react';
+import {
+  Music,
+  Shuffle,
+  List,
+  Plus,
+  Trash2,
+  Play,
+  Square,
+  Repeat1,
+  Repeat,
+  CirclePlay,
+  AlertTriangle,
+  Zap,
+} from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useAdminView } from '../context/AdminViewContext';
-import { startPlayback, getPlaylists, quickAddToQueue, quickAddPlaylistToQueue, overridePlay } from '../api/api';
+import {
+  startPlayback,
+  getPlaylists,
+  quickAddToQueue,
+  quickAddPlaylistToQueue,
+  overridePlay,
+} from '../api/api';
 import type { LoopMode, Playlist, QueuedSong } from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
@@ -128,7 +147,22 @@ export default function QueuePage() {
                     : 'border-border text-muted hover:border-muted hover:text-fg'
                 }`}
               >
-                {mode === "off" ? <> <Square size={12} className="inline mr-1" /> off </> : mode === "song" ? <> <Repeat1 size={12} className="inline mr-1" /> song </> : <> <Repeat size={12} className="inline mr-1" /> queue </>}
+                {mode === 'off' ? (
+                  <>
+                    {' '}
+                    <Square size={12} className="inline mr-1" /> off{' '}
+                  </>
+                ) : mode === 'song' ? (
+                  <>
+                    {' '}
+                    <Repeat1 size={12} className="inline mr-1" /> song{' '}
+                  </>
+                ) : (
+                  <>
+                    {' '}
+                    <Repeat size={12} className="inline mr-1" /> queue{' '}
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -161,9 +195,13 @@ export default function QueuePage() {
             </button>
             <button
               onClick={handleClear}
-              disabled={clearBusy || (queue.length === 0 && priorityQueue.length === 0 && !currentSong)}
+              disabled={
+                clearBusy || (queue.length === 0 && priorityQueue.length === 0 && !currentSong)
+              }
               className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                queue.length === 0 && priorityQueue.length === 0 && !currentSong ? 'btn-ghost' : 'btn-danger'
+                queue.length === 0 && priorityQueue.length === 0 && !currentSong
+                  ? 'btn-ghost'
+                  : 'btn-danger'
               }`}
             >
               <Trash2 size={14} />
@@ -368,9 +406,7 @@ function NowPlayingCard({
           </a>
 
           {/* Requester */}
-          <p className="font-mono text-xs text-muted mt-1">
-            requested by {song.requestedBy}
-          </p>
+          <p className="font-mono text-xs text-muted mt-1">requested by {song.requestedBy}</p>
 
           {/* Progress bar */}
           <div className="mt-4">
@@ -413,13 +449,7 @@ function IdleCard() {
 // ---------------------------------------------------------------------------
 // Load Playlist modal
 // ---------------------------------------------------------------------------
-function LoadPlaylistModal({
-  onClose,
-  onLoaded,
-}: {
-  onClose: () => void;
-  onLoaded: () => void;
-}) {
+function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoaded: () => void }) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const [selectedId, setSelectedId] = useState<string | ''>('');
@@ -504,9 +534,7 @@ function LoadPlaylistModal({
 
             {/* Order */}
             <div>
-              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">
-                Order
-              </p>
+              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
               <div className="flex gap-2">
                 {(['sequential', 'random'] as const).map((m) => (
                   <button
@@ -526,9 +554,7 @@ function LoadPlaylistModal({
 
             {/* Loop */}
             <div>
-              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">
-                Loop
-              </p>
+              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Loop</p>
               <div className="flex gap-2">
                 {(['off', 'song', 'queue'] as const).map((l) => (
                   <button
@@ -559,7 +585,14 @@ function LoadPlaylistModal({
             onClick={handlePlay}
             disabled={submitting || !selectedId || loadingPlaylists}
           >
-            {submitting ? 'Starting...' : <> <CirclePlay size={12} className="inline mr-1" /> Play </>}
+            {submitting ? (
+              'Starting...'
+            ) : (
+              <>
+                {' '}
+                <CirclePlay size={12} className="inline mr-1" /> Play{' '}
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -570,13 +603,7 @@ function LoadPlaylistModal({
 // ---------------------------------------------------------------------------
 // Quick Add Modal
 // ---------------------------------------------------------------------------
-function QuickAddModal({
-  onClose,
-  onAdded,
-}: {
-  onClose: () => void;
-  onAdded: () => void;
-}) {
+function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -611,7 +638,9 @@ function QuickAddModal({
       }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      setError(e?.response?.data?.error ?? 'Could not add song to queue. Is the bot in a voice channel?');
+      setError(
+        e?.response?.data?.error ?? 'Could not add song to queue. Is the bot in a voice channel?'
+      );
       setSubmitting(false);
     }
   };
@@ -685,11 +714,7 @@ function QuickAddModal({
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}
           >
-            {submitting
-              ? 'Adding...'
-              : importFullPlaylist
-              ? 'Add Playlist'
-              : 'Add to Up Next'}
+            {submitting ? 'Adding...' : importFullPlaylist ? 'Add Playlist' : 'Add to Up Next'}
           </button>
         </div>
       </div>
@@ -700,13 +725,7 @@ function QuickAddModal({
 // ---------------------------------------------------------------------------
 // Override Modal (Admin only)
 // ---------------------------------------------------------------------------
-function OverrideModal({
-  onClose,
-  onOverride,
-}: {
-  onClose: () => void;
-  onOverride: () => void;
-}) {
+function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverride: () => void }) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -720,7 +739,9 @@ function OverrideModal({
       onOverride();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      setError(e?.response?.data?.error ?? 'Could not override playback. Is the bot in a voice channel?');
+      setError(
+        e?.response?.data?.error ?? 'Could not override playback. Is the bot in a voice channel?'
+      );
       setSubmitting(false);
     }
   };
@@ -735,7 +756,8 @@ function OverrideModal({
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Override</h2>
         <p className="font-mono text-xs text-danger mb-6">
-          <AlertTriangle size={14} className="inline mr-1" /> This will stop current playback, clear all queues, and play the requested song immediately.
+          <AlertTriangle size={14} className="inline mr-1" /> This will stop current playback, clear
+          all queues, and play the requested song immediately.
         </p>
 
         <div className="space-y-4 mb-6">

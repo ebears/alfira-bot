@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import {
   getQueueState,
   skipTrack,
@@ -129,9 +122,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // This is what fixes the refresh bug — instead of always starting at 0,
     // we calculate how far along the track actually is.
     if (state.trackStartedAt && state.isPlaying && !state.isPaused) {
-      const serverElapsed = Math.floor(
-        (Date.now() - state.trackStartedAt) / 1000
-      );
+      const serverElapsed = Math.floor((Date.now() - state.trackStartedAt) / 1000);
       const clamped = Math.min(serverElapsed, state.currentSong?.duration ?? 0);
       elapsedRef.current = clamped;
       setElapsed(clamped);
@@ -140,10 +131,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!state.isPlaying || state.isPaused) return;
 
     const id = setInterval(() => {
-      elapsedRef.current = Math.min(
-        elapsedRef.current + 1,
-        state.currentSong?.duration ?? 0
-      );
+      elapsedRef.current = Math.min(elapsedRef.current + 1, state.currentSong?.duration ?? 0);
       setElapsed(elapsedRef.current);
     }, 1000);
 
@@ -174,14 +162,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await togglePause();
   }, []);
 
-  const setLoop = useCallback(
-    async (mode: LoopMode) => {
-      await setLoopMode(mode);
-      // No refetch needed — setLoopMode triggers a broadcastQueueUpdate
-      // in GuildPlayer which arrives via the socket immediately.
-    },
-    []
-  );
+  const setLoop = useCallback(async (mode: LoopMode) => {
+    await setLoopMode(mode);
+    // No refetch needed — setLoopMode triggers a broadcastQueueUpdate
+    // in GuildPlayer which arrives via the socket immediately.
+  }, []);
 
   const shuffle = useCallback(async () => {
     await shuffleQueue();

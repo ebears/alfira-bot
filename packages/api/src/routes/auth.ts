@@ -24,7 +24,10 @@ const {
 const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173';
 
 const ADMIN_ROLE_ID_SET = new Set(
-  (ADMIN_ROLE_IDS ?? '').split(',').map((id) => id.trim()).filter(Boolean)
+  (ADMIN_ROLE_IDS ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
 );
 
 // ---------------------------------------------------------------------------
@@ -59,11 +62,16 @@ function parseDuration(duration: string): number {
   const value = parseInt(match[1], 10);
   const unit = match[2];
   switch (unit) {
-    case 'd': return value * 24 * 60 * 60 * 1000;
-    case 'h': return value * 60 * 60 * 1000;
-    case 'm': return value * 60 * 1000;
-    case 's': return value * 1000;
-    default: return 7 * 24 * 60 * 60 * 1000;
+    case 'd':
+      return value * 24 * 60 * 60 * 1000;
+    case 'h':
+      return value * 60 * 60 * 1000;
+    case 'm':
+      return value * 60 * 1000;
+    case 's':
+      return value * 1000;
+    default:
+      return 7 * 24 * 60 * 60 * 1000;
   }
 }
 
@@ -152,19 +160,16 @@ async function fetchUserAdminStatus(
 ): Promise<{ isAdmin: boolean; username: string; avatar: string | null } | null> {
   try {
     // Fetch user's current username/avatar
-    const userRes = await axios.get(
-      `https://discord.com/api/users/${discordId}`,
-      {
-        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` }
-      }
-    );
+    const userRes = await axios.get(`https://discord.com/api/users/${discordId}`, {
+      headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` },
+    });
     const { username, avatar } = userRes.data;
 
     // Fetch member roles to determine admin status
     const memberRes = await axios.get(
       `https://discord.com/api/guilds/${GUILD_ID}/members/${discordId}`,
       {
-        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` }
+        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` },
       }
     );
     const memberRoles: string[] = memberRes.data.roles ?? [];
@@ -458,19 +463,22 @@ router.get(
 // ---------------------------------------------------------------------------
 // POST /auth/logout
 // ---------------------------------------------------------------------------
-router.post('/logout', asyncHandler(async (req, res) => {
-  // Try to revoke the refresh token if present.
-  const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-  if (refreshToken) {
-    try {
-      const tokenHash = hashToken(refreshToken);
-      await prisma.refreshToken.deleteMany({ where: { tokenHash } });
-    } catch {
-      // Ignore errors - just clear cookies anyway.
+router.post(
+  '/logout',
+  asyncHandler(async (req, res) => {
+    // Try to revoke the refresh token if present.
+    const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    if (refreshToken) {
+      try {
+        const tokenHash = hashToken(refreshToken);
+        await prisma.refreshToken.deleteMany({ where: { tokenHash } });
+      } catch {
+        // Ignore errors - just clear cookies anyway.
+      }
     }
-  }
-  clearAuthCookies(res);
-  res.json({ message: 'Logged out.' });
-}));
+    clearAuthCookies(res);
+    res.json({ message: 'Logged out.' });
+  })
+);
 
 export default router;

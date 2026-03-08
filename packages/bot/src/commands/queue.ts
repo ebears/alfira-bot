@@ -9,13 +9,14 @@ import type { Command } from '../types';
 const MAX_QUEUE_DISPLAY = 10;
 
 export const queueCommand: Command = {
-  data: new SlashCommandBuilder()
-    .setName('queue')
-    .setDescription('Show the current queue.'),
+  data: new SlashCommandBuilder().setName('queue').setDescription('Show the current queue.'),
 
   async execute(interaction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: 'This command can only be used inside a server.', flags: 'Ephemeral' });
+      await interaction.reply({
+        content: 'This command can only be used inside a server.',
+        flags: 'Ephemeral',
+      });
       return;
     }
 
@@ -29,9 +30,7 @@ export const queueCommand: Command = {
       return;
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(0x5865f2)
-      .setTitle('🎵  Queue');
+    const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🎵  Queue');
 
     // ---------------------------------------------------------------------------
     // Now playing section

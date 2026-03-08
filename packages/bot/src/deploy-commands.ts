@@ -54,10 +54,9 @@ const rest = new REST().setToken(DISCORD_BOT_TOKEN);
   try {
     console.log(`🔄  Registering ${commands.length} slash command(s)...`);
 
-    await rest.put(
-      Routes.applicationGuildCommands(DISCORD_CLIENT_ID, GUILD_ID),
-      { body: commands }
-    );
+    await rest.put(Routes.applicationGuildCommands(DISCORD_CLIENT_ID, GUILD_ID), {
+      body: commands,
+    });
 
     console.log('✅  Slash commands registered successfully.');
   } catch (error) {

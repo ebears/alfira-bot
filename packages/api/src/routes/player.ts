@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { getVoiceConnection, joinVoiceChannel, VoiceConnectionStatus, entersState } from '@discordjs/voice';
+import {
+  getVoiceConnection,
+  joinVoiceChannel,
+  VoiceConnectionStatus,
+  entersState,
+} from '@discordjs/voice';
 import { TextChannel } from 'discord.js';
 import prisma from '../lib/prisma';
 import { getClient } from '@discord-music-bot/bot/src/lib/client';
@@ -8,7 +13,12 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { getPlayer, removePlayer } from '@discord-music-bot/bot/src/player/manager';
-import { isValidYouTubeUrl, getMetadata, isYouTubePlaylistUrl, getPlaylistMetadataWithVideos } from '@discord-music-bot/bot/src/utils/ytdlp';
+import {
+  isValidYouTubeUrl,
+  getMetadata,
+  isYouTubePlaylistUrl,
+  getPlaylistMetadataWithVideos,
+} from '@discord-music-bot/bot/src/utils/ytdlp';
 import type { LoopMode, QueuedSong, Song } from '@discord-music-bot/shared';
 import type { Request, Response } from 'express';
 
@@ -78,7 +88,8 @@ async function resolveOrAutoJoinPlayer(
 
     if (!textChannel) {
       res.status(503).json({
-        error: 'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+        error:
+          'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
       });
       return null;
     }
@@ -206,10 +217,7 @@ router.post(
       }
 
       // Reorder: chosen song first, then all songs after it, then songs before it
-      dbSongs = [
-        ...dbSongs.slice(startIndex),
-        ...dbSongs.slice(0, startIndex),
-      ];
+      dbSongs = [...dbSongs.slice(startIndex), ...dbSongs.slice(0, startIndex)];
     }
 
     // Apply shuffle if random mode is requested (after reordering for startFromSongId).
@@ -239,10 +247,10 @@ router.post(
 
     // If starting from a specific song, clear the queue and interrupt current playback
     if (startFromSongId) {
-    await player.replaceQueueAndPlay(queuedSongs);
+      await player.replaceQueueAndPlay(queuedSongs);
     } else {
-    // Add songs to existing queue
-    await player.addToQueue(queuedSongs);
+      // Add songs to existing queue
+      await player.addToQueue(queuedSongs);
     }
 
     res.json({ message: `Queued ${queuedSongs.length} song(s).` });
@@ -304,8 +312,6 @@ router.post(
     res.json({ message: 'Left the voice channel.' });
   })
 );
-
-
 
 // ---------------------------------------------------------------------------
 // POST /api/player/loop
@@ -399,7 +405,8 @@ router.post(
       metadata = await getMetadata(url);
     } catch {
       res.status(422).json({
-        error: 'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
+        error:
+          'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
       });
       return;
     }
@@ -458,7 +465,8 @@ router.post(
 
     if (!isYouTubePlaylistUrl(url)) {
       res.status(400).json({
-        error: 'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
+        error:
+          'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
       });
       return;
     }
@@ -654,7 +662,8 @@ router.post(
       metadata = await getMetadata(url);
     } catch {
       res.status(422).json({
-        error: 'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
+        error:
+          'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
       });
       return;
     }

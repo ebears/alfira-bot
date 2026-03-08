@@ -1,4 +1,12 @@
-import { Client, GatewayIntentBits, Collection, Interaction, InteractionReplyOptions, REST, Routes } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  Interaction,
+  InteractionReplyOptions,
+  REST,
+  Routes,
+} from 'discord.js';
 import { setClient } from './lib/client';
 import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
@@ -19,16 +27,18 @@ import type { Command } from './types';
 // Registers slash commands with Discord. Called automatically on startup when
 // AUTO_DEPLOY_COMMANDS is enabled (default: true in production).
 // ---------------------------------------------------------------------------
-async function deployCommands(clientId: string, guildId: string, token: string, commands: Command[]): Promise<void> {
+async function deployCommands(
+  clientId: string,
+  guildId: string,
+  token: string,
+  commands: Command[]
+): Promise<void> {
   const rest = new REST().setToken(token);
   const commandData = commands.map((c) => c.data.toJSON());
 
   try {
     console.log(`🔄 Auto-registering ${commandData.length} slash command(s)...`);
-    await rest.put(
-      Routes.applicationGuildCommands(clientId, guildId),
-      { body: commandData }
-    );
+    await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commandData });
     console.log('✅ Slash commands registered successfully.');
   } catch (error) {
     console.error('❌ Failed to register commands:', error);
@@ -63,29 +73,26 @@ export async function startBot(): Promise<void> {
     throw new Error('GUILD_ID is not set.');
   }
 
-  	const client = new Client({
-  		intents: [
-  			GatewayIntentBits.Guilds,
-  			GatewayIntentBits.GuildVoiceStates,
-  		],
-  	});
+  const client = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+  });
 
-  	// Expose the client so the API can access it for auto-join functionality.
-  	setClient(client);
+  // Expose the client so the API can access it for auto-join functionality.
+  setClient(client);
 
   client.commands = new Collection<string, Command>();
 
   const commands: Command[] = [
-  	joinCommand,
-  	leaveCommand,
-  	playCommand,
-  	skipCommand,
-  	pauseCommand,
-  	loopCommand,
-  	shuffleCommand,
-  	queueCommand,
-  	nowplayingCommand,
-  	playlistCommand,
+    joinCommand,
+    leaveCommand,
+    playCommand,
+    skipCommand,
+    pauseCommand,
+    loopCommand,
+    shuffleCommand,
+    queueCommand,
+    nowplayingCommand,
+    playlistCommand,
   ];
 
   for (const command of commands) {
@@ -101,7 +108,9 @@ export async function startBot(): Promise<void> {
     if (shouldAutoDeploy) {
       await deployCommands(DISCORD_CLIENT_ID!, GUILD_ID!, DISCORD_BOT_TOKEN!, commands);
     } else {
-      console.log('ℹ️  Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.');
+      console.log(
+        'ℹ️  Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
+      );
     }
   });
 
@@ -120,7 +129,10 @@ export async function startBot(): Promise<void> {
     } catch (error) {
       console.error(`❌  Error executing /${interaction.commandName}:`, error);
 
-      const errorMessage: InteractionReplyOptions = { content: 'Something went wrong.', flags: 'Ephemeral' };
+      const errorMessage: InteractionReplyOptions = {
+        content: 'Something went wrong.',
+        flags: 'Ephemeral',
+      };
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp(errorMessage);
       } else {

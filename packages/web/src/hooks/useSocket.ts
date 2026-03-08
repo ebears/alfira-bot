@@ -37,8 +37,7 @@ export function useSocket(): Socket {
 
   useEffect(() => {
     const onConnect = () => console.log('🔌  Socket.io connected:', socket.id);
-    const onDisconnect = (reason: string) =>
-      console.log('🔌  Socket.io disconnected:', reason);
+    const onDisconnect = (reason: string) => console.log('🔌  Socket.io disconnected:', reason);
     const onConnectError = (err: Error) =>
       console.warn('🔌  Socket.io connection error:', err.message);
 

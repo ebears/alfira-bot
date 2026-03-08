@@ -27,6 +27,9 @@ jobs:
       - name: Build bot package
         run: npm run -w packages/bot build
 
+      - name: Lint with Biome
+        run: npm run lint
+
       - name: Typecheck API
         run: npx tsc --noEmit -p packages/api/tsconfig.json
 

@@ -10,7 +10,10 @@ export const nowplayingCommand: Command = {
 
   async execute(interaction) {
     if (!interaction.guild) {
-      await interaction.reply({ content: 'This command can only be used inside a server.', flags: 'Ephemeral' });
+      await interaction.reply({
+        content: 'This command can only be used inside a server.',
+        flags: 'Ephemeral',
+      });
       return;
     }
 
@@ -36,9 +39,10 @@ export const nowplayingCommand: Command = {
         { name: 'Loop', value: formatLoopMode(loopMode), inline: true }
       )
       .setFooter({
-        text: queueLength > 0
-          ? `${queueLength} song${queueLength === 1 ? '' : 's'} in queue`
-          : 'No songs in queue',
+        text:
+          queueLength > 0
+            ? `${queueLength} song${queueLength === 1 ? '' : 's'} in queue`
+            : 'No songs in queue',
       });
 
     await interaction.reply({ embeds: [embed] });

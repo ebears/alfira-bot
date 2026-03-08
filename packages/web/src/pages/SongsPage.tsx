@@ -1,6 +1,15 @@
 import { Search, Play, Loader2, ListVideo, ListPlus, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getSongs, addSong, deleteSong, getPlaylists, addSongToPlaylist, startPlayback, importPlaylist, addToPriorityQueue } from '../api/api';
+import {
+  getSongs,
+  addSong,
+  deleteSong,
+  getPlaylists,
+  addSongToPlaylist,
+  startPlayback,
+  importPlaylist,
+  addToPriorityQueue,
+} from '../api/api';
 import type { Song, Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
 import { useSocket } from '../hooks/useSocket';
@@ -57,22 +66,17 @@ export default function SongsPage() {
   }, [socket]);
 
   const handleDelete = async (id: string) => {
-  		await deleteSong(id);
-  		setDeleteId(null);
-  		// Socket event will update the songs list
-  	};
+    await deleteSong(id);
+    setDeleteId(null);
+    // Socket event will update the songs list
+  };
 
-  	const filtered = songs.filter((s) =>
-    s.title.toLowerCase().includes(search.toLowerCase())
-  );
-
-
+  const filtered = songs.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
   // the clicked song, then continues sequentially through the rest.
   // ---------------------------------------------------------------------------
-
 
   const handlePlayFromSong = async (songId: string) => {
     setPlayingId(songId);
@@ -85,7 +89,8 @@ export default function SongsPage() {
       notify('Started playback', 'success');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
+      const errorMsg =
+        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
       notify(errorMsg, 'error', 5000);
     } finally {
       setPlayingId(null);
@@ -98,7 +103,8 @@ export default function SongsPage() {
       notify('Added to Up Next', 'success');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
+      const errorMsg =
+        e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
       notify(errorMsg, 'error', 5000);
     }
   };
@@ -135,25 +141,23 @@ export default function SongsPage() {
       {loading ? (
         <SkeletonGrid />
       ) : filtered.length === 0 ? (
-        <EmptyState
-          search={search}
-          isAdmin={isAdminView}
-          onAdd={() => setShowAddModal(true)}
-        />
+        <EmptyState search={search} isAdmin={isAdminView} onAdd={() => setShowAddModal(true)} />
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
           {filtered.map((song, i) => (
             <SongCard
-            key={song.id}
-            song={song}
-            isAdmin={isAdminView}
-            playlists={playlists}
-            style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
-            onDelete={() => setDeleteId(song.id)}
-            onAddedToPlaylist={() => {/* optimistic — no refresh needed */}}
-            onPlay={() => handlePlayFromSong(song.id)}
-            isPlaying={playingId === song.id}
-            onAddToQueue={() => handleAddToQueue(song.id)}
+              key={song.id}
+              song={song}
+              isAdmin={isAdminView}
+              playlists={playlists}
+              style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+              onDelete={() => setDeleteId(song.id)}
+              onAddedToPlaylist={() => {
+                /* optimistic — no refresh needed */
+              }}
+              onPlay={() => handlePlayFromSong(song.id)}
+              isPlaying={playingId === song.id}
+              onAddToQueue={() => handleAddToQueue(song.id)}
             />
           ))}
         </div>
@@ -173,18 +177,17 @@ export default function SongsPage() {
         />
       )}
 
-
-
-      {deleteId && (() => {
-      const songToDelete = songs.find((s) => s.id === deleteId);
-      return songToDelete ? (
-      <ConfirmDeleteModal
-      song={songToDelete}
-      onConfirm={() => handleDelete(deleteId)}
-      onCancel={() => setDeleteId(null)}
-      />
-      ) : null;
-      })()}
+      {deleteId &&
+        (() => {
+          const songToDelete = songs.find((s) => s.id === deleteId);
+          return songToDelete ? (
+            <ConfirmDeleteModal
+              song={songToDelete}
+              onConfirm={() => handleDelete(deleteId)}
+              onCancel={() => setDeleteId(null)}
+            />
+          ) : null;
+        })()}
 
       {/* Notification Toast */}
       {notification && (
@@ -418,18 +421,18 @@ function AddSongModal({
 
     try {
       if (importFullPlaylist) {
-      // Import playlist
-      const result = await importPlaylist(url.trim());
-      setSuccessMsg(result.message);
-      // Close modal after a short delay to show success message
-      // The socket events will update the song list automatically
-      setTimeout(() => {
-      onClose();
-      }, 1500);
+        // Import playlist
+        const result = await importPlaylist(url.trim());
+        setSuccessMsg(result.message);
+        // Close modal after a short delay to show success message
+        // The socket events will update the song list automatically
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       } else {
-      // Add single song
-      const song = await addSong(url.trim(), nickname.trim() || undefined);
-      onAdded(song);
+        // Add single song
+        const song = await addSong(url.trim(), nickname.trim() || undefined);
+        onAdded(song);
       }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
@@ -502,11 +505,7 @@ function AddSongModal({
           <button className="btn-ghost" onClick={onClose} disabled={loading}>
             Cancel
           </button>
-          <button
-            className="btn-primary"
-            onClick={handleSubmit}
-            disabled={loading || !url.trim()}
-          >
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !url.trim()}>
             {importFullPlaylist ? 'Import' : 'Add'}
           </button>
         </div>
@@ -554,13 +553,7 @@ function ConfirmDeleteModal({
 // ---------------------------------------------------------------------------
 // Shared backdrop
 // ---------------------------------------------------------------------------
-function Backdrop({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
+function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"

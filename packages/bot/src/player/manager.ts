@@ -35,7 +35,7 @@ export function getPlayer(guildId: string): GuildPlayer | undefined {
 export function createPlayer(
   guildId: string,
   connection: VoiceConnection,
-  textChannel: TextChannel,
+  textChannel: TextChannel
 ): GuildPlayer {
   const existing = players.get(guildId);
   if (existing) return existing;

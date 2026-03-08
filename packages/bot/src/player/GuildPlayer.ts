@@ -25,11 +25,7 @@ import { SinglyLinkedList } from './SinglyLinkedList';
 // pause is inserted between each attempt. If all attempts fail, the last
 // error is re-thrown.
 // ---------------------------------------------------------------------------
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number,
-  delayMs: number,
-): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, maxRetries: number, delayMs: number): Promise<T> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -60,8 +56,8 @@ export class GuildPlayer {
   private stopping = false;
 
   private trackStartedAt: number | null = null;
-  private pausedAt: number | null = null;       // wall-clock ms when pause began
-  private pausedElapsed: number = 0;            // ms already elapsed before this pause
+  private pausedAt: number | null = null; // wall-clock ms when pause began
+  private pausedElapsed: number = 0; // ms already elapsed before this pause
 
   // Set to true by skip() so onTrackEnd() knows to advance regardless of
   // loop mode. Without this, skipping in 'song' mode would just replay.
@@ -114,7 +110,7 @@ export class GuildPlayer {
     connection: VoiceConnection,
     textChannel: TextChannel,
     guildId: string,
-    onDestroyed: () => void,
+    onDestroyed: () => void
   ) {
     this.connection = connection;
     this.textChannel = textChannel;
@@ -148,7 +144,7 @@ export class GuildPlayer {
         `[GuildPlayer:${this.guildId}] AudioPlayer error:`,
         error.message,
         '| Track:',
-        this.currentSong?.title ?? 'unknown',
+        this.currentSong?.title ?? 'unknown'
       );
       // Treat an error as a track end so the queue keeps moving.
       this.onTrackEnd();
@@ -160,7 +156,7 @@ export class GuildPlayer {
     this.audioPlayer.on(AudioPlayerStatus.AutoPaused, () => {
       console.warn(
         `[GuildPlayer:${this.guildId}] AudioPlayer AutoPaused — ` +
-          'voice connection may be temporarily unavailable.',
+          'voice connection may be temporarily unavailable.'
       );
     });
 
@@ -198,7 +194,7 @@ export class GuildPlayer {
       this.isReconnecting = true;
 
       console.warn(
-        `[GuildPlayer:${this.guildId}] Voice connection disconnected — attempting recovery.`,
+        `[GuildPlayer:${this.guildId}] Voice connection disconnected — attempting recovery.`
       );
 
       try {
@@ -206,16 +202,14 @@ export class GuildPlayer {
           entersState(this.connection, VoiceConnectionStatus.Signalling, 5_000),
           entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000),
         ]);
-        console.info(
-          `[GuildPlayer:${this.guildId}] Voice connection is reconnecting.`,
-        );
+        console.info(`[GuildPlayer:${this.guildId}] Voice connection is reconnecting.`);
       } catch {
         // The connection did not start reconnecting. Destroy it unless it has
         // already been moved to the Destroyed state by something else (e.g. a
         // concurrent stop() call).
         if (this.connection.state.status !== VoiceConnectionStatus.Destroyed) {
           console.error(
-            `[GuildPlayer:${this.guildId}] Voice connection could not recover — destroying.`,
+            `[GuildPlayer:${this.guildId}] Voice connection could not recover — destroying.`
           );
           this.connection.destroy();
         }
@@ -242,8 +236,8 @@ export class GuildPlayer {
         this.killCurrentFfmpeg = null;
 
         // Reset in-memory state and push it to the web UI.
-            this.queue.clear();
-            this.currentSong = null;
+        this.queue.clear();
+        this.currentSong = null;
         broadcastQueueUpdate(this.getQueueState());
 
         // Notify the text channel. fire-and-forget; don't let a channel error
@@ -251,13 +245,10 @@ export class GuildPlayer {
         this.textChannel
           .send(
             '⚠️ Lost the voice connection unexpectedly. ' +
-              'Use **/play** or **/join** to reconnect.',
+              'Use **/play** or **/join** to reconnect.'
           )
           .catch((err) =>
-            console.error(
-              `[GuildPlayer:${this.guildId}] Failed to send disconnect warning:`,
-              err,
-            ),
+            console.error(`[GuildPlayer:${this.guildId}] Failed to send disconnect warning:`, err)
           );
       }
 
@@ -289,28 +280,28 @@ export class GuildPlayer {
     }
   }
 
-    /**
-     * Add a song to the priority queue (Up Next).
-     * Priority queue songs play before regular queue songs.
-     * If nothing is currently playing, playback starts immediately.
-     */
-    async addToPriorityQueue(song: QueuedSong): Promise<void> {
-      this.priorityQueue.push(song);
-      if (this.currentSong === null) {
-        await this.playNext();
-      } else {
-        broadcastQueueUpdate(this.getQueueState());
-      }
-    }
-
-    /**
-     * Clear both priority queue and regular queue.
-     */
-    clearAllQueues(): void {
-      this.priorityQueue.clear();
-      this.queue.clear();
+  /**
+   * Add a song to the priority queue (Up Next).
+   * Priority queue songs play before regular queue songs.
+   * If nothing is currently playing, playback starts immediately.
+   */
+  async addToPriorityQueue(song: QueuedSong): Promise<void> {
+    this.priorityQueue.push(song);
+    if (this.currentSong === null) {
+      await this.playNext();
+    } else {
       broadcastQueueUpdate(this.getQueueState());
     }
+  }
+
+  /**
+   * Clear both priority queue and regular queue.
+   */
+  clearAllQueues(): void {
+    this.priorityQueue.clear();
+    this.queue.clear();
+    broadcastQueueUpdate(this.getQueueState());
+  }
 
   /**
    * Replace the entire queue with new songs and immediately start playback.
@@ -344,29 +335,29 @@ export class GuildPlayer {
    * Works regardless of loop mode.
    */
   async skip(): Promise<void> {
-      if (this.currentSong === null) return;
+    if (this.currentSong === null) return;
 
-      this.skipping = true;
+    this.skipping = true;
 
-      // If paused, unpause first so that .stop() triggers the Idle event correctly.
-      // Calling .stop() on a paused AudioPlayer does not trigger the Idle event,
-      // which would prevent onTrackEnd() from being called and the queue wouldn't advance.
-      if (this.paused) {
-        this.audioPlayer.unpause();
-        this.paused = false;
-        this.pausedAt = null;
-      }
-
-      // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
-      // which calls onTrackEnd(). The skipping flag tells it to advance.
-      // The old FFmpeg process will be killed at the top of the next playNext()
-      // call. broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
-      this.audioPlayer.stop();
+    // If paused, unpause first so that .stop() triggers the Idle event correctly.
+    // Calling .stop() on a paused AudioPlayer does not trigger the Idle event,
+    // which would prevent onTrackEnd() from being called and the queue wouldn't advance.
+    if (this.paused) {
+      this.audioPlayer.unpause();
+      this.paused = false;
+      this.pausedAt = null;
     }
 
-  	/**
-  	 * Stop playback.
-  	 */
+    // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
+    // which calls onTrackEnd(). The skipping flag tells it to advance.
+    // The old FFmpeg process will be killed at the top of the next playNext()
+    // call. broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
+    this.audioPlayer.stop();
+  }
+
+  /**
+   * Stop playback.
+   */
   stop(): void {
     this.intentionallyStopped = true;
     this.stopping = true;
@@ -460,17 +451,17 @@ export class GuildPlayer {
   // Returns a QueueState snapshot. Used by GET /api/player/queue and as the
   // payload for the Socket.io player:update event.
   // ---------------------------------------------------------------------------
-	  getQueueState(): QueueState {
-	    return {
-	      isPlaying: this.isPlaying(),
-	      isPaused: this.paused,
-	      loopMode: this.loopMode,
-	      currentSong: this.currentSong,
-	      priorityQueue: this.priorityQueue.toArray(),
-	      queue: this.queue.toArray(),
-	      trackStartedAt: this.trackStartedAt,
-	    };
-	  }
+  getQueueState(): QueueState {
+    return {
+      isPlaying: this.isPlaying(),
+      isPaused: this.paused,
+      loopMode: this.loopMode,
+      currentSong: this.currentSong,
+      priorityQueue: this.priorityQueue.toArray(),
+      queue: this.queue.toArray(),
+      trackStartedAt: this.trackStartedAt,
+    };
+  }
 
   // ---------------------------------------------------------------------------
   // Private methods
@@ -557,16 +548,16 @@ export class GuildPlayer {
       ({ url: streamUrl, isWebmOpus } = await withRetry(
         () => getStreamFormat(next.youtubeUrl),
         2,
-        1_000,
+        1_000
       ));
     } catch (error) {
       console.error(
         `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
-        error,
+        error
       );
       try {
         await this.textChannel.send(
-          `⚠️ Skipping **${next.title}** — could not resolve the audio stream.`,
+          `⚠️ Skipping **${next.title}** — could not resolve the audio stream.`
         );
       } catch (e) {
         console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, e);
@@ -597,12 +588,10 @@ export class GuildPlayer {
       await entersState(this.audioPlayer, AudioPlayerStatus.Playing, 5_000);
     } catch {
       console.error(
-        `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`,
+        `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`
       );
       try {
-        await this.textChannel.send(
-          `⚠️ Skipping **${next.title}** — audio failed to start.`,
-        );
+        await this.textChannel.send(`⚠️ Skipping **${next.title}** — audio failed to start.`);
       } catch (e) {
         console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, e);
       }
@@ -663,7 +652,7 @@ export class GuildPlayer {
       .addFields(
         { name: 'Duration', value: formatDuration(song.duration), inline: true },
         { name: 'Requested by', value: song.requestedBy, inline: true },
-        { name: 'Loop', value: formatLoopMode(this.loopMode), inline: true },
+        { name: 'Loop', value: formatLoopMode(this.loopMode), inline: true }
       );
   }
 }

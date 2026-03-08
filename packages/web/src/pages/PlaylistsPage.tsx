@@ -18,15 +18,17 @@ export default function PlaylistsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
 
   const load = useCallback(async () => {
-      setLoading(true);
-      try {
-        setPlaylists(await getPlaylists(isAdminView));
-      } finally {
-        setLoading(false);
-      }
-    }, [isAdminView]);
+    setLoading(true);
+    try {
+      setPlaylists(await getPlaylists(isAdminView));
+    } finally {
+      setLoading(false);
+    }
+  }, [isAdminView]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // ---------------------------------------------------------------------------
   // Real-time socket wiring
@@ -107,20 +109,20 @@ export default function PlaylistsPage() {
               key={pl.id}
               playlist={pl}
               isAdmin={isAdminView}
- isOwner={user?.discordId === pl.createdBy}
+              isOwner={user?.discordId === pl.createdBy}
               style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
               onClick={() => navigate(`/playlists/${pl.id}`)}
-              onDelete={(e) => { e.stopPropagation(); setDeleteTarget(pl); }}
+              onDelete={(e) => {
+                e.stopPropagation();
+                setDeleteTarget(pl);
+              }}
             />
           ))}
         </div>
       )}
 
       {showCreate && (
-        <CreatePlaylistModal
-          onClose={() => setShowCreate(false)}
-          onCreate={handleCreate}
-        />
+        <CreatePlaylistModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />
       )}
       {deleteTarget && (
         <ConfirmDeleteModal
@@ -136,14 +138,21 @@ export default function PlaylistsPage() {
 // ---------------------------------------------------------------------------
 // Playlist row
 // ---------------------------------------------------------------------------
-  function PlaylistRow({ playlist, isAdmin, isOwner, style, onClick, onDelete }: {
-    playlist: Playlist;
-    isAdmin: boolean;
-    isOwner: boolean;
-    style?: React.CSSProperties;
-    onClick: () => void;
-    onDelete: (e: React.MouseEvent) => void;
-  }) {
+function PlaylistRow({
+  playlist,
+  isAdmin,
+  isOwner,
+  style,
+  onClick,
+  onDelete,
+}: {
+  playlist: Playlist;
+  isAdmin: boolean;
+  isOwner: boolean;
+  style?: React.CSSProperties;
+  onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}) {
   const count = playlist._count?.songs ?? 0;
 
   return (
@@ -155,8 +164,10 @@ export default function PlaylistsPage() {
       onClick={onClick}
     >
       {/* Icon */}
-      <div className="w-10 h-10 rounded bg-accent/10 border border-accent/20 shrink-0
-                      flex items-center justify-center">
+      <div
+        className="w-10 h-10 rounded bg-accent/10 border border-accent/20 shrink-0
+                      flex items-center justify-center"
+      >
         <ListIcon size={16} className="text-accent" />
       </div>
 
@@ -190,7 +201,10 @@ export default function PlaylistsPage() {
       )}
 
       {/* Arrow */}
-      <ChevronIcon size={16} className="text-faint group-hover:text-muted transition-colors duration-150" />
+      <ChevronIcon
+        size={16}
+        className="text-faint group-hover:text-muted transition-colors duration-150"
+      />
     </div>
   );
 }
@@ -231,13 +245,21 @@ function CreatePlaylistModal({
           className="input mb-3"
           placeholder="My Playlist"
           value={name}
-          onChange={(e) => { setName(e.target.value); setError(''); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape') onClose(); }}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError('');
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSubmit();
+            if (e.key === 'Escape') onClose();
+          }}
           disabled={loading}
         />
         {error && <p className="font-mono text-xs text-danger mb-3">{error}</p>}
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
+          <button className="btn-ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </button>
           <button className="btn-primary" onClick={handleSubmit} disabled={loading || !name.trim()}>
             Create
           </button>
@@ -264,12 +286,16 @@ function ConfirmDeleteModal({
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Delete Playlist</h2>
         <p className="font-body text-sm text-muted mb-6">
-          Delete <span className="text-fg font-semibold">"{playlist.name}"</span>?
-          Songs in the library won't be affected.
+          Delete <span className="text-fg font-semibold">"{playlist.name}"</span>? Songs in the
+          library won't be affected.
         </p>
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-          <button className="btn-danger border-danger/50" onClick={onConfirm}>Delete</button>
+          <button className="btn-ghost" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="btn-danger border-danger/50" onClick={onConfirm}>
+            Delete
+          </button>
         </div>
       </div>
     </Backdrop>
@@ -316,7 +342,9 @@ function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: (
   return (
     <div
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       {children}
     </div>
@@ -325,19 +353,40 @@ function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: (
 
 function ListIcon({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" />
-      <line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" />
-      <line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
     </svg>
   );
 }
 
 function ChevronIcon({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );

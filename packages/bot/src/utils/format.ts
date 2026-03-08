@@ -28,8 +28,8 @@ export function formatDuration(seconds: number): string {
 // ---------------------------------------------------------------------------
 export function formatLoopMode(mode: LoopMode): string {
   const labels: Record<LoopMode, string> = {
-    off:   '⬛ Off',
-    song:  '🔂 Song',
+    off: '⬛ Off',
+    song: '🔂 Song',
     queue: '🔁 Queue',
   };
   return labels[mode];

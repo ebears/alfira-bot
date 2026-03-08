@@ -53,14 +53,18 @@ app.set('trust proxy', process.env.TRUSTED_PROXY_IP ?? false);
 // Security headers middleware.
 // CSP is disabled since this is an API-only server; the web frontend
 // should set its own Content-Security-Policy.
-app.use(helmet({
-  contentSecurityPolicy: false,
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
-app.use(cors({
-  origin: process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173',
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
