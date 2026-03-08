@@ -20,19 +20,14 @@ export interface PlaylistMetadata {
   title: string;
   playlistId: string;
   videoCount: number;
-  videos: {
-    id: string;
-    title: string;
-    duration: number;
-    thumbnailUrl: string;
-  }[];
+  videos: { id: string; title: string; duration: number; thumbnailUrl: string }[];
 }
 
 // ---------------------------------------------------------------------------
 // getMetadata
 //
 // Fetches title, duration, and id for a YouTube URL by running:
-// yt-dlp --print %(id)s --print %(duration)s --print %(title)s <url>
+//   yt-dlp --print %(id)s --print %(duration)s --print %(title)s <url>
 //
 // --print outputs exactly one value per flag and exits without downloading
 // anything — far cheaper than --dump-json, which fetches and serialises the
@@ -115,53 +110,55 @@ export interface AudioStreamHandle {
 // unexpectedly with no visible errors.
 //
 // Key FFmpeg input flags:
-// -reconnect 1                   Reconnect after a dropped HTTP connection.
-// -reconnect_streamed 1          Also reconnect for live/streamed (chunked) sources.
-// -reconnect_on_network_error 1  Reconnect on lower-level network/TLS errors.
-// -reconnect_delay_max 2         Cap reconnect back-off at 2 seconds.
-// -analyzeduration 0             Disable input format probing (we know it's audio).
-// -fpsprobesize 0                Disable frame rate probing (not needed for audio).
-// -probesize 32                  Minimal probe size to speed up startup.
+//   -reconnect 1                  Reconnect after a dropped HTTP connection.
+//   -reconnect_streamed 1         Also reconnect for live/streamed (chunked) sources.
+//   -reconnect_on_network_error 1 Reconnect on lower-level network/TLS errors.
+//   -reconnect_delay_max 2        Cap reconnect back-off at 2 seconds.
+//   -analyzeduration 0            Disable input format probing (we know it's audio).
+//   -fpsprobesize 0               Disable frame rate probing (not needed for audio).
+//   -probesize 32                 Minimal probe size to speed up startup.
 //
 // Key FFmpeg output flags — two modes:
 //
-// isWebmOpus = true (default, ~99% of YouTube tracks):
-//   YouTube's "bestaudio" is already a WebM container with an Opus stream at
-//   ~160 kbps. FFmpeg remuxes (copies) the Opus packets directly into a new
-//   WebM container — no decode/encode step, negligible CPU.
-//   Use StreamType.WebmOpus in createAudioResource.
+//   isWebmOpus = true (default, ~99% of YouTube tracks):
+//     YouTube's "bestaudio" is already a WebM container with an Opus stream at
+//     ~160 kbps. FFmpeg remuxes (copies) the Opus packets directly into a new
+//     WebM container — no decode/encode step, negligible CPU.
+//     Use StreamType.WebmOpus in createAudioResource.
 //
-// isWebmOpus = false (fallback for M4A/MP4 sources):
-//   Some age-restricted or region-locked videos only offer AAC in an M4A
-//   container, which can't be put into WebM. FFmpeg re-encodes to Opus at
-//   96 kbps inside an OGG container.
-//   Use StreamType.OggOpus in createAudioResource.
+//   isWebmOpus = false (fallback for M4A/MP4 sources):
+//     Some age-restricted or region-locked videos only offer AAC in an M4A
+//     container, which can't be put into WebM. FFmpeg re-encodes to Opus at
+//     96 kbps inside an OGG container.
+//     Use StreamType.OggOpus in createAudioResource.
 //
 // Node.js-side output buffer:
-// FFmpeg's stdout is piped into an fs-capacitor WriteStream, which spills
-// all incoming data to a temporary file on disk. A ReadStream created from
-// the same capacitor is returned to the AudioPlayer.
+//   FFmpeg's stdout is piped into an fs-capacitor WriteStream, which spills
+//   all incoming data to a temporary file on disk. A ReadStream created from
+//   the same capacitor is returned to the AudioPlayer.
 //
-// Why fs-capacitor instead of PassThrough:
+//   Why fs-capacitor instead of PassThrough:
 //
-// PassThrough is a back-pressure-coupled, in-memory pipe. The consumer
-// (AudioPlayer) and producer (FFmpeg) are tightly coupled: if the consumer
-// reads slowly, the in-memory buffer fills up and Node.js applies back-
-// pressure to FFmpeg's stdout, preventing it from pre-filling the buffer
-// ahead of time.
+//   PassThrough is a back-pressure-coupled, in-memory pipe. The consumer
+//   (AudioPlayer) and producer (FFmpeg) are tightly coupled: if the consumer
+//   reads slowly, the in-memory buffer fills up and Node.js applies back-
+//   pressure to FFmpeg's stdout, preventing it from pre-filling the buffer
+//   ahead of time.
 //
-// fs-capacitor fully decouples the write side (FFmpeg) from the read side
-// (AudioPlayer) by buffering to disk:
+//   fs-capacitor fully decouples the write side (FFmpeg) from the read side
+//   (AudioPlayer) by buffering to disk:
 //
-// 1. CDN reconnect gaps: FFmpeg pre-fills the temp file as fast as it can
-//    (or just remuxes) — there is no back-pressure from the read side to
-//    slow it down.
-// 2. Silent choppiness: variable network throughput, encoding jitter, or
-//    brief Node.js event-loop pauses cause irregular spacing between encoded
-//    packets. Because the disk buffer is decoupled, these micro-gaps never
-//    reach the AudioPlayer.
-// 3. Unlimited buffer depth: unlike a fixed-size in-memory highWaterMark,
-//    the disk buffer can grow as large as needed.
+//     1. CDN reconnect gaps: FFmpeg pre-fills the temp file as fast as it can
+//        (or just remuxes) — there is no back-pressure from the read side to
+//        slow it down.
+//
+//     2. Silent choppiness: variable network throughput, encoding jitter, or
+//        brief Node.js event-loop pauses cause irregular spacing between encoded
+//        packets. Because the disk buffer is decoupled, these micro-gaps never
+//        reach the AudioPlayer.
+//
+//     3. Unlimited buffer depth: unlike a fixed-size in-memory highWaterMark,
+//        the disk buffer can grow as large as needed.
 // ---------------------------------------------------------------------------
 export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStreamHandle {
   // Choose output flags based on whether the source is already WebM/Opus.
@@ -173,14 +170,22 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
     'ffmpeg',
     [
       // ---- Input / HTTP options (must come before -i) ---------------------
-      '-reconnect', '1',
-      '-reconnect_streamed', '1',
-      '-reconnect_on_network_error', '1',
-      '-reconnect_delay_max', '2',
-      '-analyzeduration', '0',
-      '-probesize', '32',
-      '-fpsprobesize', '0',
-      '-i', cdnUrl,
+      '-reconnect',
+      '1',
+      '-reconnect_streamed',
+      '1',
+      '-reconnect_on_network_error',
+      '1',
+      '-reconnect_delay_max',
+      '2',
+      '-analyzeduration',
+      '0',
+      '-probesize',
+      '32',
+      '-fpsprobesize',
+      '0',
+      '-i',
+      cdnUrl,
       // ---- Output ---------------------------------------------------------
       ...outputArgs,
     ],
@@ -199,8 +204,8 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
   const benignErrorPatterns = [
     /Error parsing Opus packet header/,
     /Invalid packet header/,
-    /out#0\/webm.*muxing overhead/,   // WebM passthrough mode
-    /out#0\/ogg.*muxing overhead/,    // OGG re-encode fallback mode
+    /out#0\/webm.*muxing overhead/, // WebM passthrough mode
+    /out#0\/ogg.*muxing overhead/, // OGG re-encode fallback mode
     /moov atom not found/,
   ];
 
@@ -263,9 +268,9 @@ export function isValidYouTubeUrl(url: string): boolean {
 // isYouTubePlaylistUrl
 //
 // Detects if a URL is a YouTube playlist URL. Supports:
-// - youtube.com/playlist?list=PLAYLIST_ID
-// - youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
-// - youtu.be/VIDEO_ID?list=PLAYLIST_ID
+//   - youtube.com/playlist?list=PLAYLIST_ID
+//   - youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
+//   - youtu.be/VIDEO_ID?list=PLAYLIST_ID
 // ---------------------------------------------------------------------------
 export function isYouTubePlaylistUrl(url: string): boolean {
   try {
@@ -282,21 +287,6 @@ export function isYouTubePlaylistUrl(url: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// getPlaylistId
-//
-// Extracts the playlist ID from a YouTube playlist URL.
-// Returns null if not a playlist URL or no playlist ID found.
-// ---------------------------------------------------------------------------
-export function getPlaylistId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    return parsed.searchParams.get('list');
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // getPlaylistMetadata
 //
 // Fetches metadata for a YouTube playlist using yt-dlp.
@@ -304,19 +294,23 @@ export function getPlaylistId(url: string): string | null {
 // (much faster for large playlists).
 //
 // Output format:
-// - Line 0: playlist title
-// - Line 1: playlist id
-// - Line 2: number of entries
-// - Remaining lines: video_id, title, duration (one per line, separated by \t)
+//   - Line 0: playlist title
+//   - Line 1: playlist id
+//   - Line 2: number of entries
+//   - Remaining lines: video_id, title, duration (one per line, separated by \t)
 // ---------------------------------------------------------------------------
-export function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata> {
+function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata> {
   return new Promise((resolve, reject) => {
     const args = [
       '--flat-playlist',
-      '-I', `1:${maxVideos || 'inf'}`,
-      '--print', '%(playlist_title)s',
-      '--print', '%(playlist_id)s',
-      '--print', '%(playlist_count)s',
+      '-I',
+      `1:${maxVideos || 'inf'}`,
+      '--print',
+      '%(playlist_title)s',
+      '--print',
+      '%(playlist_id)s',
+      '--print',
+      '%(playlist_count)s',
       playlistUrl,
     ];
 
@@ -332,7 +326,7 @@ export function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Pr
 
         const lines = stdout.trimEnd().split('\n');
         if (lines.length < 3) {
-        return reject(new Error('yt-dlp returned unexpected output for playlist'));
+          return reject(new Error('yt-dlp returned unexpected output for playlist'));
         }
 
         const title = lines[0].trim();
@@ -356,12 +350,13 @@ export function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Pr
 // Fetches the list of videos in a YouTube playlist using yt-dlp.
 // Uses --flat-playlist with --dump-json for reliable parsing.
 // ---------------------------------------------------------------------------
-export function getPlaylistVideos(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata['videos']> {
+function getPlaylistVideos(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata['videos']> {
   return new Promise((resolve, reject) => {
     const args = [
       '--flat-playlist',
       '--dump-json',
-      '-I', `1:${maxVideos || 'inf'}`,
+      '-I',
+      `1:${maxVideos || 'inf'}`,
       playlistUrl,
     ];
 
@@ -376,19 +371,21 @@ export function getPlaylistVideos(playlistUrl: string, maxVideos?: number): Prom
         }
 
         const lines = stdout.trimEnd().split('\n');
-        const videos = lines.map((line) => {
-          try {
-            const data = JSON.parse(line);
-            return {
-              id: data.id || '',
-              title: data.title || 'Unknown',
-              duration: Math.round(data.duration) || 0,
-              thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
-            };
-          } catch {
-            return null;
-          }
-        }).filter((v): v is NonNullable<typeof v> => v !== null);
+        const videos = lines
+          .map((line) => {
+            try {
+              const data = JSON.parse(line);
+              return {
+                id: data.id || '',
+                title: data.title || 'Unknown',
+                duration: Math.round(data.duration) || 0,
+                thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
+              };
+            } catch {
+              return null;
+            }
+          })
+          .filter((v): v is NonNullable<typeof v> => v !== null);
 
         resolve(videos);
       }
@@ -418,20 +415,28 @@ export function getStreamFormat(youtubeUrl: string): Promise<{ url: string; isWe
     execFile(
       'yt-dlp',
       [
-        '-f', 'bestaudio[ext=webm]/bestaudio',
+        '-f',
+        'bestaudio[ext=webm]/bestaudio',
         '--no-playlist',
-        '--print', '%(ext)s',    // line 0: container extension
-        '--print', '%(urls)s',   // line 1: direct CDN URL (same as -g but via --print)
+        '--print',
+        '%(ext)s', // line 0: container extension
+        '--print',
+        '%(urls)s', // line 1: direct CDN URL (same as -g but via --print)
         youtubeUrl,
       ],
       (error, stdout) => {
         if (error) {
           return reject(new Error(`yt-dlp stream URL fetch failed: ${error.message}`));
         }
+
         const lines = stdout.trim().split('\n');
         const ext = lines[0].trim();
         const url = lines[1].trim();
-        resolve({ url, isWebmOpus: ext === 'webm' });
+
+        resolve({
+          url,
+          isWebmOpus: ext === 'webm',
+        });
       }
     );
   });

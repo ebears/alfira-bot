@@ -36,10 +36,10 @@ function playlistToWire(playlist: PrismaPlaylist): Playlist {
 //      push events to all connected clients.
 //
 // All events use a consistent naming convention: "<resource>:<action>"
-//   player:update      — any queue or playback state change
-//   songs:added        — a song was added to the library
-//   songs:deleted      — a song was removed from the library
-//   playlists:updated  — a playlist was created, renamed, or its songs changed
+//   player:update — any queue or playback state change
+//   songs:added — a song was added to the library
+//   songs:deleted — a song was removed from the library
+//   playlists:updated — a playlist was created, renamed, or its songs changed
 // ---------------------------------------------------------------------------
 
 let _io: SocketIOServer | null = null;
@@ -92,7 +92,6 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
   // ---------------------------------------------------------------------------
   _io.use((socket, next) => {
     const { JWT_SECRET } = process.env;
-
     if (!JWT_SECRET) {
       console.error('JWT_SECRET is not set — cannot verify Socket.io connections.');
       next(new Error('Server misconfiguration.'));
@@ -127,21 +126,12 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
 
   _io.on('connection', (socket) => {
     console.log(`🔌 Socket connected: ${socket.id} (user: ${socket.data.user?.username})`);
-
     socket.on('disconnect', (reason) => {
-      console.log(`🔌  Socket disconnected: ${socket.id} (${reason})`);
+      console.log(`🔌 Socket disconnected: ${socket.id} (${reason})`);
     });
   });
 
-  console.log(`✅  Socket.io initialised (CORS origin: ${WEB_UI_ORIGIN})`);
-  return _io;
-}
-
-/**
- * Retrieve the Socket.io server instance.
- * Returns null if initSocket() has not been called yet.
- */
-export function getIO(): SocketIOServer | null {
+  console.log(`✅ Socket.io initialised (CORS origin: ${WEB_UI_ORIGIN})`);
   return _io;
 }
 
