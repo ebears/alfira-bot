@@ -1,9 +1,13 @@
 // ---------------------------------------------------------------------------
-// CircularBuffer
+// PlaybackCursor
 //
-// A fixed-capacity buffer optimized for sequential playback with loop support.
+// A playback cursor over a fixed set of items with loop support.
 // Uses a read pointer that can wrap around for queue loop mode, and supports
 // shuffle via a separate playback order index array.
+//
+// Note: Unlike a traditional circular/ring buffer, this class does not
+// automatically wrap or manage capacity. It's essentially a cursor over
+// a list of items with shuffle support.
 //
 // Time Complexities:
 // - current(): O(1)
@@ -13,7 +17,7 @@
 // - toArray(): O(n)
 // ---------------------------------------------------------------------------
 
-export class CircularBuffer<T> {
+export class PlaybackCursor<T> {
   private buffer: T[];
   private readIndex: number = 0;
   private playbackOrder: number[] | null = null;
@@ -72,7 +76,6 @@ export class CircularBuffer<T> {
     const idx = this.playbackOrder
       ? this.playbackOrder[this.readIndex]
       : this.readIndex;
-
     return this.buffer[idx];
   }
 
@@ -89,7 +92,6 @@ export class CircularBuffer<T> {
     const idx = this.playbackOrder
       ? this.playbackOrder[nextIndex]
       : nextIndex;
-
     return this.buffer[idx];
   }
 
