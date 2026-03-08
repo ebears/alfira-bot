@@ -194,7 +194,7 @@ export default function Layout() {
 // Now Playing bar — wired to PlayerContext
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
-  const { state, elapsed, skip, leave, pause, resume } = usePlayer();
+  const { state, elapsed, skip, leave, pause } = usePlayer();
   const { currentSong, isPlaying, isPaused } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
@@ -206,19 +206,15 @@ function NowPlayingBar() {
     : 0;
 
   const handlePauseResume = async () => {
-    setPauseBusy(true);
-    try {
-      if (isStopped) {
-        await resume();
-      } else {
+      setPauseBusy(true);
+      try {
         await pause();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setPauseBusy(false);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPauseBusy(false);
-    }
-  };
+    };
 
   const handleSkip = async () => {
     setSkipBusy(true);

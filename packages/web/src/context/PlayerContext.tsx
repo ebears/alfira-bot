@@ -6,7 +6,15 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { getQueueState, skipTrack, leaveVoice, resumePlayback, setLoopMode, shuffleQueue, clearQueue, togglePause } from '../api/api';
+import {
+  getQueueState,
+  skipTrack,
+  leaveVoice,
+  setLoopMode,
+  shuffleQueue,
+  clearQueue,
+  togglePause,
+} from '../api/api';
 import { useSocket } from '../hooks/useSocket';
 import type { QueueState, LoopMode } from '@discord-music-bot/shared';
 
@@ -34,7 +42,6 @@ interface PlayerContextValue {
   leave: () => Promise<void>;
   pause: () => Promise<void>;
   clear: () => Promise<void>;
-  resume: () => Promise<void>;
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
   // Force an immediate REST refetch (e.g. after starting playback from QueuePage).
@@ -47,11 +54,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
   const [elapsed, setElapsed] = useState(0);
-
   // Track the song ID we last started timing so we can reset when it changes.
   const timedSongId = useRef<string | null>(null);
   const elapsedRef = useRef(0);
-
   const socket = useSocket();
 
   // ---------------------------------------------------------------------------
@@ -124,7 +129,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // This is what fixes the refresh bug — instead of always starting at 0,
     // we calculate how far along the track actually is.
     if (state.trackStartedAt && state.isPlaying && !state.isPaused) {
-      const serverElapsed = Math.floor((Date.now() - state.trackStartedAt) / 1000);
+      const serverElapsed = Math.floor(
+        (Date.now() - state.trackStartedAt) / 1000
+      );
       const clamped = Math.min(serverElapsed, state.currentSong?.duration ?? 0);
       elapsedRef.current = clamped;
       setElapsed(clamped);
@@ -186,15 +193,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await refetch();
   }, [refetch]);
 
-  const resume = useCallback(async () => {
-    await resumePlayback();
-    await new Promise((r) => setTimeout(r, 400));
-    await refetch();
-  }, [refetch]);
-
   return (
     <PlayerContext.Provider
-      value={{ state, loading, elapsed, skip, leave, pause, clear, resume, setLoop, shuffle, refetch }}
+      value={{
+        state,
+        loading,
+        elapsed,
+        skip,
+        leave,
+        pause,
+        clear,
+        setLoop,
+        shuffle,
+        refetch,
+      }}
     >
       {children}
     </PlayerContext.Provider>

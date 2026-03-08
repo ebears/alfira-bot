@@ -553,27 +553,6 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
-// POST /api/player/resume
-// Member accessible.
-// ---------------------------------------------------------------------------
-router.post(
-  '/resume',
-  requireAuth,
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
-
-    if (!player) {
-      res.status(409).json({ error: 'The bot is not in a voice channel.' });
-      return;
-    }
-
-    await player.resume();
-
-    res.json({ message: 'Resumed.' });
-  })
-);
-
-// ---------------------------------------------------------------------------
 // POST /api/player/add-to-priority
 // Member accessible.
 //
