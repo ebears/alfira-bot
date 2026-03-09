@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 // ---------------------------------------------------------------------------
@@ -16,6 +16,7 @@ export interface UserPayload {
 // Augment Express's Request type so req.user is available in all route
 // handlers without needing a cast.
 // ---------------------------------------------------------------------------
+// biome-ignore lint/style/noNamespace: Required for Express type augmentation
 declare global {
   namespace Express {
     interface Request {

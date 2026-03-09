@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import type React from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { getMe, logout as apiLogout } from '../api/api';
 import type { User } from '@discord-music-bot/shared';
 

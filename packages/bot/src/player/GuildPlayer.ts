@@ -1,19 +1,19 @@
+import type { LoopMode, QueuedSong, QueueState } from '@discord-music-bot/shared';
 import {
-  VoiceConnection,
-  AudioPlayer,
-  AudioResource,
+  type AudioPlayer,
+  AudioPlayerStatus,
+  type AudioResource,
   createAudioPlayer,
   createAudioResource,
-  AudioPlayerStatus,
-  VoiceConnectionStatus,
   entersState,
   StreamType,
+  type VoiceConnection,
+  VoiceConnectionStatus,
 } from '@discordjs/voice';
-import { TextChannel, EmbedBuilder } from 'discord.js';
-import { getStreamFormat, createAudioStream } from '../utils/ytdlp';
-import { formatDuration, formatLoopMode } from '../utils/format';
+import { EmbedBuilder, type TextChannel } from 'discord.js';
 import { broadcastQueueUpdate } from '../lib/broadcast';
-import type { QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
+import { formatDuration, formatLoopMode } from '../utils/format';
+import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
 import { PlaybackCursor } from './PlaybackCursor';
 import { SinglyLinkedList } from './SinglyLinkedList';
 
@@ -57,7 +57,6 @@ export class GuildPlayer {
 
   private trackStartedAt: number | null = null;
   private pausedAt: number | null = null; // wall-clock ms when pause began
-  private pausedElapsed: number = 0; // ms already elapsed before this pause
 
   // Set to true by skip() so onTrackEnd() knows to advance regardless of
   // loop mode. Without this, skipping in 'song' mode would just replay.
@@ -334,7 +333,7 @@ export class GuildPlayer {
    * Skip the current song and immediately advance to the next one.
    * Works regardless of loop mode.
    */
-  async skip(): Promise<void> {
+  skip(): void {
     if (this.currentSong === null) return;
 
     this.skipping = true;
@@ -628,7 +627,7 @@ export class GuildPlayer {
     }
 
     const finished = this.currentSong;
-    const wasSkipping = this.skipping;
+    const _wasSkipping = this.skipping;
     this.skipping = false;
 
     if (!finished) return;

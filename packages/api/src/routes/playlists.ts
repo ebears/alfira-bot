@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
-import { requireAdmin } from '../middleware/requireAdmin';
 import { asyncHandler } from '../middleware/errorHandler';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { getClient } from '@discord-music-bot/bot/src/lib/client';
@@ -48,8 +47,8 @@ router.get(
     // Filter private playlists: only visible to creator and admins (in Admin View)
     const filteredPlaylists = playlists.filter((pl) => {
       if (!pl.isPrivate) return true;
-      const isCreator = pl.createdBy === req.user!.discordId;
-      const isAdminInAdminView = req.user!.isAdmin && adminView;
+      const isCreator = pl.createdBy === req.user?.discordId;
+      const isAdminInAdminView = req.user?.isAdmin && adminView;
       return isCreator || isAdminInAdminView;
     });
 
@@ -89,7 +88,7 @@ router.post(
     const playlist = await prisma.playlist.create({
       data: {
         name: name.trim(),
-        createdBy: req.user!.discordId,
+        createdBy: req.user?.discordId,
       },
     });
 
@@ -125,8 +124,8 @@ router.get(
 
     // Check access for private playlists
     if (playlist.isPrivate) {
-      const isCreator = playlist.createdBy === req.user!.discordId;
-      const isAdminInAdminView = req.user!.isAdmin && adminView;
+      const isCreator = playlist.createdBy === req.user?.discordId;
+      const isAdminInAdminView = req.user?.isAdmin && adminView;
       if (!isCreator && !isAdminInAdminView) {
         res.status(403).json({ error: 'Access denied. This playlist is private.' });
         return;
@@ -166,8 +165,8 @@ router.patch(
     }
 
     // Check permissions: creator or admin (in Admin View)
-    const isCreator = existing.createdBy === req.user!.discordId;
-    const isAdminInAdminView = req.user!.isAdmin && adminView;
+    const isCreator = existing.createdBy === req.user?.discordId;
+    const isAdminInAdminView = req.user?.isAdmin && adminView;
     if (!isCreator && !isAdminInAdminView) {
       res
         .status(403)
@@ -217,8 +216,8 @@ router.patch(
     }
 
     // Check permissions: playlist owner or admin
-    const isOwner = existing.createdBy === req.user!.discordId;
-    const isAdmin = req.user!.isAdmin;
+    const isOwner = existing.createdBy === req.user?.discordId;
+    const isAdmin = req.user?.isAdmin;
     if (!isOwner && !isAdmin) {
       res
         .status(403)
@@ -257,9 +256,9 @@ router.delete(
     }
 
     // Check permissions: playlist owner or admin
-    const isOwner = existing.createdBy === req.user!.discordId;
+    const isOwner = existing.createdBy === req.user?.discordId;
 
-    const isAdmin = req.user!.isAdmin;
+    const isAdmin = req.user?.isAdmin;
 
     if (!isOwner && !isAdmin) {
       res
@@ -312,8 +311,8 @@ router.post(
     }
 
     // Check permissions: playlist owner or admin
-    const isOwner = playlist.createdBy === req.user!.discordId;
-    const isAdmin = req.user!.isAdmin;
+    const isOwner = playlist.createdBy === req.user?.discordId;
+    const isAdmin = req.user?.isAdmin;
     if (!isOwner && !isAdmin) {
       res
         .status(403)
@@ -384,8 +383,8 @@ router.delete(
     }
 
     // Check permissions: playlist owner or admin
-    const isOwner = playlist.createdBy === req.user!.discordId;
-    const isAdmin = req.user!.isAdmin;
+    const isOwner = playlist.createdBy === req.user?.discordId;
+    const isAdmin = req.user?.isAdmin;
 
     if (!isOwner && !isAdmin) {
       res.status(403).json({ error: 'Only the playlist owner or admins can remove songs.' });

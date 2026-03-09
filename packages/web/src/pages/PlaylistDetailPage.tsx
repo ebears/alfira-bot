@@ -387,7 +387,7 @@ export default function PlaylistDetailPage() {
       )}
       {removeId && (
         <ConfirmRemoveModal
-          song={playlist.songs.find((ps) => ps.songId === removeId)!.song}
+          song={playlist.songs.find((ps) => ps.songId === removeId)?.song}
           onConfirm={() => handleRemoveSong(removeId)}
           onCancel={() => setRemoveId(null)}
         />
@@ -530,7 +530,6 @@ function AddSongsModal({
           <h2 className="font-display text-3xl text-fg tracking-wider">Add Songs</h2>
           <p className="font-mono text-xs text-muted mt-0.5">to "{playlist.name}"</p>
           <input
-            autoFocus
             className="input mt-4"
             placeholder="Search..."
             value={search}

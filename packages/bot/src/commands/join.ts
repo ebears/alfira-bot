@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, GuildMember, ChannelType, TextChannel } from 'discord.js';
+import { SlashCommandBuilder, type GuildMember, ChannelType, type TextChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnectionStatus, entersState } from '@discordjs/voice';
 import { createPlayer } from '../player/manager';
 import type { Command } from '../types';

@@ -1,15 +1,15 @@
-import { SlashCommandBuilder, GuildMember, ChannelType, TextChannel } from 'discord.js';
+import type { QueuedSong } from '@discord-music-bot/shared';
 import {
-  joinVoiceChannel,
-  VoiceConnectionStatus,
   entersState,
   getVoiceConnection,
+  joinVoiceChannel,
+  VoiceConnectionStatus,
 } from '@discordjs/voice';
-import { isValidYouTubeUrl, getMetadata } from '../utils/ytdlp';
+import { ChannelType, type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
 import prisma from '../lib/prisma';
-import { getPlayer, createPlayer } from '../player/manager';
-import type { QueuedSong } from '@discord-music-bot/shared';
+import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
+import { getMetadata, isValidYouTubeUrl } from '../utils/ytdlp';
 
 export const playCommand: Command = {
   data: new SlashCommandBuilder()
@@ -65,7 +65,7 @@ export const playCommand: Command = {
     // ---------------------------------------------------------------------------
     // Fetch song metadata via yt-dlp.
     // ---------------------------------------------------------------------------
-    let metadata;
+    let metadata: Awaited<ReturnType<typeof getMetadata>> | undefined;
     try {
       metadata = await getMetadata(url);
     } catch (error) {

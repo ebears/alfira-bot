@@ -1,14 +1,16 @@
-import { Router } from 'express';
+import crypto from 'node:crypto';
 import axios from 'axios';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import { Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { asyncHandler } from '../middleware/errorHandler';
-import { requireAuth } from '../middleware/requireAuth';
+import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
+// ---------------------------------------------------------------------------
+// Environment variable validation
+// ---------------------------------------------------------------------------
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -18,6 +20,19 @@ const {
   JWT_SECRET,
   ADMIN_ROLE_IDS,
 } = process.env;
+
+if (
+  !DISCORD_CLIENT_ID ||
+  !DISCORD_CLIENT_SECRET ||
+  !DISCORD_REDIRECT_URI ||
+  !DISCORD_BOT_TOKEN ||
+  !GUILD_ID ||
+  !JWT_SECRET
+) {
+  throw new Error(
+    'Missing required environment variables: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, DISCORD_BOT_TOKEN, GUILD_ID, JWT_SECRET'
+  );
+}
 
 // The web UI origin. In development this is the Vite dev server.
 // In production, point this at your deployed frontend URL.
@@ -99,7 +114,7 @@ function generateAccessToken(payload: {
   avatar: string | null;
   isAdmin: boolean;
 }): string {
-  return jwt.sign(payload, JWT_SECRET!, {
+  return jwt.sign(payload, JWT_SECRET, {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 }
@@ -110,7 +125,7 @@ function generateAccessToken(payload: {
 // Contains only the discord ID. Long-lived and stored in DB for revocation.
 // ---------------------------------------------------------------------------
 function generateRefreshToken(discordId: string): string {
-  return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET!, {
+  return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET, {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
 }
@@ -180,13 +195,19 @@ async function fetchUserAdminStatus(
       : null;
 
     return { isAdmin, username, avatar: avatarUrl };
-  } catch (err: any) {
+  } catch (err: unknown) {
     // User not in guild
-    if (err?.response?.status === 404) {
-      return null;
+    if (err instanceof Error && 'response' in err) {
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError.response?.status === 404) {
+        return null;
+      }
     }
     // Discord error - log and return null
-    console.error('Failed to fetch user info from Discord:', err?.message);
+    console.error(
+      'Failed to fetch user info from Discord:',
+      err instanceof Error ? err.message : String(err)
+    );
     return null;
   }
 }
@@ -227,8 +248,8 @@ const authLimiter = rateLimit({
 // ---------------------------------------------------------------------------
 router.get('/login', authLimiter, (_req, res) => {
   const params = new URLSearchParams({
-    client_id: DISCORD_CLIENT_ID!,
-    redirect_uri: DISCORD_REDIRECT_URI!,
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: DISCORD_REDIRECT_URI,
     response_type: 'code',
     scope: 'identify',
   });
@@ -254,11 +275,11 @@ router.get(
       const tokenRes = await axios.post(
         'https://discord.com/api/oauth2/token',
         new URLSearchParams({
-          client_id: DISCORD_CLIENT_ID!,
-          client_secret: DISCORD_CLIENT_SECRET!,
+          client_id: DISCORD_CLIENT_ID,
+          client_secret: DISCORD_CLIENT_SECRET,
           grant_type: 'authorization_code',
           code,
-          redirect_uri: DISCORD_REDIRECT_URI!,
+          redirect_uri: DISCORD_REDIRECT_URI,
         }),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
@@ -297,10 +318,13 @@ router.get(
         { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
       );
       memberRoles = memberRes.data.roles ?? [];
-    } catch (err: any) {
-      if (err?.response?.status === 404) {
-        res.status(403).json({ error: 'You must be a member of the server to use this app.' });
-        return;
+    } catch (err: unknown) {
+      if (err instanceof Error && 'response' in err) {
+        const axiosError = err as { response?: { status?: number } };
+        if (axiosError.response?.status === 404) {
+          res.status(403).json({ error: 'You must be a member of the server to use this app.' });
+          return;
+        }
       }
       // Discord is unreachable or returned an unexpected error.
       // Log the detail server-side; return a generic message to the client.
@@ -370,7 +394,7 @@ router.post(
     // 1. Verify the refresh token signature and expiration.
     let decoded: { discordId: string; type: string };
     try {
-      decoded = jwt.verify(refreshToken, JWT_SECRET!) as { discordId: string; type: string };
+      decoded = jwt.verify(refreshToken, JWT_SECRET) as { discordId: string; type: string };
       if (decoded.type !== 'refresh') {
         res.status(401).json({ error: 'Invalid token type.' });
         return;
@@ -452,13 +476,9 @@ router.post(
 // ---------------------------------------------------------------------------
 // GET /auth/me
 // ---------------------------------------------------------------------------
-router.get(
-  '/me',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    res.json({ user: req.user });
-  })
-);
+router.get('/me', requireAuth, (req, res) => {
+  res.json({ user: req.user });
+});
 
 // ---------------------------------------------------------------------------
 // POST /auth/logout

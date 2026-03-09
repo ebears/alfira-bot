@@ -1,23 +1,23 @@
 import {
-  Music,
+  ChevronLeft,
+  CirclePause,
+  CirclePlay,
   Disc3,
   ListMusic,
-  SquarePlay,
-  Play,
-  SkipForward,
-  LogOut,
-  ChevronLeft,
-  ShieldUser,
-  Shield,
-  Pause,
   Loader2,
-  CirclePlay,
-  CirclePause,
+  LogOut,
+  Music,
+  Pause,
+  Play,
+  Shield,
+  ShieldUser,
+  SkipForward,
+  SquarePlay,
 } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useAdminView } from '../context/AdminViewContext';
+import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 
 const NAV_ITEMS = [
@@ -76,9 +76,10 @@ export default function Layout() {
             </div>
           )}
           <button
+            type="button"
             onClick={() => setCollapsed((c) => !c)}
             className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted
-                       hover:text-fg hover:bg-elevated transition-colors duration-150"
+          hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronLeft size={16} className={collapsed ? 'rotate-180' : ''} />
@@ -112,6 +113,7 @@ export default function Layout() {
         {user?.isAdmin && (
           <div className={`px-3 pb-2 ${collapsed ? 'flex justify-center' : ''}`}>
             <button
+              type="button"
               onClick={toggleAdminView}
               title={isAdminView ? 'Switch to user view' : 'Switch to admin view'}
               className={`flex items-center rounded border transition-colors duration-150 ${
@@ -151,6 +153,7 @@ export default function Layout() {
                 )}
               </div>
               <button
+                type="button"
                 onClick={handleLogout}
                 className="w-7 h-7 flex items-center justify-center rounded text-muted
                            hover:text-danger hover:bg-elevated transition-colors duration-150"
@@ -178,6 +181,7 @@ export default function Layout() {
                 <span className="text-sm font-body text-fg truncate flex-1">{user?.username}</span>
               </div>
               <button
+                type="button"
                 onClick={handleLogout}
                 className="w-full text-left px-3 py-2 text-xs font-mono text-muted hover:text-fg
                            hover:bg-elevated rounded transition-colors duration-150"

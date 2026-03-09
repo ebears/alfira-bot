@@ -1,5 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, type Prisma } from '../../../api/src/generated/prisma/client';
+import { type Prisma, PrismaClient } from '../../../api/src/generated/prisma/client';
+
 // ---------------------------------------------------------------------------
 // Prisma client singleton for the bot package.
 //
@@ -20,8 +21,13 @@ import { PrismaClient, type Prisma } from '../../../api/src/generated/prisma/cli
 // production because the directory structure is preserved.
 // ---------------------------------------------------------------------------
 
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
+
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: DATABASE_URL,
 });
 
 const prisma: PrismaClient = new PrismaClient({ adapter });

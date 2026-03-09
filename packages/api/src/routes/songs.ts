@@ -1,15 +1,15 @@
+import {
+  getMetadata,
+  getPlaylistMetadataWithVideos,
+  isValidYouTubeUrl,
+  isYouTubePlaylistUrl,
+} from '@discord-music-bot/bot/src/utils/ytdlp';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth } from '../middleware/requireAuth';
-import { requireAdmin } from '../middleware/requireAdmin';
-import { asyncHandler } from '../middleware/errorHandler';
-import {
-  isValidYouTubeUrl,
-  getMetadata,
-  isYouTubePlaylistUrl,
-  getPlaylistMetadataWithVideos,
-} from '@discord-music-bot/bot/src/utils/ytdlp';
 import { emitSongAdded, emitSongDeleted } from '../lib/socket';
+import { asyncHandler } from '../middleware/errorHandler';
+import { requireAdmin } from '../middleware/requireAdmin';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
@@ -68,7 +68,7 @@ router.post(
     }
 
     // Fetch metadata first so we can extract the youtubeId for the duplicate check.
-    let metadata;
+    let metadata: Awaited<ReturnType<typeof getMetadata>> | undefined;
     try {
       metadata = await getMetadata(url);
     } catch {
@@ -99,7 +99,7 @@ router.post(
         youtubeId: metadata.youtubeId,
         duration: metadata.duration,
         thumbnailUrl: metadata.thumbnailUrl,
-        addedBy: req.user!.discordId,
+        addedBy: req.user?.discordId,
         nickname: nickname?.trim() || null,
       },
     });
@@ -143,25 +143,21 @@ router.post(
     }
 
     if (!isYouTubePlaylistUrl(url)) {
-      res
-        .status(400)
-        .json({
-          error:
-            'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
-        });
+      res.status(400).json({
+        error:
+          'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
+      });
       return;
     }
 
     // Fetch playlist metadata with videos
-    let playlistMetadata;
+    let playlistMetadata: Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> | undefined;
     try {
       playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
     } catch {
-      res
-        .status(422)
-        .json({
-          error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
-        });
+      res.status(422).json({
+        error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
+      });
       return;
     }
 
@@ -212,7 +208,7 @@ router.post(
             youtubeId: video.id,
             duration: video.duration,
             thumbnailUrl: video.thumbnailUrl,
-            addedBy: req.user!.discordId,
+            addedBy: req.user?.discordId,
           },
         })
       )

@@ -241,7 +241,6 @@ function CreatePlaylistModal({
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">New Playlist</h2>
         <p className="font-mono text-xs text-muted mb-6">choose a name</p>
         <input
-          autoFocus
           className="input mb-3"
           placeholder="My Playlist"
           value={name}

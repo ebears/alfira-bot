@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import type React from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import {
   getQueueState,
   skipTrack,

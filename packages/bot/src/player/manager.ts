@@ -1,5 +1,5 @@
-import { VoiceConnection } from '@discordjs/voice';
-import { TextChannel } from 'discord.js';
+import type { VoiceConnection } from '@discordjs/voice';
+import type { TextChannel } from 'discord.js';
 import { GuildPlayer } from './GuildPlayer';
 
 // ---------------------------------------------------------------------------

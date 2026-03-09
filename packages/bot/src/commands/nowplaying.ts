@@ -25,8 +25,8 @@ export const nowplayingCommand: Command = {
       return;
     }
 
-    const loopMode = player!.getLoopMode();
-    const queueLength = player!.getQueue().length;
+    const loopMode = player?.getLoopMode();
+    const queueLength = player?.getQueue().length;
 
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)

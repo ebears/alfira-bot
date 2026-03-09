@@ -1,6 +1,6 @@
-import { execFile, spawn } from 'child_process';
-import type { ChildProcess } from 'child_process';
-import type { Readable } from 'stream';
+import { execFile, spawn } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
+import type { Readable } from 'node:stream';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
 // ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
   // capacitor spills all data to a temp file on disk as it arrives, fully
   // decoupling the FFmpeg write side from the AudioPlayer read side.
   const capacitor = new CapacitorWriteStream();
-  ffmpeg.stdout!.pipe(capacitor);
+  ffmpeg.stdout?.pipe(capacitor);
 
   // Surface FFmpeg warnings/errors in the bot console, filtering out benign
   // "Error parsing Opus packet header" messages that occur when the stream ends.
