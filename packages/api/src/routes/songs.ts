@@ -99,7 +99,7 @@ router.post(
         youtubeId: metadata.youtubeId,
         duration: metadata.duration,
         thumbnailUrl: metadata.thumbnailUrl,
-        addedBy: req.user?.discordId,
+        addedBy: req.user?.discordId ?? '',
         nickname: nickname?.trim() || null,
       },
     });
@@ -208,7 +208,7 @@ router.post(
             youtubeId: video.id,
             duration: video.duration,
             thumbnailUrl: video.thumbnailUrl,
-            addedBy: req.user?.discordId,
+            addedBy: req.user?.discordId ?? '',
           },
         })
       )

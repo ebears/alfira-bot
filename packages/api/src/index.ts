@@ -1,18 +1,18 @@
 import 'dotenv/config';
 import http from 'node:http';
-import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import prisma from './lib/prisma';
-import { initSocket, emitPlayerUpdate } from './lib/socket';
-import { errorHandler } from './middleware/errorHandler';
-import songsRouter from './routes/songs';
-import playlistsRouter from './routes/playlists';
-import playerRouter from './routes/player';
-import authRouter from './routes/auth';
 import { startBot } from '@discord-music-bot/bot';
 import { setBroadcastQueueUpdate } from '@discord-music-bot/bot/src/lib/broadcast';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
+import prisma from './lib/prisma';
+import { emitPlayerUpdate, initSocket } from './lib/socket';
+import { errorHandler } from './middleware/errorHandler';
+import authRouter from './routes/auth';
+import playerRouter from './routes/player';
+import playlistsRouter from './routes/playlists';
+import songsRouter from './routes/songs';
 
 // ---------------------------------------------------------------------------
 // Validate required environment variables.

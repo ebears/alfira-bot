@@ -27,7 +27,7 @@ const MAX_URL_LENGTH = 2000;
 // ---------------------------------------------------------------------------
 // Environment variable validation
 // ---------------------------------------------------------------------------
-const GUILD_ID = process.env.GUILD_ID;
+const GUILD_ID = process.env.GUILD_ID as string;
 if (!GUILD_ID) {
   throw new Error('GUILD_ID environment variable is not set');
 }
@@ -61,7 +61,7 @@ async function resolveOrAutoJoinPlayer(
 
   try {
     const guild = await discordClient.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(req.user?.discordId);
+    const member = await guild.members.fetch(req.user?.discordId ?? '');
     const voiceChannel = member.voice.channel;
 
     if (!voiceChannel) {
@@ -239,7 +239,7 @@ router.post(
 
     // Build QueuedSong objects.
     // requestedBy shows who triggered playback in "Now playing" embeds.
-    const requestedBy = req.user?.username;
+    const requestedBy = req.user?.username ?? 'Unknown';
 
     const queuedSongs: QueuedSong[] = dbSongs.map((song) => ({
       ...song,
@@ -416,7 +416,7 @@ router.post(
     }
 
     // Create a QueuedSong without saving to database
-    const requestedBy = req.user?.username;
+    const requestedBy = req.user?.username ?? 'Unknown';
 
     const queuedSong: QueuedSong = {
       id: `temp-${Date.now()}`,
@@ -425,7 +425,7 @@ router.post(
       youtubeId: metadata.youtubeId,
       duration: metadata.duration,
       thumbnailUrl: metadata.thumbnailUrl,
-      addedBy: req.user?.discordId,
+      addedBy: req.user?.discordId ?? 'Unknown',
       createdAt: new Date().toISOString(),
       requestedBy,
     };
@@ -490,7 +490,7 @@ router.post(
     }
 
     // Queue all songs from the playlist
-    const requestedBy = req.user?.username;
+    const requestedBy = req.user?.username ?? 'Unknown';
     const queuedSongs: QueuedSong[] = [];
 
     for (const video of playlistMetadata.videos) {
@@ -501,7 +501,7 @@ router.post(
         youtubeId: video.id,
         duration: video.duration,
         thumbnailUrl: video.thumbnailUrl,
-        addedBy: req.user?.discordId,
+        addedBy: req.user?.discordId ?? 'Unknown',
         createdAt: new Date().toISOString(),
         requestedBy,
       };
@@ -599,7 +599,7 @@ router.post(
     if (!player) return; // Response already sent by helper
 
     // Create a QueuedSong from the database song
-    const requestedBy = req.user?.username;
+    const requestedBy = req.user?.username ?? 'Unknown';
 
     const queuedSong: QueuedSong = {
       id: song.id,
@@ -661,7 +661,7 @@ router.post(
     if (!player) return; // Response already sent by helper
 
     // Fetch metadata from YouTube
-    let metadata;
+    let metadata: Awaited<ReturnType<typeof getMetadata>> | undefined;
 
     try {
       metadata = await getMetadata(url);
@@ -674,7 +674,7 @@ router.post(
     }
 
     // Create a QueuedSong without saving to database
-    const requestedBy = req.user?.username;
+    const requestedBy = req.user?.username ?? 'Unknown';
 
     const queuedSong: QueuedSong = {
       id: `temp-${Date.now()}`,
@@ -683,7 +683,7 @@ router.post(
       youtubeId: metadata.youtubeId,
       duration: metadata.duration,
       thumbnailUrl: metadata.thumbnailUrl,
-      addedBy: req.user?.discordId,
+      addedBy: req.user?.discordId ?? 'Unknown',
       createdAt: new Date().toISOString(),
       requestedBy,
     };

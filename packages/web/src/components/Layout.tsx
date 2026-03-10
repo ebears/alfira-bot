@@ -318,6 +318,7 @@ function NowPlayingBar() {
             </BarButton>
 
             <button
+              type="button"
               onClick={handleLeave}
               title="Leave voice channel"
               className="w-8 h-8 flex items-center justify-center rounded text-muted
@@ -352,6 +353,7 @@ function BarButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       title={title}

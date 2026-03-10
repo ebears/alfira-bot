@@ -1,8 +1,8 @@
 import type {
-  SlashCommandBuilder,
-  SlashCommandSubcommandsOnlyBuilder,
   ChatInputCommandInteraction,
   Collection,
+  SlashCommandBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
 
 // ---------------------------------------------------------------------------
@@ -10,7 +10,7 @@ import type {
 // continues to work without changes. The canonical definitions live in
 // @discord-music-bot/shared.
 // ---------------------------------------------------------------------------
-export type { Song, QueuedSong, LoopMode, QueueState } from '@discord-music-bot/shared';
+export type { LoopMode, QueuedSong, QueueState, Song } from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
 // Command interface

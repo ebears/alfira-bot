@@ -1,5 +1,5 @@
-import { execFile, spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 

@@ -19,6 +19,12 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "useButtonType": "error",
+        "noStaticElementInteractions": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useSemanticElements": "warn"
+      },
       "complexity": {
         "noExtraBooleanCast": "error",
         "noUselessCatch": "error",
@@ -70,7 +76,8 @@
         "noUnsafeDeclarationMerging": "error",
         "noUnsafeNegation": "error",
         "useAwait": "error",
-        "useDefaultSwitchClauseLast": "error"
+        "useDefaultSwitchClauseLast": "error",
+        "noArrayIndexKey": "warn"
       },
       "style": {
         "noInferrableTypes": "warn",
@@ -103,7 +110,6 @@
       "indentWidth": 2
     }
   },
-
   "overrides": [
     {
       "includes": ["packages/web/**"],
@@ -117,6 +123,36 @@
       "includes": ["packages/api/**", "packages/bot/**"],
       "javascript": {
         "globals": ["process", "console", "__dirname", "__filename", "module", "require"]
+      }
+    },
+    {
+      "includes": ["packages/api/src/middleware/requireAuth.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNamespace": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/web/src/pages/PlaylistsPage.tsx",
+        "packages/web/src/pages/SongsPage.tsx",
+        "packages/web/src/pages/PlaylistDetailPage.tsx",
+        "packages/web/src/pages/QueuePage.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noStaticElementInteractions": "off",
+            "useSemanticElements": "off",
+            "useKeyWithClickEvents": "off"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "off"
+          }
+        }
       }
     }
   ]

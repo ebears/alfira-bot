@@ -1,33 +1,33 @@
+import type { LoopMode, Playlist, PlaylistDetail, Song } from '@discord-music-bot/shared';
 import {
   ChevronLeft,
-  Play,
-  Plus,
-  ListVideo,
-  Trash2,
   CirclePlay,
   Ghost,
+  ListVideo,
   Lock,
+  Play,
+  Plus,
+  Trash2,
   Unlock,
 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
-  getPlaylist,
-  renamePlaylist,
-  removeSongFromPlaylist,
   addSongToPlaylist,
-  getSongs,
-  startPlayback,
-  deletePlaylist,
-  togglePlaylistVisibility,
   addToPriorityQueue,
+  deletePlaylist,
+  getPlaylist,
+  getSongs,
+  removeSongFromPlaylist,
+  renamePlaylist,
+  startPlayback,
+  togglePlaylistVisibility,
 } from '../api/api';
-import type { PlaylistDetail, Song, LoopMode, Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../hooks/useSocket';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
+import { useSocket } from '../hooks/useSocket';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -219,9 +219,10 @@ export default function PlaylistDetailPage() {
     <div className="p-8">
       {/* Back */}
       <button
+        type="button"
         onClick={() => navigate('/playlists')}
         className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg
-                   transition-colors duration-150 mb-6"
+ transition-colors duration-150 mb-6"
       >
         <ChevronLeft size={14} /> playlists
       </button>
@@ -243,7 +244,7 @@ export default function PlaylistDetailPage() {
                 }
               }}
               className="font-display text-5xl bg-transparent text-fg tracking-wider
-                         border-b-2 border-accent outline-none w-full"
+ border-b-2 border-accent outline-none w-full"
               style={{ fontSize: '3rem', lineHeight: 1 }}
             />
           ) : (
@@ -277,6 +278,7 @@ export default function PlaylistDetailPage() {
 
         <div className="flex gap-2 shrink-0">
           <button
+            type="button"
             className="btn-ghost text-xs flex items-center gap-1.5"
             onClick={() => handleAddPlaylistToQueue()}
             disabled={playlist.songs.length === 0}
@@ -285,6 +287,7 @@ export default function PlaylistDetailPage() {
             <Plus size={14} /> Add to Queue
           </button>
           <button
+            type="button"
             className="btn-primary text-xs flex items-center gap-1.5"
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
@@ -293,6 +296,7 @@ export default function PlaylistDetailPage() {
           </button>
           {(user?.discordId === playlist.createdBy || isAdminView) && (
             <button
+              type="button"
               className="btn-ghost text-xs flex items-center gap-1.5"
               onClick={handleToggleVisibility}
               title={playlist.isPrivate ? 'Make playlist public' : 'Make playlist private'}
@@ -314,15 +318,24 @@ export default function PlaylistDetailPage() {
             <>
               {isEditMode && (
                 <>
-                  <button className="btn-ghost text-xs" onClick={() => setShowAddSongs(true)}>
+                  <button
+                    type="button"
+                    className="btn-ghost text-xs"
+                    onClick={() => setShowAddSongs(true)}
+                  >
                     + Add Songs
                   </button>
-                  <button className="btn-danger text-xs" onClick={handleDeletePlaylist}>
+                  <button
+                    type="button"
+                    className="btn-danger text-xs"
+                    onClick={handleDeletePlaylist}
+                  >
                     Delete
                   </button>
                 </>
               )}
               <button
+                type="button"
                 className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
                 onClick={toggleEditMode}
               >
@@ -432,6 +445,7 @@ function SongRow({
           </span>
         ) : (
           <button
+            type="button"
             onClick={onPlay}
             className="hidden group-hover:flex items-center justify-center text-accent hover:text-accent/80 transition-colors duration-150"
             title="Play from this song"
@@ -455,6 +469,7 @@ function SongRow({
       <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
       {/* Add to Queue - available to all members */}
       <button
+        type="button"
         onClick={onAddToQueue}
         className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent transition-all duration-150 p-1"
         title="Add to Up Next"
@@ -463,6 +478,7 @@ function SongRow({
       </button>
       {isAdmin && (
         <button
+          type="button"
           onClick={onRemove}
           className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger transition-all duration-150 p-1"
           title="Remove from playlist"
@@ -524,7 +540,7 @@ function AddSongsModal({
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
       <div
         className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl
-                      flex flex-col max-h-[80vh] animate-fade-up"
+ flex flex-col max-h-[80vh] animate-fade-up"
       >
         <div className="p-5 border-b border-border">
           <h2 className="font-display text-3xl text-fg tracking-wider">Add Songs</h2>
@@ -541,7 +557,7 @@ function AddSongsModal({
           {loading ? (
             <div className="p-6 space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3">
+                <div key={`skeleton-${i}`} className="flex items-center gap-3">
                   <div className="skeleton w-10 h-7 rounded" />
                   <div className="skeleton h-3 flex-1" />
                 </div>
@@ -557,7 +573,7 @@ function AddSongsModal({
                 <div
                   key={song.id}
                   className="flex items-center gap-3 px-5 py-3
-                                               hover:bg-elevated transition-colors duration-100"
+ hover:bg-elevated transition-colors duration-100"
                 >
                   <img
                     src={song.thumbnailUrl}
@@ -572,6 +588,7 @@ function AddSongsModal({
                     {formatDuration(song.duration)}
                   </span>
                   <button
+                    type="button"
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
                     className={`font-mono text-xs px-3 py-1 rounded border transition-colors duration-150 ${
@@ -589,7 +606,7 @@ function AddSongsModal({
         </div>
 
         <div className="p-4 border-t border-border flex justify-end">
-          <button className="btn-primary" onClick={hasAddedNew ? onAdded : onClose}>
+          <button type="button" className="btn-primary" onClick={hasAddedNew ? onAdded : onClose}>
             {hasAddedNew ? 'Done' : 'Close'}
           </button>
         </div>
@@ -641,6 +658,7 @@ function PlayModal({
             <div className="flex gap-2">
               {(['sequential', 'random'] as const).map((m) => (
                 <button
+                  type="button"
                   key={m}
                   onClick={() => setMode(m)}
                   className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
@@ -660,6 +678,7 @@ function PlayModal({
             <div className="flex gap-2">
               {(['off', 'song', 'queue'] as const).map((l) => (
                 <button
+                  type="button"
                   key={l}
                   onClick={() => setLoop(l)}
                   className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
@@ -678,10 +697,10 @@ function PlayModal({
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={loading}>
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={loading}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handlePlay} disabled={loading}>
+          <button type="button" className="btn-primary" onClick={handlePlay} disabled={loading}>
             {loading ? (
               'Starting...'
             ) : (
@@ -723,10 +742,10 @@ function ConfirmRemoveModal({
           The song won't be deleted from the library.
         </p>
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onCancel}>
+          <button type="button" className="btn-ghost" onClick={onCancel}>
             Cancel
           </button>
-          <button className="btn-danger border-danger/50" onClick={onConfirm}>
+          <button type="button" className="btn-danger border-danger/50" onClick={onConfirm}>
             Remove
           </button>
         </div>
@@ -745,7 +764,7 @@ function DetailSkeleton() {
       <div className="skeleton h-12 w-64 mb-2 rounded" />
       <div className="skeleton h-3 w-24 mb-8 rounded" />
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 py-3">
+        <div key={`skeleton-${i}`} className="flex items-center gap-4 py-3">
           <div className="skeleton w-6 h-3 rounded" />
           <div className="skeleton w-10 h-7 rounded" />
           <div className="skeleton h-3 flex-1 rounded" />
@@ -762,7 +781,7 @@ function EmptyState({ isAdmin, onAdd }: { isAdmin: boolean; onAdd: () => void })
       <p className="font-display text-4xl text-faint tracking-wider mb-2">Empty Playlist</p>
       {isAdmin ? (
         <p className="font-mono text-xs text-faint">
-          <button className="text-accent hover:underline" onClick={onAdd}>
+          <button type="button" className="text-accent hover:underline" onClick={onAdd}>
             add some songs
           </button>{' '}
           to get started

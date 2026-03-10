@@ -1,9 +1,9 @@
+import { getClient } from '@discord-music-bot/bot/src/lib/client';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth } from '../middleware/requireAuth';
-import { asyncHandler } from '../middleware/errorHandler';
 import { emitPlaylistUpdated } from '../lib/socket';
-import { getClient } from '@discord-music-bot/bot/src/lib/client';
+import { asyncHandler } from '../middleware/errorHandler';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const MAX_NAME_LENGTH = 200;
@@ -88,7 +88,7 @@ router.post(
     const playlist = await prisma.playlist.create({
       data: {
         name: name.trim(),
-        createdBy: req.user?.discordId,
+        createdBy: req.user?.discordId ?? '',
       },
     });
 

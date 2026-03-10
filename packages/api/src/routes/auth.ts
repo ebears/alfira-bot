@@ -5,6 +5,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { asyncHandler } from '../middleware/errorHandler';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
@@ -114,7 +115,7 @@ function generateAccessToken(payload: {
   avatar: string | null;
   isAdmin: boolean;
 }): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, JWT_SECRET as string, {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 }
@@ -125,7 +126,7 @@ function generateAccessToken(payload: {
 // Contains only the discord ID. Long-lived and stored in DB for revocation.
 // ---------------------------------------------------------------------------
 function generateRefreshToken(discordId: string): string {
-  return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET, {
+  return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET as string, {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
 }
@@ -332,7 +333,7 @@ router.get(
         'Failed to fetch guild member roles for user',
         discordUser.id,
         '— denying login.',
-        err?.message
+        err instanceof Error ? err.message : String(err)
       );
       res
         .status(503)
