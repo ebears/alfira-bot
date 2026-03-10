@@ -18,7 +18,7 @@
   "dependencies": {
     "@discord-music-bot/api": "*",
     "@discord-music-bot/shared": "*",
-    "@discordjs/voice": "^0.19.0",
+    "@discordjs/voice": "^0.19.1",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@snazzah/davey": "^0.1.10",
