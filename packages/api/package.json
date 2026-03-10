@@ -35,7 +35,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.4.0",
     "prisma": "^7.4.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
