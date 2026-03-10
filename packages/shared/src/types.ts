@@ -53,6 +53,7 @@ export type LoopMode = 'off' | 'song' | 'queue';
 export interface QueueState {
   isPlaying: boolean;
   isPaused: boolean;
+  isConnectedToVoice: boolean; // True when bot is connected to a voice channel
   loopMode: LoopMode;
   currentSong: QueuedSong | null;
   priorityQueue: QueuedSong[]; // Songs added via Quick Add or "Add to Queue" - play before regular queue

@@ -115,11 +115,13 @@ router.get(
   // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
+    const connection = getVoiceConnection(GUILD_ID);
 
     if (!player) {
       res.json({
         isPlaying: false,
         isPaused: false,
+        isConnectedToVoice: !!connection,
         loopMode: 'off',
         currentSong: null,
         priorityQueue: [],
