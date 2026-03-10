@@ -600,7 +600,6 @@ export class GuildPlayer {
 
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
-    this.pausedElapsed = 0;
 
     // Broadcast after confirming playback has actually started.
     broadcastQueueUpdate(this.getQueueState());
@@ -619,7 +618,6 @@ export class GuildPlayer {
   private async onTrackEnd(): Promise<void> {
     this.trackStartedAt = null;
     this.pausedAt = null;
-    this.pausedElapsed = 0;
 
     if (this.stopping) {
       this.stopping = false;
