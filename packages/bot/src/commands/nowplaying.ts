@@ -1,7 +1,7 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
-import { formatDuration, formatLoopMode } from '../utils/format';
 import type { Command } from '../types';
+import { formatDuration, formatLoopMode } from '../utils/format';
 
 export const nowplayingCommand: Command = {
   data: new SlashCommandBuilder()
@@ -25,8 +25,8 @@ export const nowplayingCommand: Command = {
       return;
     }
 
-    const loopMode = player!.getLoopMode();
-    const queueLength = player!.getQueue().length;
+    const loopMode = player?.getLoopMode() ?? 'off';
+    const queueLength = player?.getQueue().length ?? 0;
 
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)

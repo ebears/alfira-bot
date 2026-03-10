@@ -71,7 +71,14 @@ export default function LoginPage() {
 
 function DiscordIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      role="img"
+      aria-label="Discord logo"
+    >
       <path
         d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0
         0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0

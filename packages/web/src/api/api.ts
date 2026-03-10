@@ -1,12 +1,12 @@
-import client from './client';
 import type {
-  Song,
+  LoopMode,
   Playlist,
   PlaylistDetail,
   QueueState,
-  LoopMode,
+  Song,
   User,
 } from '@discord-music-bot/shared';
+import client from './client';
 
 // ---------------------------------------------------------------------------
 // Auth

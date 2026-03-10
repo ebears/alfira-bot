@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { getMe, logout as apiLogout } from '../api/api';
 import type { User } from '@discord-music-bot/shared';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { logout as apiLogout, getMe } from '../api/api';
 
 interface AuthContextValue {
   user: User | null;

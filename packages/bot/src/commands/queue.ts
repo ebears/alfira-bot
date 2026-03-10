@@ -1,7 +1,7 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
-import { formatDuration, formatLoopMode } from '../utils/format';
 import type { Command } from '../types';
+import { formatDuration, formatLoopMode } from '../utils/format';
 
 // Maximum number of queued songs to list before truncating.
 // Discord embeds have a 6000 character total limit. At ~60 chars per entry,

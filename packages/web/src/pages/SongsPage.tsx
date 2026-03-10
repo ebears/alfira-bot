@@ -1,20 +1,20 @@
-import { Search, Play, Loader2, ListVideo, ListPlus, Trash2 } from 'lucide-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import type { Playlist, Song } from '@discord-music-bot/shared';
+import { ListPlus, ListVideo, Loader2, Play, Search, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  getSongs,
   addSong,
+  addSongToPlaylist,
+  addToPriorityQueue,
   deleteSong,
   getPlaylists,
-  addSongToPlaylist,
-  startPlayback,
+  getSongs,
   importPlaylist,
-  addToPriorityQueue,
+  startPlayback,
 } from '../api/api';
-import type { Song, Playlist } from '@discord-music-bot/shared';
 import { useAdminView } from '../context/AdminViewContext';
-import { useSocket } from '../hooks/useSocket';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
+import { useSocket } from '../hooks/useSocket';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
@@ -120,7 +120,7 @@ export default function SongsPage() {
           </p>
         </div>
         {isAdminView && (
-          <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+          <button type="button" className="btn-primary" onClick={() => setShowAddModal(true)}>
             + Add Song
           </button>
         )}
@@ -292,6 +292,7 @@ function SongCard({
 
         {/* Play button overlay — visible on hover or while loading */}
         <button
+          type="button"
           onClick={onPlay}
           disabled={isPlaying}
           className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
@@ -321,6 +322,7 @@ function SongCard({
         <div className="flex gap-1.5 mt-auto pt-1">
           {/* Add to Queue - available to all members */}
           <button
+            type="button"
             onClick={handleAddToQueue}
             disabled={addingToQueue}
             className="flex items-center justify-center w-8 h-8 text-muted hover:text-accent border border-border hover:border-accent/30 rounded transition-colors duration-150 disabled:opacity-50"
@@ -337,6 +339,7 @@ function SongCard({
               {/* Add to playlist */}
               <div className="relative" ref={menuRef}>
                 <button
+                  type="button"
                   onClick={() => setShowPlaylistMenu((p) => !p)}
                   className="flex items-center justify-center w-8 h-8 text-muted hover:text-fg border border-border hover:border-accent/30 rounded transition-colors duration-150"
                   title="Add to playlist"
@@ -350,6 +353,7 @@ function SongCard({
                     ) : (
                       playlists.map((pl) => (
                         <button
+                          type="button"
                           key={pl.id}
                           disabled={addingToPlaylist === pl.id || addedTo.has(pl.id)}
                           onClick={() => handleAddToPlaylist(pl.id)}
@@ -367,6 +371,7 @@ function SongCard({
               </div>
               {/* Delete */}
               <button
+                type="button"
                 onClick={onDelete}
                 className="flex items-center justify-center w-8 h-8 text-faint hover:text-danger border border-border hover:border-danger/30 rounded transition-colors duration-150"
                 title="Delete song"
@@ -502,10 +507,15 @@ function AddSongModal({
         )}
 
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={loading}>
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={loading}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !url.trim()}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={loading || !url.trim()}
+          >
             {importFullPlaylist ? 'Import' : 'Add'}
           </button>
         </div>
@@ -538,10 +548,10 @@ function ConfirmDeleteModal({
           this will remove it from all playlists too.
         </p>
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onCancel}>
+          <button type="button" className="btn-ghost" onClick={onCancel}>
             Cancel
           </button>
-          <button className="btn-danger border-danger/50" onClick={onConfirm}>
+          <button type="button" className="btn-danger border-danger/50" onClick={onConfirm}>
             Delete
           </button>
         </div>
@@ -611,7 +621,7 @@ function EmptyState({
       <p className="font-display text-4xl text-faint tracking-wider mb-2">Empty Library</p>
       {isAdmin ? (
         <p className="font-mono text-xs text-faint">
-          <button className="text-accent hover:underline" onClick={onAdd}>
+          <button type="button" className="text-accent hover:underline" onClick={onAdd}>
             add the first song
           </button>{' '}
           to get started

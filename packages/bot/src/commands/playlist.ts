@@ -1,10 +1,10 @@
-import { SlashCommandBuilder, GuildMember, ChannelType, TextChannel } from 'discord.js';
 import {
-  joinVoiceChannel,
-  VoiceConnectionStatus,
   entersState,
   getVoiceConnection,
+  joinVoiceChannel,
+  VoiceConnectionStatus,
 } from '@discordjs/voice';
+import { ChannelType, type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
 import type { Prisma } from '../../../api/src/generated/prisma/client';
 import prisma from '../lib/prisma';
 
@@ -14,8 +14,9 @@ import prisma from '../lib/prisma';
 // the schema automatically — no manual duplication required.
 // ---------------------------------------------------------------------------
 type PlaylistSongWithSong = Prisma.PlaylistSongGetPayload<{ include: { song: true } }>;
-import { getPlayer, createPlayer } from '../player/manager';
+
 import type { QueuedSong } from '@discord-music-bot/shared';
+import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
 
 export const playlistCommand: Command = {

@@ -19,7 +19,7 @@ interface SinglyListNode<T> {
 export class SinglyLinkedList<T> {
   private head: SinglyListNode<T> | null = null;
   private tail: SinglyListNode<T> | null = null;
-  private _size: number = 0;
+  private _size = 0;
 
   // ---------------------------------------------------------------------------
   // Getters

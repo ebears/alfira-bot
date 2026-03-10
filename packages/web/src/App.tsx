@@ -1,14 +1,14 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { AdminViewProvider } from './context/AdminViewContext';
-import { PlayerProvider } from './context/PlayerContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AdminViewProvider } from './context/AdminViewContext';
+import { AuthProvider } from './context/AuthContext';
+import { PlayerProvider } from './context/PlayerContext';
 import LoginPage from './pages/LoginPage';
-import SongsPage from './pages/SongsPage';
-import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
+import PlaylistsPage from './pages/PlaylistsPage';
 import QueuePage from './pages/QueuePage';
+import SongsPage from './pages/SongsPage';
 
 export default function App() {
   return (

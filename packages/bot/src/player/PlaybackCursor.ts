@@ -19,7 +19,7 @@
 
 export class PlaybackCursor<T> {
   private buffer: T[];
-  private readIndex: number = 0;
+  private readIndex = 0;
   private playbackOrder: number[] | null = null;
 
   constructor(items: T[] = []) {

@@ -1,24 +1,23 @@
 import {
   Client,
-  GatewayIntentBits,
   Collection,
-  Interaction,
-  InteractionReplyOptions,
+  GatewayIntentBits,
+  type Interaction,
+  type InteractionReplyOptions,
   REST,
   Routes,
 } from 'discord.js';
-import { setClient } from './lib/client';
 import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
-import { playCommand } from './commands/play';
-import { skipCommand } from './commands/skip';
-
-import { pauseCommand } from './commands/pause';
 import { loopCommand } from './commands/loop';
-import { shuffleCommand } from './commands/shuffle';
-import { queueCommand } from './commands/queue';
 import { nowplayingCommand } from './commands/nowplaying';
+import { pauseCommand } from './commands/pause';
+import { playCommand } from './commands/play';
 import { playlistCommand } from './commands/playlist';
+import { queueCommand } from './commands/queue';
+import { shuffleCommand } from './commands/shuffle';
+import { skipCommand } from './commands/skip';
+import { setClient } from './lib/client';
 import type { Command } from './types';
 
 // ---------------------------------------------------------------------------
@@ -106,10 +105,10 @@ export async function startBot(): Promise<void> {
     // Set AUTO_DEPLOY_COMMANDS=false to disable (e.g., for advanced use cases)
     const shouldAutoDeploy = AUTO_DEPLOY_COMMANDS !== 'false';
     if (shouldAutoDeploy) {
-      await deployCommands(DISCORD_CLIENT_ID!, GUILD_ID!, DISCORD_BOT_TOKEN!, commands);
+      await deployCommands(DISCORD_CLIENT_ID, GUILD_ID, DISCORD_BOT_TOKEN, commands);
     } else {
       console.log(
-        'ℹ️  Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
+        'ℹ️ Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
       );
     }
   });

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
-import { formatLoopMode } from '../utils/format';
 import type { Command, LoopMode } from '../types';
+import { formatLoopMode } from '../utils/format';
 
 export const loopCommand: Command = {
   data: new SlashCommandBuilder()

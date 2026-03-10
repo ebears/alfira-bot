@@ -1,7 +1,7 @@
-import { Server as SocketIOServer } from 'socket.io';
-import type { Server as HTTPServer } from 'http';
+import type { Server as HTTPServer } from 'node:http';
+import type { Playlist, QueueState, Song } from '@discord-music-bot/shared';
 import jwt from 'jsonwebtoken';
-import type { QueueState, Song, Playlist } from '@discord-music-bot/shared';
+import { Server as SocketIOServer } from 'socket.io';
 
 // ---------------------------------------------------------------------------
 // Helper functions to convert Prisma objects (with Date) to wire format (string)
@@ -100,7 +100,7 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
 
     const cookieHeader = socket.handshake.headers.cookie;
     const cookies = parseCookies(cookieHeader);
-    const token = cookies['session'];
+    const token = cookies.session;
 
     if (!token) {
       next(new Error('Authentication required. Please log in.'));

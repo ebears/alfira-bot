@@ -1,15 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import type { LoopMode, QueueState } from '@discord-music-bot/shared';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
+  clearQueue,
   getQueueState,
-  skipTrack,
   leaveVoice,
   setLoopMode,
   shuffleQueue,
-  clearQueue,
+  skipTrack,
   togglePause,
 } from '../api/api';
 import { useSocket } from '../hooks/useSocket';
-import type { QueueState, LoopMode } from '@discord-music-bot/shared';
 
 // ---------------------------------------------------------------------------
 // Default empty state — used before the first fetch completes.

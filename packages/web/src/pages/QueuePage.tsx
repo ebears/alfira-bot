@@ -1,28 +1,28 @@
+import type { LoopMode, Playlist, QueuedSong } from '@discord-music-bot/shared';
 import {
-  Music,
-  Shuffle,
-  List,
-  Plus,
-  Trash2,
-  Play,
-  Square,
-  Repeat1,
-  Repeat,
-  CirclePlay,
   AlertTriangle,
+  CirclePlay,
+  List,
+  Music,
+  Play,
+  Plus,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  Square,
+  Trash2,
   Zap,
 } from 'lucide-react';
-import { useState, useCallback, useEffect } from 'react';
-import { usePlayer } from '../context/PlayerContext';
-import { useAdminView } from '../context/AdminViewContext';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  startPlayback,
   getPlaylists,
-  quickAddToQueue,
-  quickAddPlaylistToQueue,
   overridePlay,
+  quickAddPlaylistToQueue,
+  quickAddToQueue,
+  startPlayback,
 } from '../api/api';
-import type { LoopMode, Playlist, QueuedSong } from '@discord-music-bot/shared';
+import { useAdminView } from '../context/AdminViewContext';
+import { usePlayer } from '../context/PlayerContext';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,6 +100,7 @@ export default function QueuePage() {
       {isAdminView && (
         <section className="mb-6">
           <button
+            type="button"
             onClick={() => setShowOverride(true)}
             className="flex items-center gap-2 btn-danger"
           >
@@ -138,6 +139,7 @@ export default function QueuePage() {
             </span>
             {(['off', 'song', 'queue'] as const).map((mode) => (
               <button
+                type="button"
                 key={mode}
                 disabled={loopBusy}
                 onClick={() => handleLoop(mode)}
@@ -167,6 +169,7 @@ export default function QueuePage() {
             ))}
           </div>
           <button
+            type="button"
             onClick={() => setShowLoadPlaylist(true)}
             className="flex items-center gap-2 btn-primary ml-auto"
           >
@@ -174,6 +177,7 @@ export default function QueuePage() {
             <span>Load Playlist</span>
           </button>
           <button
+            type="button"
             onClick={() => setShowQuickAdd(true)}
             className="flex items-center gap-2 btn-primary"
           >
@@ -186,6 +190,7 @@ export default function QueuePage() {
         {isAdminView && (
           <div className="flex items-center gap-3 flex-wrap">
             <button
+              type="button"
               onClick={handleShuffle}
               disabled={shuffleBusy || queue.length === 0}
               className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
@@ -194,6 +199,7 @@ export default function QueuePage() {
               <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
             </button>
             <button
+              type="button"
               onClick={handleClear}
               disabled={
                 clearBusy || (queue.length === 0 && priorityQueue.length === 0 && !currentSong)
@@ -276,6 +282,7 @@ export default function QueuePage() {
             <p className="font-mono text-xs text-faint">queue is empty</p>
             {priorityQueue.length === 0 && (
               <button
+                type="button"
                 onClick={() => setShowLoadPlaylist(true)}
                 className="mt-3 font-mono text-xs text-accent hover:underline"
               >
@@ -538,6 +545,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               <div className="flex gap-2">
                 {(['sequential', 'random'] as const).map((m) => (
                   <button
+                    type="button"
                     key={m}
                     onClick={() => setMode(m)}
                     className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
@@ -558,6 +566,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               <div className="flex gap-2">
                 {(['off', 'song', 'queue'] as const).map((l) => (
                   <button
+                    type="button"
                     key={l}
                     onClick={() => setLoop(l)}
                     className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
@@ -577,10 +586,11 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={submitting}>
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={submitting}>
             Cancel
           </button>
           <button
+            type="button"
             className="btn-primary"
             onClick={handlePlay}
             disabled={submitting || !selectedId || loadingPlaylists}
@@ -706,10 +716,11 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
         )}
 
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={submitting}>
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={submitting}>
             Cancel
           </button>
           <button
+            type="button"
             className="btn-primary"
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}
@@ -794,10 +805,11 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
         )}
 
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={submitting}>
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={submitting}>
             Cancel
           </button>
           <button
+            type="button"
             className="btn-danger"
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}

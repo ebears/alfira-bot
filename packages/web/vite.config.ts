@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 
 // When running inside Docker the proxy must target the 'api' service by name,
 // not localhost.  Set API_URL in the container's environment (e.g. via

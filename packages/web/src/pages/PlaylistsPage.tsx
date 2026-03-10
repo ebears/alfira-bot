@@ -1,8 +1,8 @@
-import { Ghost } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getPlaylists, createPlaylist, deletePlaylist } from '../api/api';
 import type { Playlist } from '@discord-music-bot/shared';
+import { Ghost } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPlaylist, deletePlaylist, getPlaylists } from '../api/api';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
@@ -92,7 +92,7 @@ export default function PlaylistsPage() {
             {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setShowCreate(true)}>
+        <button type="button" className="btn-primary" onClick={() => setShowCreate(true)}>
           + New Playlist
         </button>
       </div>
@@ -162,6 +162,14 @@ function PlaylistRow({
                  animate-fade-up opacity-0"
       style={style}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
       {/* Icon */}
       <div
@@ -191,6 +199,7 @@ function PlaylistRow({
       {/* Admin/Owner actions */}
       {(isAdmin || isOwner) && (
         <button
+          type="button"
           onClick={onDelete}
           className="opacity-0 group-hover:opacity-100 font-mono text-xs text-faint
             hover:text-danger transition-all duration-150 px-2 py-1"
@@ -241,7 +250,6 @@ function CreatePlaylistModal({
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">New Playlist</h2>
         <p className="font-mono text-xs text-muted mb-6">choose a name</p>
         <input
-          autoFocus
           className="input mb-3"
           placeholder="My Playlist"
           value={name}
@@ -257,10 +265,15 @@ function CreatePlaylistModal({
         />
         {error && <p className="font-mono text-xs text-danger mb-3">{error}</p>}
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onClose} disabled={loading}>
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={loading}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !name.trim()}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={loading || !name.trim()}
+          >
             Create
           </button>
         </div>
@@ -290,10 +303,10 @@ function ConfirmDeleteModal({
           library won't be affected.
         </p>
         <div className="flex gap-2 justify-end">
-          <button className="btn-ghost" onClick={onCancel}>
+          <button type="button" className="btn-ghost" onClick={onCancel}>
             Cancel
           </button>
-          <button className="btn-danger border-danger/50" onClick={onConfirm}>
+          <button type="button" className="btn-danger border-danger/50" onClick={onConfirm}>
             Delete
           </button>
         </div>
@@ -309,7 +322,7 @@ function SkeletonList() {
   return (
     <div className="grid gap-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="card flex items-center gap-4 px-5 py-4">
+        <div key={`skeleton-${i}`} className="card flex items-center gap-4 px-5 py-4">
           <div className="skeleton w-10 h-10 rounded" />
           <div className="flex-1 space-y-2">
             <div className="skeleton h-3 w-48" />
@@ -327,7 +340,7 @@ function EmptyState({ isAdmin, onCreate }: { isAdmin: boolean; onCreate: () => v
       <p className="font-display text-4xl text-faint tracking-wider mb-2">No Playlists</p>
       {isAdmin ? (
         <p className="font-mono text-xs text-faint">
-          <button className="text-accent hover:underline" onClick={onCreate}>
+          <button type="button" className="text-accent hover:underline" onClick={onCreate}>
             create the first playlist
           </button>
         </p>
@@ -345,6 +358,7 @@ function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: (
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      role="presentation"
     >
       {children}
     </div>
@@ -363,7 +377,9 @@ function ListIcon({ size = 20, className = '' }: { size?: number; className?: st
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      aria-label="Playlist"
     >
+      <title>Playlist</title>
       <line x1="8" y1="6" x2="21" y2="6" />
       <line x1="8" y1="12" x2="21" y2="12" />
       <line x1="8" y1="18" x2="21" y2="18" />
@@ -386,7 +402,9 @@ function ChevronIcon({ size = 20, className = '' }: { size?: number; className?:
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      aria-label="Chevron"
     >
+      <title>Chevron</title>
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );

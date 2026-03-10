@@ -17,14 +17,14 @@ import 'dotenv/config';
 import { REST, Routes } from 'discord.js';
 import { joinCommand } from './commands/join';
 import { leaveCommand } from './commands/leave';
-import { playCommand } from './commands/play';
-import { skipCommand } from './commands/skip';
-import { pauseCommand } from './commands/pause';
 import { loopCommand } from './commands/loop';
-import { shuffleCommand } from './commands/shuffle';
-import { queueCommand } from './commands/queue';
 import { nowplayingCommand } from './commands/nowplaying';
+import { pauseCommand } from './commands/pause';
+import { playCommand } from './commands/play';
 import { playlistCommand } from './commands/playlist';
+import { queueCommand } from './commands/queue';
+import { shuffleCommand } from './commands/shuffle';
+import { skipCommand } from './commands/skip';
 
 const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID } = process.env;
 

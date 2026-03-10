@@ -1,5 +1,5 @@
-import { SlashCommandBuilder } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
+import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer, removePlayer } from '../player/manager';
 import type { Command } from '../types';
 
