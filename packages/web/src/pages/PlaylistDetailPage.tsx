@@ -724,10 +724,12 @@ function ConfirmRemoveModal({
   onConfirm,
   onCancel,
 }: {
-  song: Song;
+  song: Song | undefined;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  if (!song) return null;
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
