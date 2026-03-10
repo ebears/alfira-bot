@@ -18,6 +18,7 @@ import { useSocket } from '../hooks/useSocket';
 const EMPTY_STATE: QueueState = {
   isPlaying: false,
   isPaused: false,
+  isConnectedToVoice: false,
   loopMode: 'off',
   currentSong: null,
   priorityQueue: [],

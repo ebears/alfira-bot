@@ -212,7 +212,7 @@ export default function Layout() {
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
   const { state, elapsed, skip, leave, pause } = usePlayer();
-  const { currentSong, isPlaying, isPaused } = state;
+  const { currentSong, isPlaying, isPaused, isConnectedToVoice } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
   const [pauseBusy, setPauseBusy] = useState(false);
@@ -295,39 +295,40 @@ function NowPlayingBar() {
         </div>
 
         {/* Playback controls */}
-        {currentSong && (
-          <div className="flex items-center gap-2 shrink-0">
-            <BarButton
-              onClick={handlePauseResume}
-              busy={pauseBusy}
-              disabled={pauseBusy || skipBusy}
-              title={isPaused || isStopped ? 'Resume' : 'Pause'}
-              hoverColor="hover:text-fg"
-            >
-              {isPaused || isStopped ? <Play size={16} /> : <Pause size={16} />}
-            </BarButton>
-
-            <BarButton
-              onClick={handleSkip}
-              busy={skipBusy}
-              disabled={pauseBusy || skipBusy}
-              title="Skip"
-              hoverColor="hover:text-fg"
-            >
-              <SkipForward size={16} />
-            </BarButton>
-
+        <div className="flex items-center gap-2 shrink-0">
+          {currentSong && (
+            <>
+              <BarButton
+                onClick={handlePauseResume}
+                busy={pauseBusy}
+                disabled={pauseBusy || skipBusy}
+                title={isPaused || isStopped ? 'Resume' : 'Pause'}
+                hoverColor="hover:text-fg"
+              >
+                {isPaused || isStopped ? <Play size={16} /> : <Pause size={16} />}
+              </BarButton>
+              <BarButton
+                onClick={handleSkip}
+                busy={skipBusy}
+                disabled={pauseBusy || skipBusy}
+                title="Skip"
+                hoverColor="hover:text-fg"
+              >
+                <SkipForward size={16} />
+              </BarButton>
+            </>
+          )}
+          {isConnectedToVoice && (
             <button
               type="button"
               onClick={handleLeave}
               title="Leave voice channel"
-              className="w-8 h-8 flex items-center justify-center rounded text-muted
-                         hover:text-danger hover:bg-elevated transition-colors duration-150"
+              className="w-8 h-8 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
             >
               <LogOut size={16} />
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

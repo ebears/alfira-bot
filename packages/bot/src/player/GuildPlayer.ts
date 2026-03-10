@@ -454,6 +454,7 @@ export class GuildPlayer {
     return {
       isPlaying: this.isPlaying(),
       isPaused: this.paused,
+      isConnectedToVoice: this.connection.state.status !== VoiceConnectionStatus.Destroyed,
       loopMode: this.loopMode,
       currentSong: this.currentSong,
       priorityQueue: this.priorityQueue.toArray(),
