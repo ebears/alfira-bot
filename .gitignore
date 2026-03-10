@@ -50,4 +50,8 @@ Thumbs.db
 # AI shite
 # -----------------------------------------------
 .claude/
+.rules/
+AGENT.md
+AGENTS.md
 CLAUDE.md
+GEMINI.md
