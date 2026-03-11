@@ -1,4 +1,15 @@
-import { Disc3, ListMusic, Menu, Music, Settings, ShieldUser, SquarePlay, X } from 'lucide-react';
+import {
+  Disc3,
+  ListMusic,
+  Menu,
+  Moon,
+  Music,
+  Settings,
+  ShieldUser,
+  SquarePlay,
+  Sun,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAdminView } from '../context/AdminViewContext';
@@ -216,7 +227,7 @@ export default function MobileNav() {
 function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
   const { user } = useAuth();
   const { isAdminView, toggleAdminView } = useAdminView();
-  const { theme, setTheme, themes } = useTheme();
+  const { colorTheme, mode, setColorTheme, toggleMode, colorThemes } = useTheme();
 
   return (
     <>
@@ -259,37 +270,67 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
             </div>
           )}
 
-          {/* Theme Selector */}
+          {/* Color Theme Selector */}
           <div className="space-y-2">
-            <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Theme</h3>
-            <div className="space-y-1">
-              {themes.map((t) => (
+            <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">
+              Color Theme
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {colorThemes.map((t) => (
                 <button
                   key={t.name}
                   type="button"
-                  onClick={() => setTheme(t.name)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base transition-colors duration-150 ${
-                    theme === t.name
-                      ? 'bg-accent/20 text-accent border border-accent/30'
+                  onClick={() => setColorTheme(t.name)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded text-sm font-body transition-colors duration-150 ${
+                    colorTheme === t.name
+                      ? 'bg-accent/10 text-accent border border-accent/30'
                       : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
                   }`}
                 >
                   <span
-                    className={`w-5 h-5 rounded-full border ${
-                      theme === t.name ? 'border-accent' : 'border-border'
-                    }`}
-                    style={{
-                      backgroundColor:
-                        t.name === 'dark' ? '#080808' : t.name === 'light' ? '#f5f5f5' : '#0a0a1a',
-                    }}
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: t.accentColor }}
                   />
-                  <span>{t.displayName}</span>
-                  {theme === t.name && (
-                    <span className="ml-auto font-mono text-[11px] text-accent">active</span>
-                  )}
+                  <span className="truncate">{t.displayName}</span>
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="space-y-2">
+            <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">
+              Appearance
+            </h3>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => toggleMode()}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-body transition-colors duration-150 ${
+                  mode === 'light'
+                    ? 'bg-accent/10 text-accent border border-accent/30'
+                    : 'bg-elevated text-muted border border-border hover:text-fg'
+                }`}
+              >
+                <Sun size={18} />
+                <span>Light</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleMode()}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-body transition-colors duration-150 ${
+                  mode === 'dark'
+                    ? 'bg-accent/10 text-accent border border-accent/30'
+                    : 'bg-elevated text-muted border border-border hover:text-fg'
+                }`}
+              >
+                <Moon size={18} />
+                <span>Dark</span>
+              </button>
+            </div>
+            <p className="text-xs text-faint">
+              {colorThemes.find((t) => t.name === colorTheme)?.description}
+            </p>
           </div>
         </div>
 
