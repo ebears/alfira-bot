@@ -9,7 +9,6 @@ import {
   Music,
   Pause,
   Play,
-  Shield,
   ShieldUser,
   SkipForward,
   SquarePlay,
@@ -19,6 +18,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import SettingsMenu from './SettingsMenu';
 
 const NAV_ITEMS = [
   { to: '/songs', label: 'Songs', icon: Disc3 },
@@ -28,7 +28,7 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const { user, logout } = useAuth();
-  const { isAdminView, toggleAdminView } = useAdminView();
+  const { isAdminView } = useAdminView();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -40,7 +40,7 @@ export default function Layout() {
   return (
     <div className="flex h-full bg-base">
       {/* ------------------------------------------------------------------ */}
-      {/* Sidebar                                                             */}
+      {/* Sidebar */}
       {/* ------------------------------------------------------------------ */}
       <aside
         className={`${
@@ -69,7 +69,9 @@ export default function Layout() {
           )}
           {collapsed && (
             <div
-              className={`w-7 h-7 flex items-center justify-center ${isAdminView ? 'text-accent' : 'text-member'}`}
+              className={`w-7 h-7 flex items-center justify-center ${
+                isAdminView ? 'text-accent' : 'text-member'
+              }`}
               title={isAdminView ? 'Admin mode' : 'Member mode'}
             >
               {isAdminView ? <ShieldUser size={18} /> : <Music size={18} />}
@@ -78,8 +80,7 @@ export default function Layout() {
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}
-            className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted
-          hover:text-fg hover:bg-elevated transition-colors duration-150"
+            className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronLeft size={16} className={collapsed ? 'rotate-180' : ''} />
@@ -109,28 +110,8 @@ export default function Layout() {
           ))}
         </nav>
 
-        {/* Admin view toggle */}
-        {user?.isAdmin && (
-          <div className={`px-3 pb-2 ${collapsed ? 'flex justify-center' : ''}`}>
-            <button
-              type="button"
-              onClick={toggleAdminView}
-              title={isAdminView ? 'Switch to user view' : 'Switch to admin view'}
-              className={`flex items-center rounded border transition-colors duration-150 ${
-                collapsed
-                  ? 'w-7 h-7 justify-center'
-                  : 'w-full gap-1.5 px-3 py-1.5 font-mono text-[11px]'
-              } ${
-                isAdminView
-                  ? 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/20'
-                  : 'border-border text-muted hover:text-fg hover:border-muted'
-              }`}
-            >
-              <Shield size={12} />
-              {!collapsed && (isAdminView ? 'admin view' : 'user view')}
-            </button>
-          </div>
-        )}
+        {/* Settings Menu */}
+        <SettingsMenu collapsed={collapsed} />
 
         {/* User section */}
         <div className="p-3 border-t border-border">
@@ -155,8 +136,7 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-7 h-7 flex items-center justify-center rounded text-muted
-                           hover:text-danger hover:bg-elevated transition-colors duration-150"
+                className="w-7 h-7 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
                 title="Log out"
               >
                 <LogOut size={14} />
@@ -183,8 +163,7 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-xs font-mono text-muted hover:text-fg
-                           hover:bg-elevated rounded transition-colors duration-150"
+                className="w-full text-left px-3 py-2 text-xs font-mono text-muted hover:text-fg hover:bg-elevated rounded transition-colors duration-150"
               >
                 log out
               </button>
@@ -194,13 +173,12 @@ export default function Layout() {
       </aside>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Main content + now playing bar                                      */}
+      {/* Main content + now playing bar */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex-1 flex flex-col min-w-0">
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
-
         <NowPlayingBar />
       </div>
     </div>
@@ -214,7 +192,6 @@ function NowPlayingBar() {
   const { state, elapsed, skip, leave, pause } = usePlayer();
   const { currentSong, isPlaying, isPaused, isConnectedToVoice } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
-
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
 
@@ -272,7 +249,6 @@ function NowPlayingBar() {
               </div>
             )}
           </div>
-
           <div className="min-w-0">
             {currentSong ? (
               <>
@@ -358,13 +334,11 @@ function BarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`w-8 h-8 flex items-center justify-center rounded transition-all duration-150
-                 ${
-                   busy
-                     ? 'opacity-40 cursor-not-allowed text-muted'
-                     : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
-                 }
-                 disabled:pointer-events-none`}
+      className={`w-8 h-8 flex items-center justify-center rounded transition-all duration-150 ${
+        busy
+          ? 'opacity-40 cursor-not-allowed text-muted'
+          : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
+      } disabled:pointer-events-none`}
     >
       {busy ? <Loader2 size={15} className="animate-spin" /> : children}
     </button>
