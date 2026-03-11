@@ -216,19 +216,19 @@ export default function PlaylistDetailPage() {
   if (!playlist) return null;
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Back */}
       <button
         type="button"
         onClick={() => navigate('/playlists')}
-        className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg
- transition-colors duration-150 mb-6"
+        className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg active:text-fg transition-colors duration-150 mb-4 md:mb-6 min-h-[44px] md:min-h-0"
       >
-        <ChevronLeft size={14} /> playlists
+        <ChevronLeft size={16} className="md:w-3.5 md:h-3.5" />
+        playlists
       </button>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 md:mb-8 gap-4">
         <div className="flex-1 min-w-0">
           {editingName && canEdit ? (
             <input
@@ -243,16 +243,15 @@ export default function PlaylistDetailPage() {
                   setNameValue(playlist.name);
                 }
               }}
-              className="font-display text-5xl bg-transparent text-fg tracking-wider
- border-b-2 border-accent outline-none w-full"
-              style={{ fontSize: '3rem', lineHeight: 1 }}
+              className="font-display text-4xl md:text-5xl bg-transparent text-fg tracking-wider border-b-2 border-accent outline-none w-full"
+              style={{ fontSize: '2.5rem', lineHeight: 1 }}
             />
           ) : (
             <div className="flex items-center gap-2">
               <h1
-                className={`font-display text-5xl text-fg tracking-wider ${
+                className={`font-display text-4xl md:text-5xl text-fg tracking-wider ${
                   canEdit
-                    ? 'cursor-pointer hover:text-accent/90 transition-colors duration-150'
+                    ? 'cursor-pointer hover:text-accent/90 active:text-accent transition-colors duration-150'
                     : ''
                 }`}
                 onClick={() => canEdit && setEditingName(true)}
@@ -262,7 +261,8 @@ export default function PlaylistDetailPage() {
               </h1>
               {playlist.isPrivate && (
                 <span className="text-muted text-sm" title="Private playlist">
-                  <Ghost size={14} className="inline mr-1" /> private
+                  <Ghost size={14} className="inline mr-1" />
+                  private
                 </span>
               )}
             </div>
@@ -276,7 +276,7 @@ export default function PlaylistDetailPage() {
           </p>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap">
           <button
             type="button"
             className="btn-ghost text-xs flex items-center gap-1.5"
@@ -430,8 +430,8 @@ function SongRow({
   onAddToQueue: () => void;
 }) {
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-lg group hover:bg-elevated transition-colors duration-100">
-      <div className="w-6 shrink-0 flex justify-end">
+    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
+      <div className="w-8 md:w-6 shrink-0 flex justify-end">
         <span
           className={`font-mono text-xs text-faint text-right ${
             isPlaying ? 'hidden' : 'group-hover:hidden'
@@ -447,17 +447,17 @@ function SongRow({
           <button
             type="button"
             onClick={onPlay}
-            className="hidden group-hover:flex items-center justify-center text-accent hover:text-accent/80 transition-colors duration-150"
+            className="hidden md:group-hover:flex items-center justify-center text-accent hover:text-accent/80 active:text-accent-muted transition-colors duration-150 w-11 h-11 md:w-auto md:h-auto"
             title="Play from this song"
           >
-            <Play size={14} />
+            <Play size={16} className="md:w-3.5 md:h-3.5" />
           </button>
         )}
       </div>
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}
-        className="w-10 h-7 object-cover rounded border border-border shrink-0"
+        className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
@@ -471,19 +471,19 @@ function SongRow({
       <button
         type="button"
         onClick={onAddToQueue}
-        className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent transition-all duration-150 p-1"
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-lg md:rounded"
         title="Add to Up Next"
       >
-        <ListVideo size={14} />
+        <ListVideo size={18} className="md:w-3.5 md:h-3.5" />
       </button>
       {isAdmin && (
         <button
           type="button"
           onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger transition-all duration-150 p-1"
+          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-lg md:rounded"
           title="Remove from playlist"
         >
-          <Trash2 size={14} />
+          <Trash2 size={18} className="md:w-3.5 md:h-3.5" />
         </button>
       )}
     </div>
@@ -542,29 +542,28 @@ function AddSongsModal({
         className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl
  flex flex-col max-h-[80vh] animate-fade-up"
       >
-        <div className="p-5 border-b border-border">
-          <h2 className="font-display text-3xl text-fg tracking-wider">Add Songs</h2>
+        <div className="p-4 md:p-5 border-b border-border">
+          <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider">Add Songs</h2>
           <p className="font-mono text-xs text-muted mt-0.5">to "{playlist.name}"</p>
           <input
-            className="input mt-4"
+            className="input mt-3 md:mt-4"
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-6 space-y-2">
+            <div className="p-4 md:p-6 space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={`skeleton-${i}`} className="flex items-center gap-3">
-                  <div className="skeleton w-10 h-7 rounded" />
+                  <div className="skeleton w-12 h-8 md:w-10 md:h-7 rounded" />
                   <div className="skeleton h-3 flex-1" />
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <p className="p-6 font-mono text-xs text-muted text-center">no songs found</p>
+            <p className="p-4 md:p-6 font-mono text-xs text-muted text-center">no songs found</p>
           ) : (
             filtered.map((song) => {
               const isAdded = added.has(song.id);
@@ -572,29 +571,28 @@ function AddSongsModal({
               return (
                 <div
                   key={song.id}
-                  className="flex items-center gap-3 px-5 py-3
- hover:bg-elevated transition-colors duration-100"
+                  className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-3 hover:bg-elevated active:bg-elevated/80 transition-colors duration-100"
                 >
                   <img
                     src={song.thumbnailUrl}
                     alt={song.nickname || song.title}
-                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
+                    className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
                     loading="lazy"
                   />
                   <span className="flex-1 font-body text-sm text-fg truncate">
                     {song.nickname || song.title}
                   </span>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="font-mono text-xs text-muted hidden sm:block">
                     {formatDuration(song.duration)}
                   </span>
                   <button
                     type="button"
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
-                    className={`font-mono text-xs px-3 py-1 rounded border transition-colors duration-150 ${
+                    className={`font-mono text-xs px-3 py-2 md:py-1 rounded-lg md:rounded border transition-colors duration-150 min-h-[44px] md:min-h-0 ${
                       isAdded
                         ? 'border-accent/30 text-accent bg-accent/5 cursor-default'
-                        : 'border-border text-muted hover:border-accent/40 hover:text-accent'
+                        : 'border-border text-muted hover:border-accent/40 hover:text-accent active:bg-accent/10'
                     }`}
                   >
                     {isAdding ? '...' : isAdded ? '✓' : 'add'}
@@ -648,8 +646,10 @@ function PlayModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Play Playlist</h2>
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
+        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
+          Play Playlist
+        </h2>
         <p className="font-mono text-xs text-muted mb-6">configure playback</p>
 
         <div className="space-y-4 mb-6">

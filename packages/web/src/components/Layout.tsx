@@ -18,6 +18,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import MobileNav from './MobileNav';
 import SettingsMenu from './SettingsMenu';
 
 const NAV_ITEMS = [
@@ -40,12 +41,17 @@ export default function Layout() {
   return (
     <div className="flex h-full bg-base">
       {/* ------------------------------------------------------------------ */}
-      {/* Sidebar */}
+      {/* Mobile Navigation - visible on small screens */}
+      {/* ------------------------------------------------------------------ */}
+      <MobileNav />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Sidebar - visible on medium screens and up */}
       {/* ------------------------------------------------------------------ */}
       <aside
-        className={`${
+        className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 ${
+        } shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 ${
           isAdminView ? 'border-t-accent' : 'border-t-member'
         }`}
       >
@@ -99,8 +105,8 @@ export default function Layout() {
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
                 } ${
                   isActive
-                    ? 'bg-accent/10 text-accent'
-                    : 'text-muted hover:text-fg hover:bg-elevated'
+                    ? 'bg-accent/20 text-accent border border-accent/30'
+                    : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
                 }`
               }
             >
@@ -175,8 +181,8 @@ export default function Layout() {
       {/* ------------------------------------------------------------------ */}
       {/* Main content + now playing bar */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0">
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
           <Outlet />
         </main>
         <NowPlayingBar />
@@ -192,6 +198,7 @@ function NowPlayingBar() {
   const { state, elapsed, skip, leave, pause } = usePlayer();
   const { currentSong, isPlaying, isPaused, isConnectedToVoice } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
+
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
 
@@ -224,19 +231,19 @@ function NowPlayingBar() {
   };
 
   return (
-    <div className="shrink-0 border-t border-border bg-surface">
+    <div className="shrink-0 border-t border-border bg-surface fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom">
       {/* Progress bar — sits flush at the very top of the bar */}
-      <div className="h-px w-full bg-elevated relative overflow-hidden">
+      <div className="h-1 md:h-px w-full bg-elevated relative overflow-hidden">
         <div
           className="absolute inset-y-0 left-0 bg-accent transition-all duration-1000 ease-linear"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="h-16 flex items-center px-6 gap-4">
+      <div className="h-18 md:h-16 flex items-center px-3 md:px-6 gap-2 md:gap-4">
         {/* Thumbnail + song info */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-9 h-9 rounded bg-elevated border border-border shrink-0 overflow-hidden">
+        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+          <div className="w-11 h-11 md:w-9 md:h-9 rounded bg-elevated border border-border shrink-0 overflow-hidden">
             {currentSong ? (
               <img
                 src={currentSong.thumbnailUrl}
@@ -245,22 +252,26 @@ function NowPlayingBar() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Music size={14} className="text-faint" />
+                <Music size={16} className="text-faint md:w-3.5 md:h-3.5" />
               </div>
             )}
           </div>
+
           <div className="min-w-0">
             {currentSong ? (
               <>
                 <p className="font-body text-sm font-semibold text-fg truncate leading-tight">
                   {currentSong.title}
                 </p>
-                <p className="font-mono text-[10px] text-muted leading-tight">
-                  {formatDuration(elapsed)} / {formatDuration(currentSong.duration)}
+                <p className="font-mono text-[11px] md:text-[10px] text-muted leading-tight flex items-center gap-1">
+                  <span className="hidden sm:inline">
+                    {formatDuration(elapsed)} / {formatDuration(currentSong.duration)}
+                  </span>
+                  <span className="sm:hidden">{formatDuration(elapsed)}</span>
                   {isPlaying ? (
-                    <CirclePlay size={12} className="ml-2 text-accent" />
+                    <CirclePlay size={12} className="text-accent" />
                   ) : (
-                    <CirclePause size={12} className="ml-2 text-muted" />
+                    <CirclePause size={12} className="text-muted" />
                   )}
                 </p>
               </>
@@ -271,7 +282,7 @@ function NowPlayingBar() {
         </div>
 
         {/* Playback controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 md:gap-2 shrink-0">
           {currentSong && (
             <>
               <BarButton
@@ -281,7 +292,11 @@ function NowPlayingBar() {
                 title={isPaused || isStopped ? 'Resume' : 'Pause'}
                 hoverColor="hover:text-fg"
               >
-                {isPaused || isStopped ? <Play size={16} /> : <Pause size={16} />}
+                {isPaused || isStopped ? (
+                  <Play size={18} className="md:w-4 md:h-4" />
+                ) : (
+                  <Pause size={18} className="md:w-4 md:h-4" />
+                )}
               </BarButton>
               <BarButton
                 onClick={handleSkip}
@@ -290,18 +305,19 @@ function NowPlayingBar() {
                 title="Skip"
                 hoverColor="hover:text-fg"
               >
-                <SkipForward size={16} />
+                <SkipForward size={18} className="md:w-4 md:h-4" />
               </BarButton>
             </>
           )}
+
           {isConnectedToVoice && (
             <button
               type="button"
               onClick={handleLeave}
               title="Leave voice channel"
-              className="w-8 h-8 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
+              className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
             >
-              <LogOut size={16} />
+              <LogOut size={18} className="md:w-4 md:h-4" />
             </button>
           )}
         </div>
@@ -334,13 +350,13 @@ function BarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`w-8 h-8 flex items-center justify-center rounded transition-all duration-150 ${
+      className={`w-11 h-11 md:w-8 md:h-8 flex items-center justify-center rounded-lg md:rounded transition-all duration-150 ${
         busy
           ? 'opacity-40 cursor-not-allowed text-muted'
-          : `text-muted ${hoverColor} hover:bg-elevated cursor-pointer`
+          : `text-muted ${hoverColor} hover:bg-elevated active:bg-elevated/80 cursor-pointer`
       } disabled:pointer-events-none`}
     >
-      {busy ? <Loader2 size={15} className="animate-spin" /> : children}
+      {busy ? <Loader2 size={18} className="animate-spin md:w-3.5 md:h-3.5" /> : children}
     </button>
   );
 }

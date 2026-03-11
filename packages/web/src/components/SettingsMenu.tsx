@@ -7,9 +7,10 @@ import SettingsToggle from './settings/SettingsToggle';
 
 interface SettingsMenuProps {
   collapsed?: boolean;
+  onClose?: () => void;
 }
 
-export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
+export default function SettingsMenu({ collapsed = false, onClose }: SettingsMenuProps) {
   const { user } = useAuth();
   const { isAdminView, toggleAdminView } = useAdminView();
   const { theme, setTheme, themes } = useTheme();
@@ -52,10 +53,13 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
               <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
+                onClick={() => {
+                  setIsOpen(false);
+                  onClose?.();
+                }}
+                className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 

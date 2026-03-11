@@ -91,8 +91,10 @@ export default function QueuePage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="font-display text-5xl text-fg tracking-wider mb-8">Queue</h1>
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
+      <h1 className="font-display text-4xl md:text-5xl text-fg tracking-wider mb-6 md:mb-8">
+        Queue
+      </h1>
 
       {/* ------------------------------------------------------------------ */}
       {/* Admin Override Button */}
@@ -130,11 +132,11 @@ export default function QueuePage() {
       {/* ------------------------------------------------------------------ */}
       {/* Controls */}
       {/* ------------------------------------------------------------------ */}
-      <section className="mt-6 space-y-4">
+      <section className="mt-4 md:mt-6 space-y-3 md:space-y-4">
         {/* First row: Loop (left) and Load Playlist/Quick Add (right) */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-muted uppercase tracking-widest mr-1">
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <span className="font-mono text-[11px] md:text-xs text-muted uppercase tracking-widest mr-0.5 md:mr-1">
               Loop
             </span>
             {(['off', 'song', 'queue'] as const).map((mode) => (
@@ -143,10 +145,10 @@ export default function QueuePage() {
                 key={mode}
                 disabled={loopBusy}
                 onClick={() => handleLoop(mode)}
-                className={`px-3 py-1.5 text-xs font-mono rounded border transition-colors duration-150 disabled:opacity-50 ${
+                className={`px-3 py-2 md:py-1.5 text-xs font-mono rounded-lg md:rounded border transition-colors duration-150 disabled:opacity-50 min-h-11 md:min-h-0 ${
                   loopMode === mode
                     ? 'bg-accent/10 border-accent/40 text-accent'
-                    : 'border-border text-muted hover:border-muted hover:text-fg'
+                    : 'border-border text-muted hover:border-muted hover:text-fg active:bg-elevated'
                 }`}
               >
                 {mode === 'off' ? (
@@ -168,34 +170,38 @@ export default function QueuePage() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => setShowLoadPlaylist(true)}
-            className="flex items-center gap-2 btn-primary ml-auto"
-          >
-            <List size={14} />
-            <span>Load Playlist</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowQuickAdd(true)}
-            className="flex items-center gap-2 btn-primary"
-          >
-            <Plus size={14} />
-            <span>Quick Add</span>
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              type="button"
+              onClick={() => setShowLoadPlaylist(true)}
+              className="flex items-center gap-2 btn-primary"
+            >
+              <List size={16} className="md:w-3.5 md:h-3.5" />
+              <span className="hidden sm:inline">Load Playlist</span>
+              <span className="sm:hidden">Load</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowQuickAdd(true)}
+              className="flex items-center gap-2 btn-primary"
+            >
+              <Plus size={16} className="md:w-3.5 md:h-3.5" />
+              <span className="hidden sm:inline">Quick Add</span>
+              <span className="sm:hidden">Add</span>
+            </button>
+          </div>
         </div>
 
         {/* Second row: Admin-only controls (Shuffle and Clear Queue) */}
         {isAdminView && (
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <button
               type="button"
               onClick={handleShuffle}
               disabled={shuffleBusy || queue.length === 0}
               className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Shuffle size={14} />
+              <Shuffle size={16} className="md:w-3.5 md:h-3.5" />
               <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
             </button>
             <button
@@ -210,7 +216,7 @@ export default function QueuePage() {
                   : 'btn-danger'
               }`}
             >
-              <Trash2 size={14} />
+              <Trash2 size={16} className="md:w-3.5 md:h-3.5" />
               <span>Clear Queue</span>
             </button>
           </div>
@@ -221,15 +227,16 @@ export default function QueuePage() {
       {/* Up Next (Priority Queue) */}
       {/* ------------------------------------------------------------------ */}
       {priorityQueue.length > 0 && (
-        <section className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-2xl text-fg tracking-wider">
-              <Zap size={18} className="inline mr-1" /> Up Next
+        <section className="mt-6 md:mt-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="font-display text-xl md:text-2xl text-fg tracking-wider">
+              <Zap size={18} className="inline mr-1" />
+              Up Next
               <span className="ml-2 font-mono text-sm text-accent normal-case tracking-normal">
                 {priorityQueue.length} {priorityQueue.length === 1 ? 'song' : 'songs'}
               </span>
             </h2>
-            <span className="font-mono text-[10px] text-muted uppercase tracking-widest">
+            <span className="font-mono text-[10px] text-muted uppercase tracking-widest hidden sm:block">
               Priority Queue
             </span>
           </div>
@@ -237,7 +244,7 @@ export default function QueuePage() {
             {priorityQueue.map((song, i) => (
               <div
                 key={`priority-${song.id}-${i}`}
-                className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-elevated transition-colors duration-100 group"
+                className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg hover:bg-elevated active:bg-elevated/80 transition-colors duration-100 group"
               >
                 <span className="font-mono text-xs text-accent w-5 text-right shrink-0">
                   {i + 1}
@@ -245,14 +252,16 @@ export default function QueuePage() {
                 <img
                   src={song.thumbnailUrl}
                   alt={song.nickname || song.title}
-                  className="w-10 h-7 object-cover rounded border border-border shrink-0"
+                  className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-body text-sm font-medium text-fg truncate">
                     {song.nickname || song.title}
                   </p>
-                  <p className="font-mono text-[10px] text-muted">req. {song.requestedBy}</p>
+                  <p className="font-mono text-[10px] text-muted hidden sm:block">
+                    req. {song.requestedBy}
+                  </p>
                 </div>
                 <span className="font-mono text-xs text-muted shrink-0">
                   {formatDuration(song.duration)}
@@ -266,9 +275,9 @@ export default function QueuePage() {
       {/* ------------------------------------------------------------------ */}
       {/* Queue */}
       {/* ------------------------------------------------------------------ */}
-      <section className="mt-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-2xl text-fg tracking-wider">
+      <section className="mt-6 md:mt-8">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="font-display text-xl md:text-2xl text-fg tracking-wider">
             Queue
             {queue.length > 0 && (
               <span className="ml-2 font-mono text-sm text-muted normal-case tracking-normal">
@@ -278,7 +287,7 @@ export default function QueuePage() {
           </h2>
         </div>
         {queue.length === 0 ? (
-          <div className="py-12 text-center border border-dashed border-border rounded-xl">
+          <div className="py-8 md:py-12 text-center border border-dashed border-border rounded-xl">
             <p className="font-mono text-xs text-faint">queue is empty</p>
             {priorityQueue.length === 0 && (
               <button
@@ -303,14 +312,16 @@ export default function QueuePage() {
                 <img
                   src={song.thumbnailUrl}
                   alt={song.nickname || song.title}
-                  className="w-10 h-7 object-cover rounded border border-border shrink-0"
+                  className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-body text-sm font-medium text-fg truncate">
                     {song.nickname || song.title}
                   </p>
-                  <p className="font-mono text-[10px] text-muted">req. {song.requestedBy}</p>
+                  <p className="font-mono text-[10px] text-muted hidden sm:block">
+                    req. {song.requestedBy}
+                  </p>
                 </div>
                 <span className="font-mono text-xs text-muted shrink-0">
                   {formatDuration(song.duration)}
@@ -384,13 +395,13 @@ function NowPlayingCard({
 }) {
   return (
     <div className="card overflow-hidden">
-      <div className="flex flex-col sm:flex-row gap-4 p-5">
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 p-4 md:p-5">
         {/* Large square album art */}
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 mx-auto sm:mx-0">
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-40 h-40 rounded-lg border border-border shadow-lg object-cover"
+            className="w-32 h-32 md:w-40 md:h-40 rounded-lg border border-border shadow-lg object-cover"
           />
           {/* Playing indicator */}
           {isPlaying && (
@@ -407,7 +418,7 @@ function NowPlayingCard({
             href={song.youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-body font-bold text-lg text-fg hover:text-accent transition-colors duration-150 line-clamp-2"
+            className="font-body font-bold md:text-lg text-fg hover:text-accent active:text-accent-muted transition-colors duration-150 line-clamp-2 text-center sm:text-left"
           >
             {song.nickname || song.title}
           </a>
@@ -416,7 +427,7 @@ function NowPlayingCard({
           <p className="font-mono text-xs text-muted mt-1">requested by {song.requestedBy}</p>
 
           {/* Progress bar */}
-          <div className="mt-4">
+          <div className="mt-3 md:mt-4">
             <div className="relative h-2 w-full bg-elevated rounded-full overflow-hidden">
               <div
                 className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
@@ -507,9 +518,11 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Load Playlist</h2>
-        <p className="font-mono text-xs text-muted mb-6">choose a playlist to queue</p>
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
+        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
+          Load Playlist
+        </h2>
+        <p className="font-mono text-xs text-muted mb-4 md:mb-6">choose a playlist to queue</p>
 
         {loadingPlaylists ? (
           <div className="space-y-2 mb-6">
@@ -662,9 +675,9 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Quick Add</h2>
-        <p className="font-mono text-xs text-muted mb-6">
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
+        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Quick Add</h2>
+        <p className="font-mono text-xs text-muted mb-4 md:mb-6">
           add a song to Up Next without saving to library
         </p>
 
@@ -764,9 +777,9 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Override</h2>
-        <p className="font-mono text-xs text-danger mb-6">
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
+        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Override</h2>
+        <p className="font-mono text-xs text-danger mb-4 md:mb-6">
           <AlertTriangle size={14} className="inline mr-1" /> This will stop current playback, clear
           all queues, and play the requested song immediately.
         </p>

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Custom utility for Now Playing bar height on mobile */
+@layer utilities {
+  .h-18 {
+    height: 4.5rem;
+  }
+}
+
 @keyframes fadeUp {
   0% {
     opacity: 0;
@@ -8,6 +15,15 @@
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
   }
 }
 
@@ -42,6 +58,7 @@
 
   --animate-fade-up: fadeUp 0.3s ease forwards;
   --animate-shimmer: shimmer 1.4s infinite linear;
+  --animate-slide-in-right: slideInRight 0.3s ease forwards;
 }
 
 /* Light theme */
@@ -58,6 +75,7 @@
   --color-muted: #666666;
   --color-faint: #999999;
   --color-danger: #dc2626;
+  --animate-slide-in-right: slideInRight 0.3s ease forwards;
 }
 
 /* Midnight theme */
@@ -73,8 +91,9 @@
   --color-fg: #e0e0ff;
   --color-muted: #8888aa;
   --color-faint: #4a4a6a;
-  --color-danger: #f87171;
-}
+  	--color-danger: #f87171;
+  	--animate-slide-in-right: slideInRight 0.3s ease forwards;
+  }
 
 @theme {
   --color-base: var(--color-base);
@@ -96,25 +115,39 @@
 
   --animate-fade-up: fadeUp 0.3s ease forwards;
   --animate-shimmer: shimmer 1.4s infinite linear;
+  --animate-slide-in-right: slideInRight 0.3s ease forwards;
 }
 
 @layer base {
   * {
     box-sizing: border-box;
   }
-
   html,
   body,
   #root {
     height: 100%;
   }
-
   body {
     background-color: var(--color-base);
     color: var(--color-fg);
     font-family: 'Karla', sans-serif;
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.3s ease, color 0.3s ease;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+  }
+  /* Safe area insets for mobile devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right, 0);
   }
 
   ::-webkit-scrollbar {
@@ -150,19 +183,17 @@
   }
 
   .btn-primary {
-    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2 rounded hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] md:min-h-0;
   }
-
   .btn-ghost {
-    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2 rounded hover:border-muted hover:bg-elevated transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:border-muted hover:bg-elevated transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] md:min-h-0;
   }
-
   .btn-danger {
-    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-3 py-1.5 rounded hover:bg-danger/10 transition-colors duration-150;
+    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-lg md:rounded hover:bg-danger/10 active:bg-danger/20 transition-colors duration-150 min-h-[44px] md:min-h-0;
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-2 rounded outline-none focus:border-accent/60 transition-colors duration-150 placeholder:text-faint w-full;
+    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-3 md:py-2 rounded-lg md:rounded outline-none focus:border-accent/60 transition-colors duration-150 placeholder:text-faint w-full text-base;
   }
 
   .card {
