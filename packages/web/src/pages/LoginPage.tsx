@@ -37,24 +37,24 @@ export default function LoginPage() {
 
       {/* Card */}
       <div className="relative z-10 w-full max-w-sm mx-4 animate-fade-up">
-        <div className="bg-surface border border-border rounded-xl p-8 shadow-2xl">
+        <div className="bg-surface border border-border rounded-xl p-6 md:p-8 shadow-2xl">
           {/* Logo */}
-          <div className="mb-8 text-center">
-            <h1 className="font-display text-6xl text-accent tracking-widest">alfira</h1>
+          <div className="mb-6 md:mb-8 text-center">
+            <h1 className="font-display text-5xl md:text-6xl text-accent tracking-widest">
+              alfira
+            </h1>
             <p className="font-mono text-xs text-muted mt-2 tracking-widest uppercase">music bot</p>
           </div>
 
           {/* Description */}
-          <p className="font-body text-sm text-muted text-center mb-8 leading-relaxed">
+          <p className="font-body text-sm text-muted text-center mb-6 md:mb-8 leading-relaxed">
             Log in with your Discord account to access the music library and controls.
           </p>
 
           {/* Login button — redirects to Express OAuth handler */}
           <a
             href="/auth/login"
-            className="flex items-center justify-center gap-3 w-full bg-[#5865F2]
-                       hover:bg-[#4752C4] text-white font-body font-bold text-sm
-                       px-6 py-3 rounded transition-colors duration-150"
+            className="flex items-center justify-center gap-3 w-full bg-[#5865F2] hover:bg-[#4752C4] active:bg-[#4752C4] text-white font-body font-bold text-sm px-6 py-3.5 md:py-3 rounded-lg md:rounded transition-colors duration-150 min-h-[48px]"
           >
             <DiscordIcon />
             Login with Discord

@@ -110,11 +110,11 @@ export default function SongsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
         <div>
-          <h1 className="font-display text-5xl text-fg tracking-wider">Library</h1>
+          <h1 className="font-display text-4xl md:text-5xl text-fg tracking-wider">Library</h1>
           <p className="font-mono text-xs text-muted mt-1">
             {loading ? '—' : `${songs.length} track${songs.length !== 1 ? 's' : ''}`}
           </p>
@@ -127,10 +127,13 @@ export default function SongsPage() {
       </div>
 
       {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={15} />
+      <div className="relative mb-4 md:mb-6">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-faint w-4 h-4 md:w-3.5 md:h-3.5"
+          size={16}
+        />
         <input
-          className="input pl-9"
+          className="input pl-10"
           placeholder="Search by title..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -143,7 +146,7 @@ export default function SongsPage() {
       ) : filtered.length === 0 ? (
         <EmptyState search={search} isAdmin={isAdminView} onAdd={() => setShowAddModal(true)} />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 md:gap-4">
           {filtered.map((song, i) => (
             <SongCard
               key={song.id}
@@ -296,19 +299,19 @@ function SongCard({
           onClick={onPlay}
           disabled={isPlaying}
           className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-            isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 md:opacity-0'
           } disabled:cursor-default`}
           title="Play from this song"
         >
           <div
-            className={`w-12 h-12 rounded-full bg-black/60 border border-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl transition-transform duration-150 ${
+            className={`w-14 h-14 md:w-12 md:h-12 rounded-full bg-black/60 border border-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl transition-transform duration-150 ${
               isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
             }`}
           >
             {isPlaying ? (
-              <Loader2 size={20} className="text-accent animate-spin" />
+              <Loader2 size={24} className="text-accent animate-spin md:w-5 md:h-5" />
             ) : (
-              <Play size={20} className="text-white" />
+              <Play size={24} className="text-white md:w-5 md:h-5" />
             )}
           </div>
         </button>
@@ -325,13 +328,13 @@ function SongCard({
             type="button"
             onClick={handleAddToQueue}
             disabled={addingToQueue}
-            className="flex items-center justify-center w-8 h-8 text-muted hover:text-accent border border-border hover:border-accent/30 rounded transition-colors duration-150 disabled:opacity-50"
+            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-lg md:rounded transition-colors duration-150 disabled:opacity-50"
             title="Add to Up Next"
           >
             {addingToQueue ? (
-              <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
+              <span className="w-4 h-4 md:w-3 md:h-3 border-2 md:border border-accent border-t-transparent rounded-full animate-spin inline-block" />
             ) : (
-              <ListVideo size={16} />
+              <ListVideo size={18} className="md:w-4 md:h-4" />
             )}
           </button>
           {isAdmin && (
@@ -341,10 +344,10 @@ function SongCard({
                 <button
                   type="button"
                   onClick={() => setShowPlaylistMenu((p) => !p)}
-                  className="flex items-center justify-center w-8 h-8 text-muted hover:text-fg border border-border hover:border-accent/30 rounded transition-colors duration-150"
+                  className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-lg md:rounded transition-colors duration-150"
                   title="Add to playlist"
                 >
-                  <ListPlus size={16} />
+                  <ListPlus size={18} className="md:w-4 md:h-4" />
                 </button>
                 {showPlaylistMenu && (
                   <div className="absolute bottom-full left-0 mb-1 w-44 bg-elevated border border-border rounded shadow-xl z-20 overflow-hidden">
@@ -373,10 +376,10 @@ function SongCard({
               <button
                 type="button"
                 onClick={onDelete}
-                className="flex items-center justify-center w-8 h-8 text-faint hover:text-danger border border-border hover:border-danger/30 rounded transition-colors duration-150"
+                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-faint hover:text-danger active:bg-danger/10 border border-border hover:border-danger/30 rounded-lg md:rounded transition-colors duration-150"
                 title="Delete song"
               >
-                <Trash2 size={16} />
+                <Trash2 size={18} className="md:w-4 md:h-4" />
               </button>
             </>
           )}
@@ -454,9 +457,9 @@ function AddSongModal({
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-md shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Add Song</h2>
-        <p className="font-mono text-xs text-muted mb-6">paste a youtube url</p>
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-md mx-4 shadow-2xl animate-fade-up">
+        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Add Song</h2>
+        <p className="font-mono text-xs text-muted mb-4 md:mb-6">paste a youtube url</p>
 
         <input
           ref={inputRef}
@@ -538,13 +541,15 @@ function ConfirmDeleteModal({
 }) {
   return (
     <Backdrop onClose={onCancel}>
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Delete Song</h2>
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
+        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
+          Delete Song
+        </h2>
         <p className="font-body text-sm text-muted mb-2">
           Remove <span className="text-fg font-semibold">"{song.nickname || song.title}"</span> from
           the library?
         </p>
-        <p className="font-mono text-xs text-danger/70 mb-6">
+        <p className="font-mono text-xs text-danger/70 mb-4 md:mb-6">
           this will remove it from all playlists too.
         </p>
         <div className="flex gap-2 justify-end">
