@@ -1,6 +1,8 @@
 import type React from 'react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
+
+const STORAGE_KEY = 'alfira-admin-view';
 
 interface AdminViewContextValue {
   isAdminView: boolean;
@@ -9,9 +11,28 @@ interface AdminViewContextValue {
 
 const AdminViewContext = createContext<AdminViewContextValue | null>(null);
 
+function getInitialAdminView(): boolean {
+  // Check localStorage first
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) {
+      return stored === 'true';
+    }
+  }
+  // Default to true for admins
+  return true;
+}
+
 export function AdminViewProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [adminViewOn, setAdminViewOn] = useState(true);
+  const [adminViewOn, setAdminViewOn] = useState(getInitialAdminView);
+
+  // Persist to localStorage when adminViewOn changes
+  useEffect(() => {
+    if (user?.isAdmin) {
+      localStorage.setItem(STORAGE_KEY, String(adminViewOn));
+    }
+  }, [adminViewOn, user?.isAdmin]);
 
   // isAdminView is only true when the user IS an admin AND the toggle is on.
   // Non-admin users always get false, regardless of the toggle state.

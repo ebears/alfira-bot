@@ -1,32 +1,98 @@
 @import "tailwindcss";
 
 @keyframes fadeUp {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
 }
 
-@theme {
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
   --color-base: #080808;
   --color-surface: #111111;
   --color-elevated: #191919;
   --color-border: #252525;
-  	--color-accent: #c8f135;
-  	--color-accent-muted: #8aaa22;
-  	--color-member: #3b82f6;
-  	--color-member-muted: #1d4ed8;
+  --color-accent: #c8f135;
+  --color-accent-muted: #8aaa22;
+  --color-member: #3b82f6;
+  --color-member-muted: #1d4ed8;
   --color-fg: #f0f0f0;
   --color-muted: #7a7a7a;
   --color-faint: #333333;
   --color-danger: #ff4444;
 
-  	--font-display: "Bebas Neue", cursive;
-  	--font-body: Karla, sans-serif;
-  	--font-mono: "JetBrains Mono", monospace;
+  --font-display: "Bebas Neue", cursive;
+  --font-body: Karla, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --animate-fade-up: fadeUp 0.3s ease forwards;
+  --animate-shimmer: shimmer 1.4s infinite linear;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --color-base: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-elevated: #e8e8e8;
+  --color-border: #d0d0d0;
+  --color-accent: #7a9a1a;
+  --color-accent-muted: #5c7a0f;
+  --color-member: #2563eb;
+  --color-member-muted: #1d4ed8;
+  --color-fg: #1a1a1a;
+  --color-muted: #666666;
+  --color-faint: #999999;
+  --color-danger: #dc2626;
+}
+
+/* Midnight theme */
+[data-theme="midnight"] {
+  --color-base: #0a0a1a;
+  --color-surface: #12122a;
+  --color-elevated: #1a1a3a;
+  --color-border: #2a2a4a;
+  --color-accent: #818cf8;
+  --color-accent-muted: #6366f1;
+  --color-member: #38bdf8;
+  --color-member-muted: #0ea5e9;
+  --color-fg: #e0e0ff;
+  --color-muted: #8888aa;
+  --color-faint: #4a4a6a;
+  --color-danger: #f87171;
+}
+
+@theme {
+  --color-base: var(--color-base);
+  --color-surface: var(--color-surface);
+  --color-elevated: var(--color-elevated);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-member: var(--color-member);
+  --color-member-muted: var(--color-member-muted);
+  --color-fg: var(--color-fg);
+  --color-muted: var(--color-muted);
+  --color-faint: var(--color-faint);
+  --color-danger: var(--color-danger);
+
+  --font-display: "Bebas Neue", cursive;
+  --font-body: Karla, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   --animate-fade-up: fadeUp 0.3s ease forwards;
   --animate-shimmer: shimmer 1.4s infinite linear;
@@ -37,62 +103,66 @@
     box-sizing: border-box;
   }
 
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
   }
 
   body {
-    background-color: #080808;
-    color: #f0f0f0;
+    background-color: var(--color-base);
+    color: var(--color-fg);
     font-family: 'Karla', sans-serif;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: var(--color-faint);
     border-radius: 3px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--color-muted);
   }
 }
 
 @layer components {
   .skeleton {
-    background: linear-gradient(90deg, #191919 25%, #222 50%, #191919 75%);
+    background: linear-gradient(
+      90deg,
+      var(--color-elevated) 25%,
+      var(--color-border) 50%,
+      var(--color-elevated) 75%
+    );
     background-size: 400px 100%;
     animation: shimmer 1.4s infinite linear;
     border-radius: 4px;
   }
 
   .btn-primary {
-    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2 rounded
-           hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40
-           disabled:cursor-not-allowed;
+    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2 rounded hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2 rounded
-           hover:border-muted hover:bg-elevated transition-colors duration-150
-           disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2 rounded hover:border-muted hover:bg-elevated transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-danger {
-    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-3 py-1.5
-           rounded hover:bg-danger/10 transition-colors duration-150;
+    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-3 py-1.5 rounded hover:bg-danger/10 transition-colors duration-150;
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-2 rounded
-           outline-none focus:border-accent/60 transition-colors duration-150
-           placeholder:text-faint w-full;
+    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-2 rounded outline-none focus:border-accent/60 transition-colors duration-150 placeholder:text-faint w-full;
   }
 
   .card {
