@@ -55,7 +55,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     name: 'druid',
     displayName: 'Druid',
     description: 'Nature and wilderness',
-    accentColor: '#22c55e', // Green
+    accentColor: '#fb7185', // Rose
   },
   {
     name: 'fighter',
@@ -73,7 +73,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     name: 'paladin',
     displayName: 'Paladin',
     description: 'Holy warrior',
-    accentColor: '#fbbf24', // Amber/Gold
+    accentColor: '#cbd5e1', // Silver
   },
   {
     name: 'ranger',
@@ -85,13 +85,13 @@ export const COLOR_THEMES: ColorTheme[] = [
     name: 'rogue',
     displayName: 'Rogue',
     description: 'Shadows and stealth',
-    accentColor: '#374151', // Charcoal
+    accentColor: '#6366f1', // Indigo
   },
   {
     name: 'sorcerer',
     displayName: 'Sorcerer',
     description: 'Innate magic',
-    accentColor: '#ea580c', // Red-Orange
+    accentColor: '#e11d48', // Crimson
   },
   {
     name: 'warlock',
