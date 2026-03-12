@@ -1,6 +1,6 @@
 # Biome Setup Guide
 
-This document describes the Biome configuration for the Discord Music Bot project.
+This document describes the Biome configuration for the Alfira project.
 
 ## What is Biome?
 

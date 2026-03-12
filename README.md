@@ -23,7 +23,7 @@
 ## Features
 
 - **Discord bot**
-  - Slash commands: `/join`, `/leave`, `/play`, `/skip`, `/stop`, `/queue`, `/loop`, `/shuffle`, `/playlist play`, `/nowplaying`.
+  - Slash commands: `/join`, `/leave`, `/play`, `/pause`, `/skip`, `/queue`, `/loop`, `/shuffle`, `/playlist play`, `/nowplaying`.
   - Queue management with loop modes (`off`, `song`, `queue`) and shuffle.
   - Audio playback via `yt-dlp` + `ffmpeg` + `@discordjs/voice`.
 - **Web UI**
@@ -31,6 +31,7 @@
   - Song library: add-by-URL via YouTube, delete, add to playlists (admins only).
   - Playlists: create/delete/rename, add/remove songs, play into the queue with sequential/random order and loop mode.
   - Player page + global Now Playing bar with live progress, queue view, and admin controls.
+  - Progressive Web App (PWA) support with offline capabilities and caching.
 - **Real-time sync**
   - `Socket.io` events keep the UI in sync with the in-memory player state and library changes (no polling).
 - **Single-guild focus**
@@ -38,6 +39,7 @@
 
 ## Screenshots
 
+![Login Page](.github/screenshots/login.png)
 ![Song Library](.github/screenshots/songs.png)
 ![Playlist View](.github/screenshots/playlists.png)
 ![Player View](.github/screenshots/player.png)
@@ -74,6 +76,7 @@ Edit `.env` with values from the [Discord Developer Portal](https://discord.com/
 | `GUILD_ID` | ✅ | Your Discord server ID |
 | `ADMIN_ROLE_IDS` | ✅ | Role ID(s) for admin permissions |
 | `JWT_SECRET` | ✅ | Random secret string for JWT signing |
+| `API_URL` | ❌ | API base URL for development (default: `http://localhost:3001`) |
 | `POSTGRES_PASSWORD` | ✅ | Database password |
 
 ### 3. Start the Stack

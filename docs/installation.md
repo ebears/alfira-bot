@@ -59,7 +59,8 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 1. Navigate to **OAuth2** → **General**.
 2. Copy the **Client secret** — this is your `DISCORD_CLIENT_SECRET`.
 3. Add your redirect URL:
-   - Development: `http://localhost:3001/auth/callback`
+   - Local development: `http://localhost:3001/auth/callback`
+   - Docker development: `http://localhost:8080/auth/callback`
    - Production: `https://your-domain.com/auth/callback`
 4. Click **"Save Changes"**.
 
@@ -227,6 +228,7 @@ cp .env.example .env
 #    - Discord credentials (from Developer Portal)
 #    - Your Guild ID and Admin Role ID
 #    - A secure JWT_SECRET (generate with: openssl rand -hex 32)
+#    - Database credentials (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
 #    - Your domain for WEB_UI_ORIGIN and DISCORD_REDIRECT_URI
 
 # 4. Start all services
@@ -262,6 +264,7 @@ All configuration is handled through a single `.env` file in the project root. C
 | `POSTGRES_DB` | ✅ | Database name |
 | `WEB_UI_ORIGIN` | ⚪ | Public URL of the web UI |
 | `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
+| `TRUSTED_PROXY_IP` | ⚪ | IP of reverse proxy (for `X-Forwarded-For` trust) |
 
 > **Security:** Use a strong, random `JWT_SECRET`. Generate one with: `openssl rand -hex 32`
 

@@ -43,6 +43,8 @@ cp packages/bot/.env.example packages/bot/.env
 | `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:3001/auth/callback` |
 | `JWT_EXPIRES_IN` | JWT refresh token expiry duration (supports `d`, `h`, `m`, `s` suffixes) | `7d` |
 | `DEFAULT_TEXT_CHANNEL_ID` | Text channel for "Now playing" embeds when auto-joining via web UI | Guild's system channel |
+| `TRUSTED_PROXY_IP` | IP address of reverse proxy (for rate limiting and `X-Forwarded-For` trust) | — |
+| `DOCKER_HOST_IP` | IP to bind the API port to (e.g., LAN interface) | `0.0.0.0` |
 
 ### Production-Specific
 
@@ -85,15 +87,23 @@ postgresql://[user]:[password]@[host]:[port]/[database]
 In development, Docker Compose sets this automatically. The default is:
 
 ```
-DATABASE_URL=postgresql://postgres:postgres@db:5432/alfira
+DATABASE_URL=postgresql://botuser:botpass@db:5432/musicbot
 ```
 
 ### Production
 
 For production, you can either:
 
-1. **Let Docker Compose handle it** (recommended) — use the same approach as development
+1. **Let Docker Compose handle it** (recommended) — Docker Compose constructs `DATABASE_URL` automatically from the `POSTGRES_*` variables
 2. **Use an external database** — set `DATABASE_URL` to your external PostgreSQL instance
+
+When using Docker Compose, set these variables in your root `.env` file:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `POSTGRES_USER` | Database username | `alfira` |
+| `POSTGRES_PASSWORD` | Database password | `change-this-to-a-secure-password` |
+| `POSTGRES_DB` | Database name | `alfira` |
 
 Example for external database:
 
@@ -152,7 +162,7 @@ DISCORD_CLIENT_ID=123456789012345678
 
 ### Production
 
-`packages/api/.env`:
+`.env` (project root):
 
 ```env
 DISCORD_CLIENT_ID=123456789012345678
@@ -161,6 +171,9 @@ DISCORD_BOT_TOKEN=your-bot-token
 GUILD_ID=987654321098765432
 ADMIN_ROLE_IDS=123456789012345678
 JWT_SECRET=a1b2c3d4e5f6...your-secure-64-char-hex-string
+POSTGRES_USER=alfira
+POSTGRES_PASSWORD=change-this-to-a-secure-password
+POSTGRES_DB=alfira
 WEB_UI_ORIGIN=https://alfira.example.com
 DISCORD_REDIRECT_URI=https://alfira.example.com/auth/callback
 ```
