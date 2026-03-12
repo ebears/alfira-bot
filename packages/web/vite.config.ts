@@ -36,6 +36,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Exclude auth, API, and socket.io routes from the navigation fallback
+        // so the service worker doesn't serve cached index.html for requests
+        // that must reach the backend server.
+        navigateFallbackDenylist: [/^\/auth\//, /^\/api\//, /^\/socket\.io\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.example\.com\/.*/i,
