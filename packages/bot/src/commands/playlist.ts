@@ -15,7 +15,7 @@ import prisma from '../lib/prisma';
 // ---------------------------------------------------------------------------
 type PlaylistSongWithSong = Prisma.PlaylistSongGetPayload<{ include: { song: true } }>;
 
-import type { QueuedSong } from '@discord-music-bot/shared';
+import type { QueuedSong } from '@alfira-bot/shared';
 import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
 

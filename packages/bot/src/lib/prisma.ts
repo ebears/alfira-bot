@@ -16,7 +16,7 @@ import { type Prisma, PrismaClient } from '../../../api/src/generated/prisma/cli
 //
 // NOTE: We import directly from the API's generated Prisma client using a
 // relative path. This avoids the circular build dependency that would occur
-// if we imported from @discord-music-bot/api/prisma (which requires the API
+// if we imported from @alfira-bot/api/prisma (which requires the API
 // to be built first). The relative path works in both development and Docker
 // production because the directory structure is preserved.
 // ---------------------------------------------------------------------------

@@ -1,16 +1,14 @@
 {
-  "name": "discord-music-bot",
+  "name": "alfira-bot",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev": "npm run -w packages/api dev",
-    "web:dev": "npm run -w packages/web dev",
-    "bot:deploy": "npm run -w packages/bot deploy",
-    "db:migrate": "npm run -w packages/api db:migrate",
-    "db:generate": "npm run -w packages/api db:generate",
-    "db:studio": "npm run -w packages/api db:studio",
+    "dev": "pnpm -w --filter @alfira-bot/api run dev",
+    "web:dev": "pnpm -w --filter @alfira-bot/web run dev",
+    "bot:deploy": "pnpm -w --filter @alfira-bot/bot run deploy",
+    "db:migrate": "pnpm -w --filter @alfira-bot/api run db:migrate",
+    "db:generate": "pnpm -w --filter @alfira-bot/api run db:generate",
+    "db:studio": "pnpm -w --filter @alfira-bot/api run db:studio",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
@@ -20,11 +18,23 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.6"
   },
-  "overrides": {
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  },
   "dependencies": {
     "vite-plugin-pwa": "^1.2.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "^19.2.4",
+      "react-dom": "^19.2.4",
+      "hono": "4.12.7",
+      "@hono/node-server": "1.19.11",
+      "serialize-javascript": "7.0.4",
+      "undici": "6.24.0",
+      "lodash": "4.17.23"
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
   }
 }

@@ -1,17 +1,20 @@
 # ---------------------------------------------------------------------------
-# Dependencies stage - install npm packages
+# Dependencies stage - install pnpm packages
 # ---------------------------------------------------------------------------
 FROM node:25-alpine AS deps
+
+# Install pnpm globally
+RUN npm install -g pnpm
 
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/web/package.json ./packages/web/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # ---------------------------------------------------------------------------
 # Development stage - for local development with Vite HMR
@@ -28,7 +31,7 @@ ENV NODE_ENV=development
 
 EXPOSE 5173
 
-CMD ["npm", "run", "web:dev"]
+CMD ["pnpm", "run", "web:dev"]
 
 # ---------------------------------------------------------------------------
 # Builder stage - compile TypeScript and build static assets
@@ -42,7 +45,7 @@ COPY packages/web ./packages/web
 COPY packages/shared ./packages/shared
 
 # Build the web application
-RUN npm run -w packages/web build
+RUN pnpm --filter @alfira-bot/web run build
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal nginx image serving static files

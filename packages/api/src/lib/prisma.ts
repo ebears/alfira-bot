@@ -30,5 +30,5 @@ export default prisma;
 
 export type { Prisma } from '../generated/prisma/client';
 // Re-export PrismaClient and Prisma types for use in other packages
-// This allows the bot package to import from @discord-music-bot/api/prisma
+// This allows the bot package to import from @alfira-bot/api/prisma
 export { PrismaClient } from '../generated/prisma/client';

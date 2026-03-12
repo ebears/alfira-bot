@@ -1,4 +1,4 @@
-import type { QueuedSong } from '@discord-music-bot/shared';
+import type { QueuedSong } from '@alfira-bot/shared';
 import {
   entersState,
   getVoiceConnection,

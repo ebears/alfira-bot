@@ -1,12 +1,12 @@
-import { getClient } from '@discord-music-bot/bot/src/lib/client';
-import { createPlayer, getPlayer, removePlayer } from '@discord-music-bot/bot/src/player/manager';
+import { getClient } from '@alfira-bot/bot/src/lib/client';
+import { createPlayer, getPlayer, removePlayer } from '@alfira-bot/bot/src/player/manager';
 import {
   getMetadata,
   getPlaylistMetadataWithVideos,
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
-} from '@discord-music-bot/bot/src/utils/ytdlp';
-import type { LoopMode, QueuedSong } from '@discord-music-bot/shared';
+} from '@alfira-bot/bot/src/utils/ytdlp';
+import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
 import {
   entersState,
   getVoiceConnection,

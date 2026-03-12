@@ -1,4 +1,4 @@
-import type { LoopMode, Playlist, PlaylistDetail, Song } from '@discord-music-bot/shared';
+import type { LoopMode, Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
 import {
   ChevronLeft,
   CirclePlay,

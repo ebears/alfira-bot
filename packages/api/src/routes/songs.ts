@@ -3,7 +3,7 @@ import {
   getPlaylistMetadataWithVideos,
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
-} from '@discord-music-bot/bot/src/utils/ytdlp';
+} from '@alfira-bot/bot/src/utils/ytdlp';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { emitSongAdded, emitSongDeleted } from '../lib/socket';

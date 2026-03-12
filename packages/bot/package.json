@@ -1,5 +1,5 @@
 {
-  "name": "@discord-music-bot/bot",
+  "name": "@alfira-bot/bot",
   "version": "0.1.0",
   "private": true,
   "main": "dist/bot/src/index.js",
@@ -16,8 +16,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@discord-music-bot/api": "*",
-    "@discord-music-bot/shared": "*",
+    "@alfira-bot/api": "workspace:*",
+    "@alfira-bot/shared": "workspace:*",
     "@discordjs/voice": "^0.19.1",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",

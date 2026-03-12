@@ -1,4 +1,4 @@
-import type { LoopMode, QueueState } from '@discord-music-bot/shared';
+import type { LoopMode, QueueState } from '@alfira-bot/shared';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
