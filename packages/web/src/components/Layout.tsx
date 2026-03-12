@@ -65,7 +65,7 @@ export default function Layout() {
         >
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-display text-3xl text-accent tracking-wider">alfira</span>
+              <span className="font-display text-3xl text-accent tracking-wider">Alfira</span>
               {isAdminView && (
                 <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
                   admin

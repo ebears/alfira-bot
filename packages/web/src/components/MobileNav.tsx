@@ -84,7 +84,7 @@ export default function MobileNav() {
 
         {/* Center: Wordmark */}
         <div className="flex items-center gap-2">
-          <span className="font-display text-2xl text-accent tracking-wider">alfira</span>
+          <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
           {isAdminView && (
             <span className="text-[9px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
               admin
@@ -139,7 +139,7 @@ export default function MobileNav() {
             >
               {isAdminView ? <ShieldUser size={20} /> : <Music size={20} />}
             </div>
-            <span className="font-display text-2xl text-accent tracking-wider">alfira</span>
+            <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
           </div>
           <button
             type="button"
