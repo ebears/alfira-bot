@@ -1,7 +1,10 @@
 # ---------------------------------------------------------------------------
-# Dependencies stage - install system deps and npm packages
+# Dependencies stage - install system deps and pnpm packages
 # ---------------------------------------------------------------------------
 FROM node:25-alpine AS deps
+
+# Install pnpm globally
+RUN npm install -g pnpm
 
 # Install system dependencies needed for build and runtime
 # ffmpeg: audio processing for the bot
@@ -28,14 +31,14 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api/package.json ./packages/api/
 COPY packages/bot/package.json ./packages/bot/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/web/package.json ./packages/web/
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # ---------------------------------------------------------------------------
 # Development stage - for local development with hot reload
@@ -48,16 +51,16 @@ COPY packages ./packages
 
 # Generate Prisma client (required before building bot, since bot imports from api)
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
 
 # Build the bot package (required by API)
-RUN npm run -w packages/bot build
+RUN pnpm --filter @alfira-bot/bot run build
 
 ENV NODE_ENV=development
 
 EXPOSE 3001
 
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]
 
 # ---------------------------------------------------------------------------
 # Builder stage - compile TypeScript and prepare production assets
@@ -70,16 +73,17 @@ COPY packages ./packages
 
 # Generate Prisma client (Prisma 7 outputs to src/generated/prisma)
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
 
 # Build bot and API
-RUN npm run -w packages/bot build && \
-    npm run -w packages/api build
+RUN pnpm --filter @alfira-bot/bot run build && \
+    pnpm --filter @alfira-bot/api run build
 
-# Install only production dependencies
-RUN npm prune --production && \
-  # Regenerate Prisma client for production
-  DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
+# Regenerate Prisma client for production (before pruning so prisma CLI is available)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
+
+# Remove devDependencies for smaller production image
+RUN CI=true pnpm prune --prod
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image

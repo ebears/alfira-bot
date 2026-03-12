@@ -5,7 +5,7 @@ import type {
   QueueState,
   Song,
   User,
-} from '@discord-music-bot/shared';
+} from '@alfira-bot/shared';
 import client from './client';
 
 // ---------------------------------------------------------------------------

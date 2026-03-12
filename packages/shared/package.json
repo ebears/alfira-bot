@@ -1,5 +1,5 @@
 {
-  "name": "@discord-music-bot/shared",
+  "name": "@alfira-bot/shared",
   "version": "0.1.0",
   "private": true,
   "main": "src/types.ts",

@@ -1,6 +1,7 @@
-# Dependencies — reinstalled inside the image by npm ci
+# Dependencies — reinstalled inside the image by pnpm install
 node_modules
 packages/*/node_modules
+.pnpm-store
 
 # Build output — compiled fresh inside the image
 dist

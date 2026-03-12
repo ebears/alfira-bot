@@ -1,4 +1,4 @@
-import type { Playlist, Song } from '@discord-music-bot/shared';
+import type { Playlist, Song } from '@alfira-bot/shared';
 import { ListPlus, ListVideo, Loader2, Play, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {

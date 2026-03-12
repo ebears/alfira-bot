@@ -1,4 +1,4 @@
-import type { Playlist } from '@discord-music-bot/shared';
+import type { Playlist } from '@alfira-bot/shared';
 import { Ghost } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

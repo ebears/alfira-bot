@@ -1,4 +1,4 @@
-import type { LoopMode } from '@discord-music-bot/shared';
+import type { LoopMode } from '@alfira-bot/shared';
 
 // ---------------------------------------------------------------------------
 // formatDuration

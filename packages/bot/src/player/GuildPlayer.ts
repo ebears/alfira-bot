@@ -1,4 +1,4 @@
-import type { LoopMode, QueuedSong, QueueState } from '@discord-music-bot/shared';
+import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
 import {
   type AudioPlayer,
   AudioPlayerStatus,

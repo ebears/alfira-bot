@@ -1,5 +1,5 @@
 import type { Server as HTTPServer } from 'node:http';
-import type { Playlist, QueueState, Song } from '@discord-music-bot/shared';
+import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
 import jwt from 'jsonwebtoken';
 import { Server as SocketIOServer } from 'socket.io';
 

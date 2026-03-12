@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// @discord-music-bot/shared — types
+// @alfira-bot/shared — types
 //
 // This is the single source of truth for types that cross package boundaries.
 // Both the bot and the API import from here. Never duplicate these types.

@@ -1,4 +1,4 @@
-import { getClient } from '@discord-music-bot/bot/src/lib/client';
+import { getClient } from '@alfira-bot/bot/src/lib/client';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';

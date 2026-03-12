@@ -1,4 +1,4 @@
-import type { LoopMode, Playlist, QueuedSong } from '@discord-music-bot/shared';
+import type { LoopMode, Playlist, QueuedSong } from '@alfira-bot/shared';
 import {
   AlertTriangle,
   CirclePlay,

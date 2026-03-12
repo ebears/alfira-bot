@@ -1,4 +1,4 @@
-import type { QueueState } from '@discord-music-bot/shared';
+import type { QueueState } from '@alfira-bot/shared';
 
 // ---------------------------------------------------------------------------
 // broadcast.ts

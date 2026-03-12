@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import http from 'node:http';
-import { startBot } from '@discord-music-bot/bot';
-import { setBroadcastQueueUpdate } from '@discord-music-bot/bot/src/lib/broadcast';
+import { startBot } from '@alfira-bot/bot';
+import { setBroadcastQueueUpdate } from '@alfira-bot/bot/src/lib/broadcast';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
