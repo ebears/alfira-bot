@@ -12,29 +12,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "25"
-          cache: "npm"
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npm run db:generate
+        run: DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
 
       - name: Build bot package
-        run: npm run -w packages/bot build
+        run: pnpm --filter @alfira-bot/bot run build
 
       - name: Lint with Biome
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Typecheck API
-        run: npx tsc --noEmit -p packages/api/tsconfig.json
+        run: pnpm exec tsc --noEmit -p packages/api/tsconfig.json
 
       - name: Typecheck bot
-        run: npx tsc --noEmit -p packages/bot/tsconfig.json
+        run: pnpm exec tsc --noEmit -p packages/bot/tsconfig.json
 
       - name: Typecheck web
-        run: npx tsc --noEmit -p packages/web/tsconfig.json
+        run: pnpm exec tsc --noEmit -p packages/web/tsconfig.json
