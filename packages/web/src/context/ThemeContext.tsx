@@ -42,8 +42,8 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'bard',
     displayName: 'Bard',
-    description: 'Spotify-inspired dark theme',
-    accentColor: '#1DB954', // Spotify Green
+    description: 'Performance and charisma',
+    accentColor: '#ec4899', // Magenta/Pink
   },
   {
     name: 'cleric',
@@ -66,8 +66,8 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'monk',
     displayName: 'Monk',
-    description: 'GitHub-inspired theme',
-    accentColor: '#0969da', // GitHub Blue
+    description: 'Discipline and harmony',
+    accentColor: '#14b8a6', // Cyan/Teal
   },
   {
     name: 'paladin',
@@ -96,14 +96,14 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'warlock',
     displayName: 'Warlock',
-    description: 'Dracula-inspired theme',
-    accentColor: '#bd93f9', // Dracula Purple
+    description: 'Eldritch pact',
+    accentColor: '#a855f7', // Dark Purple
   },
   {
     name: 'wizard',
     displayName: 'Wizard',
-    description: 'Catppuccin-inspired theme',
-    accentColor: '#cba6f7', // Catppuccin Mauve
+    description: 'Arcane knowledge',
+    accentColor: '#3b82f6', // Deep Blue
   },
 ];
 

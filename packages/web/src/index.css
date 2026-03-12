@@ -120,43 +120,43 @@
   --color-danger: #b91c1c;
 }
 
-/* ----- BARD: Spotify-inspired ----- */
+/* ----- BARD: Magenta/Pink, Performance & Charisma ----- */
 [data-color-theme="bard"] {
-  --palette-accent: #1DB954;
-  --palette-accent-muted: #169c46;
-  --palette-member: #3b82f6;
-  --palette-member-muted: #2563eb;
-  --palette-danger: #e91429;
+  --palette-accent: #ec4899;
+  --palette-accent-muted: #db2777;
+  --palette-member: #8b5cf6;
+  --palette-member-muted: #7c3aed;
+  --palette-danger: #f43f5e;
 }
 
 [data-color-theme="bard"][data-mode="dark"] {
-  --color-base: #000000;
-  --color-surface: #0a0a0a;
-  --color-elevated: #141414;
-  --color-border: #282828;
+  --color-base: #0a0608;
+  --color-surface: #120c10;
+  --color-elevated: #1a1218;
+  --color-border: #2a1e26;
   --color-accent: var(--palette-accent);
   --color-accent-muted: var(--palette-accent-muted);
   --color-member: var(--palette-member);
   --color-member-muted: var(--palette-member-muted);
-  --color-fg: #ffffff;
-  --color-muted: #a7a7a7;
-  --color-faint: #535353;
+  --color-fg: #f5e8f0;
+  --color-muted: #9a7a8a;
+  --color-faint: #5a3a4a;
   --color-danger: var(--palette-danger);
 }
 
 [data-color-theme="bard"][data-mode="light"] {
-  --color-base: #f6f6f6;
+  --color-base: #fdf8fa;
   --color-surface: #ffffff;
-  --color-elevated: #ededed;
-  --color-border: #d4d4d4;
-  --color-accent: #169c46;
-  --color-accent-muted: #0d7a35;
+  --color-elevated: #f5e8f0;
+  --color-border: #e8d0d8;
+  --color-accent: var(--palette-accent);
+  --color-accent-muted: var(--palette-accent-muted);
   --color-member: var(--palette-member);
   --color-member-muted: var(--palette-member-muted);
-  --color-fg: #121212;
-  --color-muted: #5e5e5e;
-  --color-faint: #a3a3a3;
-  --color-danger: #b91c1c;
+  --color-fg: #1a1014;
+  --color-muted: #6a4a5a;
+  --color-faint: #aa8a9a;
+  --color-danger: #e11d48;
 }
 
 /* ----- CLERIC: Gold/Yellow, Divine Light ----- */
@@ -276,43 +276,43 @@
   --color-danger: #dc2626;
 }
 
-/* ----- MONK: GitHub-inspired ----- */
+/* ----- MONK: Cyan/Teal, Discipline & Harmony ----- */
 [data-color-theme="monk"] {
-  --palette-accent: #0969da;
-  --palette-accent-muted: #0550ae;
-  --palette-member: #8250df;
-  --palette-member-muted: #6639ba;
-  --palette-danger: #cf222e;
+  --palette-accent: #14b8a6;
+  --palette-accent-muted: #0d9488;
+  --palette-member: #6366f1;
+  --palette-member-muted: #4f46e5;
+  --palette-danger: #ef4444;
 }
 
 [data-color-theme="monk"][data-mode="dark"] {
-  --color-base: #0d1117;
-  --color-surface: #161b22;
-  --color-elevated: #21262d;
-  --color-border: #30363d;
-  --color-accent: #58a6ff;
-  --color-accent-muted: #388bfd;
-  --color-member: var(--palette-member);
-  --color-member-muted: var(--palette-member-muted);
-  --color-fg: #e6edf3;
-  --color-muted: #7d8590;
-  --color-faint: #484f58;
-  --color-danger: #f85149;
-}
-
-[data-color-theme="monk"][data-mode="light"] {
-  --color-base: #ffffff;
-  --color-surface: #f6f8fa;
-  --color-elevated: #eaeef2;
-  --color-border: #d0d7de;
+  --color-base: #060a0a;
+  --color-surface: #0c1414;
+  --color-elevated: #141e1e;
+  --color-border: #1e3030;
   --color-accent: var(--palette-accent);
   --color-accent-muted: var(--palette-accent-muted);
   --color-member: var(--palette-member);
   --color-member-muted: var(--palette-member-muted);
-  --color-fg: #1f2328;
-  --color-muted: #656d76;
-  --color-faint: #8c959f;
+  --color-fg: #e0f0f0;
+  --color-muted: #6a9a9a;
+  --color-faint: #2a5a5a;
   --color-danger: var(--palette-danger);
+}
+
+[data-color-theme="monk"][data-mode="light"] {
+  --color-base: #f2fafa;
+  --color-surface: #ffffff;
+  --color-elevated: #e0f5f5;
+  --color-border: #c0e0e0;
+  --color-accent: var(--palette-accent);
+  --color-accent-muted: var(--palette-accent-muted);
+  --color-member: var(--palette-member);
+  --palette-member-muted: var(--palette-member-muted);
+  --color-fg: #0a1a1a;
+  --color-muted: #3a6a6a;
+  --color-faint: #7aaaaa;
+  --color-danger: #dc2626;
 }
 
 /* ----- PALADIN: Gold/Amber, Holy Warrior ----- */
@@ -471,109 +471,85 @@
   --color-danger: #dc2626;
 }
 
-/* ----- WARLOCK: Dracula-inspired ----- */
+/* ----- WARLOCK: Dark Purple/Red, Eldritch Pact ----- */
 [data-color-theme="warlock"] {
-  --palette-accent: #bd93f9;
-  --palette-accent-muted: #a67ce2;
-  --palette-member: #8be9fd;
-  --palette-member-muted: #6ec7db;
-  --palette-danger: #ff5555;
+  --palette-accent: #a855f7;
+  --palette-accent-muted: #9333ea;
+  --palette-member: #f97316;
+  --palette-member-muted: #ea580c;
+  --palette-danger: #dc2626;
 }
 
 [data-color-theme="warlock"][data-mode="dark"] {
-  --color-base: #282a36;
-  --color-surface: #2d303e;
-  --color-elevated: #343746;
-  --color-border: #44475a;
+  --color-base: #0c0610;
+  --color-surface: #140c18;
+  --color-elevated: #1e1424;
+  --color-border: #2e2030;
   --color-accent: var(--palette-accent);
   --color-accent-muted: var(--palette-accent-muted);
   --color-member: var(--palette-member);
   --color-member-muted: var(--palette-member-muted);
-  --color-fg: #f8f8f2;
-  --color-muted: #6272a4;
-  --color-faint: #44475a;
+  --color-fg: #f0e8f4;
+  --color-muted: #9070a0;
+  --color-faint: #503060;
   --color-danger: var(--palette-danger);
 }
 
 [data-color-theme="warlock"][data-mode="light"] {
-  --color-base: #f8f8f2;
+  --color-base: #faf8fc;
   --color-surface: #ffffff;
-  --color-elevated: #ededed;
-  --color-border: #d4d4d4;
-  --color-accent: #6272a4;
-  --color-accent-muted: #44475a;
-  --color-member: #282a36;
-  --color-member-muted: #44475a;
-  --color-fg: #282a36;
-  --color-muted: #6272a4;
-  --color-faint: #9ea3b8;
-  --color-danger: #e64545;
-}
-
-/* ----- WIZARD: Catppuccin-inspired ----- */
-[data-color-theme="wizard"] {
-  --palette-accent: #cba6f7;
-  --palette-accent-muted: #a67ce2;
-  --palette-member: #89b4fa;
-  --palette-member-muted: #74a5f5;
-  --palette-danger: #f38ba8;
-}
-
-[data-color-theme="wizard"][data-mode="dark"] {
-  /* Catppuccin Mocha */
-  --color-base: #11111b;
-  --color-surface: #181825;
-  --color-elevated: #1e1e2e;
-  --color-border: #313244;
+  --color-elevated: #f4eef8;
+  --color-border: #e0d4e8;
   --color-accent: var(--palette-accent);
   --color-accent-muted: var(--palette-accent-muted);
   --color-member: var(--palette-member);
   --color-member-muted: var(--palette-member-muted);
-  --color-fg: #cdd6f4;
-  --color-muted: #a6adc8;
-  --color-faint: #585b70;
+  --color-fg: #1a101e;
+  --color-muted: #6a5080;
+  --color-faint: #b0a0c0;
+  --color-danger: #b91c1c;
+}
+
+/* ----- WIZARD: Deep Blue, Arcane Knowledge ----- */
+[data-color-theme="wizard"] {
+  --palette-accent: #3b82f6;
+  --palette-accent-muted: #2563eb;
+  --palette-member: #a855f7;
+  --palette-member-muted: #9333ea;
+  --palette-danger: #ef4444;
+}
+
+[data-color-theme="wizard"][data-mode="dark"] {
+  --color-base: #060810;
+  --color-surface: #0c1018;
+  --color-elevated: #141820;
+  --color-border: #1e2838;
+  --color-accent: var(--palette-accent);
+  --color-accent-muted: var(--palette-accent-muted);
+  --color-member: var(--palette-member);
+  --color-member-muted: var(--palette-member-muted);
+  --color-fg: #e0e8f5;
+  --color-muted: #7080a0;
+  --color-faint: #304060;
   --color-danger: var(--palette-danger);
 }
 
 [data-color-theme="wizard"][data-mode="light"] {
-  /* Catppuccin Latte */
-  --color-base: #eff1f5;
-  --color-surface: #e6e9ef;
-  --color-elevated: #dce0e8;
-  --color-border: #bcc0cc;
+  --color-base: #f4f6fc;
+  --color-surface: #ffffff;
+  --color-elevated: #e8ecf5;
+  --color-border: #c8d0e0;
   --color-accent: var(--palette-accent);
   --color-accent-muted: var(--palette-accent-muted);
   --color-member: var(--palette-member);
   --color-member-muted: var(--palette-member-muted);
-  --color-fg: #4c4f69;
-  --color-muted: #6c6f85;
-  --color-faint: #9ca0b0;
-  --color-danger: #d20f39;
+  --color-fg: #101420;
+  --color-muted: #506080;
+  --color-faint: #90a0c0;
+  --color-danger: #dc2626;
 }
 
-/* ============================================
-   DEFAULT FALLBACK (Bard Dark - Spotify style)
-   ============================================ */
-:root {
-  --color-base: #000000;
-  --color-surface: #0a0a0a;
-  --color-elevated: #141414;
-  --color-border: #282828;
-  --color-accent: #1DB954;
-  --color-accent-muted: #169c46;
-  --color-member: #3b82f6;
-  --color-member-muted: #2563eb;
-  --color-fg: #ffffff;
-  --color-muted: #a7a7a7;
-  --color-faint: #535353;
-  --color-danger: #e91429;
-  --font-display: "Bebas Neue", cursive;
-  --font-body: Karla, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --animate-fade-up: fadeUp 0.3s ease forwards;
-  --animate-shimmer: shimmer 1.4s infinite linear;
-  --animate-slide-in-right: slideInRight 0.3s ease forwards;
-}
+
 
 @theme {
   --color-base: var(--color-base);
