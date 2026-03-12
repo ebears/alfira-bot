@@ -1,6 +1,7 @@
 {
   "name": "alfira-bot",
   "private": true,
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "pnpm -w --filter @alfira-bot/api run dev",
     "web:dev": "pnpm -w --filter @alfira-bot/web run dev",
