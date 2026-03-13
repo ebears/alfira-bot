@@ -6,10 +6,7 @@ import {
   Music,
   Play,
   Plus,
-  Repeat,
-  Repeat1,
   Shuffle,
-  Square,
   Trash2,
   Zap,
 } from 'lucide-react';
@@ -37,27 +34,16 @@ function formatDuration(seconds: number): string {
 // QueuePage
 // ---------------------------------------------------------------------------
 export default function QueuePage() {
-  const { state, loading, elapsed, setLoop, shuffle, refetch, clear } = usePlayer();
+  const { state, loading, elapsed, shuffle, refetch, clear } = usePlayer();
   const { isAdminView } = useAdminView();
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showOverride, setShowOverride] = useState(false);
-  const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
 
-  const { currentSong, queue, priorityQueue, isPlaying, loopMode } = state;
+  const { currentSong, queue, priorityQueue, isPlaying } = state;
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
-
-  const handleLoop = async (mode: LoopMode) => {
-    if (mode === loopMode) return;
-    setLoopBusy(true);
-    try {
-      await setLoop(mode);
-    } finally {
-      setLoopBusy(false);
-    }
-  };
 
   const handleShuffle = async () => {
     setShuffleBusy(true);
@@ -133,43 +119,8 @@ export default function QueuePage() {
       {/* Controls */}
       {/* ------------------------------------------------------------------ */}
       <section className="mt-4 md:mt-6 space-y-3 md:space-y-4">
-        {/* First row: Loop (left) and Load Playlist/Quick Add (right) */}
+        {/* Load Playlist / Quick Add */}
         <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <span className="font-mono text-[11px] md:text-xs text-muted uppercase tracking-widest mr-0.5 md:mr-1">
-              Loop
-            </span>
-            {(['off', 'song', 'queue'] as const).map((mode) => (
-              <button
-                type="button"
-                key={mode}
-                disabled={loopBusy}
-                onClick={() => handleLoop(mode)}
-                className={`px-3 py-2 md:py-1.5 text-xs font-mono rounded-lg md:rounded border transition-colors duration-150 disabled:opacity-50 min-h-11 md:min-h-0 ${
-                  loopMode === mode
-                    ? 'bg-accent/10 border-accent/40 text-accent'
-                    : 'border-border text-muted hover:border-muted hover:text-fg active:bg-elevated'
-                }`}
-              >
-                {mode === 'off' ? (
-                  <>
-                    {' '}
-                    <Square size={12} className="inline mr-1" /> off{' '}
-                  </>
-                ) : mode === 'song' ? (
-                  <>
-                    {' '}
-                    <Repeat1 size={12} className="inline mr-1" /> song{' '}
-                  </>
-                ) : (
-                  <>
-                    {' '}
-                    <Repeat size={12} className="inline mr-1" /> queue{' '}
-                  </>
-                )}
-              </button>
-            ))}
-          </div>
           <div className="flex items-center gap-2 ml-auto">
             <button
               type="button"
@@ -192,7 +143,7 @@ export default function QueuePage() {
           </div>
         </div>
 
-        {/* Second row: Admin-only controls (Shuffle and Clear Queue) */}
+        {/* Admin-only controls (Shuffle and Clear Queue) */}
         {isAdminView && (
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <button

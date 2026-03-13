@@ -31,7 +31,7 @@ ENV NODE_ENV=development
 
 EXPOSE 5173
 
-CMD ["pnpm", "run", "web:dev"]
+CMD ["pnpm", "--filter", "@alfira-bot/web", "exec", "vite"]
 
 # ---------------------------------------------------------------------------
 # Builder stage - compile TypeScript and build static assets

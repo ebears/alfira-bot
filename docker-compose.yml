@@ -102,6 +102,7 @@ services:
       context: .
       dockerfile: Dockerfile.web
       target: dev
+    command: pnpm --filter @alfira-bot/web exec vite
     restart: unless-stopped
     depends_on:
       - api

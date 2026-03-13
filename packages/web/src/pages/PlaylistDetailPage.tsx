@@ -221,7 +221,7 @@ export default function PlaylistDetailPage() {
       <button
         type="button"
         onClick={() => navigate('/playlists')}
-        className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg active:text-fg transition-colors duration-150 mb-4 md:mb-6 min-h-[44px] md:min-h-0"
+        className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg active:text-fg transition-colors duration-150 mb-4 md:mb-6 min-h-11 md:min-h-0"
       >
         <ChevronLeft size={16} className="md:w-3.5 md:h-3.5" />
         playlists
@@ -589,7 +589,7 @@ function AddSongsModal({
                     type="button"
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
-                    className={`font-mono text-xs px-3 py-2 md:py-1 rounded-lg md:rounded border transition-colors duration-150 min-h-[44px] md:min-h-0 ${
+                    className={`font-mono text-xs px-3 py-2 md:py-1 rounded-lg md:rounded border transition-colors duration-150 min-h-11 md:min-h-0 ${
                       isAdded
                         ? 'border-accent/30 text-accent bg-accent/5 cursor-default'
                         : 'border-border text-muted hover:border-accent/40 hover:text-accent active:bg-accent/10'

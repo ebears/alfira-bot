@@ -30,7 +30,8 @@ COPY packages/api/prisma ./packages/api/prisma
 
 # Generate Prisma client (Prisma 7 outputs to src/generated/prisma)
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @alfira-bot/api exec prisma generate --schema=prisma/schema.prisma
+ARG DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+RUN DATABASE_URL="$DATABASE_URL" pnpm --filter @alfira-bot/api exec prisma generate
 
 # ---------------------------------------------------------------------------
 # Runtime stage
@@ -48,11 +49,12 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Ensure node_modules/.bin is in PATH
-ENV PATH="/app/node_modules/.bin:${PATH}"
+ENV PATH="/app/node_modules/.bin:/app/packages/api/node_modules/.bin:${PATH}"
 ENV NODE_ENV=production
 
-# Copy node_modules with Prisma CLI
+# Copy node_modules with Prisma CLI (pnpm symlinks point into .pnpm store)
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/api/node_modules ./packages/api/node_modules
 
 # Copy Prisma client (Prisma 7 outputs to src/generated/prisma)
 COPY --from=deps /app/packages/api/src/generated ./packages/api/src/generated
@@ -65,6 +67,8 @@ COPY packages/api/prisma ./packages/api/prisma
 COPY packages/api/package.json ./packages/api/package.json
 COPY packages/shared ./packages/shared
 COPY package.json ./package.json
+COPY pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Run migrations using pnpm --filter
-CMD ["pnpm", "--filter", "@alfira-bot/api", "exec", "prisma", "migrate", "deploy", "--schema=prisma/schema.prisma"]
+# Run migrations (prisma.config.ts defines schema path, DATABASE_URL from docker-compose)
+CMD ["sh", "-c", "prisma migrate deploy"]

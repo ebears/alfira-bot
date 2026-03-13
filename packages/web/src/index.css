@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* Custom utility for Now Playing bar height on mobile */
+/* Custom utilities for Now Playing bar heights */
 @layer utilities {
-  .h-18 {
-    height: 4.5rem;
+  .h-26 {
+    height: 6.5rem;
   }
 }
 
@@ -33,6 +33,15 @@
   }
   100% {
     background-position: 400px 0;
+  }
+}
+
+@keyframes pulseGentle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }
 
@@ -570,6 +579,7 @@
   --animate-fade-up: fadeUp 0.3s ease forwards;
   --animate-shimmer: shimmer 1.4s infinite linear;
   --animate-slide-in-right: slideInRight 0.3s ease forwards;
+  --animate-pulse-gentle: pulseGentle 2.4s ease-in-out infinite;
 }
 
 @layer base {
@@ -637,19 +647,19 @@
   }
 
   .btn-primary {
-    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] md:min-h-0;
+    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
   }
 
   .btn-ghost {
-    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:border-muted hover:bg-elevated transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] md:min-h-0;
+    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:border-muted hover:bg-elevated transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
   }
 
   .btn-danger {
-    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-lg md:rounded hover:bg-danger/10 active:bg-danger/20 transition-colors duration-150 min-h-[44px] md:min-h-0;
+    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-lg md:rounded hover:bg-danger/10 active:bg-danger/20 transition-colors duration-150 min-h-11 md:min-h-0;
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-3 md:py-2 rounded-lg md:rounded outline-none focus:border-accent/60 transition-colors duration-150 placeholder:text-faint w-full text-base;
+    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-3 md:py-2 rounded-lg md:rounded outline-none focus:border-accent/60 transition-colors duration-150 placeholder:text-faint w-full;
   }
 
   .card {
