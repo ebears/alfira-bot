@@ -29,8 +29,8 @@ export function errorHandler(
 // asyncHandler
 //
 // Wraps an async route handler so that any thrown error is forwarded to
-// next() automatically. Without this, unhandled promise rejections in async
-// route handlers silently fail in Express 4.
+// next() automatically. Ensures consistent error handling behavior across
+// async route handlers.
 //
 // Usage:
 //   router.get('/path', asyncHandler(async (req, res) => { ... }));
