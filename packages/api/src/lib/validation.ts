@@ -125,3 +125,32 @@ export function buildQueuedSongFromMetadata(
     requestedBy,
   };
 }
+
+// ---------------------------------------------------------------------------
+// PrismaSong: A song as returned from Prisma (with Date createdAt).
+// PrismaSongLike: Interface for objects compatible with PrismaSong.
+// ---------------------------------------------------------------------------
+
+type PrismaSongLike = {
+  id: string;
+  title: string;
+  youtubeUrl: string;
+  youtubeId: string;
+  duration: number;
+  thumbnailUrl: string;
+  addedBy: string;
+  nickname?: string | null;
+  createdAt: Date;
+};
+
+/**
+ * Converts a Prisma song (with Date createdAt) to a QueuedSong (with string createdAt).
+ * Used by player routes when loading songs from the database for queue operations.
+ */
+export function dbSongToQueuedSong(song: PrismaSongLike, requestedBy: string): QueuedSong {
+  return {
+    ...song,
+    createdAt: song.createdAt.toISOString(),
+    requestedBy,
+  };
+}

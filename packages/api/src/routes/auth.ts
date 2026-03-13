@@ -47,6 +47,15 @@ const ADMIN_ROLE_ID_SET = new Set(
 );
 
 // ---------------------------------------------------------------------------
+// Helper: Build Discord avatar URL
+//
+// Returns the full CDN URL for a user's avatar, or null if no avatar hash.
+// ---------------------------------------------------------------------------
+function buildAvatarUrl(discordId: string, avatar: string | null): string | null {
+  return avatar ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png` : null;
+}
+
+// ---------------------------------------------------------------------------
 // Token configuration
 //
 // Access tokens are short-lived (1 hour) and contain the user's info including
@@ -191,11 +200,7 @@ async function fetchUserAdminStatus(
     const memberRoles: string[] = memberRes.data.roles ?? [];
     const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
 
-    const avatarUrl = avatar
-      ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png`
-      : null;
-
-    return { isAdmin, username, avatar: avatarUrl };
+    return { isAdmin, username, avatar: buildAvatarUrl(discordId, avatar) };
   } catch (err: unknown) {
     // User not in guild
     if (err instanceof Error && 'response' in err) {
@@ -344,16 +349,11 @@ router.get(
     // 4. Determine isAdmin.
     const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
 
-    // 5. Build avatar URL.
-    const avatarUrl = discordUser.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
-      : null;
-
-    // 6. Generate tokens.
+    // 5. Generate tokens.
     const payload = {
       discordId: discordUser.id,
       username: discordUser.username,
-      avatar: avatarUrl,
+      avatar: buildAvatarUrl(discordUser.id, discordUser.avatar),
       isAdmin,
     };
     const accessToken = generateAccessToken(payload);
