@@ -257,7 +257,7 @@ router.get(
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(discordUser.id);
 
-    // 7. Store refresh token hash in database.
+    // 6. Store refresh token hash in database.
     const refreshTokenHash = hashToken(refreshToken);
     const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
     await prisma.refreshToken.create({
@@ -268,7 +268,7 @@ router.get(
       },
     });
 
-    // 8. Set cookies and redirect.
+    // 7. Set cookies and redirect.
     setAuthCookies(res, accessToken, refreshToken);
     res.redirect(WEB_UI_ORIGIN);
   })

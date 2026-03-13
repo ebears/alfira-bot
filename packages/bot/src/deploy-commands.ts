@@ -15,16 +15,7 @@
 
 import 'dotenv/config';
 import { REST, Routes } from 'discord.js';
-import { joinCommand } from './commands/join';
-import { leaveCommand } from './commands/leave';
-import { loopCommand } from './commands/loop';
-import { nowplayingCommand } from './commands/nowplaying';
-import { pauseCommand } from './commands/pause';
-import { playCommand } from './commands/play';
-import { playlistCommand } from './commands/playlist';
-import { queueCommand } from './commands/queue';
-import { shuffleCommand } from './commands/shuffle';
-import { skipCommand } from './commands/skip';
+import { commands } from './commands';
 
 const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID } = process.env;
 
@@ -35,27 +26,16 @@ if (!DISCORD_BOT_TOKEN || !DISCORD_CLIENT_ID || !GUILD_ID) {
   process.exit(1);
 }
 
-const commands = [
-  joinCommand,
-  leaveCommand,
-  playCommand,
-  skipCommand,
-  pauseCommand,
-  loopCommand,
-  shuffleCommand,
-  queueCommand,
-  nowplayingCommand,
-  playlistCommand,
-].map((c) => c.data.toJSON());
+const commandData = commands.map((c) => c.data.toJSON());
 
 const rest = new REST().setToken(DISCORD_BOT_TOKEN);
 
 (async () => {
   try {
-    console.log(`🔄  Registering ${commands.length} slash command(s)...`);
+    console.log(`🔄  Registering ${commandData.length} slash command(s)...`);
 
     await rest.put(Routes.applicationGuildCommands(DISCORD_CLIENT_ID, GUILD_ID), {
-      body: commands,
+      body: commandData,
     });
 
     console.log('✅  Slash commands registered successfully.');
