@@ -110,31 +110,26 @@ async function resolveOrAutoJoinPlayer(
 // Returns the current queue state. Member accessible.
 // If the bot is not in a voice channel, returns an empty state.
 // ---------------------------------------------------------------------------
-router.get(
-  '/queue',
-  requireAuth,
-  // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
-    const connection = getVoiceConnection(GUILD_ID);
+router.get('/queue', requireAuth, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
+  const connection = getVoiceConnection(GUILD_ID);
 
-    if (!player) {
-      res.json({
-        isPlaying: false,
-        isPaused: false,
-        isConnectedToVoice: !!connection,
-        loopMode: 'off',
-        currentSong: null,
-        priorityQueue: [],
-        queue: [],
-        trackStartedAt: null,
-      });
-      return;
-    }
+  if (!player) {
+    res.json({
+      isPlaying: false,
+      isPaused: false,
+      isConnectedToVoice: !!connection,
+      loopMode: 'off',
+      currentSong: null,
+      priorityQueue: [],
+      queue: [],
+      trackStartedAt: null,
+    });
+    return;
+  }
 
-    res.json(player.getQueueState());
-  })
-);
+  res.json(player.getQueueState());
+});
 
 // ---------------------------------------------------------------------------
 // POST /api/player/play
@@ -284,87 +279,71 @@ router.post(
 // channel. This is the web UI equivalent of the /leave slash command.
 // Member accessible.
 // ---------------------------------------------------------------------------
-router.post(
-  '/leave',
-  requireAuth,
-  // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
-    const connection = getVoiceConnection(GUILD_ID);
+router.post('/leave', requireAuth, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
+  const connection = getVoiceConnection(GUILD_ID);
 
-    if (!player && !connection) {
-      res.status(409).json({ error: 'The bot is not in a voice channel.' });
-      return;
-    }
+  if (!player && !connection) {
+    res.status(409).json({ error: 'The bot is not in a voice channel.' });
+    return;
+  }
 
-    // Stop the player first (broadcasts idle state, kills FFmpeg process).
-    if (player) {
-      player.stop();
-    }
+  // Stop the player first (broadcasts idle state, kills FFmpeg process).
+  if (player) {
+    player.stop();
+  }
 
-    // Destroy the voice connection.
-    if (connection) {
-      connection.destroy();
-    }
+  // Destroy the voice connection.
+  if (connection) {
+    connection.destroy();
+  }
 
-    // Belt-and-suspenders cleanup.
-    removePlayer(GUILD_ID);
+  // Belt-and-suspenders cleanup.
+  removePlayer(GUILD_ID);
 
-    res.json({ message: 'Left the voice channel.' });
-  })
-);
+  res.json({ message: 'Left the voice channel.' });
+});
 
 // ---------------------------------------------------------------------------
 // POST /api/player/loop
 // Member accessible.
 // ---------------------------------------------------------------------------
-router.post(
-  '/loop',
-  requireAuth,
-  // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
-  asyncHandler(async (req, res) => {
-    const { mode } = req.body as { mode?: LoopMode };
+router.post('/loop', requireAuth, (req, res) => {
+  const { mode } = req.body as { mode?: LoopMode };
 
-    if (!mode || !['off', 'song', 'queue'].includes(mode)) {
-      res.status(400).json({ error: 'mode must be "off", "song", or "queue".' });
-      return;
-    }
+  if (!mode || !['off', 'song', 'queue'].includes(mode)) {
+    res.status(400).json({ error: 'mode must be "off", "song", or "queue".' });
+    return;
+  }
 
-    const player = getPlayer(GUILD_ID);
+  const player = getPlayer(GUILD_ID);
 
-    if (!player) {
-      res.status(409).json({ error: 'Nothing is playing.' });
-      return;
-    }
+  if (!player) {
+    res.status(409).json({ error: 'Nothing is playing.' });
+    return;
+  }
 
-    player.setLoopMode(mode);
+  player.setLoopMode(mode);
 
-    res.json({ loopMode: mode });
-  })
-);
+  res.json({ loopMode: mode });
+});
 
 // ---------------------------------------------------------------------------
 // POST /api/player/shuffle
 // Admin only.
 // ---------------------------------------------------------------------------
-router.post(
-  '/shuffle',
-  requireAuth,
-  requireAdmin,
-  // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
+router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
 
-    if (!player || player.getQueue().length === 0) {
-      res.status(409).json({ error: 'No songs in the queue to shuffle.' });
-      return;
-    }
+  if (!player || player.getQueue().length === 0) {
+    res.status(409).json({ error: 'No songs in the queue to shuffle.' });
+    return;
+  }
 
-    player.shuffle();
+  player.shuffle();
 
-    res.json({ message: 'Queue shuffled.' });
-  })
-);
+  res.json({ message: 'Queue shuffled.' });
+});
 
 // ---------------------------------------------------------------------------
 // POST /api/player/quick-add
@@ -463,46 +442,35 @@ router.post(
 // POST /api/player/pause-toggle
 // Member accessible.
 // ---------------------------------------------------------------------------
-router.post(
-  '/pause-toggle',
-  requireAuth,
-  // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
+router.post('/pause-toggle', requireAuth, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
 
-    if (!player || !player.getCurrentSong()) {
-      res.status(409).json({ error: 'Nothing is currently playing.' });
-      return;
-    }
+  if (!player || !player.getCurrentSong()) {
+    res.status(409).json({ error: 'Nothing is currently playing.' });
+    return;
+  }
 
-    const isPaused = player.togglePause();
+  const isPaused = player.togglePause();
 
-    res.json({ isPaused });
-  })
-);
+  res.json({ isPaused });
+});
 
 // ---------------------------------------------------------------------------
 // POST /api/player/clear
 // Admin only.
 // ---------------------------------------------------------------------------
-router.post(
-  '/clear',
-  requireAuth,
-  requireAdmin,
-  // biome-ignore lint/suspicious/useAwait: Handler doesn't need await
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
+router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
 
-    if (!player) {
-      res.status(409).json({ error: 'Nothing is playing.' });
-      return;
-    }
+  if (!player) {
+    res.status(409).json({ error: 'Nothing is playing.' });
+    return;
+  }
 
-    player.clearQueue();
+  player.clearQueue();
 
-    res.json({ message: 'Queue cleared.' });
-  })
-);
+  res.json({ message: 'Queue cleared.' });
+});
 
 // ---------------------------------------------------------------------------
 // POST /api/player/add-to-priority

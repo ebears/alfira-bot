@@ -123,9 +123,7 @@ async function main(): Promise<void> {
   // 3. Inject the broadcast function into the bot package.
   //    GuildPlayer calls broadcastQueueUpdate() after every state change;
   //    this wires it to the real Socket.io emit.
-  setBroadcastQueueUpdate((state) => {
-    emitPlayerUpdate(state);
-  });
+  setBroadcastQueueUpdate(emitPlayerUpdate);
 
   // 4. Start the HTTP server (Express + Socket.io on the same port).
   httpServer.listen(PORT, () => {
