@@ -44,8 +44,9 @@ WORKDIR /app
 COPY packages/web ./packages/web
 COPY packages/shared ./packages/shared
 
-# Build the web application
-RUN pnpm --filter @alfira-bot/web run build
+# Build shared package (required for type declarations) then web
+RUN pnpm --filter @alfira-bot/shared run build && \
+    pnpm --filter @alfira-bot/web run build
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal nginx image serving static files
