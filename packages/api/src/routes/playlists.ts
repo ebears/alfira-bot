@@ -68,6 +68,14 @@ async function getUserDisplayName(discordId: string): Promise<string> {
   }
 }
 
+async function emitPlaylistBroadcast(playlistId: string): Promise<void> {
+  const updatedPlaylist = await prisma.playlist.findUnique({
+    where: { id: playlistId },
+    include: { _count: { select: { songs: true } } },
+  });
+  if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/playlists
 //
@@ -344,13 +352,7 @@ router.post(
       include: { song: true },
     });
 
-    // Fetch the updated playlist with the new song count for the broadcast.
-    const updatedPlaylist = await prisma.playlist.findUnique({
-      where: { id: playlist.id },
-      include: { _count: { select: { songs: true } } },
-    });
-
-    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+    await emitPlaylistBroadcast(playlist.id);
     res.status(201).json(playlistSong);
   })
 );
@@ -417,13 +419,7 @@ router.delete(
       )
     );
 
-    // Broadcast the updated playlist with the new song count.
-    const updatedPlaylist = await prisma.playlist.findUnique({
-      where: { id: playlistId as string },
-      include: { _count: { select: { songs: true } } },
-    });
-
-    if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+    await emitPlaylistBroadcast(playlistId as string);
     res.status(204).send();
   })
 );
