@@ -13,6 +13,7 @@ import { Router } from 'express';
 import prisma from '../lib/prisma';
 import {
   buildQueuedSongFromMetadata,
+  dbSongToQueuedSong,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
   validateYouTubePlaylistUrl,
@@ -242,12 +243,7 @@ router.post(
     // Build QueuedSong objects.
     // requestedBy shows who triggered playback in "Now playing" embeds.
     const requestedBy = req.user?.username ?? 'Unknown';
-
-    const queuedSongs: QueuedSong[] = dbSongs.map((song) => ({
-      ...song,
-      createdAt: song.createdAt.toISOString(),
-      requestedBy,
-    }));
+    const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
 
     // If starting from a specific song, clear the queue and interrupt current playback
     if (startFromSongId) {
@@ -543,19 +539,7 @@ router.post(
 
     // Create a QueuedSong from the database song
     const requestedBy = req.user?.username ?? 'Unknown';
-
-    const queuedSong: QueuedSong = {
-      id: song.id,
-      title: song.title,
-      youtubeUrl: song.youtubeUrl,
-      youtubeId: song.youtubeId,
-      duration: song.duration,
-      thumbnailUrl: song.thumbnailUrl,
-      addedBy: song.addedBy,
-      nickname: song.nickname,
-      createdAt: song.createdAt.toISOString(),
-      requestedBy,
-    };
+    const queuedSong = dbSongToQueuedSong(song, requestedBy);
 
     await player.addToPriorityQueue(queuedSong);
 
