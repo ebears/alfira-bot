@@ -1,3 +1,4 @@
+import { formatDuration } from '@alfira-bot/shared';
 import {
   ChevronLeft,
   Disc3,
@@ -19,7 +20,6 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
-import { formatDuration } from '../utils/format';
 import MobileNav from './MobileNav';
 import SettingsMenu from './SettingsMenu';
 

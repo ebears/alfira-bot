@@ -1,4 +1,5 @@
 import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
+import { formatDuration } from '@alfira-bot/shared';
 import {
   ChevronLeft,
   CirclePlay,
@@ -30,7 +31,6 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
-import { formatDuration } from '../utils/format';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();

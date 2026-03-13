@@ -10,15 +10,10 @@ import type { Response } from 'express';
 const MAX_URL_LENGTH = 2000;
 
 /**
- * Base URL validation: checks type, length, and calls a format validator.
- * Returns the trimmed URL or null (response already sent on error).
+ * Validates a YouTube URL for single video endpoints.
+ * Sends error response and returns null if invalid, otherwise returns the trimmed URL.
  */
-function validateUrlBase(
-  youtubeUrl: unknown,
-  res: Response,
-  validate: (url: string) => boolean,
-  errorMessage: string
-): string | null {
+export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
   if (!youtubeUrl || typeof youtubeUrl !== 'string') {
     res.status(400).json({ error: 'youtubeUrl is required.' });
     return null;
@@ -31,8 +26,8 @@ function validateUrlBase(
     return null;
   }
 
-  if (!validate(url)) {
-    res.status(400).json({ error: errorMessage });
+  if (!isValidYouTubeUrl(url)) {
+    res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
     return null;
   }
 
@@ -40,29 +35,31 @@ function validateUrlBase(
 }
 
 /**
- * Validates a YouTube URL for single video endpoints.
- * Sends error response and returns null if invalid, otherwise returns the trimmed URL.
- */
-export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
-  return validateUrlBase(
-    youtubeUrl,
-    res,
-    isValidYouTubeUrl,
-    'That does not look like a valid YouTube URL.'
-  );
-}
-
-/**
  * Validates a YouTube playlist URL.
  * Sends error response and returns null if invalid, otherwise returns the trimmed URL.
  */
 export function validateYouTubePlaylistUrl(youtubeUrl: unknown, res: Response): string | null {
-  return validateUrlBase(
-    youtubeUrl,
-    res,
-    isYouTubePlaylistUrl,
-    'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.'
-  );
+  if (!youtubeUrl || typeof youtubeUrl !== 'string') {
+    res.status(400).json({ error: 'youtubeUrl is required.' });
+    return null;
+  }
+
+  const url = youtubeUrl.trim();
+
+  if (url.length > MAX_URL_LENGTH) {
+    res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+    return null;
+  }
+
+  if (!isYouTubePlaylistUrl(url)) {
+    res.status(400).json({
+      error:
+        'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
+    });
+    return null;
+  }
+
+  return url;
 }
 
 /**
