@@ -238,7 +238,7 @@ export class GuildPlayer {
         // Notify the text channel. fire-and-forget; don't let a channel error
         // bubble up through an event handler.
         this.sendToTextChannel(
-          '⚠️ Lost the voice connection unexpectedly. ' + 'Use **/play** or **/join** to reconnect.'
+          '⚠️ Lost the voice connection unexpectedly. Use **/play** or **/join** to reconnect.'
         );
       }
 
@@ -453,11 +453,11 @@ export class GuildPlayer {
    * Fire-and-forget: returns void, not a Promise.
    */
   private sendToTextChannel(message: string | { embeds: EmbedBuilder[] }): void {
-    const promise =
-      typeof message === 'string' ? this.textChannel.send(message) : this.textChannel.send(message);
-    promise.catch((err) =>
-      console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, err)
-    );
+    this.textChannel
+      .send(message)
+      .catch((err) =>
+        console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, err)
+      );
   }
 
   /**

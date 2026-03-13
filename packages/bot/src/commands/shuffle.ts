@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
+import { requireGuild } from './guards';
 
 export const shuffleCommand: Command = {
   data: new SlashCommandBuilder()
@@ -8,15 +9,10 @@ export const shuffleCommand: Command = {
     .setDescription('Shuffle the upcoming queue. Does not affect the current song.'),
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
-    const player = getPlayer(interaction.guild.id);
+    const player = getPlayer(guild.id);
     const queue = player?.getQueue() ?? [];
 
     if (!player || queue.length === 0) {

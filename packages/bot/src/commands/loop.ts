@@ -3,6 +3,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 import { formatLoopMode } from '../utils/format';
+import { requireGuild } from './guards';
 
 export const loopCommand: Command = {
   data: new SlashCommandBuilder()
@@ -21,15 +22,10 @@ export const loopCommand: Command = {
     ) as SlashCommandBuilder,
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
-    const player = getPlayer(interaction.guild.id);
+    const player = getPlayer(guild.id);
 
     if (!player) {
       await interaction.reply({ content: 'Nothing is playing.', flags: 'Ephemeral' });

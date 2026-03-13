@@ -2,6 +2,7 @@ import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs
 import { ChannelType, type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
 import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
+import { requireGuild } from './guards';
 
 export const joinCommand: Command = {
   data: new SlashCommandBuilder()
@@ -9,14 +10,8 @@ export const joinCommand: Command = {
     .setDescription('Join your current voice channel.'),
 
   async execute(interaction) {
-    // Ensure the command is used inside a guild.
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
     // Fetch the member's current voice state.
     const member = interaction.member as GuildMember;
@@ -47,8 +42,8 @@ export const joinCommand: Command = {
     try {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
-        guildId: interaction.guild.id,
-        adapterCreator: interaction.guild.voiceAdapterCreator,
+        guildId: guild.id,
+        adapterCreator: guild.voiceAdapterCreator,
       });
 
       // Wait until the connection is ready (or fail after 5 seconds).
@@ -58,7 +53,7 @@ export const joinCommand: Command = {
       // start playback via POST /api/player/play without needing a Discord
       // slash command first. The text channel is used for "Now playing" embeds.
       const textChannel = interaction.channel as TextChannel;
-      createPlayer(interaction.guild.id, connection, textChannel);
+      createPlayer(guild.id, connection, textChannel);
 
       await interaction.editReply(`✅ Joined **${voiceChannel.name}**.`);
     } catch (error) {

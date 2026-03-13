@@ -4,7 +4,7 @@ import {
   joinVoiceChannel,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
-import { ChannelType, type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
+import { type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
 import type { Prisma } from '../../../api/src/generated/prisma/client';
 import prisma from '../lib/prisma';
 
@@ -18,6 +18,7 @@ type PlaylistSongWithSong = Prisma.PlaylistSongGetPayload<{ include: { song: tru
 import type { QueuedSong } from '@alfira-bot/shared';
 import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
+import { requireGuild, requireVoiceChannel } from './guards';
 
 export const playlistCommand: Command = {
   // SlashCommandBuilder (not the Omit variant) because addSubcommand is used.
@@ -34,13 +35,8 @@ export const playlistCommand: Command = {
     ),
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
     const subcommand = interaction.options.getSubcommand();
 
@@ -51,20 +47,8 @@ export const playlistCommand: Command = {
       const name = interaction.options.getString('name', true).trim();
 
       // Ensure the user is in a voice channel before hitting the database.
-      const member = interaction.member as GuildMember;
-      const voiceChannel = member.voice.channel;
-
-      if (
-        !voiceChannel ||
-        (voiceChannel.type !== ChannelType.GuildVoice &&
-          voiceChannel.type !== ChannelType.GuildStageVoice)
-      ) {
-        await interaction.reply({
-          content: 'You need to be in a voice channel to use this command.',
-          flags: 'Ephemeral',
-        });
-        return;
-      }
+      const voiceChannel = await requireVoiceChannel(interaction);
+      if (!voiceChannel) return;
 
       // Database lookup can take a moment; defer immediately.
       await interaction.deferReply();
@@ -101,13 +85,14 @@ export const playlistCommand: Command = {
       // ---------------------------------------------------------------------------
       // Get or create the voice connection.
       // ---------------------------------------------------------------------------
-      let connection = getVoiceConnection(interaction.guild.id);
+      const guildId = guild.id;
+      let connection = getVoiceConnection(guildId);
 
       if (!connection) {
         connection = joinVoiceChannel({
           channelId: voiceChannel.id,
-          guildId: interaction.guild.id,
-          adapterCreator: interaction.guild.voiceAdapterCreator,
+          guildId,
+          adapterCreator: guild.voiceAdapterCreator,
         });
       }
 
@@ -125,7 +110,7 @@ export const playlistCommand: Command = {
       // Get or create the GuildPlayer.
       // ---------------------------------------------------------------------------
       const textChannel = interaction.channel as TextChannel;
-      const player = createPlayer(interaction.guild.id, connection, textChannel);
+      const player = createPlayer(guildId, connection, textChannel);
 
       // ---------------------------------------------------------------------------
       // Build QueuedSong objects from the PlaylistSong records.
@@ -133,6 +118,7 @@ export const playlistCommand: Command = {
       // ps.song is the full Song DB record (id, addedBy, etc.), so unlike the
       // /play command there are no placeholder fields here.
       // ---------------------------------------------------------------------------
+      const member = interaction.member as GuildMember;
       const queuedSongs: QueuedSong[] = playlist.songs.map((ps: PlaylistSongWithSong) => ({
         ...ps.song,
         createdAt: ps.song.createdAt.toISOString(),
