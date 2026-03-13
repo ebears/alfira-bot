@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@alfira-bot/shared": "workspace:*",
+    "@phosphor-icons/react": "^2.1.10",
     "axios": "^1.13.6",
-    "lucide-react": "^0.577.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.1",
