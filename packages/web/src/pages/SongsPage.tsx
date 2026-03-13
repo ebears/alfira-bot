@@ -11,10 +11,13 @@ import {
   importPlaylist,
   startPlayback,
 } from '../api/api';
+import { Backdrop } from '../components/Backdrop';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
+import { apiErrorMessage } from '../utils/api';
+import { formatDuration } from '../utils/format';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
@@ -88,10 +91,11 @@ export default function SongsPage() {
       });
       notify('Started playback', 'success');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg =
-        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?';
-      notify(errorMsg, 'error', 5000);
+      notify(
+        apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'),
+        'error',
+        5000
+      );
     } finally {
       setPlayingId(null);
     }
@@ -102,10 +106,11 @@ export default function SongsPage() {
       await addToPriorityQueue(songId);
       notify('Added to Up Next', 'success');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg =
-        e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
-      notify(errorMsg, 'error', 5000);
+      notify(
+        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
+        'error',
+        5000
+      );
     }
   };
 
@@ -257,8 +262,7 @@ function SongCard({
       setAddedTo((prev) => new Set([...prev, playlistId]));
       onAddedToPlaylist();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } } };
-      if (error?.response?.data?.error?.includes('already')) {
+      if (apiErrorMessage(err, '').includes('already')) {
         setAddedTo((prev) => new Set([...prev, playlistId]));
       }
     } finally {
@@ -443,8 +447,7 @@ function AddSongModal({
         onAdded(song);
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error?.response?.data?.error ?? 'Something went wrong. Try again.');
+      setError(apiErrorMessage(err, 'Something went wrong. Try again.'));
     } finally {
       setLoading(false);
     }
@@ -566,22 +569,6 @@ function ConfirmDeleteModal({
 }
 
 // ---------------------------------------------------------------------------
-// Shared backdrop
-// ---------------------------------------------------------------------------
-function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Skeleton loading grid
 // ---------------------------------------------------------------------------
 function SkeletonGrid() {
@@ -636,14 +623,4 @@ function EmptyState({
       )}
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Helpers / icons
-// ---------------------------------------------------------------------------
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }

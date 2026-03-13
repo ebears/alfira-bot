@@ -21,17 +21,11 @@ import {
   quickAddToQueue,
   startPlayback,
 } from '../api/api';
+import { Backdrop } from '../components/Backdrop';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+import { apiErrorMessage } from '../utils/api';
+import { formatDuration } from '../utils/format';
 
 // ---------------------------------------------------------------------------
 // QueuePage
@@ -503,21 +497,13 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
       });
       onLoaded();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(
-        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?'
-      );
+      setError(apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'));
       setSubmitting(false);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <Backdrop onClose={onClose}>
       <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
           Load Playlist
@@ -619,7 +605,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
@@ -660,21 +646,13 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
         onAdded();
       }
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(
-        e?.response?.data?.error ?? 'Could not add song to queue. Is the bot in a voice channel?'
-      );
+      setError(apiErrorMessage(err, 'Could not add song to queue. Is the bot in a voice channel?'));
       setSubmitting(false);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <Backdrop onClose={onClose}>
       <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Quick Add</h2>
         <p className="font-mono text-xs text-muted mb-4 md:mb-6">
@@ -742,7 +720,7 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
@@ -762,21 +740,13 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
       await overridePlay(youtubeUrl.trim());
       onOverride();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(
-        e?.response?.data?.error ?? 'Could not override playback. Is the bot in a voice channel?'
-      );
+      setError(apiErrorMessage(err, 'Could not override playback. Is the bot in a voice channel?'));
       setSubmitting(false);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <Backdrop onClose={onClose}>
       <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Override</h2>
         <p className="font-mono text-xs text-danger mb-4 md:mb-6">
@@ -831,6 +801,6 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
