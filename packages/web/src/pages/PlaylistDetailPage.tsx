@@ -23,11 +23,14 @@ import {
   startPlayback,
   togglePlaylistVisibility,
 } from '../api/api';
+import { Backdrop } from '../components/Backdrop';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
+import { apiErrorMessage } from '../utils/api';
+import { formatDuration } from '../utils/format';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -152,9 +155,7 @@ export default function PlaylistDetailPage() {
       setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
       notify(updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public', 'success');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not toggle visibility.';
-      notify(errorMsg, 'error', 5000);
+      notify(apiErrorMessage(err, 'Could not toggle visibility.'), 'error', 5000);
     }
   };
 
@@ -173,12 +174,10 @@ export default function PlaylistDetailPage() {
         startFromSongId: songId,
       });
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not start playback.';
       if (throwErrors) {
         throw err;
       }
-      notify(errorMsg, 'error', 5000);
+      notify(apiErrorMessage(err, 'Could not start playback.'), 'error', 5000);
     } finally {
       setPlayingSongId(null);
     }
@@ -189,10 +188,11 @@ export default function PlaylistDetailPage() {
       await addToPriorityQueue(songId);
       notify('Added to Up Next', 'success');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg =
-        e?.response?.data?.error ?? 'Could not add to queue. Is the bot in a voice channel?';
-      notify(errorMsg, 'error', 5000);
+      notify(
+        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
+        'error',
+        5000
+      );
     }
   };
 
@@ -206,9 +206,7 @@ export default function PlaylistDetailPage() {
       });
       notify(`Added "${playlist.name}" to queue`, 'success');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      const errorMsg = e?.response?.data?.error ?? 'Could not add to queue.';
-      notify(errorMsg, 'error', 5000);
+      notify(apiErrorMessage(err, 'Could not add to queue.'), 'error', 5000);
     }
   };
 
@@ -537,7 +535,7 @@ function AddSongsModal({
   const hasAddedNew = added.size > playlist.songs.length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <Backdrop onClose={onClose}>
       <div
         className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl
  flex flex-col max-h-[80vh] animate-fade-up"
@@ -609,7 +607,7 @@ function AddSongsModal({
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
@@ -636,16 +634,13 @@ function PlayModal({
       await onPlay(mode);
       onClose();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(
-        e?.response?.data?.error ?? 'Could not start playback. Is the bot in a voice channel?'
-      );
+      setError(apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'));
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <Backdrop onClose={onClose}>
       <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
           Play Playlist
@@ -712,7 +707,7 @@ function PlayModal({
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
@@ -731,12 +726,7 @@ function ConfirmRemoveModal({
   if (!song) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
+    <Backdrop onClose={onCancel}>
       <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
         <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Remove Song</h2>
         <p className="font-body text-sm text-muted mb-6">
@@ -752,7 +742,7 @@ function ConfirmRemoveModal({
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
@@ -793,13 +783,4 @@ function EmptyState({ isAdmin, onAdd }: { isAdmin: boolean; onAdd: () => void })
       )}
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Helpers / icons
-// ---------------------------------------------------------------------------
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }

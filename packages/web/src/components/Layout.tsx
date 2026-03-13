@@ -19,6 +19,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import { formatDuration } from '../utils/format';
 import MobileNav from './MobileNav';
 import SettingsMenu from './SettingsMenu';
 
@@ -411,10 +412,4 @@ function BarButton({
       {busy ? <Loader2 size={18} className="animate-spin md:w-3.5 md:h-3.5" /> : children}
     </button>
   );
-}
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }

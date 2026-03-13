@@ -1,8 +1,9 @@
 import type { Playlist } from '@alfira-bot/shared';
-import { Ghost } from 'lucide-react';
+import { Ghost, List } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPlaylist, deletePlaylist, getPlaylists } from '../api/api';
+import { Backdrop } from '../components/Backdrop';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
@@ -170,7 +171,7 @@ function PlaylistRow({
     >
       {/* Icon */}
       <div className="w-11 h-11 md:w-10 md:h-10 rounded-lg md:rounded bg-accent/10 border border-accent/20 shrink-0 flex items-center justify-center">
-        <ListIcon size={18} className="text-accent md:w-4 md:h-4" />
+        <List size={18} className="text-accent md:w-4 md:h-4" />
       </div>
       {/* Info */}
       <div className="flex-1 min-w-0">
@@ -342,45 +343,6 @@ function EmptyState({ isAdmin, onCreate }: { isAdmin: boolean; onCreate: () => v
         <p className="font-mono text-xs text-faint">no playlists have been created yet</p>
       )}
     </div>
-  );
-}
-
-function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      role="presentation"
-    >
-      {children}
-    </div>
-  );
-}
-
-function ListIcon({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-label="Playlist"
-    >
-      <title>Playlist</title>
-      <line x1="8" y1="6" x2="21" y2="6" />
-      <line x1="8" y1="12" x2="21" y2="12" />
-      <line x1="8" y1="18" x2="21" y2="18" />
-      <line x1="3" y1="6" x2="3.01" y2="6" />
-      <line x1="3" y1="12" x2="3.01" y2="12" />
-      <line x1="3" y1="18" x2="3.01" y2="18" />
-    </svg>
   );
 }
 
