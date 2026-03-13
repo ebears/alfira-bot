@@ -9,9 +9,6 @@ import { requireAuth } from '../middleware/requireAuth';
 const router = Router();
 const MAX_NAME_LENGTH = 200;
 
-// ---------------------------------------------------------------------------
-// Permission helpers
-// ---------------------------------------------------------------------------
 interface UserContext {
   discordId?: string;
   isAdmin?: boolean;
@@ -22,44 +19,29 @@ interface PlaylistLike {
   isPrivate: boolean;
 }
 
-/**
- * Returns true if the user can view/modify a private playlist.
- * The creator always has access; admins only when Admin View is active.
- */
+/** Returns true if user can view/modify a private playlist. */
 function canAccessPrivatePlaylist(
   playlist: PlaylistLike,
   user: UserContext | undefined,
   adminView?: boolean
 ): boolean {
   if (!playlist.isPrivate) return true;
-  const isCreator = playlist.createdBy === user?.discordId;
-  const isAdminInAdminView = user?.isAdmin === true && adminView === true;
-  return isCreator || isAdminInAdminView;
+  return playlist.createdBy === user?.discordId || (user?.isAdmin === true && adminView === true);
 }
 
-/**
- * Checks if the user can modify a playlist (owner or admin).
- * Sends 403 response and returns false if not authorized.
- */
+/** Returns true if user is owner or admin. Sends 403 and returns false if not. */
 function requirePlaylistOwnerOrAdmin(
   playlist: PlaylistLike,
   user: UserContext | undefined,
   res: Response,
   action: string
 ): boolean {
-  const isOwner = playlist.createdBy === user?.discordId;
-  const isAdmin = user?.isAdmin;
-  if (!isOwner && !isAdmin) {
-    res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
-    return false;
-  }
-  return true;
+  if (playlist.createdBy === user?.discordId || user?.isAdmin) return true;
+  res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
+  return false;
 }
 
-/**
- * Checks if the user can access a private playlist.
- * Sends 403 response and returns false if not authorized.
- */
+/** Sends 403 if user cannot access this private playlist. */
 function checkPlaylistAccess(
   playlist: PlaylistLike,
   user: UserContext | undefined,
@@ -71,19 +53,13 @@ function checkPlaylistAccess(
   return false;
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Fetch user's display name from Discord
-// Returns nickname if set, otherwise username
-// ---------------------------------------------------------------------------
 async function getUserDisplayName(discordId: string): Promise<string> {
   const client = getClient();
   if (!client) return discordId;
 
   try {
-    // Use the configured guild ID from environment
     const guildId = process.env.GUILD_ID;
     if (!guildId) return discordId;
-
     const guild = await client.guilds.fetch(guildId);
     const member = await guild.members.fetch(discordId);
     return member.displayName || member.user.username || discordId;
