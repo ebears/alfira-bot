@@ -1,4 +1,4 @@
-import { Monitor, Moon, Settings, Sun, X } from 'lucide-react';
+import { Desktop, Gear, Moon, Sun, X } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +30,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
               : 'w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-body font-medium text-muted hover:text-fg hover:bg-elevated transition-colors duration-150'
           }
         >
-          <Settings size={16} />
+          <Gear size={16} weight="duotone" />
           {!collapsed && <span>Settings</span>}
         </button>
       </div>
@@ -59,7 +59,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                 }}
                 className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
               >
-                <X size={20} />
+                <X size={20} weight="duotone" />
               </button>
             </div>
 
@@ -122,7 +122,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
-                    <Monitor size={16} />
+                    <Desktop size={16} weight="duotone" />
                     <span>Auto</span>
                   </button>
                   <button
@@ -134,7 +134,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
-                    <Sun size={16} />
+                    <Sun size={16} weight="duotone" />
                     <span>Light</span>
                   </button>
                   <button
@@ -146,7 +146,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
-                    <Moon size={16} />
+                    <Moon size={16} weight="duotone" />
                     <span>Dark</span>
                   </button>
                 </div>
