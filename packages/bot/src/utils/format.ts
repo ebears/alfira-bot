@@ -1,5 +1,5 @@
 import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
-import { formatDuration } from '@alfira-bot/shared/src/format';
+import { formatDuration } from '@alfira-bot/shared';
 import { EmbedBuilder } from 'discord.js';
 
 export { formatDuration };

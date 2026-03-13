@@ -53,8 +53,9 @@ COPY packages ./packages
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
 
-# Build the bot package (required by API)
-RUN pnpm --filter @alfira-bot/bot run build
+# Build shared (required by bot for runtime exports) and bot package
+RUN pnpm --filter @alfira-bot/shared run build && \
+    pnpm --filter @alfira-bot/bot run build
 
 ENV NODE_ENV=development
 
@@ -75,8 +76,9 @@ COPY packages ./packages
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
 
-# Build bot and API
-RUN pnpm --filter @alfira-bot/bot run build && \
+# Build shared, bot, and API (shared must build first — bot imports runtime code from it)
+RUN pnpm --filter @alfira-bot/shared run build && \
+    pnpm --filter @alfira-bot/bot run build && \
     pnpm --filter @alfira-bot/api run build
 
 # ---------------------------------------------------------------------------
@@ -143,7 +145,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/prisma.config.ts ./prisma.config.
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/package.json ./packages/api/package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/package.json ./packages/bot/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared ./packages/shared
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/package.json
 
 # Switch to non-root user
 USER nodejs
