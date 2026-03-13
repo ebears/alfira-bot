@@ -1,7 +1,8 @@
+import { formatDuration } from '@alfira-bot/shared';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { formatDuration, formatLoopMode } from '../utils/format';
+import { formatLoopMode } from '../utils/format';
 import { requireGuild } from './guards';
 
 // Maximum number of queued songs to list before truncating.

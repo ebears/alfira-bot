@@ -3,14 +3,14 @@ import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
-export interface SongMetadata {
+interface SongMetadata {
   title: string;
   youtubeId: string;
   duration: number; // seconds
   thumbnailUrl: string;
 }
 
-export interface PlaylistMetadata {
+interface PlaylistMetadata {
   title: string;
   playlistId: string;
   videoCount: number;

@@ -12,15 +12,13 @@ export const skipCommand: Command = {
     const player = await requirePlaying(interaction, guild.id);
     if (!player) return;
 
-    const current = player.getCurrentSong();
+    const currentTitle = player.getCurrentSong()?.title;
     await player.skip();
 
-    const next = player.getCurrentSong();
-
-    if (next) {
-      await interaction.reply(`⏭️ Skipped **${current?.title}**.`);
+    if (player.getCurrentSong()) {
+      await interaction.reply(`⏭️ Skipped **${currentTitle}**.`);
     } else {
-      await interaction.reply(`⏭️ Skipped **${current?.title}**. The queue is now empty.`);
+      await interaction.reply(`⏭️ Skipped **${currentTitle}**. The queue is now empty.`);
     }
   },
 };
