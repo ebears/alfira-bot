@@ -2,6 +2,7 @@ import { getVoiceConnection } from '@discordjs/voice';
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer, removePlayer } from '../player/manager';
 import type { Command } from '../types';
+import { requireGuild } from './guards';
 
 export const leaveCommand: Command = {
   data: new SlashCommandBuilder()
@@ -9,15 +10,11 @@ export const leaveCommand: Command = {
     .setDescription('Stop playback, clear the queue, and leave the voice channel.'),
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
-    const connection = getVoiceConnection(interaction.guild.id);
+    const guildId = guild.id;
+    const connection = getVoiceConnection(guildId);
 
     if (!connection) {
       await interaction.reply({
@@ -28,7 +25,7 @@ export const leaveCommand: Command = {
     }
 
     // Stop the GuildPlayer first (clears queue, broadcasts idle state, kills FFmpeg).
-    const player = getPlayer(interaction.guild.id);
+    const player = getPlayer(guildId);
     if (player) {
       player.stop();
     }
@@ -39,7 +36,7 @@ export const leaveCommand: Command = {
 
     // Belt-and-suspenders: remove from manager in case the Destroyed handler
     // has already been unregistered or hasn't fired yet.
-    removePlayer(interaction.guild.id);
+    removePlayer(guildId);
 
     await interaction.reply('👋 Stopped playback and left the voice channel.');
   },

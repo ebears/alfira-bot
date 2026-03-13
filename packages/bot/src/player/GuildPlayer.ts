@@ -10,7 +10,7 @@ import {
   type VoiceConnection,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
-import type { TextChannel } from 'discord.js';
+import type { EmbedBuilder, TextChannel } from 'discord.js';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import { buildNowPlayingEmbed } from '../utils/format';
 import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
@@ -237,14 +237,9 @@ export class GuildPlayer {
 
         // Notify the text channel. fire-and-forget; don't let a channel error
         // bubble up through an event handler.
-        this.textChannel
-          .send(
-            '⚠️ Lost the voice connection unexpectedly. ' +
-              'Use **/play** or **/join** to reconnect.'
-          )
-          .catch((err) =>
-            console.error(`[GuildPlayer:${this.guildId}] Failed to send disconnect warning:`, err)
-          );
+        this.sendToTextChannel(
+          '⚠️ Lost the voice connection unexpectedly. Use **/play** or **/join** to reconnect.'
+        );
       }
 
       // Always clean up the manager entry. removePlayer() is a simple
@@ -454,6 +449,21 @@ export class GuildPlayer {
   // ---------------------------------------------------------------------------
 
   /**
+<<<<<<< Updated upstream
+=======
+   * Send a message to the text channel, logging any errors without throwing.
+   * Fire-and-forget: returns void, not a Promise.
+   */
+  private sendToTextChannel(message: string | { embeds: EmbedBuilder[] }): void {
+    this.textChannel
+      .send(message)
+      .catch((err) =>
+        console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, err)
+      );
+  }
+
+  /**
+>>>>>>> Stashed changes
    * Pull the next song off the queue and start playing it.
    *
    * Fetches a fresh CDN URL at playback time (not at enqueue time) to avoid

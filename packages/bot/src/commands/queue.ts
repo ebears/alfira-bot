@@ -2,6 +2,7 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 import { formatDuration, formatLoopMode } from '../utils/format';
+import { requireGuild } from './guards';
 
 // Maximum number of queued songs to list before truncating.
 // Discord embeds have a 6000 character total limit. At ~60 chars per entry,
@@ -12,15 +13,10 @@ export const queueCommand: Command = {
   data: new SlashCommandBuilder().setName('queue').setDescription('Show the current queue.'),
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
-    const player = getPlayer(interaction.guild.id);
+    const player = getPlayer(guild.id);
     const current = player?.getCurrentSong() ?? null;
     const queue = player?.getQueue() ?? [];
     const loopMode = player?.getLoopMode() ?? 'off';

@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 import { buildNowPlayingEmbed } from '../utils/format';
+import { requireGuild } from './guards';
 
 export const nowplayingCommand: Command = {
   data: new SlashCommandBuilder()
@@ -9,15 +10,10 @@ export const nowplayingCommand: Command = {
     .setDescription('Show what is currently playing.'),
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
-    const player = getPlayer(interaction.guild.id);
+    const player = getPlayer(guild.id);
     const song = player?.getCurrentSong() ?? null;
 
     if (!song) {

@@ -5,11 +5,12 @@ import {
   joinVoiceChannel,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
-import { ChannelType, type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
+import { type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
 import prisma from '../lib/prisma';
 import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
 import { getMetadata, isValidYouTubeUrl } from '../utils/ytdlp';
+import { requireGuild, requireVoiceChannel } from './guards';
 
 export const playCommand: Command = {
   data: new SlashCommandBuilder()
@@ -20,13 +21,8 @@ export const playCommand: Command = {
     ) as SlashCommandBuilder,
 
   async execute(interaction) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: 'This command can only be used inside a server.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const guild = await requireGuild(interaction);
+    if (!guild) return;
 
     const url = interaction.options.getString('url', true).trim();
 
@@ -44,20 +40,8 @@ export const playCommand: Command = {
     // ---------------------------------------------------------------------------
     // Ensure the user is in a voice channel.
     // ---------------------------------------------------------------------------
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member.voice.channel;
-
-    if (
-      !voiceChannel ||
-      (voiceChannel.type !== ChannelType.GuildVoice &&
-        voiceChannel.type !== ChannelType.GuildStageVoice)
-    ) {
-      await interaction.reply({
-        content: 'You need to be in a voice channel to use this command.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const voiceChannel = await requireVoiceChannel(interaction);
+    if (!voiceChannel) return;
 
     // Fetching metadata can take a moment, so defer immediately.
     await interaction.deferReply();
@@ -94,13 +78,14 @@ export const playCommand: Command = {
     // If the bot is already connected (e.g. from a previous /play or /join),
     // reuse that connection. Otherwise join the user's channel.
     // ---------------------------------------------------------------------------
-    let connection = getVoiceConnection(interaction.guild.id);
+    const guildId = guild.id;
+    let connection = getVoiceConnection(guildId);
 
     if (!connection) {
       connection = joinVoiceChannel({
         channelId: voiceChannel.id,
-        guildId: interaction.guild.id,
-        adapterCreator: interaction.guild.voiceAdapterCreator,
+        guildId,
+        adapterCreator: guild.voiceAdapterCreator,
       });
     }
 
@@ -116,7 +101,7 @@ export const playCommand: Command = {
     // Get or create the GuildPlayer for this guild.
     // ---------------------------------------------------------------------------
     const textChannel = interaction.channel as TextChannel;
-    const player = createPlayer(interaction.guild.id, connection, textChannel);
+    const player = createPlayer(guildId, connection, textChannel);
 
     // ---------------------------------------------------------------------------
     // Build the QueuedSong.
@@ -128,6 +113,7 @@ export const playCommand: Command = {
     // Note: getStreamFormat() is NOT called here. The GuildPlayer calls it at
     // playback time so CDN URLs are always fresh for songs in long queues.
     // ---------------------------------------------------------------------------
+    const member = interaction.member as GuildMember;
     const song: QueuedSong = dbSong
       ? { ...dbSong, createdAt: dbSong.createdAt.toISOString(), requestedBy: member.displayName }
       : {
