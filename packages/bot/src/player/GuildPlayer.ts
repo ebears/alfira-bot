@@ -430,10 +430,6 @@ export class GuildPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
   }
 
-  isPausedState(): boolean {
-    return this.paused;
-  }
-
   // ---------------------------------------------------------------------------
   // getQueueState
   //
