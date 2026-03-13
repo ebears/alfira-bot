@@ -1,22 +1,8 @@
 import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
+import { formatDuration } from '@alfira-bot/shared/src/format';
 import { EmbedBuilder } from 'discord.js';
 
-// ---------------------------------------------------------------------------
-// formatDuration
-//
-// Converts a duration in whole seconds to an M:SS display string.
-// Used in "Now Playing" embeds and queue listings.
-//
-// Examples:
-//   formatDuration(0)    → "0:00"
-//   formatDuration(90)   → "1:30"
-//   formatDuration(3661) → "61:01"
-// ---------------------------------------------------------------------------
-export function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+export { formatDuration };
 
 // ---------------------------------------------------------------------------
 // formatLoopMode
