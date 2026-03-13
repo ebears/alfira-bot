@@ -79,18 +79,27 @@ RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:gen
 RUN pnpm --filter @alfira-bot/bot run build && \
     pnpm --filter @alfira-bot/api run build
 
-# Regenerate Prisma client for production (before pruning so prisma CLI is available)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
+# ---------------------------------------------------------------------------
+# Production deps stage - install only production dependencies
+# ---------------------------------------------------------------------------
+FROM node:25-alpine AS prod-deps
+RUN npm install -g pnpm
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/api/package.json ./packages/api/
+COPY packages/bot/package.json ./packages/bot/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/web/package.json ./packages/web/
 
-# Remove devDependencies for smaller production image
-RUN CI=true pnpm prune --prod
+# Install only production dependencies (creates proper pnpm structure)
+RUN pnpm install --prod --frozen-lockfile
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
 # ---------------------------------------------------------------------------
 FROM node:25-alpine AS runtime
 
-# Install only runtime dependencies (no build tools)
+# Install only runtime system dependencies (no build tools)
 ARG YTDLP_VERSION=2026.03.03
 RUN apk add --no-cache \
     ffmpeg \
@@ -115,10 +124,10 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy production dependencies (root + per-package node_modules for pnpm)
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/packages/api/node_modules ./packages/api/node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/node_modules ./packages/bot/node_modules
+# Copy production node_modules (properly structured by pnpm install --prod)
+COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/api/node_modules ./packages/api/node_modules
+COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/bot/node_modules ./packages/bot/node_modules
 
 # Copy built applications
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
