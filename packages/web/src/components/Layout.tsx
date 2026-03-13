@@ -1,20 +1,21 @@
 import { formatDuration } from '@alfira-bot/shared';
 import {
-  ChevronLeft,
-  Disc3,
-  ListMusic,
-  Loader2,
-  LogOut,
-  Music,
-  Octagon,
+  CaretLeft,
+  MusicNotes,
   Pause,
   Play,
+  Playlist,
+  Queue,
   Repeat,
-  Repeat1,
+  RepeatOnce,
   ShieldUser,
+  SignOut,
   SkipForward,
-  SquarePlay,
-} from 'lucide-react';
+  Sparkle,
+  Spinner,
+  StopCircle,
+  VinylRecord,
+} from '@phosphor-icons/react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminView } from '../context/AdminViewContext';
@@ -24,9 +25,9 @@ import MobileNav from './MobileNav';
 import SettingsMenu from './SettingsMenu';
 
 const NAV_ITEMS = [
-  { to: '/songs', label: 'Songs', icon: Disc3 },
-  { to: '/playlists', label: 'Playlists', icon: ListMusic },
-  { to: '/queue', label: 'Queue', icon: SquarePlay },
+  { to: '/songs', label: 'Songs', icon: VinylRecord },
+  { to: '/playlists', label: 'Playlists', icon: Playlist },
+  { to: '/queue', label: 'Queue', icon: Queue },
 ];
 
 export default function Layout() {
@@ -82,7 +83,11 @@ export default function Layout() {
               }`}
               title={isAdminView ? 'Admin mode' : 'Member mode'}
             >
-              {isAdminView ? <ShieldUser size={18} /> : <Music size={18} />}
+              {isAdminView ? (
+                <ShieldUser size={18} weight="duotone" />
+              ) : (
+                <MusicNotes size={18} weight="duotone" />
+              )}
             </div>
           )}
           <button
@@ -91,7 +96,7 @@ export default function Layout() {
             className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <ChevronLeft size={16} className={collapsed ? 'rotate-180' : ''} />
+            <CaretLeft size={16} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
           </button>
         </div>
 
@@ -112,7 +117,7 @@ export default function Layout() {
                 }`
               }
             >
-              <Icon size={16} />
+              <Icon size={16} weight="duotone" />
               {!collapsed && label}
             </NavLink>
           ))}
@@ -147,7 +152,7 @@ export default function Layout() {
                 className="w-7 h-7 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
                 title="Log out"
               >
-                <LogOut size={14} />
+                <SignOut size={14} weight="duotone" />
               </button>
             </div>
           ) : (
@@ -246,9 +251,9 @@ function NowPlayingBar() {
 
   const loopIcon =
     loopMode === 'song' ? (
-      <Repeat1 size={18} className="md:w-4 md:h-4" />
+      <RepeatOnce size={18} weight="duotone" className="md:w-4 md:h-4" />
     ) : (
-      <Repeat size={18} className="md:w-4 md:h-4" />
+      <Repeat size={18} weight="duotone" className="md:w-4 md:h-4" />
     );
 
   const isLoopActive = loopMode !== 'off';
@@ -277,9 +282,9 @@ function NowPlayingBar() {
                 pulse={isPlaying && !isPaused}
               >
                 {isPaused || isStopped ? (
-                  <Play size={20} className="md:w-4.5 md:h-4.5" />
+                  <Play size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
                 ) : (
-                  <Pause size={20} className="md:w-4.5 md:h-4.5" />
+                  <Pause size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
                 )}
               </BarButton>
               <BarButton
@@ -289,7 +294,7 @@ function NowPlayingBar() {
                 title="Skip"
                 hoverColor="hover:text-fg"
               >
-                <SkipForward size={20} className="md:w-4.5 md:h-4.5" />
+                <SkipForward size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
               </BarButton>
             </>
           )}
@@ -301,7 +306,7 @@ function NowPlayingBar() {
               title="Stop playback"
               className="w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
             >
-              <Octagon size={20} className="md:w-4.5 md:h-4.5" />
+              <StopCircle size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
             </button>
           )}
         </div>
@@ -327,7 +332,11 @@ function NowPlayingBar() {
                 : undefined
             }
           >
-            {loopBusy ? <Loader2 size={18} className="animate-spin md:w-4 md:h-4" /> : loopIcon}
+            {loopBusy ? (
+              <Spinner size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
+            ) : (
+              loopIcon
+            )}
           </button>
         )}
 
@@ -358,7 +367,12 @@ function NowPlayingBar() {
             )}
           </div>
 
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded bg-elevated border border-border shrink-0 overflow-hidden">
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded bg-elevated border border-border shrink-0 overflow-hidden relative">
+            {currentSong && isPlaying && !isPaused && (
+              <div className="absolute -top-1.5 -right-1.5 z-10">
+                <Sparkle size={12} weight="duotone" className="text-accent animate-pulse-gentle" />
+              </div>
+            )}
             {currentSong ? (
               <img
                 src={currentSong.thumbnailUrl}
@@ -367,7 +381,7 @@ function NowPlayingBar() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Music size={18} className="text-faint" />
+                <MusicNotes size={18} weight="duotone" className="text-faint" />
               </div>
             )}
           </div>
@@ -409,7 +423,11 @@ function BarButton({
           : `${pulse ? 'text-accent animate-pulse-gentle' : 'text-muted'} ${hoverColor} hover:bg-elevated active:bg-elevated/80 cursor-pointer`
       } disabled:pointer-events-none`}
     >
-      {busy ? <Loader2 size={18} className="animate-spin md:w-3.5 md:h-3.5" /> : children}
+      {busy ? (
+        <Spinner size={18} weight="bold" className="animate-spin md:w-3.5 md:h-3.5" />
+      ) : (
+        children
+      )}
     </button>
   );
 }
