@@ -1,8 +1,8 @@
 import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
-import { ChannelType, type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
+import { SlashCommandBuilder, type TextChannel } from 'discord.js';
 import { createPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { requireGuild } from './guards';
+import { requireGuild, requireVoiceChannel } from './guards';
 
 export const joinCommand: Command = {
   data: new SlashCommandBuilder()
@@ -13,29 +13,8 @@ export const joinCommand: Command = {
     const guild = await requireGuild(interaction);
     if (!guild) return;
 
-    // Fetch the member's current voice state.
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member.voice.channel;
-
-    if (!voiceChannel) {
-      await interaction.reply({
-        content: 'You need to be in a voice channel first.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
-
-    // Only stage and regular voice channels are joinable.
-    if (
-      voiceChannel.type !== ChannelType.GuildVoice &&
-      voiceChannel.type !== ChannelType.GuildStageVoice
-    ) {
-      await interaction.reply({
-        content: 'That channel type is not supported.',
-        flags: 'Ephemeral',
-      });
-      return;
-    }
+    const voiceChannel = await requireVoiceChannel(interaction);
+    if (!voiceChannel) return;
 
     await interaction.deferReply();
 
