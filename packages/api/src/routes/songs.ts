@@ -1,19 +1,17 @@
-import {
-  getMetadata,
-  getPlaylistMetadataWithVideos,
-  isValidYouTubeUrl,
-  isYouTubePlaylistUrl,
-} from '@alfira-bot/bot/src/utils/ytdlp';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { emitSongAdded, emitSongDeleted } from '../lib/socket';
+import {
+  fetchPlaylistMetadata,
+  fetchYouTubeMetadata,
+  validateYouTubePlaylistUrl,
+  validateYouTubeUrl,
+} from '../lib/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-
-const MAX_URL_LENGTH = 2000;
 
 // ---------------------------------------------------------------------------
 // GET /api/songs
@@ -48,36 +46,12 @@ router.post(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { youtubeUrl, nickname } = req.body as { youtubeUrl?: string; nickname?: string };
+    const { nickname } = req.body as { nickname?: string };
+    const url = validateYouTubeUrl(req.body.youtubeUrl, res);
+    if (!url) return;
 
-    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-      res.status(400).json({ error: 'youtubeUrl is required.' });
-      return;
-    }
-
-    const url = youtubeUrl.trim();
-
-    if (url.length > MAX_URL_LENGTH) {
-      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-      return;
-    }
-
-    if (!isValidYouTubeUrl(url)) {
-      res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
-      return;
-    }
-
-    // Fetch metadata first so we can extract the youtubeId for the duplicate check.
-    let metadata: Awaited<ReturnType<typeof getMetadata>> | undefined;
-    try {
-      metadata = await getMetadata(url);
-    } catch {
-      res.status(422).json({
-        error:
-          'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
-      });
-      return;
-    }
+    const metadata = await fetchYouTubeMetadata(url, res);
+    if (!metadata) return;
 
     // Check for duplicate by youtubeId (more reliable than URL comparison).
     const existing = await prisma.song.findUnique({
@@ -104,7 +78,6 @@ router.post(
       },
     });
 
-    // Notify all connected clients so the Songs page updates in real time.
     emitSongAdded(song);
 
     res.status(201).json(song);
@@ -128,38 +101,12 @@ router.post(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { youtubeUrl, maxVideos } = req.body as { youtubeUrl?: string; maxVideos?: number };
+    const { maxVideos } = req.body as { maxVideos?: number };
+    const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
+    if (!url) return;
 
-    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-      res.status(400).json({ error: 'youtubeUrl is required.' });
-      return;
-    }
-
-    const url = youtubeUrl.trim();
-
-    if (url.length > MAX_URL_LENGTH) {
-      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-      return;
-    }
-
-    if (!isYouTubePlaylistUrl(url)) {
-      res.status(400).json({
-        error:
-          'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
-      });
-      return;
-    }
-
-    // Fetch playlist metadata with videos
-    let playlistMetadata: Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> | undefined;
-    try {
-      playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
-    } catch {
-      res.status(422).json({
-        error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
-      });
-      return;
-    }
+    const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
+    if (!playlistMetadata) return;
 
     // Build the canonical URL format for each video
     const videosWithUrls = playlistMetadata.videos.map((v) => ({

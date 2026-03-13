@@ -58,10 +58,6 @@ export class GuildPlayer {
   private trackStartedAt: number | null = null;
   private pausedAt: number | null = null; // wall-clock ms when pause began
 
-  // Set to true by skip() so onTrackEnd() knows to advance regardless of
-  // loop mode. Without this, skipping in 'song' mode would just replay.
-  private skipping = false;
-
   // Set to true by stop() before connection.destroy() is called, so the
   // VoiceConnectionStatus.Destroyed handler can distinguish an intentional
   // teardown (stop/leave commands) from an unexpected connection loss and
@@ -336,8 +332,6 @@ export class GuildPlayer {
   skip(): void {
     if (this.currentSong === null) return;
 
-    this.skipping = true;
-
     // If paused, unpause first so that .stop() triggers the Idle event correctly.
     // Calling .stop() on a paused AudioPlayer does not trigger the Idle event,
     // which would prevent onTrackEnd() from being called and the queue wouldn't advance.
@@ -347,10 +341,6 @@ export class GuildPlayer {
       this.pausedAt = null;
     }
 
-    // Stopping the AudioPlayer triggers AudioPlayerStatus.Idle,
-    // which calls onTrackEnd(). The skipping flag tells it to advance.
-    // The old FFmpeg process will be killed at the top of the next playNext()
-    // call. broadcastQueueUpdate will be called inside playNext() / onTrackEnd().
     this.audioPlayer.stop();
   }
 
@@ -626,14 +616,8 @@ export class GuildPlayer {
     }
 
     const finished = this.currentSong;
-    const _wasSkipping = this.skipping;
-    this.skipping = false;
 
     if (!finished) return;
-
-    // Handle song loop: if we're in song loop mode and not skipping,
-    // the playNext method will handle replaying (read pointer stayed in place)
-    // No need to re-add the song - the circular buffer handles this naturally
 
     await this.playNext();
   }

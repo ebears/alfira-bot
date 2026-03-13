@@ -1,5 +1,5 @@
 import type { Playlist } from '@alfira-bot/shared';
-import { Ghost, List } from 'lucide-react';
+import { ChevronRight, Ghost, List } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPlaylist, deletePlaylist, getPlaylists } from '../api/api';
@@ -201,7 +201,7 @@ function PlaylistRow({
         </button>
       )}
       {/* Arrow */}
-      <ChevronIcon
+      <ChevronRight
         size={18}
         className="text-faint group-hover:text-muted transition-colors duration-150 md:w-4 md:h-4"
       />
@@ -343,25 +343,5 @@ function EmptyState({ isAdmin, onCreate }: { isAdmin: boolean; onCreate: () => v
         <p className="font-mono text-xs text-faint">no playlists have been created yet</p>
       )}
     </div>
-  );
-}
-
-function ChevronIcon({ size = 20, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-label="Chevron"
-    >
-      <title>Chevron</title>
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
   );
 }
