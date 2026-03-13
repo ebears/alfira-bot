@@ -1,13 +1,9 @@
 import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
+import { formatDuration } from '@alfira-bot/shared/src/format';
 import { EmbedBuilder } from 'discord.js';
 
-export function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+export { formatDuration };
 
-// The /loop command uses its own longer confirmation strings — not shared here.
 export function formatLoopMode(mode: LoopMode): string {
   const labels: Record<LoopMode, string> = {
     off: '⬛ Off',

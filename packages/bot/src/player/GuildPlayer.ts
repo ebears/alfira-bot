@@ -44,16 +44,12 @@ export class GuildPlayer {
   private trackStartedAt: number | null = null;
   private pausedAt: number | null = null;
 
-  // Set by stop() so the Destroyed handler can distinguish intentional teardown
-  // from unexpected connection loss.
+  // Set by stop() so Destroyed handler can distinguish intentional vs unexpected teardown.
   private intentionallyStopped = false;
 
-  // Guards against multiple simultaneous reconnect attempts.
   private isReconnecting = false;
 
   // FFmpeg kill function, stored to prevent zombie processes on skip/stop.
-  // We spawn FFmpeg ourselves with HTTP reconnect flags (-reconnect etc.)
-  // so transient CDN drops are retried instead of silently ending the stream.
   private killCurrentFfmpeg: (() => void) | null = null;
 
   private readonly connection: VoiceConnection;
@@ -73,8 +69,7 @@ export class GuildPlayer {
     this.guildId = guildId;
     this.onDestroyed = onDestroyed;
 
-    // 50 frames (~1s) of missed frames before auto-pause, avoiding choppiness
-    // from brief network jitter (default 5 frames / ~100ms is too aggressive).
+    // 50 frames (~1s) before auto-pause — avoids choppiness from brief network jitter.
     this.audioPlayer = createAudioPlayer({ behaviors: { maxMissedFrames: 50 } });
     this.connection.subscribe(this.audioPlayer);
 
@@ -96,8 +91,7 @@ export class GuildPlayer {
       );
     });
 
-    // Clear UDP keepAlive interval on networking state changes to prevent
-    // periodic stutters. Discord's WebSocket gateway maintains its own heartbeat.
+    // Clear UDP keepAlive to prevent periodic stutters.
     this.connection.on('stateChange', (oldState, newState) => {
       const oldNetworking = Reflect.get(oldState, 'networking');
       const newNetworking = Reflect.get(newState, 'networking');
@@ -111,7 +105,7 @@ export class GuildPlayer {
       newNetworking?.on('stateChange', networkStateChangeHandler);
     });
 
-    // Give Discord 5s to reconnect on its own before destroying the connection.
+    // Give Discord 5s to reconnect before destroying.
     this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
       if (this.isReconnecting) return;
       this.isReconnecting = true;
@@ -138,7 +132,6 @@ export class GuildPlayer {
       }
     });
 
-    // Clean up on connection destroy — reset state for unexpected losses.
     this.connection.on(VoiceConnectionStatus.Destroyed, () => {
       console.info(`[GuildPlayer:${this.guildId}] Voice connection destroyed.`);
 

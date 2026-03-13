@@ -4,7 +4,7 @@ import {
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
 } from '@alfira-bot/bot/src/utils/ytdlp';
-import type { QueuedSong } from '@alfira-bot/shared';
+import type { QueuedSong, Song } from '@alfira-bot/shared';
 import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;
@@ -126,28 +126,10 @@ export function buildQueuedSongFromMetadata(
   };
 }
 
-// ---------------------------------------------------------------------------
-// PrismaSong: A song as returned from Prisma (with Date createdAt).
-// PrismaSongLike: Interface for objects compatible with PrismaSong.
-// ---------------------------------------------------------------------------
+// A Prisma song has Date createdAt instead of string.
+type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
 
-type PrismaSongLike = {
-  id: string;
-  title: string;
-  youtubeUrl: string;
-  youtubeId: string;
-  duration: number;
-  thumbnailUrl: string;
-  addedBy: string;
-  nickname?: string | null;
-  createdAt: Date;
-};
-
-/**
- * Converts a Prisma song (with Date createdAt) to a QueuedSong (with string createdAt).
- * Used by player routes when loading songs from the database for queue operations.
- */
-export function dbSongToQueuedSong(song: PrismaSongLike, requestedBy: string): QueuedSong {
+export function dbSongToQueuedSong(song: PrismaSong, requestedBy: string): QueuedSong {
   return {
     ...song,
     createdAt: song.createdAt.toISOString(),

@@ -20,12 +20,6 @@ import { skipCommand } from './commands/skip';
 import { setClient } from './lib/client';
 import type { Command } from './types';
 
-// ---------------------------------------------------------------------------
-// deployCommands
-//
-// Registers slash commands with Discord. Called automatically on startup when
-// AUTO_DEPLOY_COMMANDS is enabled (default: true in production).
-// ---------------------------------------------------------------------------
 async function deployCommands(
   clientId: string,
   guildId: string,
@@ -45,23 +39,10 @@ async function deployCommands(
   }
 }
 
-// ---------------------------------------------------------------------------
-// startBot
-//
-// Initialises and connects the Discord bot. Called by the API's entry point
-// (packages/api/src/index.ts) after Express and Prisma are ready.
-//
-// The bot no longer runs itself — the API process owns startup. This allows
-// the bot and API to share a process, which is required for GuildPlayer to
-// call broadcastQueueUpdate() directly on the Socket.io server (Phase 8).
-//
-// Note: dotenv is NOT called here. The API entry point loads env vars before
-// calling startBot(), so they are already on process.env by the time this runs.
-// ---------------------------------------------------------------------------
+/** Initializes and connects the Discord bot. Called by the API entry point. */
 export async function startBot(): Promise<void> {
   const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID, AUTO_DEPLOY_COMMANDS } = process.env;
 
-  // Validate required environment variables
   if (!DISCORD_BOT_TOKEN) {
     throw new Error('DISCORD_BOT_TOKEN is not set.');
   }
@@ -76,7 +57,6 @@ export async function startBot(): Promise<void> {
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
   });
 
-  // Expose the client so the API can access it for auto-join functionality.
   setClient(client);
 
   client.commands = new Collection<string, Command>();
@@ -101,8 +81,6 @@ export async function startBot(): Promise<void> {
   client.once('clientReady', async (readyClient) => {
     console.log(`✅ Bot logged in as ${readyClient.user.tag}`);
 
-    // Auto-deploy commands if enabled (default: true for convenience)
-    // Set AUTO_DEPLOY_COMMANDS=false to disable (e.g., for advanced use cases)
     const shouldAutoDeploy = AUTO_DEPLOY_COMMANDS !== 'false';
     if (shouldAutoDeploy) {
       await deployCommands(DISCORD_CLIENT_ID, GUILD_ID, DISCORD_BOT_TOKEN, commands);
