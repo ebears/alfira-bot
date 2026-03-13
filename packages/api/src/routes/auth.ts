@@ -41,10 +41,6 @@ const ADMIN_ROLE_ID_SET = new Set(
     .filter(Boolean)
 );
 
-function buildAvatarUrl(discordId: string, avatar: string | null): string | null {
-  return avatar ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png` : null;
-}
-
 // Access tokens are short-lived (1h). Refresh tokens are long-lived (7d default),
 // stored as SHA-256 hashes, and single-use.
 const ACCESS_TOKEN_EXPIRES_IN = '1h';
@@ -52,30 +48,15 @@ const REFRESH_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN ?? '7d';
 const ACCESS_COOKIE_NAME = 'session';
 const REFRESH_COOKIE_NAME = 'refresh_token';
 
-/** Parse duration strings like '7d', '1h', '30m' into milliseconds. */
-function parseDuration(duration: string): number {
-  const match = duration.match(/^(\d+)([dhms])$/);
+const REFRESH_TOKEN_MAX_AGE = (() => {
+  const match = REFRESH_TOKEN_EXPIRES_IN.match(/^(\d+)([dhms])$/);
   if (!match) {
-    console.warn(`Invalid JWT_EXPIRES_IN format "${duration}", defaulting to 7d`);
+    console.warn(`Invalid JWT_EXPIRES_IN format "${REFRESH_TOKEN_EXPIRES_IN}", defaulting to 7d`);
     return 7 * 24 * 60 * 60 * 1000;
   }
-  const value = parseInt(match[1], 10);
-  const unit = match[2];
-  switch (unit) {
-    case 'd':
-      return value * 24 * 60 * 60 * 1000;
-    case 'h':
-      return value * 60 * 60 * 1000;
-    case 'm':
-      return value * 60 * 1000;
-    case 's':
-      return value * 1000;
-    default:
-      return 7 * 24 * 60 * 60 * 1000;
-  }
-}
-
-const REFRESH_TOKEN_MAX_AGE = parseDuration(REFRESH_TOKEN_EXPIRES_IN);
+  const multipliers: Record<string, number> = { d: 86400000, h: 3600000, m: 60000, s: 1000 };
+  return parseInt(match[1], 10) * (multipliers[match[2]] ?? 86400000);
+})();
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -144,7 +125,11 @@ async function fetchUserAdminStatus(
     const memberRoles: string[] = memberRes.data.roles ?? [];
     const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
 
-    return { isAdmin, username, avatar: buildAvatarUrl(discordId, avatar) };
+    return {
+      isAdmin,
+      username,
+      avatar: avatar ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png` : null,
+    };
   } catch (err: unknown) {
     // User not in guild
     if (isAxiosError(err) && err.response?.status === 404) {
@@ -264,7 +249,9 @@ router.get(
     const payload = {
       discordId: discordUser.id,
       username: discordUser.username,
-      avatar: buildAvatarUrl(discordUser.id, discordUser.avatar),
+      avatar: discordUser.avatar
+        ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+        : null,
       isAdmin,
     };
     const accessToken = generateAccessToken(payload);

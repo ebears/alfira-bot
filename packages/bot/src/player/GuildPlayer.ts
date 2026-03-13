@@ -171,12 +171,6 @@ export class GuildPlayer {
     }
   }
 
-  clearAllQueues(): void {
-    this.priorityQueue.clear();
-    this.queue.clear();
-    broadcastQueueUpdate(this.getQueueState());
-  }
-
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
     this.queue.clear();
     this.priorityQueue.clear();

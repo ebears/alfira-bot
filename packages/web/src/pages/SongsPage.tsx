@@ -1,4 +1,5 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
+import { formatDuration } from '@alfira-bot/shared';
 import { ListPlus, ListVideo, Loader2, Play, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -17,7 +18,6 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
-import { formatDuration } from '../utils/format';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();

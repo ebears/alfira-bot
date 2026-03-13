@@ -1,4 +1,5 @@
 import type { LoopMode, Playlist, QueuedSong } from '@alfira-bot/shared';
+import { formatDuration } from '@alfira-bot/shared';
 import {
   AlertTriangle,
   CirclePlay,
@@ -22,7 +23,6 @@ import { Backdrop } from '../components/Backdrop';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { apiErrorMessage } from '../utils/api';
-import { formatDuration } from '../utils/format';
 
 // ---------------------------------------------------------------------------
 // QueuePage
