@@ -51,6 +51,7 @@ Thumbs.db
 # -----------------------------------------------
 .claude/
 .rules/
+.mcp.json
 AGENT.md
 AGENTS.md
 CLAUDE.md

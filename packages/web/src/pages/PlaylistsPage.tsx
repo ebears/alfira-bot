@@ -193,7 +193,7 @@ function PlaylistRow({
         <button
           type="button"
           onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 md:opacity-0 font-mono text-xs text-faint hover:text-danger active:text-danger transition-all duration-150 px-3 py-2.5 md:px-2 md:py-1 min-h-[44px] md:min-h-0"
+          className="opacity-0 group-hover:opacity-100 md:opacity-0 font-mono text-xs text-faint hover:text-danger active:text-danger transition-all duration-150 px-3 py-2.5 md:px-2 md:py-1 min-h-11 md:min-h-0"
           title="Delete playlist"
         >
           del
