@@ -1,4 +1,5 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
+import type { Response } from 'express';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
@@ -7,6 +8,58 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const MAX_NAME_LENGTH = 200;
+
+// ---------------------------------------------------------------------------
+// Permission helper
+// ---------------------------------------------------------------------------
+interface UserContext {
+  discordId?: string;
+  isAdmin?: boolean;
+}
+
+interface PlaylistLike {
+  createdBy: string;
+  isPrivate: boolean;
+}
+
+/**
+ * Checks if the user can modify a playlist (owner or admin).
+ * Sends 403 response and returns false if not authorized.
+ */
+function requirePlaylistOwnerOrAdmin(
+  playlist: PlaylistLike,
+  user: UserContext | undefined,
+  res: Response,
+  action: string
+): boolean {
+  const isOwner = playlist.createdBy === user?.discordId;
+  const isAdmin = user?.isAdmin;
+  if (!isOwner && !isAdmin) {
+    res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Checks if the user can access a private playlist (creator or admin in Admin View).
+ * Sends 403 response and returns false if not authorized.
+ */
+function checkPlaylistAccess(
+  playlist: PlaylistLike,
+  user: UserContext | undefined,
+  res: Response,
+  adminView?: boolean
+): boolean {
+  if (!playlist.isPrivate) return true;
+  const isCreator = playlist.createdBy === user?.discordId;
+  const isAdminInAdminView = user?.isAdmin && adminView;
+  if (!isCreator && !isAdminInAdminView) {
+    res.status(403).json({ error: 'Access denied. This playlist is private.' });
+    return false;
+  }
+  return true;
+}
 
 // ---------------------------------------------------------------------------
 // Helper: Fetch user's display name from Discord
@@ -122,15 +175,7 @@ router.get(
       return;
     }
 
-    // Check access for private playlists
-    if (playlist.isPrivate) {
-      const isCreator = playlist.createdBy === req.user?.discordId;
-      const isAdminInAdminView = req.user?.isAdmin && adminView;
-      if (!isCreator && !isAdminInAdminView) {
-        res.status(403).json({ error: 'Access denied. This playlist is private.' });
-        return;
-      }
-    }
+    if (!checkPlaylistAccess(playlist, req.user, res, adminView)) return;
 
     res.json({
       ...playlist,
@@ -215,15 +260,7 @@ router.patch(
       return;
     }
 
-    // Check permissions: playlist owner or admin
-    const isOwner = existing.createdBy === req.user?.discordId;
-    const isAdmin = req.user?.isAdmin;
-    if (!isOwner && !isAdmin) {
-      res
-        .status(403)
-        .json({ error: 'Only the playlist owner or admins can rename this playlist.' });
-      return;
-    }
+    if (!requirePlaylistOwnerOrAdmin(existing, req.user, res, 'rename this playlist')) return;
 
     const playlist = await prisma.playlist.update({
       where: { id: req.params.id as string },
@@ -255,25 +292,10 @@ router.delete(
       return;
     }
 
-    // Check permissions: playlist owner or admin
-    const isOwner = existing.createdBy === req.user?.discordId;
-
-    const isAdmin = req.user?.isAdmin;
-
-    if (!isOwner && !isAdmin) {
-      res
-        .status(403)
-        .json({ error: 'Only the playlist owner or admins can delete this playlist.' });
-      return;
-    }
+    if (!requirePlaylistOwnerOrAdmin(existing, req.user, res, 'delete this playlist')) return;
 
     await prisma.playlist.delete({ where: { id: req.params.id as string } });
 
-    // No playlist:deleted event needed — the web UI uses the playlists:updated
-    // event to re-fetch the list. For deletions, clients will notice the item
-    // is gone on the next fetch triggered by the event. A dedicated
-    // playlists:deleted event with just the ID could be added later for
-    // instant optimistic removal, but it is not in scope for Phase 8.
     res.status(204).send();
   })
 );
@@ -310,15 +332,7 @@ router.post(
       return;
     }
 
-    // Check permissions: playlist owner or admin
-    const isOwner = playlist.createdBy === req.user?.discordId;
-    const isAdmin = req.user?.isAdmin;
-    if (!isOwner && !isAdmin) {
-      res
-        .status(403)
-        .json({ error: 'Only the playlist owner or admins can add songs to this playlist.' });
-      return;
-    }
+    if (!requirePlaylistOwnerOrAdmin(playlist, req.user, res, 'add songs to this playlist')) return;
 
     // Check for duplicate.
     const existing = await prisma.playlistSong.findUnique({
@@ -382,14 +396,7 @@ router.delete(
       return;
     }
 
-    // Check permissions: playlist owner or admin
-    const isOwner = playlist.createdBy === req.user?.discordId;
-    const isAdmin = req.user?.isAdmin;
-
-    if (!isOwner && !isAdmin) {
-      res.status(403).json({ error: 'Only the playlist owner or admins can remove songs.' });
-      return;
-    }
+    if (!requirePlaylistOwnerOrAdmin(playlist, req.user, res, 'remove songs')) return;
 
     const entry = await prisma.playlistSong.findUnique({
       where: {

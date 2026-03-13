@@ -1,4 +1,4 @@
-import type { LoopMode, Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
+import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
 import {
   ChevronLeft,
   CirclePlay,
@@ -612,7 +612,7 @@ function AddSongsModal({
 }
 
 // ---------------------------------------------------------------------------
-// Play modal — mode and loop options
+// Play modal — mode selector
 // ---------------------------------------------------------------------------
 function PlayModal({
   onClose,
@@ -622,8 +622,6 @@ function PlayModal({
   onPlay: (mode: 'sequential' | 'random') => void;
 }) {
   const [mode, setMode] = useState<'sequential' | 'random'>('sequential');
-  const [loop, setLoop] = useState<LoopMode>('off');
-  // loop is preserved for UI state but not passed to onPlay since we preserve server loop mode
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -647,45 +645,23 @@ function PlayModal({
         </h2>
         <p className="font-mono text-xs text-muted mb-6">configure playback</p>
 
-        <div className="space-y-4 mb-6">
-          <div>
-            <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
-            <div className="flex gap-2">
-              {(['sequential', 'random'] as const).map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
-                    mode === m
-                      ? 'bg-accent/10 border-accent/40 text-accent'
-                      : 'border-border text-muted hover:border-muted'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Loop</p>
-            <div className="flex gap-2">
-              {(['off', 'song', 'queue'] as const).map((l) => (
-                <button
-                  type="button"
-                  key={l}
-                  onClick={() => setLoop(l)}
-                  className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
-                    loop === l
-                      ? 'bg-accent/10 border-accent/40 text-accent'
-                      : 'border-border text-muted hover:border-muted'
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+        <div className="mb-6">
+          <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
+          <div className="flex gap-2">
+            {(['sequential', 'random'] as const).map((m) => (
+              <button
+                type="button"
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
+                  mode === m
+                    ? 'bg-accent/10 border-accent/40 text-accent'
+                    : 'border-border text-muted hover:border-muted'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
           </div>
         </div>
 

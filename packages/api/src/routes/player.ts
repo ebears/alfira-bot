@@ -1,11 +1,5 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
 import { createPlayer, getPlayer, removePlayer } from '@alfira-bot/bot/src/player/manager';
-import {
-  getMetadata,
-  getPlaylistMetadataWithVideos,
-  isValidYouTubeUrl,
-  isYouTubePlaylistUrl,
-} from '@alfira-bot/bot/src/utils/ytdlp';
 import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
 import {
   entersState,
@@ -17,12 +11,17 @@ import type { TextChannel } from 'discord.js';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
+import {
+  fetchPlaylistMetadata,
+  fetchYouTubeMetadata,
+  validateYouTubePlaylistUrl,
+  validateYouTubeUrl,
+} from '../lib/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-const MAX_URL_LENGTH = 2000;
 
 // ---------------------------------------------------------------------------
 // Environment variable validation
@@ -383,41 +382,15 @@ router.post(
   '/quick-add',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const { youtubeUrl } = req.body as { youtubeUrl?: string };
-
-    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-      res.status(400).json({ error: 'youtubeUrl is required.' });
-      return;
-    }
-
-    const url = youtubeUrl.trim();
-
-    if (url.length > MAX_URL_LENGTH) {
-      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-      return;
-    }
-
-    if (!isValidYouTubeUrl(url)) {
-      res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
-      return;
-    }
+    const url = validateYouTubeUrl(req.body.youtubeUrl, res);
+    if (!url) return;
 
     const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return; // Response already sent by helper
+    if (!player) return;
 
-    // Fetch metadata from YouTube
-    let metadata: Awaited<ReturnType<typeof getMetadata>> | undefined;
-    try {
-      metadata = await getMetadata(url);
-    } catch {
-      res.status(422).json({
-        error:
-          'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
-      });
-      return;
-    }
+    const metadata = await fetchYouTubeMetadata(url, res);
+    if (!metadata) return;
 
-    // Create a QueuedSong without saving to database
     const requestedBy = req.user?.username ?? 'Unknown';
 
     const queuedSong: QueuedSong = {
@@ -455,43 +428,16 @@ router.post(
   '/quick-add-playlist',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const { youtubeUrl, maxVideos } = req.body as { youtubeUrl?: string; maxVideos?: number };
-
-    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-      res.status(400).json({ error: 'youtubeUrl is required.' });
-      return;
-    }
-
-    const url = youtubeUrl.trim();
-
-    if (url.length > MAX_URL_LENGTH) {
-      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-      return;
-    }
-
-    if (!isYouTubePlaylistUrl(url)) {
-      res.status(400).json({
-        error:
-          'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
-      });
-      return;
-    }
+    const { maxVideos } = req.body as { maxVideos?: number };
+    const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
+    if (!url) return;
 
     const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return; // Response already sent by helper
+    if (!player) return;
 
-    // Fetch playlist metadata with videos
-    let playlistMetadata: Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> | undefined;
-    try {
-      playlistMetadata = await getPlaylistMetadataWithVideos(url, maxVideos);
-    } catch {
-      res.status(422).json({
-        error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
-      });
-      return;
-    }
+    const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
+    if (!playlistMetadata) return;
 
-    // Queue all songs from the playlist
     const requestedBy = req.user?.username ?? 'Unknown';
     const queuedSongs: QueuedSong[] = [];
 
@@ -640,42 +586,15 @@ router.post(
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { youtubeUrl } = req.body as { youtubeUrl?: string };
-
-    if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-      res.status(400).json({ error: 'youtubeUrl is required.' });
-      return;
-    }
-
-    const url = youtubeUrl.trim();
-
-    if (url.length > MAX_URL_LENGTH) {
-      res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-      return;
-    }
-
-    if (!isValidYouTubeUrl(url)) {
-      res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
-      return;
-    }
+    const url = validateYouTubeUrl(req.body.youtubeUrl, res);
+    if (!url) return;
 
     const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return; // Response already sent by helper
+    if (!player) return;
 
-    // Fetch metadata from YouTube
-    let metadata: Awaited<ReturnType<typeof getMetadata>> | undefined;
+    const metadata = await fetchYouTubeMetadata(url, res);
+    if (!metadata) return;
 
-    try {
-      metadata = await getMetadata(url);
-    } catch {
-      res.status(422).json({
-        error:
-          'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
-      });
-      return;
-    }
-
-    // Create a QueuedSong without saving to database
     const requestedBy = req.user?.username ?? 'Unknown';
 
     const queuedSong: QueuedSong = {
@@ -690,7 +609,6 @@ router.post(
       requestedBy,
     };
 
-    // Clear both queues and play immediately
     await player.replaceQueueAndPlay([queuedSong]);
 
     res.json({
