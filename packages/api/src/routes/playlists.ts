@@ -10,7 +10,7 @@ const router = Router();
 const MAX_NAME_LENGTH = 200;
 
 // ---------------------------------------------------------------------------
-// Permission helper
+// Permission helpers
 // ---------------------------------------------------------------------------
 interface UserContext {
   discordId?: string;
@@ -20,6 +20,21 @@ interface UserContext {
 interface PlaylistLike {
   createdBy: string;
   isPrivate: boolean;
+}
+
+/**
+ * Returns true if the user can view/modify a private playlist.
+ * The creator always has access; admins only when Admin View is active.
+ */
+function canAccessPrivatePlaylist(
+  playlist: PlaylistLike,
+  user: UserContext | undefined,
+  adminView?: boolean
+): boolean {
+  if (!playlist.isPrivate) return true;
+  const isCreator = playlist.createdBy === user?.discordId;
+  const isAdminInAdminView = user?.isAdmin === true && adminView === true;
+  return isCreator || isAdminInAdminView;
 }
 
 /**
@@ -42,7 +57,7 @@ function requirePlaylistOwnerOrAdmin(
 }
 
 /**
- * Checks if the user can access a private playlist (creator or admin in Admin View).
+ * Checks if the user can access a private playlist.
  * Sends 403 response and returns false if not authorized.
  */
 function checkPlaylistAccess(
@@ -51,14 +66,9 @@ function checkPlaylistAccess(
   res: Response,
   adminView?: boolean
 ): boolean {
-  if (!playlist.isPrivate) return true;
-  const isCreator = playlist.createdBy === user?.discordId;
-  const isAdminInAdminView = user?.isAdmin && adminView;
-  if (!isCreator && !isAdminInAdminView) {
-    res.status(403).json({ error: 'Access denied. This playlist is private.' });
-    return false;
-  }
-  return true;
+  if (canAccessPrivatePlaylist(playlist, user, adminView)) return true;
+  res.status(403).json({ error: 'Access denied. This playlist is private.' });
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,12 +108,9 @@ router.get(
     });
 
     // Filter private playlists: only visible to creator and admins (in Admin View)
-    const filteredPlaylists = playlists.filter((pl) => {
-      if (!pl.isPrivate) return true;
-      const isCreator = pl.createdBy === req.user?.discordId;
-      const isAdminInAdminView = req.user?.isAdmin && adminView;
-      return isCreator || isAdminInAdminView;
-    });
+    const filteredPlaylists = playlists.filter((pl) =>
+      canAccessPrivatePlaylist(pl, req.user, adminView)
+    );
 
     // Fetch creator display names for each playlist
     const playlistsWithCreator = await Promise.all(
@@ -210,9 +217,7 @@ router.patch(
     }
 
     // Check permissions: creator or admin (in Admin View)
-    const isCreator = existing.createdBy === req.user?.discordId;
-    const isAdminInAdminView = req.user?.isAdmin && adminView;
-    if (!isCreator && !isAdminInAdminView) {
+    if (!canAccessPrivatePlaylist(existing, req.user, adminView)) {
       res
         .status(403)
         .json({ error: 'Only the creator or admins (in Admin View) can change visibility.' });
