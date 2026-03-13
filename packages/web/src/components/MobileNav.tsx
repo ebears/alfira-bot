@@ -2,6 +2,7 @@ import {
   Disc3,
   ListMusic,
   Menu,
+  Monitor,
   Moon,
   Music,
   Settings,
@@ -227,7 +228,7 @@ export default function MobileNav() {
 function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
   const { user } = useAuth();
   const { isAdminView, toggleAdminView } = useAdminView();
-  const { colorTheme, mode, setColorTheme, toggleMode, colorThemes } = useTheme();
+  const { colorTheme, mode, setColorTheme, setMode, colorThemes } = useTheme();
 
   return (
     <>
@@ -305,7 +306,19 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => toggleMode()}
+                onClick={() => setMode('auto')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-body transition-colors duration-150 ${
+                  mode === 'auto'
+                    ? 'bg-accent/10 text-accent border border-accent/30'
+                    : 'bg-elevated text-muted border border-border hover:text-fg'
+                }`}
+              >
+                <Monitor size={18} />
+                <span>Auto</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('light')}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-body transition-colors duration-150 ${
                   mode === 'light'
                     ? 'bg-accent/10 text-accent border border-accent/30'
@@ -317,7 +330,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
               </button>
               <button
                 type="button"
-                onClick={() => toggleMode()}
+                onClick={() => setMode('dark')}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-body transition-colors duration-150 ${
                   mode === 'dark'
                     ? 'bg-accent/10 text-accent border border-accent/30'

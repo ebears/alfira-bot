@@ -1,4 +1,4 @@
-import { Moon, Settings, Sun, X } from 'lucide-react';
+import { Monitor, Moon, Settings, Sun, X } from 'lucide-react';
 import { useState } from 'react';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,7 @@ interface SettingsMenuProps {
 export default function SettingsMenu({ collapsed = false, onClose }: SettingsMenuProps) {
   const { user } = useAuth();
   const { isAdminView, toggleAdminView } = useAdminView();
-  const { colorTheme, mode, setColorTheme, toggleMode, colorThemes } = useTheme();
+  const { colorTheme, mode, setColorTheme, setMode, colorThemes } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -115,10 +115,22 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => toggleMode()}
+                    onClick={() => setMode('auto')}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-body transition-colors duration-150 ${
-                      mode === 'dark'
-                        ? 'bg-elevated text-fg border border-border'
+                      mode === 'auto'
+                        ? 'bg-accent/10 text-accent border border-accent/30'
+                        : 'bg-elevated text-muted border border-border hover:text-fg'
+                    }`}
+                  >
+                    <Monitor size={16} />
+                    <span>Auto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode('light')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-body transition-colors duration-150 ${
+                      mode === 'light'
+                        ? 'bg-accent/10 text-accent border border-accent/30'
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
@@ -127,10 +139,10 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                   </button>
                   <button
                     type="button"
-                    onClick={() => toggleMode()}
+                    onClick={() => setMode('dark')}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-body transition-colors duration-150 ${
-                      mode === 'light'
-                        ? 'bg-elevated text-fg border border-border'
+                      mode === 'dark'
+                        ? 'bg-accent/10 text-accent border border-accent/30'
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
