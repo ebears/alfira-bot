@@ -17,14 +17,6 @@ import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
 import { PlaybackCursor } from './PlaybackCursor';
 import { SinglyLinkedList } from './SinglyLinkedList';
 
-// ---------------------------------------------------------------------------
-// Retry helper
-//
-// Retries an async operation up to `maxRetries` additional times (so the
-// function is called at most maxRetries + 1 times total). A fixed `delayMs`
-// pause is inserted between each attempt. If all attempts fail, the last
-// error is re-thrown.
-// ---------------------------------------------------------------------------
 async function withRetry<T>(fn: () => Promise<T>, maxRetries: number, delayMs: number): Promise<T> {
   let lastError: unknown;
 
@@ -43,64 +35,33 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries: number, delayMs: n
 }
 
 export class GuildPlayer {
-  // ---------------------------------------------------------------------------
-  // State
-  // ---------------------------------------------------------------------------
-  // Main queue using PlaybackCursor for O(1) operations and efficient looping
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
-  // Priority queue using SinglyLinkedList for O(1) push/shift
   private priorityQueue: SinglyLinkedList<QueuedSong> = new SinglyLinkedList();
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
   private paused = false;
   private stopping = false;
-
   private trackStartedAt: number | null = null;
-  private pausedAt: number | null = null; // wall-clock ms when pause began
+  private pausedAt: number | null = null;
 
-  // Set to true by stop() before connection.destroy() is called, so the
-  // VoiceConnectionStatus.Destroyed handler can distinguish an intentional
-  // teardown (stop/leave commands) from an unexpected connection loss and
-  // avoid posting a spurious warning message or double-broadcasting.
+  // Set by stop() so the Destroyed handler can distinguish intentional teardown
+  // from unexpected connection loss.
   private intentionallyStopped = false;
 
-  // Guards against multiple simultaneous reconnect attempts when the
-  // Disconnected event fires in quick succession.
+  // Guards against multiple simultaneous reconnect attempts.
   private isReconnecting = false;
 
-  // Kill function for the FFmpeg process currently backing the audio stream.
-  // Stored so we can terminate it on skip or stop, preventing zombie processes.
-  //
-  // Root cause of the "music stops silently mid-track" bug:
-  //   When createAudioResource() was called with a raw URL string and
-  //   StreamType.Arbitrary, @discordjs/voice spawned FFmpeg internally without
-  //   HTTP reconnect flags. If YouTube's CDN dropped the connection (throttle,
-  //   network blip, etc.) FFmpeg treated it as EOF, exited cleanly, and the
-  //   AudioPlayer transitioned to Idle — firing onTrackEnd() as if the song
-  //   finished normally, with no error logged anywhere.
-  //
-  //   The fix: we spawn FFmpeg ourselves (via createAudioStream) with
-  //   -reconnect/-reconnect_streamed/-reconnect_delay_max so transient drops
-  //   are retried transparently. We track the process here so it can be killed
-  //   when a track is skipped or playback is stopped.
+  // FFmpeg kill function, stored to prevent zombie processes on skip/stop.
+  // We spawn FFmpeg ourselves with HTTP reconnect flags (-reconnect etc.)
+  // so transient CDN drops are retried instead of silently ending the stream.
   private killCurrentFfmpeg: (() => void) | null = null;
 
   private readonly connection: VoiceConnection;
   private readonly audioPlayer: AudioPlayer;
   private readonly guildId: string;
-
-  // The text channel where the bot will post "Now playing" embeds when
-  // auto-advancing between tracks (i.e. not triggered by a slash command).
   private readonly textChannel: TextChannel;
-
-  // Callback provided by the manager so this class can remove itself from
-  // the player map without creating a circular import between GuildPlayer
-  // and manager.ts.
   private readonly onDestroyed: () => void;
 
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
   constructor(
     connection: VoiceConnection,
     textChannel: TextChannel,
@@ -112,27 +73,12 @@ export class GuildPlayer {
     this.guildId = guildId;
     this.onDestroyed = onDestroyed;
 
-    this.audioPlayer = createAudioPlayer({
-      behaviors: {
-        // Allow up to ~1 second of missed frames before auto-pausing.
-        // The default of 5 frames (~100 ms) is far too aggressive — any brief
-        // network jitter, encoding pause, or event-loop delay causes the
-        // AudioPlayer to transition to AutoPaused, which users hear as
-        // choppiness. 50 frames gives a comfortable cushion without masking
-        // genuine end-of-stream events.
-        maxMissedFrames: 50,
-      },
-    });
+    // 50 frames (~1s) of missed frames before auto-pause, avoiding choppiness
+    // from brief network jitter (default 5 frames / ~100ms is too aggressive).
+    this.audioPlayer = createAudioPlayer({ behaviors: { maxMissedFrames: 50 } });
     this.connection.subscribe(this.audioPlayer);
 
-    // -------------------------------------------------------------------------
-    // AudioPlayer event handlers
-    // -------------------------------------------------------------------------
-
-    // When a track finishes (or is stopped), decide what to play next.
-    this.audioPlayer.on(AudioPlayerStatus.Idle, () => {
-      this.onTrackEnd();
-    });
+    this.audioPlayer.on(AudioPlayerStatus.Idle, () => this.onTrackEnd());
 
     this.audioPlayer.on('error', (error) => {
       console.error(
@@ -141,31 +87,17 @@ export class GuildPlayer {
         '| Track:',
         this.currentSong?.title ?? 'unknown'
       );
-      // Treat an error as a track end so the queue keeps moving.
       this.onTrackEnd();
     });
 
-    // AutoPaused fires when all voice connection subscribers are temporarily
-    // unable to receive audio (e.g. a brief network stutter). The player will
-    // resume automatically once the connection is ready again — we just log it.
     this.audioPlayer.on(AudioPlayerStatus.AutoPaused, () => {
       console.warn(
-        `[GuildPlayer:${this.guildId}] AudioPlayer AutoPaused — ` +
-          'voice connection may be temporarily unavailable.'
+        `[GuildPlayer:${this.guildId}] AudioPlayer AutoPaused — voice connection may be temporarily unavailable.`
       );
     });
 
-    // -------------------------------------------------------------------------
-    // VoiceConnection event handlers
-    // -------------------------------------------------------------------------
-
-    // Workaround: clear the UDP keepAlive interval whenever the underlying
-    // networking state changes. The keepAlive heartbeat fires roughly every
-    // 5 seconds and can disrupt the precise timing of outgoing audio packets,
-    // which users perceive as periodic stutters. Clearing the interval removes
-    // the interference without affecting connection health — Discord's WebSocket
-    // gateway maintains its own heartbeat independently.
-    // This mirrors the approach used by the Muse bot (museofficial/muse).
+    // Clear UDP keepAlive interval on networking state changes to prevent
+    // periodic stutters. Discord's WebSocket gateway maintains its own heartbeat.
     this.connection.on('stateChange', (oldState, newState) => {
       const oldNetworking = Reflect.get(oldState, 'networking');
       const newNetworking = Reflect.get(newState, 'networking');
@@ -179,11 +111,7 @@ export class GuildPlayer {
       newNetworking?.on('stateChange', networkStateChangeHandler);
     });
 
-    // Disconnected can be a transient network blip. Give Discord 5 s to start
-    // reconnecting on its own. If it transitions to Signalling or Connecting
-    // within that window, the handshake is underway and we leave it alone. If
-    // nothing happens, we destroy the connection ourselves so the Destroyed
-    // handler can run cleanup.
+    // Give Discord 5s to reconnect on its own before destroying the connection.
     this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
       if (this.isReconnecting) return;
       this.isReconnecting = true;
@@ -199,9 +127,6 @@ export class GuildPlayer {
         ]);
         console.info(`[GuildPlayer:${this.guildId}] Voice connection is reconnecting.`);
       } catch {
-        // The connection did not start reconnecting. Destroy it unless it has
-        // already been moved to the Destroyed state by something else (e.g. a
-        // concurrent stop() call).
         if (this.connection.state.status !== VoiceConnectionStatus.Destroyed) {
           console.error(
             `[GuildPlayer:${this.guildId}] Voice connection could not recover — destroying.`
@@ -213,54 +138,28 @@ export class GuildPlayer {
       }
     });
 
-    // Destroyed fires for both intentional teardowns (stop/leave commands) and
-    // unexpected connection losses. In the unexpected case we reset queue state,
-    // broadcast to the web UI, stop the AudioPlayer so it does not try to keep
-    // playing to a dead connection, and post a warning in the text channel.
-    // In both cases we remove this instance from the manager's Map.
+    // Clean up on connection destroy — reset state for unexpected losses.
     this.connection.on(VoiceConnectionStatus.Destroyed, () => {
       console.info(`[GuildPlayer:${this.guildId}] Voice connection destroyed.`);
 
       if (!this.intentionallyStopped) {
-        // Force the AudioPlayer to stop so the Idle handler does not fire and
-        // attempt to play the next track against a destroyed connection.
         this.audioPlayer.stop(true);
-
-        // Kill any running FFmpeg process so it doesn't linger as a zombie.
         this.killCurrentFfmpeg?.();
         this.killCurrentFfmpeg = null;
-
-        // Reset in-memory state and push it to the web UI.
         this.queue.clear();
         this.currentSong = null;
         broadcastQueueUpdate(this.getQueueState());
-
-        // Notify the text channel. fire-and-forget; don't let a channel error
-        // bubble up through an event handler.
         this.sendToTextChannel(
           '⚠️ Lost the voice connection unexpectedly. Use **/play** or **/join** to reconnect.'
         );
       }
 
-      // Always clean up the manager entry. removePlayer() is a simple
-      // Map.delete(), so calling it twice is harmless.
       this.onDestroyed();
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Public API
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Add a song to the end of the queue.
-   * If nothing is currently playing, playback starts immediately.
-   * Broadcasts the updated state after the queue is modified.
-   */
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
     const arr = Array.isArray(songs) ? songs : [songs];
-
-    // Simply append new items without affecting read position
     this.queue.append(...arr);
 
     if (this.currentSong === null) {
@@ -270,11 +169,6 @@ export class GuildPlayer {
     }
   }
 
-  /**
-   * Add a song to the priority queue (Up Next).
-   * Priority queue songs play before regular queue songs.
-   * If nothing is currently playing, playback starts immediately.
-   */
   async addToPriorityQueue(song: QueuedSong): Promise<void> {
     this.priorityQueue.push(song);
     if (this.currentSong === null) {
@@ -284,52 +178,27 @@ export class GuildPlayer {
     }
   }
 
-  /**
-   * Clear both priority queue and regular queue.
-   */
   clearAllQueues(): void {
     this.priorityQueue.clear();
     this.queue.clear();
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  /**
-   * Replace the entire queue with new songs and immediately start playback.
-   * Clears the current queue, skips any currently playing song, and starts
-   * playing the first song from the new queue.
-   */
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
-    // Clear the current queue and stop playback
     this.queue.clear();
     this.priorityQueue.clear();
-
-    // Kill any current FFmpeg process
     this.killCurrentFfmpeg?.();
     this.killCurrentFfmpeg = null;
-
-    // Stop the audio player (triggers Idle -> onTrackEnd, but queue is empty)
-    this.audioPlayer.stop(true); // true = force-stop, suppresses Idle event
-
-    // Set the new queue
+    this.audioPlayer.stop(true);
     this.queue.replace(songs);
-
-    // Start playing the first song
     await this.playNext();
-
-    // Broadcast the new state
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  /**
-   * Skip the current song and immediately advance to the next one.
-   * Works regardless of loop mode.
-   */
   skip(): void {
     if (this.currentSong === null) return;
 
-    // If paused, unpause first so that .stop() triggers the Idle event correctly.
-    // Calling .stop() on a paused AudioPlayer does not trigger the Idle event,
-    // which would prevent onTrackEnd() from being called and the queue wouldn't advance.
+    // Unpause first — .stop() on a paused player doesn't trigger Idle.
     if (this.paused) {
       this.audioPlayer.unpause();
       this.paused = false;
@@ -339,9 +208,6 @@ export class GuildPlayer {
     this.audioPlayer.stop();
   }
 
-  /**
-   * Stop playback.
-   */
   stop(): void {
     this.intentionallyStopped = true;
     this.stopping = true;
@@ -351,39 +217,25 @@ export class GuildPlayer {
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  /**
-   * Clears the song queue.
-   */
   clearQueue(): void {
     this.queue.clear();
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  /**
-   * Shuffle the upcoming queue using the PlaybackCursor's shuffle method.
-   * The currently playing song is not affected.
-   */
   shuffle(): void {
     this.queue.shuffle();
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  /**
-   * Change the loop mode.
-   */
   setLoopMode(mode: LoopMode): void {
     this.loopMode = mode;
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  /**
-   * Toggle pause.
-   */
   togglePause(): boolean {
     if (!this.currentSong) return false;
 
     if (this.paused) {
-      // Resuming — shift trackStartedAt forward by the pause duration
       if (this.pausedAt !== null) {
         const pauseDuration = Date.now() - this.pausedAt;
         if (this.trackStartedAt !== null) {
@@ -394,7 +246,6 @@ export class GuildPlayer {
       this.audioPlayer.unpause();
       this.paused = false;
     } else {
-      // Pausing
       this.pausedAt = Date.now();
       this.audioPlayer.pause(true);
       this.paused = true;
@@ -404,16 +255,11 @@ export class GuildPlayer {
     return this.paused;
   }
 
-  // ---------------------------------------------------------------------------
-  // Getters (read-only views of internal state for commands to display)
-  // ---------------------------------------------------------------------------
-
   getCurrentSong(): QueuedSong | null {
     return this.currentSong;
   }
 
   getQueue(): QueuedSong[] {
-    // Return remaining items in the queue (current playback order)
     return this.queue.toArray();
   }
 
@@ -425,12 +271,6 @@ export class GuildPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
   }
 
-  // ---------------------------------------------------------------------------
-  // getQueueState
-  //
-  // Returns a QueueState snapshot. Used by GET /api/player/queue and as the
-  // payload for the Socket.io player:update event.
-  // ---------------------------------------------------------------------------
   getQueueState(): QueueState {
     return {
       isPlaying: this.isPlaying(),
@@ -444,14 +284,6 @@ export class GuildPlayer {
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Private methods
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Send a message to the text channel, logging any errors without throwing.
-   * Fire-and-forget: returns void, not a Promise.
-   */
   private sendToTextChannel(message: string | { embeds: EmbedBuilder[] }): void {
     this.textChannel
       .send(message)
@@ -460,27 +292,9 @@ export class GuildPlayer {
       );
   }
 
-  /**
-   * Pull the next song off the queue and start playing it.
-   *
-   * Fetches a fresh CDN URL at playback time (not at enqueue time) to avoid
-   * using stale URLs for tracks that have been waiting in a long queue.
-   * Retries the URL fetch up to 2 times (3 attempts total) before skipping.
-   *
-   * Spawns FFmpeg with HTTP reconnect flags via createAudioStream() so that
-   * transient CDN drops are retried transparently instead of silently
-   * terminating the stream.
-   *
-   * Broadcasts the new state once playback begins (or when the queue empties).
-   * Bails out early if the voice connection has already been destroyed.
-   */
   private async playNext(): Promise<void> {
-    // Guard: don't attempt to play anything if the connection is gone.
-    if (this.connection.state.status === VoiceConnectionStatus.Destroyed) {
-      return;
-    }
+    if (this.connection.state.status === VoiceConnectionStatus.Destroyed) return;
 
-    // Check priority queue first
     const prioritySong = this.priorityQueue.shift();
     if (prioritySong) {
       this.currentSong = prioritySong;
@@ -489,17 +303,13 @@ export class GuildPlayer {
       return;
     }
 
-    // Check if main queue is at end
     if (this.queue.isAtEnd) {
       if (this.loopMode === 'queue' && !this.queue.isEmpty) {
-        // Wrap around for queue loop
         this.queue.reset();
       } else if (this.loopMode === 'song' && this.currentSong) {
-        // Song loop: replay current song
         await this.playSong(this.currentSong);
         return;
       } else {
-        // Queue exhausted and not looping
         this.currentSong = null;
         this.queue.clear();
         broadcastQueueUpdate(this.getQueueState());
@@ -507,7 +317,6 @@ export class GuildPlayer {
       }
     }
 
-    // Get current song from queue
     const next = this.queue.current();
     if (!next) {
       this.currentSong = null;
@@ -517,7 +326,6 @@ export class GuildPlayer {
 
     this.currentSong = next;
 
-    // Advance the read pointer ONLY if not in song loop mode
     if (this.loopMode !== 'song') {
       this.queue.advance();
     }
@@ -525,19 +333,12 @@ export class GuildPlayer {
     await this.playSong(next);
   }
 
-  /**
-   * Internal method to play a specific song.
-   * Handles stream fetching, FFmpeg process management, and error handling.
-   */
   private async playSong(next: QueuedSong): Promise<void> {
     this.paused = false;
 
     let streamUrl: string;
     let isWebmOpus: boolean;
     try {
-      // Retry up to 2 extra times (3 attempts total), waiting 1 s between
-      // each attempt. This handles transient yt-dlp / network failures
-      // without immediately skipping a song the user wanted to hear.
       ({ url: streamUrl, isWebmOpus } = await withRetry(
         () => getStreamFormat(next.youtubeUrl),
         2,
@@ -549,19 +350,13 @@ export class GuildPlayer {
         error
       );
       this.sendToTextChannel(`⚠️ Skipping **${next.title}** — could not resolve the audio stream.`);
-      // Try the next song instead.
       await this.playNext();
       return;
     }
 
-    // Kill any FFmpeg process left over from the previous track before
-    // starting a new one. This covers the normal track-end and skip paths;
-    // stop() kills it directly before destroying the connection.
     this.killCurrentFfmpeg?.();
     this.killCurrentFfmpeg = null;
 
-    // isWebmOpus = true  → FFmpeg remuxes without re-encoding (~99% of tracks)
-    // isWebmOpus = false → FFmpeg re-encodes to Opus/OGG (M4A fallback)
     const { stream, kill } = createAudioStream(streamUrl, isWebmOpus);
     this.killCurrentFfmpeg = kill;
 
@@ -584,24 +379,17 @@ export class GuildPlayer {
 
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
-
-    // Broadcast after confirming playback has actually started.
     broadcastQueueUpdate(this.getQueueState());
-
     this.sendToTextChannel({ embeds: [buildNowPlayingEmbed(next, this.loopMode)] });
   }
 
-  /**
-   * Called when the AudioPlayer becomes Idle (track finished or errored).
-   * Applies loop logic and advances the queue.
-   */
   private async onTrackEnd(): Promise<void> {
     this.trackStartedAt = null;
     this.pausedAt = null;
 
     if (this.stopping) {
       this.stopping = false;
-      return; // don't advance, don't replay
+      return;
     }
 
     if (!this.currentSong) return;
