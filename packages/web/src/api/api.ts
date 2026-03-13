@@ -74,6 +74,19 @@ export const togglePlaylistVisibility = (
 // ---------------------------------------------------------------------------
 // Player
 // ---------------------------------------------------------------------------
+
+interface QuickAddSong {
+  title: string;
+  duration: number;
+  thumbnailUrl: string;
+  requestedBy: string;
+}
+
+interface SongAddedResponse {
+  message: string;
+  song: QuickAddSong;
+}
+
 export const getQueueState = () => client.get<QueueState>('/api/player/queue').then((r) => r.data);
 export const startPlayback = (opts: {
   playlistId?: string;
@@ -82,10 +95,6 @@ export const startPlayback = (opts: {
   startFromSongId?: string;
 }) => client.post('/api/player/play', opts);
 export const skipTrack = () => client.post('/api/player/skip');
-/**
- * Stop playback, clear the queue, and disconnect the bot from the voice
- * channel. This is the primary "leave" action for the web UI.
- */
 export const leaveVoice = () => client.post('/api/player/leave');
 
 export const setLoopMode = (mode: LoopMode) => client.post('/api/player/loop', { mode });
@@ -96,19 +105,14 @@ export const togglePause = () =>
   client.post<{ isPaused: boolean }>('/api/player/pause-toggle').then((r) => r.data);
 
 export const quickAddToQueue = (youtubeUrl: string) =>
-  client
-    .post<{
-      message: string;
-      song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
-    }>('/api/player/quick-add', { youtubeUrl })
-    .then((r) => r.data);
+  client.post<SongAddedResponse>('/api/player/quick-add', { youtubeUrl }).then((r) => r.data);
 
 export interface QuickAddPlaylistResult {
   message: string;
   playlistTitle: string;
   totalVideos: number;
   queuedCount: number;
-  songs: { title: string; duration: number; thumbnailUrl: string; requestedBy: string }[];
+  songs: QuickAddSong[];
 }
 
 export const quickAddPlaylistToQueue = (youtubeUrl: string, maxVideos?: number) =>
@@ -120,17 +124,7 @@ export const quickAddPlaylistToQueue = (youtubeUrl: string, maxVideos?: number) 
     .then((r) => r.data);
 
 export const addToPriorityQueue = (songId: string) =>
-  client
-    .post<{
-      message: string;
-      song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
-    }>('/api/player/add-to-priority', { songId })
-    .then((r) => r.data);
+  client.post<SongAddedResponse>('/api/player/add-to-priority', { songId }).then((r) => r.data);
 
 export const overridePlay = (youtubeUrl: string) =>
-  client
-    .post<{
-      message: string;
-      song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
-    }>('/api/player/override', { youtubeUrl })
-    .then((r) => r.data);
+  client.post<SongAddedResponse>('/api/player/override', { youtubeUrl }).then((r) => r.data);

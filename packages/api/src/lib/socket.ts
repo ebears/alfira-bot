@@ -3,12 +3,8 @@ import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
 import jwt from 'jsonwebtoken';
 import { Server as SocketIOServer } from 'socket.io';
 
-// ---------------------------------------------------------------------------
-// Helper functions to convert Prisma objects (with Date) to wire format (string)
-// ---------------------------------------------------------------------------
-
-type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
 type PrismaPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
+type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
 
 function songToWire(song: PrismaSong): Song {
   return {
@@ -24,32 +20,11 @@ function playlistToWire(playlist: PrismaPlaylist): Playlist {
   };
 }
 
-// ---------------------------------------------------------------------------
-// socket.ts
-//
-// Socket.io server singleton.
-//
-// Usage:
-//   1. Call initSocket(httpServer) once in the API entry point after creating
-//      the HTTP server. This attaches Socket.io and stores the instance.
-//   2. Import the broadcast helpers anywhere in the API (routes, etc.) to
-//      push events to all connected clients.
-//
-// All events use a consistent naming convention: "<resource>:<action>"
-//   player:update — any queue or playback state change
-//   songs:added — a song was added to the library
-//   songs:deleted — a song was removed from the library
-//   playlists:updated — a playlist was created, renamed, or its songs changed
-// ---------------------------------------------------------------------------
+// Socket.io server singleton. Call initSocket(httpServer) once at startup.
+// Events: player:update, songs:added, songs:deleted, playlists:updated
 
 let _io: SocketIOServer | null = null;
 
-// ---------------------------------------------------------------------------
-// Cookie parser helper
-//
-// Parses the Cookie header string and returns an object mapping cookie names
-// to values. Returns an empty object if the header is missing or malformed.
-// ---------------------------------------------------------------------------
 function parseCookies(cookieHeader: string | undefined): Record<string, string> {
   const cookies: Record<string, string> = {};
   if (!cookieHeader) return cookies;
