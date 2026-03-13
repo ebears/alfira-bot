@@ -2,8 +2,6 @@ import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { EmbedBuilder } from 'discord.js';
 
-export { formatDuration };
-
 export function formatLoopMode(mode: LoopMode): string {
   const labels: Record<LoopMode, string> = {
     off: '⬛ Off',
