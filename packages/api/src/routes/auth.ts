@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
-import axios from 'axios';
-import { Router } from 'express';
+import axios, { isAxiosError } from 'axios';
+import { type Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
@@ -143,11 +143,7 @@ function generateRefreshToken(discordId: string): string {
 // ---------------------------------------------------------------------------
 // Helper: Set auth cookies
 // ---------------------------------------------------------------------------
-function setAuthCookies(
-  res: import('express').Response,
-  accessToken: string,
-  refreshToken: string
-): void {
+function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Access token cookie - short-lived
@@ -170,7 +166,7 @@ function setAuthCookies(
 // ---------------------------------------------------------------------------
 // Helper: Clear auth cookies
 // ---------------------------------------------------------------------------
-function clearAuthCookies(res: import('express').Response): void {
+function clearAuthCookies(res: Response): void {
   res.clearCookie(ACCESS_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
   res.clearCookie(REFRESH_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
 }
@@ -203,11 +199,8 @@ async function fetchUserAdminStatus(
     return { isAdmin, username, avatar: buildAvatarUrl(discordId, avatar) };
   } catch (err: unknown) {
     // User not in guild
-    if (err instanceof Error && 'response' in err) {
-      const axiosError = err as { response?: { status?: number } };
-      if (axiosError.response?.status === 404) {
-        return null;
-      }
+    if (isAxiosError(err) && err.response?.status === 404) {
+      return null;
     }
     // Discord error - log and return null
     console.error(
@@ -325,12 +318,9 @@ router.get(
       );
       memberRoles = memberRes.data.roles ?? [];
     } catch (err: unknown) {
-      if (err instanceof Error && 'response' in err) {
-        const axiosError = err as { response?: { status?: number } };
-        if (axiosError.response?.status === 404) {
-          res.status(403).json({ error: 'You must be a member of the server to use this app.' });
-          return;
-        }
+      if (isAxiosError(err) && err.response?.status === 404) {
+        res.status(403).json({ error: 'You must be a member of the server to use this app.' });
+        return;
       }
       // Discord is unreachable or returned an unexpected error.
       // Log the detail server-side; return a generic message to the client.
