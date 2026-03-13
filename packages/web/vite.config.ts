@@ -8,6 +8,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 const apiTarget = process.env.API_URL ?? 'http://localhost:3001';
 
 export default defineConfig({
+  resolve: {
+    // Allow importing source .ts files from workspace packages that use a
+    // "source" condition in their exports map (e.g. @alfira-bot/shared).
+    conditions: ['source'],
+  },
   plugins: [
     react(),
     VitePWA({

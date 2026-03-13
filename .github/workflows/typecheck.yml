@@ -27,6 +27,9 @@ jobs:
       - name: Generate Prisma client
         run: DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
 
+      - name: Build shared package
+        run: pnpm --filter @alfira-bot/shared run build
+
       - name: Build bot package
         run: pnpm --filter @alfira-bot/bot run build
 
