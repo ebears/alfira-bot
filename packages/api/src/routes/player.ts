@@ -25,25 +25,12 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Environment variable validation
-// ---------------------------------------------------------------------------
 const GUILD_ID = process.env.GUILD_ID as string;
 if (!GUILD_ID) {
   throw new Error('GUILD_ID environment variable is not set');
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Resolve existing player or auto-join the user's voice channel.
-//
-// This function checks if a player already exists for the guild. If not, it
-// attempts to auto-join the requesting user's voice channel and create a new
-// player. This eliminates duplicated auto-join logic across multiple routes.
-//
-// Returns:
-//   - The player if it exists or was successfully created
-//   - null if auto-join failed (response already sent)
-// ---------------------------------------------------------------------------
+/** Returns existing player or auto-joins the user's voice channel. */
 async function resolveOrAutoJoinPlayer(
   req: Request,
   res: Response
@@ -53,7 +40,6 @@ async function resolveOrAutoJoinPlayer(
     return existingPlayer;
   }
 
-  // Auto-join: Find the user's voice channel and join it.
   const discordClient = getClient();
   if (!discordClient) {
     res.status(503).json({ error: 'Discord bot is not ready yet.' });
@@ -80,7 +66,6 @@ async function resolveOrAutoJoinPlayer(
 
     await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
 
-    // Use DEFAULT_TEXT_CHANNEL_ID if set, otherwise fall back to system channel.
     const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
     const textChannel = textChannelId
       ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
@@ -104,12 +89,7 @@ async function resolveOrAutoJoinPlayer(
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET /api/player/queue
-//
-// Returns the current queue state. Member accessible.
-// If the bot is not in a voice channel, returns an empty state.
-// ---------------------------------------------------------------------------
+// GET /api/player/queue — returns current queue state. Member accessible.
 router.get('/queue', requireAuth, (_req, res) => {
   const player = getPlayer(GUILD_ID);
   const connection = getVoiceConnection(GUILD_ID);
@@ -131,26 +111,7 @@ router.get('/queue', requireAuth, (_req, res) => {
   res.json(player.getQueueState());
 });
 
-// ---------------------------------------------------------------------------
-// POST /api/player/play
-//
-
-//
-// Loads songs into the queue and starts playback.
-// Member accessible.
-//
-// Body:
-//   playlistId? — if provided, load songs from this playlist; otherwise
-//                 load all songs from the library.
-//   mode — "sequential" | "random"
-//   loop — "off" | "song" | "queue"
-//   startFromSongId? — if provided, start playback from this specific song
-//                      (clears existing queue and interrupts current playback)
-//
-// Note: the bot must already be in a voice channel (via /join or /play in
-// Discord) before this endpoint can work. The API cannot create a voice
-// connection — only the bot can do that.
-// ---------------------------------------------------------------------------
+// POST /api/player/play — load songs and start playback. Member accessible.
 router.post(
   '/play',
   requireAuth,
@@ -163,9 +124,8 @@ router.post(
     };
 
     const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return; // Response already sent by helper
+    if (!player) return;
 
-    // Fetch songs from the database.
     let dbSongs: Awaited<ReturnType<typeof prisma.song.findMany>>;
 
     if (playlistId) {
@@ -184,7 +144,6 @@ router.post(
         return;
       }
 
-      // Check access for private playlists
       if (playlist.isPrivate) {
         const isCreator = playlist.createdBy === req.user?.discordId;
         const isAdmin = req.user?.isAdmin;
@@ -207,7 +166,6 @@ router.post(
       return;
     }
 
-    // If starting from a specific song, reorder so that song comes first
     if (startFromSongId) {
       const startIndex = dbSongs.findIndex((s) => s.id === startFromSongId);
 
@@ -216,11 +174,9 @@ router.post(
         return;
       }
 
-      // Reorder: chosen song first, then all songs after it, then songs before it
       dbSongs = [...dbSongs.slice(startIndex), ...dbSongs.slice(0, startIndex)];
     }
 
-    // Apply shuffle if random mode is requested (after reordering for startFromSongId).
     if (mode === 'random') {
       for (let i = dbSongs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -228,23 +184,15 @@ router.post(
       }
     }
 
-    // Preserve the current loop mode if not explicitly set
-    const currentLoopMode = player.getLoopMode();
-    const targetLoopMode = loop ?? currentLoopMode;
-
-    // Set loop mode before adding songs so the first track picks it up.
+    const targetLoopMode = loop ?? player.getLoopMode();
     player.setLoopMode(targetLoopMode);
 
-    // Build QueuedSong objects.
-    // requestedBy shows who triggered playback in "Now playing" embeds.
     const requestedBy = req.user?.username ?? 'Unknown';
     const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
 
-    // If starting from a specific song, clear the queue and interrupt current playback
     if (startFromSongId) {
       await player.replaceQueueAndPlay(queuedSongs);
     } else {
-      // Add songs to existing queue
       await player.addToQueue(queuedSongs);
     }
 
@@ -252,10 +200,7 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/skip
-// Member accessible.
-// ---------------------------------------------------------------------------
+// POST /api/player/skip — skip current song. Member accessible.
 router.post(
   '/skip',
   requireAuth,
@@ -272,13 +217,7 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/leave
-//
-// Stops playback, clears the queue, and disconnects the bot from the voice
-// channel. This is the web UI equivalent of the /leave slash command.
-// Member accessible.
-// ---------------------------------------------------------------------------
+// POST /api/player/leave — stop and disconnect. Member accessible.
 router.post('/leave', requireAuth, (_req, res) => {
   const player = getPlayer(GUILD_ID);
   const connection = getVoiceConnection(GUILD_ID);
@@ -288,26 +227,14 @@ router.post('/leave', requireAuth, (_req, res) => {
     return;
   }
 
-  // Stop the player first (broadcasts idle state, kills FFmpeg process).
-  if (player) {
-    player.stop();
-  }
-
-  // Destroy the voice connection.
-  if (connection) {
-    connection.destroy();
-  }
-
-  // Belt-and-suspenders cleanup.
+  if (player) player.stop();
+  if (connection) connection.destroy();
   removePlayer(GUILD_ID);
 
   res.json({ message: 'Left the voice channel.' });
 });
 
-// ---------------------------------------------------------------------------
-// POST /api/player/loop
-// Member accessible.
-// ---------------------------------------------------------------------------
+// POST /api/player/loop — set loop mode. Member accessible.
 router.post('/loop', requireAuth, (req, res) => {
   const { mode } = req.body as { mode?: LoopMode };
 
@@ -324,14 +251,10 @@ router.post('/loop', requireAuth, (req, res) => {
   }
 
   player.setLoopMode(mode);
-
   res.json({ loopMode: mode });
 });
 
-// ---------------------------------------------------------------------------
-// POST /api/player/shuffle
-// Admin only.
-// ---------------------------------------------------------------------------
+// POST /api/player/shuffle — shuffle queue. Admin only.
 router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
   const player = getPlayer(GUILD_ID);
 
@@ -341,19 +264,10 @@ router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
   }
 
   player.shuffle();
-
   res.json({ message: 'Queue shuffled.' });
 });
 
-// ---------------------------------------------------------------------------
-// POST /api/player/quick-add
-//
-// Adds a song to the queue without saving it to the library.
-// Member accessible.
-//
-// Body:
-//   youtubeUrl — YouTube URL to fetch and queue
-// ---------------------------------------------------------------------------
+// POST /api/player/quick-add — add YouTube URL to priority queue. Member accessible.
 router.post(
   '/quick-add',
   requireAuth,
@@ -384,16 +298,7 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/quick-add-playlist
-//
-// Adds all songs from a YouTube playlist to the queue without saving to library.
-// Member accessible.
-//
-// Body:
-//   youtubeUrl — YouTube playlist URL to fetch and queue
-//   maxVideos — Optional limit on number of videos to queue
-// ---------------------------------------------------------------------------
+// POST /api/player/quick-add-playlist — add playlist to queue. Member accessible.
 router.post(
   '/quick-add-playlist',
   requireAuth,
@@ -438,10 +343,7 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/pause-toggle
-// Member accessible.
-// ---------------------------------------------------------------------------
+// POST /api/player/pause-toggle — pause/resume. Member accessible.
 router.post('/pause-toggle', requireAuth, (_req, res) => {
   const player = getPlayer(GUILD_ID);
 
@@ -451,14 +353,10 @@ router.post('/pause-toggle', requireAuth, (_req, res) => {
   }
 
   const isPaused = player.togglePause();
-
   res.json({ isPaused });
 });
 
-// ---------------------------------------------------------------------------
-// POST /api/player/clear
-// Admin only.
-// ---------------------------------------------------------------------------
+// POST /api/player/clear — clear queue. Admin only.
 router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
   const player = getPlayer(GUILD_ID);
 
@@ -468,19 +366,10 @@ router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
   }
 
   player.clearQueue();
-
   res.json({ message: 'Queue cleared.' });
 });
 
-// ---------------------------------------------------------------------------
-// POST /api/player/add-to-priority
-// Member accessible.
-//
-// Adds a song from the library to the priority queue (Up Next).
-//
-// Body:
-//   songId — ID of the song from the library
-// ---------------------------------------------------------------------------
+// POST /api/player/add-to-priority — add library song to Up Next. Member accessible.
 router.post(
   '/add-to-priority',
   requireAuth,
@@ -492,7 +381,6 @@ router.post(
       return;
     }
 
-    // Fetch the song from the database
     const song = await prisma.song.findUnique({
       where: { id: songId },
     });
@@ -503,9 +391,8 @@ router.post(
     }
 
     const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return; // Response already sent by helper
+    if (!player) return;
 
-    // Create a QueuedSong from the database song
     const requestedBy = req.user?.username ?? 'Unknown';
     const queuedSong = dbSongToQueuedSong(song, requestedBy);
 
@@ -518,16 +405,7 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/player/override
-// Admin only.
-//
-// Immediately stops current song, clears both queues, and plays the
-// requested song. Does NOT save the song to the library.
-//
-// Body:
-//   youtubeUrl — YouTube URL to fetch and play immediately
-// ---------------------------------------------------------------------------
+// POST /api/player/override — immediately play YouTube URL. Admin only.
 router.post(
   '/override',
   requireAuth,

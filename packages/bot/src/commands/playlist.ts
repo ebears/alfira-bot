@@ -1,27 +1,10 @@
-import {
-  entersState,
-  getVoiceConnection,
-  joinVoiceChannel,
-  VoiceConnectionStatus,
-} from '@discordjs/voice';
-import { type GuildMember, SlashCommandBuilder, type TextChannel } from 'discord.js';
-import type { Prisma } from '../../../api/src/generated/prisma/client';
-import prisma from '../lib/prisma';
-
-// ---------------------------------------------------------------------------
-// Describes a PlaylistSong row with its nested Song relation included.
-// Derived directly from Prisma's generated types so it stays in sync with
-// the schema automatically — no manual duplication required.
-// ---------------------------------------------------------------------------
-type PlaylistSongWithSong = Prisma.PlaylistSongGetPayload<{ include: { song: true } }>;
-
 import type { QueuedSong } from '@alfira-bot/shared';
-import { createPlayer } from '../player/manager';
+import { type GuildMember, SlashCommandBuilder } from 'discord.js';
+import prisma from '../lib/prisma';
 import type { Command } from '../types';
-import { requireGuild, requireVoiceChannel } from './guards';
+import { getOrCreateConnection, requireGuild, requireVoiceChannel } from './guards';
 
 export const playlistCommand: Command = {
-  // SlashCommandBuilder (not the Omit variant) because addSubcommand is used.
   data: new SlashCommandBuilder()
     .setName('playlist')
     .setDescription('Playlist commands.')
@@ -40,26 +23,15 @@ export const playlistCommand: Command = {
 
     const subcommand = interaction.options.getSubcommand();
 
-    // ---------------------------------------------------------------------------
-    // /playlist play [name]
-    // ---------------------------------------------------------------------------
     if (subcommand === 'play') {
       const name = interaction.options.getString('name', true).trim();
 
-      // Ensure the user is in a voice channel before hitting the database.
       const voiceChannel = await requireVoiceChannel(interaction);
       if (!voiceChannel) return;
 
       // Database lookup can take a moment; defer immediately.
       await interaction.deferReply();
 
-      // ---------------------------------------------------------------------------
-      // Look up the playlist by name.
-      //
-      // Case-insensitive match so "My Mix" and "my mix" both work. If the user
-      // has multiple playlists whose names differ only by case, the first one
-      // (by createdAt) is returned — an edge case not worth special-casing here.
-      // ---------------------------------------------------------------------------
       const playlist = await prisma.playlist.findFirst({
         where: { name: { equals: name, mode: 'insensitive' } },
         include: {
@@ -82,44 +54,11 @@ export const playlistCommand: Command = {
         return;
       }
 
-      // ---------------------------------------------------------------------------
-      // Get or create the voice connection.
-      // ---------------------------------------------------------------------------
-      const guildId = guild.id;
-      let connection = getVoiceConnection(guildId);
+      const player = await getOrCreateConnection(interaction, guild, voiceChannel);
+      if (!player) return;
 
-      if (!connection) {
-        connection = joinVoiceChannel({
-          channelId: voiceChannel.id,
-          guildId,
-          adapterCreator: guild.voiceAdapterCreator,
-        });
-      }
-
-      try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
-      } catch {
-        connection.destroy();
-        await interaction.editReply(
-          '❌ Could not connect to the voice channel in time. Try again.'
-        );
-        return;
-      }
-
-      // ---------------------------------------------------------------------------
-      // Get or create the GuildPlayer.
-      // ---------------------------------------------------------------------------
-      const textChannel = interaction.channel as TextChannel;
-      const player = createPlayer(guildId, connection, textChannel);
-
-      // ---------------------------------------------------------------------------
-      // Build QueuedSong objects from the PlaylistSong records.
-      //
-      // ps.song is the full Song DB record (id, addedBy, etc.), so unlike the
-      // /play command there are no placeholder fields here.
-      // ---------------------------------------------------------------------------
       const member = interaction.member as GuildMember;
-      const queuedSongs: QueuedSong[] = playlist.songs.map((ps: PlaylistSongWithSong) => ({
+      const queuedSongs: QueuedSong[] = playlist.songs.map((ps) => ({
         ...ps.song,
         createdAt: ps.song.createdAt.toISOString(),
         requestedBy: member.displayName,
