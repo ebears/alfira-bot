@@ -2,13 +2,7 @@
 // SinglyLinkedList
 //
 // A singly linked list optimized for queue operations: O(1) push to back
-// and O(1) shift from front. No backward traversal needed for this use case.
-//
-// Time Complexities:
-// - push(): O(1)
-// - shift(): O(1)
-// - clear(): O(1)
-// - toArray(): O(n)
+// and O(1) shift from front.
 // ---------------------------------------------------------------------------
 
 interface SinglyListNode<T> {
@@ -83,14 +77,6 @@ export class SinglyLinkedList<T> {
   }
 
   /**
-   * Peek at the front item without removing it.
-   * Returns undefined if list is empty.
-   */
-  peek(): T | undefined {
-    return this.head?.value;
-  }
-
-  /**
    * Clear all items from the list.
    * O(1) - just nulls the pointers.
    */
@@ -99,10 +85,6 @@ export class SinglyLinkedList<T> {
     this.tail = null;
     this._size = 0;
   }
-
-  // ---------------------------------------------------------------------------
-  // Utility Operations
-  // ---------------------------------------------------------------------------
 
   /**
    * Convert the list to an array.
@@ -118,55 +100,5 @@ export class SinglyLinkedList<T> {
     }
 
     return result;
-  }
-
-  /**
-   * Check if an item exists in the list.
-   * O(n) - must traverse to find item.
-   */
-  contains(predicate: (item: T) => boolean): boolean {
-    let node = this.head;
-
-    while (node) {
-      if (predicate(node.value)) {
-        return true;
-      }
-      node = node.next;
-    }
-
-    return false;
-  }
-
-  /**
-   * Find an item in the list.
-   * O(n) - must traverse to find item.
-   * Returns undefined if not found.
-   */
-  find(predicate: (item: T) => boolean): T | undefined {
-    let node = this.head;
-
-    while (node) {
-      if (predicate(node.value)) {
-        return node.value;
-      }
-      node = node.next;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Iterate over all items.
-   * Useful for debugging or batch operations.
-   */
-  forEach(callback: (item: T, index: number) => void): void {
-    let node = this.head;
-    let index = 0;
-
-    while (node) {
-      callback(node.value, index);
-      node = node.next;
-      index++;
-    }
   }
 }

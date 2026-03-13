@@ -27,8 +27,3 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 export default prisma;
-
-export type { Prisma } from '../generated/prisma/client';
-// Re-export PrismaClient and Prisma types for use in other packages
-// This allows the bot package to import from @alfira-bot/api/prisma
-export { PrismaClient } from '../generated/prisma/client';

@@ -4,17 +4,6 @@
 // A playback cursor over a fixed set of items with loop support.
 // Uses a read pointer that can wrap around for queue loop mode, and supports
 // shuffle via a separate playback order index array.
-//
-// Note: Unlike a traditional circular/ring buffer, this class does not
-// automatically wrap or manage capacity. It's essentially a cursor over
-// a list of items with shuffle support.
-//
-// Time Complexities:
-// - current(): O(1)
-// - advance(): O(1)
-// - reset(): O(1)
-// - shuffle(): O(n)
-// - toArray(): O(n)
 // ---------------------------------------------------------------------------
 
 export class PlaybackCursor<T> {
@@ -35,11 +24,6 @@ export class PlaybackCursor<T> {
     return this.buffer.length;
   }
 
-  /** Number of items remaining to be played */
-  get remaining(): number {
-    return Math.max(0, this.buffer.length - this.readIndex);
-  }
-
   /** Whether the buffer is empty */
   get isEmpty(): boolean {
     return this.buffer.length === 0;
@@ -48,16 +32,6 @@ export class PlaybackCursor<T> {
   /** Whether we've reached the end of the buffer */
   get isAtEnd(): boolean {
     return this.readIndex >= this.buffer.length;
-  }
-
-  /** Current read position (0-indexed) */
-  get position(): number {
-    return this.readIndex;
-  }
-
-  /** Whether the buffer is currently shuffled */
-  get isShuffled(): boolean {
-    return this.playbackOrder !== null;
   }
 
   // ---------------------------------------------------------------------------
@@ -74,20 +48,6 @@ export class PlaybackCursor<T> {
     }
 
     const idx = this.playbackOrder ? this.playbackOrder[this.readIndex] : this.readIndex;
-    return this.buffer[idx];
-  }
-
-  /**
-   * Peek at the next item without advancing.
-   * Returns undefined if there is no next item.
-   */
-  peekNext(): T | undefined {
-    const nextIndex = this.readIndex + 1;
-    if (nextIndex >= this.buffer.length) {
-      return undefined;
-    }
-
-    const idx = this.playbackOrder ? this.playbackOrder[nextIndex] : nextIndex;
     return this.buffer[idx];
   }
 
@@ -140,14 +100,6 @@ export class PlaybackCursor<T> {
     }
 
     this.playbackOrder = [...played, ...remaining];
-  }
-
-  /**
-   * Remove shuffle and return to original order.
-   * Preserves the current read position.
-   */
-  unshuffle(): void {
-    this.playbackOrder = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -209,26 +161,5 @@ export class PlaybackCursor<T> {
       result.push(this.buffer[idx]);
     }
     return result;
-  }
-
-  /**
-   * Convert all items to an array (including already-played items).
-   * Returns items in current playback order.
-   */
-  toArrayAll(): T[] {
-    const result: T[] = [];
-    for (let i = 0; i < this.buffer.length; i++) {
-      const idx = this.playbackOrder ? this.playbackOrder[i] : i;
-      result.push(this.buffer[idx]);
-    }
-    return result;
-  }
-
-  /**
-   * Get an array of all items in original order (ignoring shuffle).
-   * Used for debugging or when original order is needed.
-   */
-  toOriginalArray(): T[] {
-    return [...this.buffer];
   }
 }
