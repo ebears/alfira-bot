@@ -17,7 +17,7 @@ export type ColorThemeName =
   | 'warlock'
   | 'wizard';
 
-export type ColorMode = 'light' | 'dark';
+export type ColorMode = 'light' | 'dark' | 'auto';
 
 export interface ColorTheme {
   name: ColorThemeName;
@@ -113,9 +113,9 @@ const MODE_STORAGE_KEY = 'alfira-mode';
 interface ThemeContextValue {
   colorTheme: ColorThemeName;
   mode: ColorMode;
+  resolvedMode: 'light' | 'dark';
   setColorTheme: (theme: ColorThemeName) => void;
   setMode: (mode: ColorMode) => void;
-  toggleMode: () => void;
   colorThemes: ColorTheme[];
 }
 
@@ -134,50 +134,55 @@ function getInitialColorTheme(): ColorThemeName {
 function getInitialMode(): ColorMode {
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem(MODE_STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') {
+    if (stored === 'light' || stored === 'dark' || stored === 'auto') {
       return stored;
     }
-    // Check system preference
-    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      return 'light';
-    }
   }
-  return 'dark'; // Default to dark mode
+  return 'auto'; // Default to auto (follows system)
+}
+
+function resolveMode(mode: ColorMode): 'light' | 'dark' {
+  if (mode !== 'auto') return mode;
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    return 'light';
+  }
+  return 'dark';
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [colorTheme, setColorThemeState] = useState<ColorThemeName>(getInitialColorTheme);
   const [mode, setModeState] = useState<ColorMode>(getInitialMode);
+  const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>(() =>
+    resolveMode(getInitialMode())
+  );
+
+  // Resolve mode and listen for system preference changes
+  useEffect(() => {
+    setResolvedMode(resolveMode(mode));
+
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const handler = () => {
+      if (mode === 'auto') setResolvedMode(mq.matches ? 'light' : 'dark');
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [mode]);
 
   useEffect(() => {
-    // Apply both attributes to document
     document.documentElement.setAttribute('data-color-theme', colorTheme);
-    document.documentElement.setAttribute('data-mode', mode);
-    // Persist to localStorage
+    document.documentElement.setAttribute('data-mode', resolvedMode);
     localStorage.setItem(COLOR_THEME_STORAGE_KEY, colorTheme);
     localStorage.setItem(MODE_STORAGE_KEY, mode);
-  }, [colorTheme, mode]);
-
-  const setColorTheme = (newTheme: ColorThemeName) => {
-    setColorThemeState(newTheme);
-  };
-
-  const setMode = (newMode: ColorMode) => {
-    setModeState(newMode);
-  };
-
-  const toggleMode = () => {
-    setModeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  }, [colorTheme, mode, resolvedMode]);
 
   return (
     <ThemeContext.Provider
       value={{
         colorTheme,
         mode,
-        setColorTheme,
-        setMode,
-        toggleMode,
+        resolvedMode,
+        setColorTheme: setColorThemeState,
+        setMode: setModeState,
         colorThemes: COLOR_THEMES,
       }}
     >
