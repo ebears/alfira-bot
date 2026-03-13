@@ -12,6 +12,7 @@ import type { Request, Response } from 'express';
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import {
+  buildQueuedSongFromMetadata,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
   validateYouTubePlaylistUrl,
@@ -392,18 +393,12 @@ router.post(
     if (!metadata) return;
 
     const requestedBy = req.user?.username ?? 'Unknown';
-
-    const queuedSong: QueuedSong = {
-      id: `temp-${Date.now()}`,
-      title: metadata.title,
-      youtubeUrl: url,
-      youtubeId: metadata.youtubeId,
-      duration: metadata.duration,
-      thumbnailUrl: metadata.thumbnailUrl,
-      addedBy: req.user?.discordId ?? 'Unknown',
-      createdAt: new Date().toISOString(),
+    const queuedSong = buildQueuedSongFromMetadata(
+      metadata,
+      url,
       requestedBy,
-    };
+      req.user?.discordId ?? 'Unknown'
+    );
 
     await player.addToPriorityQueue(queuedSong);
 
@@ -596,18 +591,12 @@ router.post(
     if (!metadata) return;
 
     const requestedBy = req.user?.username ?? 'Unknown';
-
-    const queuedSong: QueuedSong = {
-      id: `temp-${Date.now()}`,
-      title: metadata.title,
-      youtubeUrl: url,
-      youtubeId: metadata.youtubeId,
-      duration: metadata.duration,
-      thumbnailUrl: metadata.thumbnailUrl,
-      addedBy: req.user?.discordId ?? 'Unknown',
-      createdAt: new Date().toISOString(),
+    const queuedSong = buildQueuedSongFromMetadata(
+      metadata,
+      url,
       requestedBy,
-    };
+      req.user?.discordId ?? 'Unknown'
+    );
 
     await player.replaceQueueAndPlay([queuedSong]);
 

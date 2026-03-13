@@ -1,6 +1,7 @@
+import type { LoopMode } from '@alfira-bot/shared';
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
-import type { Command, LoopMode } from '../types';
+import type { Command } from '../types';
 import { formatLoopMode } from '../utils/format';
 
 export const loopCommand: Command = {

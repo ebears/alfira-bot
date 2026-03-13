@@ -4,6 +4,7 @@ import {
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
 } from '@alfira-bot/bot/src/utils/ytdlp';
+import type { QueuedSong } from '@alfira-bot/shared';
 import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;
@@ -100,4 +101,27 @@ export async function fetchPlaylistMetadata(
     });
     return null;
   }
+}
+
+/**
+ * Builds a QueuedSong from YouTube metadata (not in the library).
+ * Used by quick-add and override endpoints.
+ */
+export function buildQueuedSongFromMetadata(
+  metadata: { title: string; youtubeId: string; duration: number; thumbnailUrl: string },
+  youtubeUrl: string,
+  requestedBy: string,
+  addedBy: string
+): QueuedSong {
+  return {
+    id: `temp-${Date.now()}`,
+    title: metadata.title,
+    youtubeUrl,
+    youtubeId: metadata.youtubeId,
+    duration: metadata.duration,
+    thumbnailUrl: metadata.thumbnailUrl,
+    addedBy,
+    createdAt: new Date().toISOString(),
+    requestedBy,
+  };
 }

@@ -10,9 +10,9 @@ import {
   type VoiceConnection,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
-import { EmbedBuilder, type TextChannel } from 'discord.js';
+import type { TextChannel } from 'discord.js';
 import { broadcastQueueUpdate } from '../lib/broadcast';
-import { formatDuration, formatLoopMode } from '../utils/format';
+import { buildNowPlayingEmbed } from '../utils/format';
 import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
 import { PlaybackCursor } from './PlaybackCursor';
 import { SinglyLinkedList } from './SinglyLinkedList';
@@ -596,7 +596,7 @@ export class GuildPlayer {
     broadcastQueueUpdate(this.getQueueState());
 
     try {
-      await this.textChannel.send({ embeds: [this.buildNowPlayingEmbed(next)] });
+      await this.textChannel.send({ embeds: [buildNowPlayingEmbed(next, this.loopMode)] });
     } catch (e) {
       console.error(`[GuildPlayer:${this.guildId}] Failed to send "Now Playing" embed:`, e);
     }
@@ -615,26 +615,8 @@ export class GuildPlayer {
       return; // don't advance, don't replay
     }
 
-    const finished = this.currentSong;
-
-    if (!finished) return;
+    if (!this.currentSong) return;
 
     await this.playNext();
-  }
-
-  /**
-   * Build a "Now playing" embed for auto-advance announcements.
-   */
-  private buildNowPlayingEmbed(song: QueuedSong): EmbedBuilder {
-    return new EmbedBuilder()
-      .setColor(0x5865f2) // Discord blurple
-      .setTitle('▶️  Now Playing')
-      .setDescription(`**[${song.title}](${song.youtubeUrl})**`)
-      .setThumbnail(song.thumbnailUrl)
-      .addFields(
-        { name: 'Duration', value: formatDuration(song.duration), inline: true },
-        { name: 'Requested by', value: song.requestedBy, inline: true },
-        { name: 'Loop', value: formatLoopMode(this.loopMode), inline: true }
-      );
   }
 }

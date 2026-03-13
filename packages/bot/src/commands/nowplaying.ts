@@ -1,7 +1,7 @@
-import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { formatDuration, formatLoopMode } from '../utils/format';
+import { buildNowPlayingEmbed } from '../utils/format';
 
 export const nowplayingCommand: Command = {
   data: new SlashCommandBuilder()
@@ -28,22 +28,12 @@ export const nowplayingCommand: Command = {
     const loopMode = player?.getLoopMode() ?? 'off';
     const queueLength = player?.getQueue().length ?? 0;
 
-    const embed = new EmbedBuilder()
-      .setColor(0x5865f2)
-      .setTitle('▶️  Now Playing')
-      .setDescription(`**[${song.title}](${song.youtubeUrl})**`)
-      .setThumbnail(song.thumbnailUrl)
-      .addFields(
-        { name: 'Duration', value: formatDuration(song.duration), inline: true },
-        { name: 'Requested by', value: song.requestedBy, inline: true },
-        { name: 'Loop', value: formatLoopMode(loopMode), inline: true }
-      )
-      .setFooter({
-        text:
-          queueLength > 0
-            ? `${queueLength} song${queueLength === 1 ? '' : 's'} in queue`
-            : 'No songs in queue',
-      });
+    const embed = buildNowPlayingEmbed(song, loopMode).setFooter({
+      text:
+        queueLength > 0
+          ? `${queueLength} song${queueLength === 1 ? '' : 's'} in queue`
+          : 'No songs in queue',
+    });
 
     await interaction.reply({ embeds: [embed] });
   },

@@ -1,4 +1,5 @@
-import type { LoopMode } from '@alfira-bot/shared';
+import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
+import { EmbedBuilder } from 'discord.js';
 
 // ---------------------------------------------------------------------------
 // formatDuration
@@ -33,4 +34,23 @@ export function formatLoopMode(mode: LoopMode): string {
     queue: '🔁 Queue',
   };
   return labels[mode];
+}
+
+// ---------------------------------------------------------------------------
+// buildNowPlayingEmbed
+//
+// Builds a "Now Playing" embed for the given song.
+// Used by GuildPlayer for auto-advance announcements and the /nowplaying command.
+// ---------------------------------------------------------------------------
+export function buildNowPlayingEmbed(song: QueuedSong, loopMode: LoopMode): EmbedBuilder {
+  return new EmbedBuilder()
+    .setColor(0x5865f2) // Discord blurple
+    .setTitle('▶️  Now Playing')
+    .setDescription(`**[${song.title}](${song.youtubeUrl})**`)
+    .setThumbnail(song.thumbnailUrl)
+    .addFields(
+      { name: 'Duration', value: formatDuration(song.duration), inline: true },
+      { name: 'Requested by', value: song.requestedBy, inline: true },
+      { name: 'Loop', value: formatLoopMode(loopMode), inline: true }
+    );
 }
