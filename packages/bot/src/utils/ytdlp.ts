@@ -246,6 +246,8 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
   return { stream: readStream, kill };
 }
 
+const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
+
 // ---------------------------------------------------------------------------
 // isValidYouTubeUrl
 //
@@ -254,9 +256,7 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
 // ---------------------------------------------------------------------------
 export function isValidYouTubeUrl(url: string): boolean {
   try {
-    const parsed = new URL(url);
-    const validHosts = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
-    return validHosts.includes(parsed.hostname);
+    return YOUTUBE_HOSTS.includes(new URL(url).hostname);
   } catch {
     return false;
   }
@@ -273,12 +273,7 @@ export function isValidYouTubeUrl(url: string): boolean {
 export function isYouTubePlaylistUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    const validHosts = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
-    if (!validHosts.includes(parsed.hostname)) {
-      return false;
-    }
-    // Check for 'list' query parameter
-    return parsed.searchParams.has('list');
+    return YOUTUBE_HOSTS.includes(parsed.hostname) && parsed.searchParams.has('list');
   } catch {
     return false;
   }
