@@ -6,13 +6,6 @@ import type {
 } from 'discord.js';
 
 // ---------------------------------------------------------------------------
-// Re-export shared types so existing bot code that imports from './types'
-// continues to work without changes. The canonical definitions live in
-// @alfira-bot/shared.
-// ---------------------------------------------------------------------------
-export type { LoopMode, QueuedSong, QueueState, Song } from '@alfira-bot/shared';
-
-// ---------------------------------------------------------------------------
 // Command interface
 //
 // The `data` union covers three distinct builder shapes:
