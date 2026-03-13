@@ -9,9 +9,6 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Environment variable validation
-// ---------------------------------------------------------------------------
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -35,8 +32,6 @@ if (
   );
 }
 
-// The web UI origin. In development this is the Vite dev server.
-// In production, point this at your deployed frontend URL.
 const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173';
 
 const ADMIN_ROLE_ID_SET = new Set(
@@ -46,38 +41,18 @@ const ADMIN_ROLE_ID_SET = new Set(
     .filter(Boolean)
 );
 
-// ---------------------------------------------------------------------------
-// Helper: Build Discord avatar URL
-//
-// Returns the full CDN URL for a user's avatar, or null if no avatar hash.
-// ---------------------------------------------------------------------------
 function buildAvatarUrl(discordId: string, avatar: string | null): string | null {
   return avatar ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png` : null;
 }
 
-// ---------------------------------------------------------------------------
-// Token configuration
-//
-// Access tokens are short-lived (1 hour) and contain the user's info including
-// isAdmin status. This limits the window where a revoked admin can still
-// access admin features.
-//
-// Refresh tokens are long-lived (7 days by default) and stored in the database
-// as a SHA-256 hash. They can be revoked by deleting them from the database.
-// When a user refreshes, we re-fetch their roles from Discord to ensure
-// admin status is up-to-date.
-// ---------------------------------------------------------------------------
+// Access tokens are short-lived (1h). Refresh tokens are long-lived (7d default),
+// stored as SHA-256 hashes, and single-use.
 const ACCESS_TOKEN_EXPIRES_IN = '1h';
 const REFRESH_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN ?? '7d';
 const ACCESS_COOKIE_NAME = 'session';
 const REFRESH_COOKIE_NAME = 'refresh_token';
 
-// ---------------------------------------------------------------------------
-// Helper: Parse duration string to milliseconds
-//
-// Parses strings like '7d', '1h', '30m' into milliseconds.
-// This is used to sync cookie maxAge and database expiry with JWT expiry.
-// ---------------------------------------------------------------------------
+/** Parse duration strings like '7d', '1h', '30m' into milliseconds. */
 function parseDuration(duration: string): number {
   const match = duration.match(/^(\d+)([dhms])$/);
   if (!match) {
@@ -102,22 +77,10 @@ function parseDuration(duration: string): number {
 
 const REFRESH_TOKEN_MAX_AGE = parseDuration(REFRESH_TOKEN_EXPIRES_IN);
 
-// ---------------------------------------------------------------------------
-// Helper: Hash a token using SHA-256
-//
-// We store only the hash of refresh tokens in the database.
-// This means even if the database is compromised, the tokens cannot be used.
-// ---------------------------------------------------------------------------
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Generate access token
-//
-// Contains user info including isAdmin. Short-lived so role changes take
-// effect within 1 hour maximum.
-// ---------------------------------------------------------------------------
 function generateAccessToken(payload: {
   discordId: string;
   username: string;
@@ -129,20 +92,12 @@ function generateAccessToken(payload: {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Generate refresh token
-//
-// Contains only the discord ID. Long-lived and stored in DB for revocation.
-// ---------------------------------------------------------------------------
 function generateRefreshToken(discordId: string): string {
   return jwt.sign({ discordId, type: 'refresh' }, JWT_SECRET as string, {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Set auth cookies
-// ---------------------------------------------------------------------------
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
   const isProduction = process.env.NODE_ENV === 'production';
 
@@ -163,19 +118,12 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
   });
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Clear auth cookies
-// ---------------------------------------------------------------------------
 function clearAuthCookies(res: Response): void {
   res.clearCookie(ACCESS_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
   res.clearCookie(REFRESH_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Fetch user's admin status from Discord
-//
-// Returns null if the user is not in the guild or Discord is unreachable.
-// ---------------------------------------------------------------------------
+/** Returns null if the user is not in the guild or Discord is unreachable. */
 async function fetchUserAdminStatus(
   discordId: string
 ): Promise<{ isAdmin: boolean; username: string; avatar: string | null } | null> {
@@ -211,27 +159,6 @@ async function fetchUserAdminStatus(
   }
 }
 
-// ---------------------------------------------------------------------------
-// Rate limiting
-//
-// Applied to /auth/login, /auth/callback, and /auth/refresh.
-//
-// Why: without rate limiting, an attacker can hammer the OAuth flow to probe
-// for valid guild members or attempt to enumerate users. The callback is
-// equally important — a burst of crafted requests can be used to exhaust
-// Discord API quota or cause unexpected server behaviour.
-//
-// Limits: 20 requests per 15 minutes per IP. This is generous enough for
-// normal usage (a user retrying after a misconfigured redirect) but tight
-// enough to stop automated scanning.
-//
-// keyGenerator: uses req.ip, which Express populates correctly only after
-// trust proxy is set in index.ts. Without that setting, all requests would
-// appear to come from the Caddy machine's IP and share a single bucket.
-//
-// skipSuccessfulRequests: true so that legitimate logins don't count against
-// the limit. Only failed or abnormal requests burn tokens.
-// ---------------------------------------------------------------------------
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20,
@@ -242,9 +169,6 @@ const authLimiter = rateLimit({
   message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
 });
 
-// ---------------------------------------------------------------------------
-// GET /auth/login
-// ---------------------------------------------------------------------------
 router.get('/login', authLimiter, (_req, res) => {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
@@ -255,9 +179,6 @@ router.get('/login', authLimiter, (_req, res) => {
   res.redirect(`https://discord.com/oauth2/authorize?${params}`);
 });
 
-// ---------------------------------------------------------------------------
-// GET /auth/callback
-// ---------------------------------------------------------------------------
 router.get(
   '/callback',
   authLimiter,
@@ -366,13 +287,6 @@ router.get(
   })
 );
 
-// ---------------------------------------------------------------------------
-// POST /auth/refresh
-//
-// Exchange a refresh token for a new access token.
-// This also re-fetches the user's admin status from Discord to ensure
-// role changes take effect quickly.
-// ---------------------------------------------------------------------------
 router.post(
   '/refresh',
   asyncHandler(async (req, res) => {
@@ -464,16 +378,10 @@ router.post(
   })
 );
 
-// ---------------------------------------------------------------------------
-// GET /auth/me
-// ---------------------------------------------------------------------------
 router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user });
 });
 
-// ---------------------------------------------------------------------------
-// POST /auth/logout
-// ---------------------------------------------------------------------------
 router.post(
   '/logout',
   asyncHandler(async (req, res) => {

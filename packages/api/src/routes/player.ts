@@ -1,6 +1,6 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
 import { createPlayer, getPlayer, removePlayer } from '@alfira-bot/bot/src/player/manager';
-import type { LoopMode, QueuedSong } from '@alfira-bot/shared';
+import type { LoopMode } from '@alfira-bot/shared';
 import {
   entersState,
   getVoiceConnection,
@@ -314,20 +314,20 @@ router.post(
     if (!playlistMetadata) return;
 
     const requestedBy = req.user?.username ?? 'Unknown';
-    const queuedSongs: QueuedSong[] = [];
+    const queuedSongs = [];
 
     for (const video of playlistMetadata.videos) {
-      const queuedSong: QueuedSong = {
-        id: `temp-${Date.now()}-${video.id}`,
-        title: video.title,
-        youtubeUrl: `https://www.youtube.com/watch?v=${video.id}`,
-        youtubeId: video.id,
-        duration: video.duration,
-        thumbnailUrl: video.thumbnailUrl,
-        addedBy: req.user?.discordId ?? 'Unknown',
-        createdAt: new Date().toISOString(),
+      const queuedSong = buildQueuedSongFromMetadata(
+        {
+          title: video.title,
+          youtubeId: video.id,
+          duration: video.duration,
+          thumbnailUrl: video.thumbnailUrl,
+        },
+        `https://www.youtube.com/watch?v=${video.id}`,
         requestedBy,
-      };
+        req.user?.discordId ?? 'Unknown'
+      );
 
       await player.addToQueue(queuedSong);
       queuedSongs.push(queuedSong);

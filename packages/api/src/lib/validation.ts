@@ -126,10 +126,10 @@ export function buildQueuedSongFromMetadata(
   };
 }
 
-// A Prisma song has Date createdAt instead of string.
-type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
-
-export function dbSongToQueuedSong(song: PrismaSong, requestedBy: string): QueuedSong {
+export function dbSongToQueuedSong(
+  song: Omit<Song, 'createdAt'> & { createdAt: Date },
+  requestedBy: string
+): QueuedSong {
   return {
     ...song,
     createdAt: song.createdAt.toISOString(),
