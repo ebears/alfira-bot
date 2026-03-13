@@ -2,6 +2,7 @@ import type { Server as HTTPServer } from 'node:http';
 import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
 import jwt from 'jsonwebtoken';
 import { Server as SocketIOServer } from 'socket.io';
+import type { UserPayload } from '../middleware/requireAuth';
 
 type PrismaPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
 type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
@@ -83,12 +84,7 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
     }
 
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as {
-        discordId: string;
-        username: string;
-        avatar: string | null;
-        isAdmin: boolean;
-      };
+      const payload = jwt.verify(token, JWT_SECRET) as UserPayload;
 
       // Attach the decoded user to socket.data for potential future use
       // (e.g., admin-only socket events, user-specific rooms)
