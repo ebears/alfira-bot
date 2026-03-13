@@ -7,16 +7,7 @@ import {
   REST,
   Routes,
 } from 'discord.js';
-import { joinCommand } from './commands/join';
-import { leaveCommand } from './commands/leave';
-import { loopCommand } from './commands/loop';
-import { nowplayingCommand } from './commands/nowplaying';
-import { pauseCommand } from './commands/pause';
-import { playCommand } from './commands/play';
-import { playlistCommand } from './commands/playlist';
-import { queueCommand } from './commands/queue';
-import { shuffleCommand } from './commands/shuffle';
-import { skipCommand } from './commands/skip';
+import { commands } from './commands';
 import { setClient } from './lib/client';
 import type { Command } from './types';
 
@@ -60,19 +51,6 @@ export async function startBot(): Promise<void> {
   setClient(client);
 
   client.commands = new Collection<string, Command>();
-
-  const commands: Command[] = [
-    joinCommand,
-    leaveCommand,
-    playCommand,
-    skipCommand,
-    pauseCommand,
-    loopCommand,
-    shuffleCommand,
-    queueCommand,
-    nowplayingCommand,
-    playlistCommand,
-  ];
 
   for (const command of commands) {
     client.commands.set(command.data.name, command);
