@@ -11,7 +11,7 @@ import { commands } from './commands';
 import { setClient } from './lib/client';
 import type { Command } from './types';
 
-async function deployCommands(
+export async function deployCommands(
   clientId: string,
   guildId: string,
   token: string,

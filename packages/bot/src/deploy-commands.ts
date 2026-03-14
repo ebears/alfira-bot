@@ -14,8 +14,8 @@
  */
 
 import 'dotenv/config';
-import { REST, Routes } from 'discord.js';
 import { commands } from './commands';
+import { deployCommands } from './index';
 
 const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID } = process.env;
 
@@ -24,23 +24,8 @@ if (!DISCORD_BOT_TOKEN || !DISCORD_CLIENT_ID || !GUILD_ID) {
     '❌  Missing one or more required env vars: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID'
   );
   process.exit(1);
+} else {
+  (async () => {
+    await deployCommands(DISCORD_CLIENT_ID, GUILD_ID, DISCORD_BOT_TOKEN, commands);
+  })();
 }
-
-const commandData = commands.map((c) => c.data.toJSON());
-
-const rest = new REST().setToken(DISCORD_BOT_TOKEN);
-
-(async () => {
-  try {
-    console.log(`🔄  Registering ${commandData.length} slash command(s)...`);
-
-    await rest.put(Routes.applicationGuildCommands(DISCORD_CLIENT_ID, GUILD_ID), {
-      body: commandData,
-    });
-
-    console.log('✅  Slash commands registered successfully.');
-  } catch (error) {
-    console.error('❌  Failed to register commands:', error);
-    process.exit(1);
-  }
-})();
