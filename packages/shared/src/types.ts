@@ -87,15 +87,6 @@ export interface PlaylistSong {
 }
 
 // ---------------------------------------------------------------------------
-// PlaylistDetail
-//
-// A Playlist with its songs fully populated. Used by GET /api/playlists/:id
-// ---------------------------------------------------------------------------
-export interface PlaylistDetail extends Omit<Playlist, 'songs'> {
-  songs: PlaylistSongWithSong[];
-}
-
-// ---------------------------------------------------------------------------
 // User
 //
 // Represents an authenticated Discord user. Returned by GET /auth/me
@@ -105,14 +96,4 @@ export interface User {
   username: string;
   avatar: string | null;
   isAdmin: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// PlaylistSongWithSong
-//
-// A PlaylistSong where the song is guaranteed to be present.
-// Used when fetching playlist details with include: { song: true }
-// ---------------------------------------------------------------------------
-export interface PlaylistSongWithSong extends Omit<PlaylistSong, 'song'> {
-  song: Song;
 }

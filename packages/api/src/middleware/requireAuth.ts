@@ -24,6 +24,21 @@ declare global {
   }
 }
 
+/**
+ * Verifies a JWT session token and returns the decoded payload.
+ * Returns null if JWT_SECRET is not set or the token is invalid.
+ */
+export function verifySessionToken(token: string): UserPayload | null {
+  const { JWT_SECRET } = process.env;
+  if (!JWT_SECRET) return null;
+
+  try {
+    return jwt.verify(token, JWT_SECRET) as UserPayload;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // requireAuth
 //
@@ -32,14 +47,6 @@ declare global {
 // missing or invalid (expired, tampered, wrong secret).
 // ---------------------------------------------------------------------------
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const { JWT_SECRET } = process.env;
-
-  if (!JWT_SECRET) {
-    console.error('JWT_SECRET is not set — cannot verify tokens.');
-    res.status(500).json({ error: 'Server misconfiguration.' });
-    return;
-  }
-
   const token = req.cookies?.session;
 
   if (!token) {
@@ -47,12 +54,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     return;
   }
 
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as UserPayload;
-    req.user = payload;
-    next();
-  } catch {
-    // Token is expired, tampered with, or signed with the wrong secret.
+  const payload = verifySessionToken(token);
+  if (!payload) {
     res.status(401).json({ error: 'Session expired or invalid. Please log in again.' });
+    return;
   }
+
+  req.user = payload;
+  next();
 }
