@@ -1,16 +1,16 @@
 import type { LoopMode, Playlist, QueuedSong } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
-  AlertTriangle,
-  CirclePlay,
-  List,
-  Music,
-  Play,
-  Plus,
-  Shuffle,
-  Trash2,
-  Zap,
-} from 'lucide-react';
+  BombIcon,
+  GuitarIcon,
+  LightningIcon,
+  ListIcon,
+  PlayCircleIcon,
+  PlayIcon,
+  PlusCircleIcon,
+  ShuffleIcon,
+  WarningIcon,
+} from '@phosphor-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import {
   getPlaylists,
@@ -86,7 +86,7 @@ export default function QueuePage() {
             onClick={() => setShowOverride(true)}
             className="flex items-center gap-2 btn-danger"
           >
-            <Play size={14} />
+            <PlayIcon size={14} weight="duotone" />
             <span>Override</span>
           </button>
           <p className="font-mono text-[10px] text-muted mt-1">
@@ -121,7 +121,7 @@ export default function QueuePage() {
               onClick={() => setShowLoadPlaylist(true)}
               className="flex items-center gap-2 btn-primary"
             >
-              <List size={16} className="md:w-3.5 md:h-3.5" />
+              <ListIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
               <span className="hidden sm:inline">Load Playlist</span>
               <span className="sm:hidden">Load</span>
             </button>
@@ -130,7 +130,7 @@ export default function QueuePage() {
               onClick={() => setShowQuickAdd(true)}
               className="flex items-center gap-2 btn-primary"
             >
-              <Plus size={16} className="md:w-3.5 md:h-3.5" />
+              <PlusCircleIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
               <span className="hidden sm:inline">Quick Add</span>
               <span className="sm:hidden">Add</span>
             </button>
@@ -146,7 +146,7 @@ export default function QueuePage() {
               disabled={shuffleBusy || queue.length === 0}
               className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Shuffle size={16} className="md:w-3.5 md:h-3.5" />
+              <ShuffleIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
               <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
             </button>
             <button
@@ -161,7 +161,7 @@ export default function QueuePage() {
                   : 'btn-danger'
               }`}
             >
-              <Trash2 size={16} className="md:w-3.5 md:h-3.5" />
+              <BombIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
               <span>Clear Queue</span>
             </button>
           </div>
@@ -175,7 +175,7 @@ export default function QueuePage() {
         <section className="mt-6 md:mt-8">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <h2 className="font-display text-xl md:text-2xl text-fg tracking-wider">
-              <Zap size={18} className="inline mr-1" />
+              <LightningIcon size={18} weight="duotone" className="inline mr-1" />
               Up Next
               <span className="ml-2 font-mono text-sm text-accent normal-case tracking-normal">
                 {priorityQueue.length} {priorityQueue.length === 1 ? 'song' : 'songs'}
@@ -346,12 +346,12 @@ function NowPlayingCard({
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-32 h-32 md:w-40 md:h-40 rounded-lg border border-border shadow-lg object-cover"
+            className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border border-border shadow-lg object-cover"
           />
           {/* Playing indicator */}
           {isPlaying && (
             <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-lg">
-              <CirclePlay size={14} className="text-white" />
+              <PlayCircleIcon size={14} weight="duotone" className="text-white" />
             </div>
           )}
         </div>
@@ -398,7 +398,7 @@ function IdleCard() {
     <div className="card flex items-center justify-center py-16 border-dashed">
       <div className="text-center">
         <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-4">
-          <Music size={24} className="text-faint" />
+          <GuitarIcon size={24} weight="duotone" className="text-faint" />
         </div>
         <p className="font-display text-3xl text-faint tracking-wider mb-1">Nothing Playing</p>
         <p className="font-mono text-xs text-faint">
@@ -550,7 +550,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
             ) : (
               <>
                 {' '}
-                <CirclePlay size={12} className="inline mr-1" /> Play{' '}
+                <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
               </>
             )}
           </button>
@@ -701,8 +701,8 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
       <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Override</h2>
         <p className="font-mono text-xs text-danger mb-4 md:mb-6">
-          <AlertTriangle size={14} className="inline mr-1" /> This will stop current playback, clear
-          all queues, and play the requested song immediately.
+          <WarningIcon size={14} weight="duotone" className="inline mr-1" /> This will stop current
+          playback, clear all queues, and play the requested song immediately.
         </p>
 
         <div className="space-y-4 mb-6">

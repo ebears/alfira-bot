@@ -1,6 +1,13 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
-import { ListPlus, ListVideo, Loader2, Play, Search, Trash2 } from 'lucide-react';
+import {
+  BombIcon,
+  CassetteTapeIcon,
+  CircleNotchIcon,
+  MagnifyingGlassIcon,
+  PlayIcon,
+  VinylRecordIcon,
+} from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   addSong,
@@ -133,9 +140,10 @@ export default function SongsPage() {
 
       {/* Search */}
       <div className="relative mb-4 md:mb-6">
-        <Search
+        <MagnifyingGlassIcon
           className="absolute left-3 top-1/2 -translate-y-1/2 text-faint w-4 h-4 md:w-3.5 md:h-3.5"
           size={16}
+          weight="duotone"
         />
         <input
           className="input pl-10"
@@ -313,9 +321,13 @@ function SongCard({
             }`}
           >
             {isPlaying ? (
-              <Loader2 size={24} className="text-accent animate-spin md:w-5 md:h-5" />
+              <CircleNotchIcon
+                size={24}
+                weight="bold"
+                className="text-accent animate-spin md:w-5 md:h-5"
+              />
             ) : (
-              <Play size={24} className="text-white md:w-5 md:h-5" />
+              <PlayIcon size={24} weight="duotone" className="text-white md:w-5 md:h-5" />
             )}
           </div>
         </button>
@@ -332,13 +344,13 @@ function SongCard({
             type="button"
             onClick={handleAddToQueue}
             disabled={addingToQueue}
-            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-lg md:rounded transition-colors duration-150 disabled:opacity-50"
+            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-xl transition-colors duration-150 disabled:opacity-50"
             title="Add to Up Next"
           >
             {addingToQueue ? (
               <span className="w-4 h-4 md:w-3 md:h-3 border-2 md:border border-accent border-t-transparent rounded-full animate-spin inline-block" />
             ) : (
-              <ListVideo size={18} className="md:w-4 md:h-4" />
+              <VinylRecordIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
             )}
           </button>
           {isAdmin && (
@@ -348,10 +360,10 @@ function SongCard({
                 <button
                   type="button"
                   onClick={() => setShowPlaylistMenu((p) => !p)}
-                  className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-lg md:rounded transition-colors duration-150"
+                  className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
                   title="Add to playlist"
                 >
-                  <ListPlus size={18} className="md:w-4 md:h-4" />
+                  <CassetteTapeIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
                 </button>
                 {showPlaylistMenu && (
                   <div className="absolute bottom-full left-0 mb-1 w-44 bg-elevated border border-border rounded shadow-xl z-20 overflow-hidden">
@@ -380,10 +392,10 @@ function SongCard({
               <button
                 type="button"
                 onClick={onDelete}
-                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-faint hover:text-danger active:bg-danger/10 border border-border hover:border-danger/30 rounded-lg md:rounded transition-colors duration-150"
+                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-faint hover:text-danger active:bg-danger/10 border border-border hover:border-danger/30 rounded-xl transition-colors duration-150"
                 title="Delete song"
               >
-                <Trash2 size={18} className="md:w-4 md:h-4" />
+                <BombIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
               </button>
             </>
           )}

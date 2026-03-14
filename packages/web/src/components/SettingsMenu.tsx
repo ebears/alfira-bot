@@ -1,4 +1,4 @@
-import { Monitor, Moon, Settings, Sun, X } from 'lucide-react';
+import { DesktopIcon, GearIcon, MoonIcon, SunIcon, XCircleIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +30,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
               : 'w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-body font-medium text-muted hover:text-fg hover:bg-elevated transition-colors duration-150'
           }
         >
-          <Settings size={16} />
+          <GearIcon size={16} weight="duotone" />
           {!collapsed && <span>Settings</span>}
         </button>
       </div>
@@ -49,7 +49,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
           {/* Panel */}
           <div className="relative w-full max-w-md bg-surface border border-border rounded-t-lg sm:rounded-lg shadow-2xl animate-fade-up max-h-[85vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
               <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
               <button
                 type="button"
@@ -59,7 +59,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                 }}
                 className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
               >
-                <X size={20} />
+                <XCircleIcon size={20} weight="duotone" />
               </button>
             </div>
 
@@ -98,7 +98,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                       }`}
                     >
                       <span
-                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: t.accentColor }}
                       />
                       <span className="truncate">{t.displayName}</span>
@@ -122,7 +122,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
-                    <Monitor size={16} />
+                    <DesktopIcon size={16} weight="duotone" />
                     <span>Auto</span>
                   </button>
                   <button
@@ -134,7 +134,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
-                    <Sun size={16} />
+                    <SunIcon size={16} weight="duotone" />
                     <span>Light</span>
                   </button>
                   <button
@@ -146,7 +146,7 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                         : 'bg-elevated text-muted border border-border hover:text-fg'
                     }`}
                   >
-                    <Moon size={16} />
+                    <MoonIcon size={16} weight="duotone" />
                     <span>Dark</span>
                   </button>
                 </div>
