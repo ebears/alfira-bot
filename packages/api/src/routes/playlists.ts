@@ -1,6 +1,7 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
 import type { Response } from 'express';
 import { Router } from 'express';
+import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -19,16 +20,6 @@ interface PlaylistLike {
   isPrivate: boolean;
 }
 
-/** Returns true if user can view/modify a private playlist. */
-function canAccessPrivatePlaylist(
-  playlist: PlaylistLike,
-  user: UserContext | undefined,
-  adminView?: boolean
-): boolean {
-  if (!playlist.isPrivate) return true;
-  return playlist.createdBy === user?.discordId || (user?.isAdmin === true && adminView === true);
-}
-
 /** Returns true if user is owner or admin. Sends 403 and returns false if not. */
 function requirePlaylistOwnerOrAdmin(
   playlist: PlaylistLike,
@@ -38,18 +29,6 @@ function requirePlaylistOwnerOrAdmin(
 ): boolean {
   if (playlist.createdBy === user?.discordId || user?.isAdmin) return true;
   res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
-  return false;
-}
-
-/** Sends 403 if user cannot access this private playlist. */
-function checkPlaylistAccess(
-  playlist: PlaylistLike,
-  user: UserContext | undefined,
-  res: Response,
-  adminView?: boolean
-): boolean {
-  if (canAccessPrivatePlaylist(playlist, user, adminView)) return true;
-  res.status(403).json({ error: 'Access denied. This playlist is private.' });
   return false;
 }
 
@@ -93,7 +72,7 @@ router.get(
 
     // Filter private playlists: only visible to creator and admins (in Admin View)
     const filteredPlaylists = playlists.filter((pl) =>
-      canAccessPrivatePlaylist(pl, req.user, adminView)
+      canAccessPlaylist(pl, req.user, undefined, adminView)
     );
 
     // Fetch creator display names for each playlist
@@ -166,7 +145,7 @@ router.get(
       return;
     }
 
-    if (!checkPlaylistAccess(playlist, req.user, res, adminView)) return;
+    if (!canAccessPlaylist(playlist, req.user, res, adminView)) return;
 
     res.json({
       ...playlist,
@@ -201,12 +180,7 @@ router.patch(
     }
 
     // Check permissions: creator or admin (in Admin View)
-    if (!canAccessPrivatePlaylist(existing, req.user, adminView)) {
-      res
-        .status(403)
-        .json({ error: 'Only the creator or admins (in Admin View) can change visibility.' });
-      return;
-    }
+    if (!canAccessPlaylist(existing, req.user, res, adminView)) return;
 
     const playlist = await prisma.playlist.update({
       where: { id: req.params.id as string },

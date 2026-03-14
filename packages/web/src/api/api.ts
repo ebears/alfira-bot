@@ -13,7 +13,6 @@ import client from './client';
 // ---------------------------------------------------------------------------
 export const getMe = () => client.get<{ user: User }>('/auth/me').then((r) => r.data.user);
 export const logout = () => client.post('/auth/logout');
-export const refresh = () => client.post<{ user: User }>('/auth/refresh').then((r) => r.data);
 
 // ---------------------------------------------------------------------------
 // Songs

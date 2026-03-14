@@ -39,6 +39,12 @@ export default function QueuePage() {
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
+  const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
+
+  const delayThenRefetch = useCallback(async () => {
+    await new Promise((r) => setTimeout(r, 600));
+    await refetch();
+  }, [refetch]);
 
   const handleShuffle = async () => {
     setShuffleBusy(true);
@@ -153,13 +159,9 @@ export default function QueuePage() {
             <button
               type="button"
               onClick={handleClear}
-              disabled={
-                clearBusy || (queue.length === 0 && priorityQueue.length === 0 && !currentSong)
-              }
+              disabled={clearBusy || isQueueEmpty}
               className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                queue.length === 0 && priorityQueue.length === 0 && !currentSong
-                  ? 'btn-ghost'
-                  : 'btn-danger'
+                isQueueEmpty ? 'btn-ghost' : 'btn-danger'
               }`}
             >
               <BombIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
@@ -286,9 +288,7 @@ export default function QueuePage() {
           onClose={() => setShowLoadPlaylist(false)}
           onLoaded={async () => {
             setShowLoadPlaylist(false);
-            // Give the bot a moment to enqueue before we poll.
-            await new Promise((r) => setTimeout(r, 600));
-            await refetch();
+            await delayThenRefetch();
           }}
         />
       )}
@@ -301,9 +301,7 @@ export default function QueuePage() {
           onClose={() => setShowQuickAdd(false)}
           onAdded={async () => {
             setShowQuickAdd(false);
-            // Give the bot a moment to enqueue before we poll.
-            await new Promise((r) => setTimeout(r, 600));
-            await refetch();
+            await delayThenRefetch();
           }}
         />
       )}
@@ -316,8 +314,7 @@ export default function QueuePage() {
           onClose={() => setShowOverride(false)}
           onOverride={async () => {
             setShowOverride(false);
-            await new Promise((r) => setTimeout(r, 600));
-            await refetch();
+            await delayThenRefetch();
           }}
         />
       )}
