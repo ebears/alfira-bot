@@ -17,13 +17,20 @@ export interface PlaylistMetadata {
   videos: { id: string; title: string; duration: number; thumbnailUrl: string }[];
 }
 
+const YT_DLP_TIMEOUT_MS = 30_000;
+
 function execFileAsync(cmd: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile(cmd, args, (error, stdout) => {
+    const child = execFile(cmd, args, { timeout: YT_DLP_TIMEOUT_MS }, (error, stdout) => {
       if (error) {
         return reject(error);
       }
       resolve(stdout);
+    });
+
+    // Prevent unhandled error event on timeout kill.
+    child.on('error', () => {
+      // Error is already handled by the execFile callback above.
     });
   });
 }

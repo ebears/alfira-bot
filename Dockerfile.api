@@ -1,7 +1,21 @@
 # ---------------------------------------------------------------------------
+# yt-dlp stage - download and verify yt-dlp (shared between deps and runtime)
+# ---------------------------------------------------------------------------
+FROM alpine AS ytdlp
+ARG YTDLP_VERSION=2026.03.03
+RUN apk add --no-cache curl && \
+    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
+      -o /yt-dlp && \
+    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/SHA2-256SUMS" \
+      -o /tmp/yt-dlp-sums && \
+    grep " yt-dlp$" /tmp/yt-dlp-sums | sed 's| yt-dlp$| /yt-dlp|' | sha256sum -c - && \
+    rm /tmp/yt-dlp-sums && \
+    chmod a+rx /yt-dlp
+
+# ---------------------------------------------------------------------------
 # Dependencies stage - install system deps and pnpm packages
 # ---------------------------------------------------------------------------
-FROM node:25-alpine AS deps
+FROM node:24-alpine AS deps
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -10,23 +24,15 @@ RUN npm install -g pnpm
 # ffmpeg: audio processing for the bot
 # python3: required for yt-dlp
 # openssl, libc6-compat: required for Prisma
-ARG YTDLP_VERSION=2026.03.03
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
     ca-certificates \
     openssl \
-    libc6-compat \
-    curl && \
-    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
-      -o /usr/local/bin/yt-dlp && \
-    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/SHA2-256SUMS" \
-      -o /tmp/yt-dlp-sums && \
-    grep " yt-dlp$" /tmp/yt-dlp-sums | sed 's| yt-dlp$| /usr/local/bin/yt-dlp|' | sha256sum -c - && \
-    rm /tmp/yt-dlp-sums && \
-    chmod a+rx /usr/local/bin/yt-dlp && \
-    # Clean up curl after use (not needed at runtime)
-    apk del curl
+    libc6-compat
+
+# Copy yt-dlp from shared stage
+COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
 
 WORKDIR /app
 
@@ -84,7 +90,7 @@ RUN pnpm --filter @alfira-bot/shared run build && \
 # ---------------------------------------------------------------------------
 # Production deps stage - install only production dependencies
 # ---------------------------------------------------------------------------
-FROM node:25-alpine AS prod-deps
+FROM node:24-alpine AS prod-deps
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -99,26 +105,19 @@ RUN pnpm install --prod --frozen-lockfile
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
 # ---------------------------------------------------------------------------
-FROM node:25-alpine AS runtime
+FROM node:24-alpine AS runtime
 
-# Install only runtime system dependencies (no build tools)
-ARG YTDLP_VERSION=2026.03.03
+# Install only runtime system dependencies (no build tools, no curl)
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
     ca-certificates \
     openssl \
     libc6-compat \
-    curl && \
-    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
-      -o /usr/local/bin/yt-dlp && \
-    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/SHA2-256SUMS" \
-      -o /tmp/yt-dlp-sums && \
-    grep " yt-dlp$" /tmp/yt-dlp-sums | sed 's| yt-dlp$| /usr/local/bin/yt-dlp|' | sha256sum -c - && \
-    rm /tmp/yt-dlp-sums && \
-    chmod a+rx /usr/local/bin/yt-dlp && \
-    apk del curl && \
-    rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/*
+
+# Copy yt-dlp from shared stage (no re-download needed)
+COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
 
 WORKDIR /app
 

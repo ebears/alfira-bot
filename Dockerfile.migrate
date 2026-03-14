@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # Lightweight Dockerfile for database migrations only
 # ---------------------------------------------------------------------------
-FROM node:25-alpine AS deps
+FROM node:24-alpine AS deps
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -36,7 +36,7 @@ RUN DATABASE_URL="$DATABASE_URL" pnpm --filter @alfira-bot/api exec prisma gener
 # ---------------------------------------------------------------------------
 # Runtime stage
 # ---------------------------------------------------------------------------
-FROM node:25-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 # Install pnpm globally (needed for prisma migrate)
 RUN npm install -g pnpm

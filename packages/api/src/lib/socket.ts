@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { Server as SocketIOServer } from 'socket.io';
 import type { UserPayload } from '../middleware/requireAuth';
 import { WEB_UI_ORIGIN } from './config';
+import logger from './logger';
 
 type PrismaPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
 type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
@@ -63,7 +64,7 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
   _io.use((socket, next) => {
     const { JWT_SECRET } = process.env;
     if (!JWT_SECRET) {
-      console.error('JWT_SECRET is not set — cannot verify Socket.io connections.');
+      logger.error('JWT_SECRET is not set — cannot verify Socket.io connections');
       next(new Error('Server misconfiguration.'));
       return;
     }
@@ -90,13 +91,13 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
   });
 
   _io.on('connection', (socket) => {
-    console.log(`🔌 Socket connected: ${socket.id} (user: ${socket.data.user?.username})`);
+    logger.info({ socketId: socket.id, username: socket.data.user?.username }, 'Socket connected');
     socket.on('disconnect', (reason) => {
-      console.log(`🔌 Socket disconnected: ${socket.id} (${reason})`);
+      logger.info({ socketId: socket.id, reason }, 'Socket disconnected');
     });
   });
 
-  console.log(`✅ Socket.io initialised (CORS origin: ${WEB_UI_ORIGIN})`);
+  logger.info({ corsOrigin: WEB_UI_ORIGIN }, 'Socket.io initialised');
   return _io;
 }
 
@@ -134,4 +135,11 @@ export function emitSongDeleted(id: string): void {
  */
 export function emitPlaylistUpdated(playlist: PrismaPlaylist): void {
   _io?.emit('playlists:updated', dateToWire(playlist));
+}
+
+/**
+ * Get the Socket.io server instance (for graceful shutdown).
+ */
+export function getIo(): SocketIOServer | null {
+  return _io;
 }

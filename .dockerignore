@@ -1,98 +1,12 @@
-# Dependencies — reinstalled inside the image by pnpm install
-node_modules
-packages/*/node_modules
-.pnpm-store
-
-# Build output — compiled fresh inside the image
-dist
-build
-packages/*/dist
-packages/*/build
-
-# Prisma generated client — regenerated inside the image
-packages/api/prisma/generated
-packages/shared/prisma/generated
-
-# Local environment files — secrets must never enter the build context
-.env
-.env.*
-packages/api/.env
-packages/api/.env.*
-packages/bot/.env
-packages/bot/.env.*
-
-# Version control
-.git
-.gitignore
-.github
-
-# Editor and OS clutter
-.vscode
-.idea
-.cursor
-.DS_Store
-Thumbs.db
-*.log
-*.swp
-*.swo
-*~
-
-# Docker files (no need to copy these into the image)
-.dockerignore
-docker-compose*.yml
-Dockerfile*
-
-# Documentation
-docs/
-README.md
-TODO.md
-LICENSE
-CHANGELOG.md
-
-# Test files and coverage
-**/*.test.ts
-**/*.test.js
-**/*.spec.ts
-**/*.spec.js
-coverage/
-.nyc_output/
-
-# CI/CD configurations
+node_modules/
+.git/
+*.md
+.env*
+dist/
+build/
+.vscode/
+.idea/
+.claude/
+.superpowers/
 .github/
-.gitlab-ci.yml
-.travis.yml
-Jenkinsfile
-
-# Development tools config
-.eslintrc*
-.prettierrc*
-tslint.json
-.editorconfig
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
-
-# Logs and debugging
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Build artifacts
-*.tsbuildinfo
-
-# SQLite databases (if any)
-*.db
-*.db-journal
-*.sqlite
-*.sqlite3
+.worktrees/

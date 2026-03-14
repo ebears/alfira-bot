@@ -330,29 +330,32 @@ router.delete(
       return;
     }
 
-    await prisma.playlistSong.delete({
-      where: {
-        playlistId_songId: {
-          playlistId: playlistId as string,
-          songId: songId as string,
+    // Delete and re-index in a transaction to prevent inconsistent positions.
+    await prisma.$transaction(async (tx) => {
+      await tx.playlistSong.delete({
+        where: {
+          playlistId_songId: {
+            playlistId: playlistId as string,
+            songId: songId as string,
+          },
         },
-      },
-    });
+      });
 
-    // Re-index remaining songs to close the gap in positions.
-    const remaining = await prisma.playlistSong.findMany({
-      where: { playlistId: playlistId as string },
-      orderBy: { position: 'asc' },
-    });
+      // Re-index remaining songs to close the gap in positions.
+      const remaining = await tx.playlistSong.findMany({
+        where: { playlistId: playlistId as string },
+        orderBy: { position: 'asc' },
+      });
 
-    await Promise.all(
-      remaining.map((ps: { id: string }, index: number) =>
-        prisma.playlistSong.update({
-          where: { id: ps.id },
-          data: { position: index },
-        })
-      )
-    );
+      await Promise.all(
+        remaining.map((ps: { id: string }, index: number) =>
+          tx.playlistSong.update({
+            where: { id: ps.id },
+            data: { position: index },
+          })
+        )
+      );
+    });
 
     await emitPlaylistBroadcast(playlistId as string);
     res.status(204).send();

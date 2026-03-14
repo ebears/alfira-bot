@@ -2,13 +2,16 @@ import 'dotenv/config';
 import http from 'node:http';
 import { startBot } from '@alfira-bot/bot';
 import { setBroadcastQueueUpdate } from '@alfira-bot/bot/src/lib/broadcast';
+import { destroyAllPlayers } from '@alfira-bot/bot/src/player/manager';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { pinoHttp } from 'pino-http';
 import { WEB_UI_ORIGIN } from './lib/config';
+import logger from './lib/logger';
 import prisma from './lib/prisma';
-import { emitPlayerUpdate, initSocket } from './lib/socket';
+import { emitPlayerUpdate, getIo, initSocket } from './lib/socket';
 import { errorHandler } from './middleware/errorHandler';
 import authRouter from './routes/auth';
 import playerRouter from './routes/player';
@@ -35,8 +38,8 @@ const requiredVars = [
 const missing = requiredVars.filter((v) => !process.env[v]);
 
 if (missing.length > 0) {
-  console.error(`❌  Missing required environment variables: ${missing.join(', ')}`);
-  console.error('    Copy packages/api/.env.example to packages/api/.env and fill in all values.');
+  logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+  logger.error('Copy packages/api/.env.example to packages/api/.env and fill in all values.');
   process.exit(1);
 }
 
@@ -69,6 +72,9 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// Request logging with structured JSON output.
+app.use(pinoHttp({ logger }));
+
 // ---------------------------------------------------------------------------
 // Routes
 // ---------------------------------------------------------------------------
@@ -77,9 +83,24 @@ app.use('/api/playlists', playlistsRouter);
 app.use('/api/player', playerRouter);
 app.use('/auth', authRouter);
 
-// Health check — useful for verifying the server is up.
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+// Health check — verifies database connectivity and Discord bot status.
+app.get('/health', async (_req, res) => {
+  const checks: Record<string, string> = {};
+
+  // Check database connectivity
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = 'ok';
+  } catch {
+    checks.database = 'error';
+  }
+
+  const isHealthy = Object.values(checks).every((v) => v === 'ok');
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'degraded',
+    checks,
+  });
 });
 
 // Global error handler — must be registered last.
@@ -111,10 +132,10 @@ async function main(): Promise<void> {
   // Use a raw query to ensure the database is reachable before proceeding.
   try {
     await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ Connected to database.');
+    logger.info('Connected to database');
   } catch (error) {
-    console.error('❌ Could not connect to the database:', error);
-    console.error(' Is PostgreSQL running? Try: docker compose up -d');
+    logger.error(error, 'Could not connect to the database');
+    logger.error('Is PostgreSQL running? Try: docker compose up -d');
     process.exit(1);
   }
 
@@ -128,16 +149,65 @@ async function main(): Promise<void> {
 
   // 4. Start the HTTP server (Express + Socket.io on the same port).
   httpServer.listen(PORT, () => {
-    console.log(`✅  API + Socket.io listening on http://localhost:${PORT}`);
+    logger.info({ port: PORT }, 'API + Socket.io listening');
   });
 
   // 5. Start the Discord bot.
   try {
     await startBot();
   } catch (error) {
-    console.error('❌  Failed to start the Discord bot:', error);
+    logger.error(error, 'Failed to start the Discord bot');
     // Don't exit — the API is still useful for testing even if the bot fails.
   }
 }
 
-main();
+main().catch((err) => {
+  logger.fatal(err, 'Fatal startup error');
+  process.exit(1);
+});
+
+// ---------------------------------------------------------------------------
+// Graceful shutdown
+//
+// On SIGTERM (Docker stop, k8s) or SIGINT (Ctrl+C):
+//   1. Stop accepting new HTTP connections.
+//   2. Disconnect all Socket.io clients.
+//   3. Destroy all GuildPlayers (stops FFmpeg, tears down voice connections).
+//   4. Disconnect Prisma.
+//   5. Exit cleanly.
+// ---------------------------------------------------------------------------
+let shuttingDown = false;
+
+async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  logger.info({ signal }, 'Starting graceful shutdown');
+
+  // 1. Stop accepting new connections.
+  httpServer.close(() => {
+    logger.info('HTTP server closed');
+  });
+
+  // 2. Disconnect all Socket.io clients.
+  const io = getIo();
+  if (io) {
+    io.disconnectSockets(true);
+    await io.close();
+    logger.info('Socket.io closed');
+  }
+
+  // 3. Destroy all players (FFmpeg + voice connections).
+  destroyAllPlayers();
+  logger.info('All players destroyed');
+
+  // 4. Disconnect database.
+  await prisma.$disconnect();
+  logger.info('Database disconnected');
+
+  logger.info('Graceful shutdown complete');
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));

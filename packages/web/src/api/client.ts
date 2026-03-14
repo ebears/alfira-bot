@@ -12,6 +12,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 // ---------------------------------------------------------------------------
 const client = axios.create({
   withCredentials: true,
+  timeout: 10_000, // 10 seconds — prevents indefinite hangs on slow/unresponsive servers
 });
 
 // ---------------------------------------------------------------------------
