@@ -12,7 +12,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   addSong,
   addSongToPlaylist,
-  addToPriorityQueue,
   deleteSong,
   getPlaylists,
   getSongs,
@@ -24,6 +23,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { useSocket } from '../hooks/useSocket';
@@ -41,6 +41,7 @@ export default function SongsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
+  const handleAddToQueue = useAddToQueue();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -111,19 +112,6 @@ export default function SongsPage() {
     }
   };
 
-  const handleAddToQueue = async (songId: string) => {
-    try {
-      await addToPriorityQueue(songId);
-      notify('Added to Up Next', 'success');
-    } catch (err: unknown) {
-      notify(
-        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
-        'error',
-        5000
-      );
-    }
-  };
-
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
@@ -171,9 +159,6 @@ export default function SongsPage() {
               playlists={playlists}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
               onDelete={() => setDeleteId(song.id)}
-              onAddedToPlaylist={() => {
-                /* optimistic — no refresh needed */
-              }}
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
               onAddToQueue={() => handleAddToQueue(song.id)}
@@ -236,7 +221,6 @@ function SongCard({
   playlists,
   style,
   onDelete,
-  onAddedToPlaylist,
   onPlay,
   isPlaying,
   onAddToQueue,
@@ -246,7 +230,6 @@ function SongCard({
   playlists: Playlist[];
   style?: React.CSSProperties;
   onDelete: () => void;
-  onAddedToPlaylist: () => void;
   onPlay: () => void;
   isPlaying: boolean;
   onAddToQueue: () => void;
@@ -274,7 +257,6 @@ function SongCard({
     try {
       await addSongToPlaylist(playlistId, song.id);
       setAddedTo((prev) => new Set([...prev, playlistId]));
-      onAddedToPlaylist();
     } catch (err: unknown) {
       if (apiErrorMessage(err, '').includes('already')) {
         setAddedTo((prev) => new Set([...prev, playlistId]));

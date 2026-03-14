@@ -13,7 +13,7 @@ export const skipCommand: Command = {
     if (!player) return;
 
     const currentTitle = player.getCurrentSong()?.title;
-    await player.skip();
+    player.skip();
 
     if (player.getCurrentSong()) {
       await interaction.reply(`⏭️ Skipped **${currentTitle}**.`);

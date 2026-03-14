@@ -15,7 +15,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   addSongToPlaylist,
-  addToPriorityQueue,
   deletePlaylist,
   getPlaylist,
   getSongs,
@@ -30,6 +29,7 @@ import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
@@ -51,6 +51,7 @@ export default function PlaylistDetailPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
+  const handleAddToQueue = useAddToQueue();
 
   // Allow editing when:
   // - User is admin AND edit mode is enabled, OR
@@ -182,19 +183,6 @@ export default function PlaylistDetailPage() {
       notify(apiErrorMessage(err, 'Could not start playback.'), 'error', 5000);
     } finally {
       setPlayingSongId(null);
-    }
-  };
-
-  const handleAddToQueue = async (songId: string) => {
-    try {
-      await addToPriorityQueue(songId);
-      notify('Added to Up Next', 'success');
-    } catch (err: unknown) {
-      notify(
-        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
-        'error',
-        5000
-      );
     }
   };
 
