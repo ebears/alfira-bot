@@ -141,7 +141,7 @@ export class GuildPlayer {
         this.killCurrentFfmpeg = null;
         this.queue.clear();
         this.currentSong = null;
-        broadcastQueueUpdate(this.getQueueState());
+        this.broadcast();
         this.sendToTextChannel(
           '⚠️ Lost the voice connection unexpectedly. Use **/play** or **/join** to reconnect.'
         );
@@ -158,7 +158,7 @@ export class GuildPlayer {
     if (this.currentSong === null) {
       await this.playNext();
     } else {
-      broadcastQueueUpdate(this.getQueueState());
+      this.broadcast();
     }
   }
 
@@ -167,7 +167,7 @@ export class GuildPlayer {
     if (this.currentSong === null) {
       await this.playNext();
     } else {
-      broadcastQueueUpdate(this.getQueueState());
+      this.broadcast();
     }
   }
 
@@ -179,7 +179,7 @@ export class GuildPlayer {
     this.audioPlayer.stop(true);
     this.queue.replace(songs);
     await this.playNext();
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
   }
 
   skip(): void {
@@ -201,22 +201,22 @@ export class GuildPlayer {
     this.audioPlayer.stop(true);
     this.paused = false;
     this.trackStartedAt = null;
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
   }
 
   clearQueue(): void {
     this.queue.clear();
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
   }
 
   shuffle(): void {
     this.queue.shuffle();
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
   }
 
   setLoopMode(mode: LoopMode): void {
     this.loopMode = mode;
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
   }
 
   togglePause(): boolean {
@@ -238,7 +238,7 @@ export class GuildPlayer {
       this.paused = true;
     }
 
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
     return this.paused;
   }
 
@@ -271,6 +271,10 @@ export class GuildPlayer {
     };
   }
 
+  private broadcast(): void {
+    broadcastQueueUpdate(this.getQueueState());
+  }
+
   private sendToTextChannel(message: string | { embeds: EmbedBuilder[] }): void {
     this.textChannel
       .send(message)
@@ -299,7 +303,7 @@ export class GuildPlayer {
       } else {
         this.currentSong = null;
         this.queue.clear();
-        broadcastQueueUpdate(this.getQueueState());
+        this.broadcast();
         return;
       }
     }
@@ -307,7 +311,7 @@ export class GuildPlayer {
     const next = this.queue.current();
     if (!next) {
       this.currentSong = null;
-      broadcastQueueUpdate(this.getQueueState());
+      this.broadcast();
       return;
     }
 
@@ -366,7 +370,7 @@ export class GuildPlayer {
 
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
-    broadcastQueueUpdate(this.getQueueState());
+    this.broadcast();
     this.sendToTextChannel({ embeds: [buildNowPlayingEmbed(next, this.loopMode)] });
   }
 

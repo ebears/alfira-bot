@@ -13,21 +13,6 @@ interface SinglyListNode<T> {
 export class SinglyLinkedList<T> {
   private head: SinglyListNode<T> | null = null;
   private tail: SinglyListNode<T> | null = null;
-  private _size = 0;
-
-  // ---------------------------------------------------------------------------
-  // Getters
-  // ---------------------------------------------------------------------------
-
-  /** Number of items in the list */
-  get size(): number {
-    return this._size;
-  }
-
-  /** Whether the list is empty */
-  get isEmpty(): boolean {
-    return this._size === 0;
-  }
 
   // ---------------------------------------------------------------------------
   // Core Operations
@@ -51,7 +36,6 @@ export class SinglyLinkedList<T> {
     }
 
     this.tail = node;
-    this._size++;
   }
 
   /**
@@ -72,7 +56,6 @@ export class SinglyLinkedList<T> {
       this.tail = null;
     }
 
-    this._size--;
     return value;
   }
 
@@ -83,7 +66,6 @@ export class SinglyLinkedList<T> {
   clear(): void {
     this.head = null;
     this.tail = null;
-    this._size = 0;
   }
 
   /**

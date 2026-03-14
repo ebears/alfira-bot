@@ -88,14 +88,10 @@ client.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      })
-        .then(() => {
-          // Retry the original request after refresh completes
-          return client(originalRequest);
-        })
-        .catch((err) => {
-          return Promise.reject(err);
-        });
+      }).then(() => {
+        // Retry the original request after refresh completes
+        return client(originalRequest);
+      });
     }
 
     // Start refreshing

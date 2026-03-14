@@ -25,6 +25,8 @@ import {
   togglePlaylistVisibility,
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
+import ConfirmModal from '../components/ConfirmModal';
+import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -385,20 +387,20 @@ export default function PlaylistDetailPage() {
       )}
 
       {/* Notification Toast */}
-      {notification && (
-        <div
-          className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-mono text-xs animate-fade-up ${
-            notification.type === 'success'
-              ? 'bg-accent/20 border border-accent/40 text-accent'
-              : 'bg-danger/20 border border-danger/40 text-danger'
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
+      {notification && <NotificationToast notification={notification} />}
       {removeId && (
-        <ConfirmRemoveModal
-          song={playlist.songs.find((ps) => ps.songId === removeId)?.song}
+        <ConfirmModal
+          title="Remove Song"
+          message={
+            <>
+              Remove{' '}
+              <span className="text-fg font-semibold">
+                "{playlist.songs.find((ps) => ps.songId === removeId)?.song?.title}"
+              </span>{' '}
+              from this playlist? The song won't be deleted from the library.
+            </>
+          }
+          confirmLabel="Remove"
           onConfirm={() => handleRemoveSong(removeId)}
           onCancel={() => setRemoveId(null)}
         />
@@ -680,41 +682,6 @@ function PlayModal({
                 <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
               </>
             )}
-          </button>
-        </div>
-      </div>
-    </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Confirm remove from playlist
-// ---------------------------------------------------------------------------
-function ConfirmRemoveModal({
-  song,
-  onConfirm,
-  onCancel,
-}: {
-  song: Song | undefined;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  if (!song) return null;
-
-  return (
-    <Backdrop onClose={onCancel}>
-      <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl animate-fade-up">
-        <h2 className="font-display text-3xl text-fg tracking-wider mb-1">Remove Song</h2>
-        <p className="font-body text-sm text-muted mb-6">
-          Remove <span className="text-fg font-semibold">"{song.title}"</span> from this playlist?
-          The song won't be deleted from the library.
-        </p>
-        <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="btn-danger border-danger/50" onClick={onConfirm}>
-            Remove
           </button>
         </div>
       </div>

@@ -10,12 +10,6 @@ if (!rootElement) {
 }
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    {/*
-      future flags opt in to React Router v7 behaviour early.
-      v7_startTransition  — wraps state updates in React.startTransition
-      v7_relativeSplatPath — fixes relative route resolution inside splat routes
-      Both are safe no-ops for this app's routing structure.
-    */}
     <BrowserRouter>
       <App />
     </BrowserRouter>
