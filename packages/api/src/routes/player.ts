@@ -234,6 +234,7 @@ router.post(
   '/skip',
   requireAuth,
   playerLimiter,
+  // biome-ignore lint/suspicious/useAwait: asyncHandler requires Promise<void> return type
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
 
@@ -242,7 +243,7 @@ router.post(
       return;
     }
 
-    await player.skip();
+    player.skip();
     res.json({ message: 'Skipped.' });
   })
 );

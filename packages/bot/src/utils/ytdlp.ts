@@ -62,7 +62,7 @@ export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
     title,
     youtubeId: id,
     duration,
-    thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+    thumbnailUrl: youtubeThumbnail(id),
   };
 }
 
@@ -139,6 +139,10 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
   return { stream: readStream, kill };
 }
 
+function youtubeThumbnail(videoId: string): string {
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
 const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
 
 export function isValidYouTubeUrl(url: string): boolean {
@@ -199,7 +203,7 @@ export async function getPlaylistMetadataWithVideos(
           id: data.id || '',
           title: data.title || 'Unknown',
           duration: Math.round(data.duration) || 0,
-          thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
+          thumbnailUrl: youtubeThumbnail(data.id),
         };
       } catch {
         return null;
