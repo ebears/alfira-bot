@@ -65,11 +65,11 @@ The bot and API run in a **single Node.js process**, sharing the same memory for
 
 ## Project Structure
 
-The project is an npm workspaces monorepo:
+The project is a pnpm workspaces monorepo:
 
 ```
 packages/
-├── shared    # Shared TypeScript types (Song, QueueState, Playlist, etc.)
+├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
 ├── bot       # Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
 ├── api       # Express API, Prisma, Socket.io server
 └── web       # Vite + React + Tailwind web UI

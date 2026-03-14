@@ -76,8 +76,9 @@ Edit `.env` with values from the [Discord Developer Portal](https://discord.com/
 | `GUILD_ID` | ✅ | Your Discord server ID |
 | `ADMIN_ROLE_IDS` | ✅ | Role ID(s) for admin permissions |
 | `JWT_SECRET` | ✅ | Random secret string for JWT signing |
-| `API_URL` | ❌ | API base URL for development (default: `http://localhost:3001`) |
+| `POSTGRES_USER` | ✅ | Database username |
 | `POSTGRES_PASSWORD` | ✅ | Database password |
+| `POSTGRES_DB` | ✅ | Database name |
 
 ### 3. Start the Stack
 

@@ -60,7 +60,7 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 2. Copy the **Client secret** — this is your `DISCORD_CLIENT_SECRET`.
 3. Add your redirect URL:
    - Local development: `http://localhost:3001/auth/callback`
-   - Docker development: `http://localhost:8080/auth/callback`
+   - Docker development: `http://localhost:3001/auth/callback`
    - Production: `https://your-domain.com/auth/callback`
 4. Click **"Save Changes"**.
 
