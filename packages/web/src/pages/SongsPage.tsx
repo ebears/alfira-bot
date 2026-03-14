@@ -333,7 +333,7 @@ function SongCard({
             type="button"
             onClick={handleAddToQueue}
             disabled={addingToQueue}
-            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-lg md:rounded transition-colors duration-150 disabled:opacity-50"
+            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-xl transition-colors duration-150 disabled:opacity-50"
             title="Add to Up Next"
           >
             {addingToQueue ? (
@@ -349,7 +349,7 @@ function SongCard({
                 <button
                   type="button"
                   onClick={() => setShowPlaylistMenu((p) => !p)}
-                  className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-lg md:rounded transition-colors duration-150"
+                  className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
                   title="Add to playlist"
                 >
                   <ListPlus size={18} weight="duotone" className="md:w-4 md:h-4" />
@@ -381,7 +381,7 @@ function SongCard({
               <button
                 type="button"
                 onClick={onDelete}
-                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-faint hover:text-danger active:bg-danger/10 border border-border hover:border-danger/30 rounded-lg md:rounded transition-colors duration-150"
+                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-faint hover:text-danger active:bg-danger/10 border border-border hover:border-danger/30 rounded-xl transition-colors duration-150"
                 title="Delete song"
               >
                 <Trash size={18} weight="duotone" className="md:w-4 md:h-4" />

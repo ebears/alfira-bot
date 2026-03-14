@@ -108,11 +108,11 @@ export default function Layout() {
               to={to}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center rounded text-sm font-body font-medium transition-colors duration-150 ${
+                `flex items-center rounded-xl text-sm font-body font-medium transition-colors duration-150 ${
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
                 } ${
                   isActive
-                    ? 'bg-accent/20 text-accent border border-accent/30'
+                    ? 'bg-accent/20 text-accent border border-accent/30 nav-active-glow'
                     : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
                 }`
               }
@@ -304,7 +304,7 @@ function NowPlayingBar() {
               type="button"
               onClick={handleStop}
               title="Stop playback"
-              className="w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
+              className="w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
             >
               <StopCircle size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
             </button>
@@ -321,7 +321,7 @@ function NowPlayingBar() {
             onClick={handleCycleLoop}
             disabled={loopBusy}
             title={`Loop: ${loopMode}`}
-            className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded transition-all duration-150 shrink-0 disabled:opacity-50 ${
+            className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150 shrink-0 disabled:opacity-50 ${
               isLoopActive
                 ? 'text-accent hover:text-accent-muted'
                 : 'text-muted hover:text-fg hover:bg-elevated'
@@ -367,7 +367,7 @@ function NowPlayingBar() {
             )}
           </div>
 
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded bg-elevated border border-border shrink-0 overflow-hidden relative">
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated border border-border shrink-0 overflow-hidden relative">
             {currentSong && isPlaying && !isPaused && (
               <div className="absolute -top-1.5 -right-1.5 z-10">
                 <Sparkle size={12} weight="duotone" className="text-accent animate-pulse-gentle" />
@@ -417,7 +417,7 @@ function BarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-lg md:rounded transition-all duration-150 ${
+      className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150 ${
         busy
           ? 'opacity-40 cursor-not-allowed text-muted'
           : `${pulse ? 'text-accent animate-pulse-gentle' : 'text-muted'} ${hoverColor} hover:bg-elevated active:bg-elevated/80 cursor-pointer`

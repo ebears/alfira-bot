@@ -346,7 +346,7 @@ function NowPlayingCard({
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-32 h-32 md:w-40 md:h-40 rounded-lg border border-border shadow-lg object-cover"
+            className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border border-border shadow-lg object-cover"
           />
           {/* Playing indicator */}
           {isPlaying && (

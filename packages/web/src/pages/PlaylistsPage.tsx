@@ -170,7 +170,7 @@ function PlaylistRow({
       tabIndex={0}
     >
       {/* Icon */}
-      <div className="w-11 h-11 md:w-10 md:h-10 rounded-lg md:rounded bg-accent/10 border border-accent/20 shrink-0 flex items-center justify-center">
+      <div className="w-11 h-11 md:w-10 md:h-10 rounded-xl bg-accent/10 border border-accent/20 shrink-0 flex items-center justify-center">
         <List size={18} weight="duotone" className="text-accent md:w-4 md:h-4" />
       </div>
       {/* Info */}

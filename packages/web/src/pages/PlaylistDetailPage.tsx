@@ -469,7 +469,7 @@ function SongRow({
       <button
         type="button"
         onClick={onAddToQueue}
-        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-lg md:rounded"
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
         title="Add to Up Next"
       >
         <ListDashes size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
@@ -478,7 +478,7 @@ function SongRow({
         <button
           type="button"
           onClick={onRemove}
-          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-lg md:rounded"
+          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
           title="Remove from playlist"
         >
           <Trash size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
@@ -587,7 +587,7 @@ function AddSongsModal({
                     type="button"
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
-                    className={`font-mono text-xs px-3 py-2 md:py-1 rounded-lg md:rounded border transition-colors duration-150 min-h-11 md:min-h-0 ${
+                    className={`font-mono text-xs px-3 py-2 md:py-1 rounded-xl border transition-colors duration-150 min-h-11 md:min-h-0 ${
                       isAdded
                         ? 'border-accent/30 text-accent bg-accent/5 cursor-default'
                         : 'border-border text-muted hover:border-accent/40 hover:text-accent active:bg-accent/10'

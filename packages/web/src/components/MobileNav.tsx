@@ -164,9 +164,9 @@ export default function MobileNav() {
               to={to}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3.5 rounded-lg text-base font-medium transition-colors duration-150 ${
+                `flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors duration-150 ${
                   isActive
-                    ? 'bg-accent/20 text-accent border border-accent/30'
+                    ? 'bg-accent/20 text-accent border border-accent/30 nav-active-glow'
                     : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
                 }`
               }
