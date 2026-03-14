@@ -1,4 +1,5 @@
 import type { VoiceConnection } from '@discordjs/voice';
+import { getVoiceConnection } from '@discordjs/voice';
 import type { TextChannel } from 'discord.js';
 import { GuildPlayer } from './GuildPlayer';
 
@@ -55,4 +56,17 @@ export function createPlayer(
  */
 export function removePlayer(guildId: string): void {
   players.delete(guildId);
+}
+
+/**
+ * Stop all active players and destroy their voice connections.
+ * Used during graceful shutdown to clean up FFmpeg processes and voice connections.
+ */
+export function destroyAllPlayers(): void {
+  for (const [guildId, player] of players) {
+    player.stop();
+    const connection = getVoiceConnection(guildId);
+    if (connection) connection.destroy();
+  }
+  players.clear();
 }

@@ -19,12 +19,14 @@ import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useConnectionStatus } from '../hooks/useSocket';
 import MobileNav from './MobileNav';
 import SettingsMenu from './SettingsMenu';
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const { isAdminView } = useAdminView();
+  const connectionStatus = useConnectionStatus();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -117,6 +119,30 @@ export default function Layout() {
 
         {/* Settings Menu */}
         <SettingsMenu collapsed={collapsed} />
+
+        {/* Connection status */}
+        {connectionStatus !== 'connected' && (
+          <div className="px-3 pb-2">
+            <div
+              className={`flex items-center gap-2 text-xs font-mono px-2 py-1.5 rounded-lg ${
+                connectionStatus === 'reconnecting'
+                  ? 'bg-warning/10 text-warning'
+                  : 'bg-danger/10 text-danger'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  connectionStatus === 'reconnecting' ? 'bg-warning animate-pulse' : 'bg-danger'
+                }`}
+              />
+              {collapsed
+                ? ''
+                : connectionStatus === 'reconnecting'
+                  ? 'Reconnecting...'
+                  : 'Disconnected'}
+            </div>
+          </div>
+        )}
 
         {/* User section */}
         <div className="p-3 border-t border-border">

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import { io, type Socket } from 'socket.io-client';
 
 // ---------------------------------------------------------------------------
@@ -20,6 +20,27 @@ import { io, type Socket } from 'socket.io-client';
 
 let _socket: Socket | null = null;
 
+// Connection status store for useSyncExternalStore
+type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting';
+let connectionStatus: ConnectionStatus = 'disconnected';
+const statusListeners = new Set<() => void>();
+
+function setStatus(status: ConnectionStatus) {
+  if (connectionStatus !== status) {
+    connectionStatus = status;
+    for (const listener of statusListeners) listener();
+  }
+}
+
+function subscribeStatus(listener: () => void) {
+  statusListeners.add(listener);
+  return () => statusListeners.delete(listener);
+}
+
+function getStatus() {
+  return connectionStatus;
+}
+
 function getSocket(): Socket {
   if (!_socket) {
     _socket = io({
@@ -28,32 +49,25 @@ function getSocket(): Socket {
       // fails (e.g. during dev when Vite's proxy hasn't fully warmed up).
       transports: ['websocket', 'polling'],
     });
+
+    _socket.on('connect', () => setStatus('connected'));
+    _socket.on('disconnect', () => setStatus('disconnected'));
+    _socket.io.on('reconnect_attempt', () => setStatus('reconnecting'));
+
+    // Set initial status
+    if (_socket.connected) {
+      setStatus('connected');
+    }
   }
   return _socket;
 }
 
 export function useSocket(): Socket {
-  const socket = getSocket();
+  return getSocket();
+}
 
-  useEffect(() => {
-    const onConnect = () => console.log('🔌  Socket.io connected:', socket.id);
-    const onDisconnect = (reason: string) => console.log('🔌  Socket.io disconnected:', reason);
-    const onConnectError = (err: Error) =>
-      console.warn('🔌  Socket.io connection error:', err.message);
-
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    socket.on('connect_error', onConnectError);
-
-    return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.off('connect_error', onConnectError);
-      // Do NOT call socket.disconnect() or null _socket here.
-      // The singleton must survive StrictMode's unmount/remount cycle,
-      // and other components (e.g. future useSocket callers) may still need it.
-    };
-  }, [socket]);
-
-  return socket;
+export function useConnectionStatus(): ConnectionStatus {
+  // Ensure socket is initialized
+  getSocket();
+  return useSyncExternalStore(subscribeStatus, getStatus, getStatus);
 }

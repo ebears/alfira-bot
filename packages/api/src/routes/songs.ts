@@ -47,6 +47,11 @@ router.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const { nickname } = req.body as { nickname?: string };
+    const trimmedNickname = nickname?.trim();
+    if (trimmedNickname && trimmedNickname.length > 50) {
+      res.status(400).json({ error: 'Nickname must be 50 characters or fewer.' });
+      return;
+    }
     const url = validateYouTubeUrl(req.body.youtubeUrl, res);
     if (!url) return;
 
@@ -74,7 +79,7 @@ router.post(
         duration: metadata.duration,
         thumbnailUrl: metadata.thumbnailUrl,
         addedBy: req.user?.discordId ?? '',
-        nickname: nickname?.trim() || null,
+        nickname: trimmedNickname || null,
       },
     });
 

@@ -10,6 +10,7 @@ import {
 import type { TextChannel } from 'discord.js';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { dateToWire } from '../lib/socket';
@@ -25,6 +26,15 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const USERNAME_FALLBACK = 'Unknown';
+
+// Rate limit player action routes to prevent abuse.
+const playerLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please slow down.' },
+});
 
 function buildQueuedSongFromMetadata(
   metadata: { title: string; youtubeId: string; duration: number; thumbnailUrl: string },
@@ -223,6 +233,7 @@ router.post(
 router.post(
   '/skip',
   requireAuth,
+  playerLimiter,
   asyncHandler(async (_req, res) => {
     const player = getPlayer(GUILD_ID);
 
@@ -237,7 +248,7 @@ router.post(
 );
 
 // POST /api/player/leave — stop and disconnect. Member accessible.
-router.post('/leave', requireAuth, (_req, res) => {
+router.post('/leave', requireAuth, playerLimiter, (_req, res) => {
   const player = getPlayer(GUILD_ID);
   const connection = getVoiceConnection(GUILD_ID);
 
@@ -254,7 +265,7 @@ router.post('/leave', requireAuth, (_req, res) => {
 });
 
 // POST /api/player/loop — set loop mode. Member accessible.
-router.post('/loop', requireAuth, (req, res) => {
+router.post('/loop', requireAuth, playerLimiter, (req, res) => {
   const { mode } = req.body as { mode?: LoopMode };
 
   if (!mode || !['off', 'song', 'queue'].includes(mode)) {
@@ -290,6 +301,7 @@ router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
 router.post(
   '/quick-add',
   requireAuth,
+  playerLimiter,
   asyncHandler(async (req, res) => {
     const url = validateYouTubeUrl(req.body.youtubeUrl, res);
     if (!url) return;
@@ -321,8 +333,13 @@ router.post(
 router.post(
   '/quick-add-playlist',
   requireAuth,
+  playerLimiter,
   asyncHandler(async (req, res) => {
-    const { maxVideos } = req.body as { maxVideos?: number };
+    let { maxVideos } = req.body as { maxVideos?: number };
+    // Cap maxVideos to prevent abuse.
+    if (maxVideos !== undefined) {
+      maxVideos = Math.min(Math.max(1, maxVideos), 100);
+    }
     const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
     if (!url) return;
 
@@ -363,7 +380,7 @@ router.post(
 );
 
 // POST /api/player/pause-toggle — pause/resume. Member accessible.
-router.post('/pause-toggle', requireAuth, (_req, res) => {
+router.post('/pause-toggle', requireAuth, playerLimiter, (_req, res) => {
   const player = getPlayer(GUILD_ID);
 
   if (!player || !player.getCurrentSong()) {
@@ -429,6 +446,7 @@ router.post(
   '/override',
   requireAuth,
   requireAdmin,
+  playerLimiter,
   asyncHandler(async (req, res) => {
     const url = validateYouTubeUrl(req.body.youtubeUrl, res);
     if (!url) return;

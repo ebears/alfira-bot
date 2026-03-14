@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # Dependencies stage - install pnpm packages
 # ---------------------------------------------------------------------------
-FROM node:25-alpine AS deps
+FROM node:24-alpine AS deps
 
 # Install pnpm globally
 RUN npm install -g pnpm

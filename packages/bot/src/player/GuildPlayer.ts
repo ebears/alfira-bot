@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
 import {
   type AudioPlayer,
@@ -18,6 +19,8 @@ import { PlaybackCursor } from './PlaybackCursor';
 import { SinglyLinkedList } from './SinglyLinkedList';
 
 export class GuildPlayer {
+  private static readonly MAX_CONSECUTIVE_FAILURES = 3;
+
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
   private priorityQueue: SinglyLinkedList<QueuedSong> = new SinglyLinkedList();
   private currentSong: QueuedSong | null = null;
@@ -26,6 +29,7 @@ export class GuildPlayer {
   private stopping = false;
   private trackStartedAt: number | null = null;
   private pausedAt: number | null = null;
+  private consecutiveFailures = 0;
 
   // Set by stop() so Destroyed handler can distinguish intentional vs unexpected teardown.
   private intentionallyStopped = false;
@@ -160,6 +164,7 @@ export class GuildPlayer {
     this.killCurrentFfmpeg?.();
     this.killCurrentFfmpeg = null;
     this.audioPlayer.stop(true);
+    this.consecutiveFailures = 0;
     this.queue.replace(songs);
     await this.playNext();
     this.broadcast();
@@ -333,6 +338,14 @@ export class GuildPlayer {
         `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
         error
       );
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
+        this.sendToTextChannel(
+          `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
+        );
+        this.stop();
+        return;
+      }
       this.sendToTextChannel(`⚠️ Skipping **${next.title}** — could not resolve the audio stream.`);
       await this.playNext();
       return;
@@ -341,7 +354,29 @@ export class GuildPlayer {
     this.killCurrentFfmpeg?.();
     this.killCurrentFfmpeg = null;
 
-    const { stream, kill } = createAudioStream(streamUrl, isWebmOpus);
+    let stream: Readable;
+    let kill: () => void;
+    try {
+      const handle = createAudioStream(streamUrl, isWebmOpus);
+      stream = handle.stream;
+      kill = handle.kill;
+    } catch (error) {
+      console.error(
+        `[GuildPlayer:${this.guildId}] Failed to spawn FFmpeg for "${next.title}":`,
+        error
+      );
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
+        this.sendToTextChannel(
+          `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
+        );
+        this.stop();
+        return;
+      }
+      this.sendToTextChannel(`⚠️ Skipping **${next.title}** — FFmpeg failed to start.`);
+      await this.playNext();
+      return;
+    }
     this.killCurrentFfmpeg = kill;
 
     const resource: AudioResource = createAudioResource(stream, {
@@ -356,11 +391,20 @@ export class GuildPlayer {
       console.error(
         `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`
       );
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
+        this.sendToTextChannel(
+          `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
+        );
+        this.stop();
+        return;
+      }
       this.sendToTextChannel(`⚠️ Skipping **${next.title}** — audio failed to start.`);
       await this.playNext();
       return;
     }
 
+    this.consecutiveFailures = 0;
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
     this.broadcast();
