@@ -1,6 +1,6 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
 import { createPlayer, getPlayer, removePlayer } from '@alfira-bot/bot/src/player/manager';
-import { fisherYatesShuffle, type LoopMode } from '@alfira-bot/shared';
+import { fisherYatesShuffle, type LoopMode, type QueuedSong, type Song } from '@alfira-bot/shared';
 import {
   entersState,
   getVoiceConnection,
@@ -12,9 +12,8 @@ import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
+import { dateToWire } from '../lib/socket';
 import {
-  buildQueuedSongFromMetadata,
-  dbSongToQueuedSong,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
   validateYouTubePlaylistUrl,
@@ -25,6 +24,36 @@ import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
+const USERNAME_FALLBACK = 'Unknown';
+
+function buildQueuedSongFromMetadata(
+  metadata: { title: string; youtubeId: string; duration: number; thumbnailUrl: string },
+  youtubeUrl: string,
+  requestedBy: string,
+  addedBy: string
+): QueuedSong {
+  return {
+    id: `temp-${Date.now()}`,
+    title: metadata.title,
+    youtubeUrl,
+    youtubeId: metadata.youtubeId,
+    duration: metadata.duration,
+    thumbnailUrl: metadata.thumbnailUrl,
+    addedBy,
+    createdAt: new Date().toISOString(),
+    requestedBy,
+  };
+}
+
+function dbSongToQueuedSong(
+  song: Omit<Song, 'createdAt'> & { createdAt: Date },
+  requestedBy: string
+): QueuedSong {
+  return {
+    ...dateToWire(song),
+    requestedBy,
+  };
+}
 
 const GUILD_ID = process.env.GUILD_ID as string;
 if (!GUILD_ID) {
@@ -177,7 +206,7 @@ router.post(
     const targetLoopMode = loop ?? player.getLoopMode();
     player.setLoopMode(targetLoopMode);
 
-    const requestedBy = req.user?.username ?? 'Unknown';
+    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
     const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
 
     if (startFromSongId) {
@@ -271,12 +300,12 @@ router.post(
     const metadata = await fetchYouTubeMetadata(url, res);
     if (!metadata) return;
 
-    const requestedBy = req.user?.username ?? 'Unknown';
+    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
     const queuedSong = buildQueuedSongFromMetadata(
       metadata,
       url,
       requestedBy,
-      req.user?.discordId ?? 'Unknown'
+      req.user?.discordId ?? USERNAME_FALLBACK
     );
 
     await player.addToPriorityQueue(queuedSong);
@@ -303,7 +332,7 @@ router.post(
     const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
     if (!playlistMetadata) return;
 
-    const requestedBy = req.user?.username ?? 'Unknown';
+    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
     const queuedSongs = [];
 
     for (const video of playlistMetadata.videos) {
@@ -316,7 +345,7 @@ router.post(
         },
         `https://www.youtube.com/watch?v=${video.id}`,
         requestedBy,
-        req.user?.discordId ?? 'Unknown'
+        req.user?.discordId ?? USERNAME_FALLBACK
       );
 
       await player.addToQueue(queuedSong);
@@ -383,7 +412,7 @@ router.post(
     const player = await resolveOrAutoJoinPlayer(req, res);
     if (!player) return;
 
-    const requestedBy = req.user?.username ?? 'Unknown';
+    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
     const queuedSong = dbSongToQueuedSong(song, requestedBy);
 
     await player.addToPriorityQueue(queuedSong);
@@ -410,12 +439,12 @@ router.post(
     const metadata = await fetchYouTubeMetadata(url, res);
     if (!metadata) return;
 
-    const requestedBy = req.user?.username ?? 'Unknown';
+    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
     const queuedSong = buildQueuedSongFromMetadata(
       metadata,
       url,
       requestedBy,
-      req.user?.discordId ?? 'Unknown'
+      req.user?.discordId ?? USERNAME_FALLBACK
     );
 
     await player.replaceQueueAndPlay([queuedSong]);

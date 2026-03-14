@@ -10,6 +10,30 @@ import { requireAuth } from '../middleware/requireAuth';
 const router = Router();
 const MAX_NAME_LENGTH = 200;
 
+function validatePlaylistName(name: unknown, res: Response): string | null {
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    res.status(400).json({ error: 'name is required.' });
+    return null;
+  }
+  if (name.length > MAX_NAME_LENGTH) {
+    res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
+    return null;
+  }
+  return name.trim();
+}
+
+async function findPlaylistOr404(id: string, res: Response, include?: Record<string, unknown>) {
+  const playlist = await prisma.playlist.findUnique({
+    where: { id },
+    ...(include ? { include } : {}),
+  });
+  if (!playlist) {
+    res.status(404).json({ error: 'Playlist not found.' });
+    return null;
+  }
+  return playlist;
+}
+
 /** Returns true if user is owner or admin. Sends 403 and returns false if not. */
 function requirePlaylistOwnerOrAdmin(
   playlist: PlaylistLike,
@@ -87,20 +111,12 @@ router.post(
   requireAuth,
   asyncHandler(async (req, res) => {
     const { name } = req.body as { name?: string };
-
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      res.status(400).json({ error: 'name is required.' });
-      return;
-    }
-
-    if (name.length > MAX_NAME_LENGTH) {
-      res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
-      return;
-    }
+    const trimmedName = validatePlaylistName(name, res);
+    if (!trimmedName) return;
 
     const playlist = await prisma.playlist.create({
       data: {
-        name: name.trim(),
+        name: trimmedName,
         createdBy: req.user?.discordId ?? '',
       },
     });
@@ -120,20 +136,13 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const adminView = req.query.adminView === 'true';
-    const playlist = await prisma.playlist.findUnique({
-      where: { id: req.params.id as string },
-      include: {
-        songs: {
-          orderBy: { position: 'asc' },
-          include: { song: true },
-        },
+    const playlist = await findPlaylistOr404(req.params.id as string, res, {
+      songs: {
+        orderBy: { position: 'asc' },
+        include: { song: true },
       },
     });
-
-    if (!playlist) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
-    }
+    if (!playlist) return;
 
     if (!canAccessPlaylist(playlist, req.user, res, adminView)) return;
 
@@ -160,14 +169,8 @@ router.patch(
       return;
     }
 
-    const existing = await prisma.playlist.findUnique({
-      where: { id: req.params.id as string },
-    });
-
-    if (!existing) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
-    }
+    const existing = await findPlaylistOr404(req.params.id as string, res);
+    if (!existing) return;
 
     // Check permissions: creator or admin (in Admin View)
     if (!canAccessPlaylist(existing, req.user, res, adminView)) return;
@@ -193,31 +196,17 @@ router.patch(
   requireAuth,
   asyncHandler(async (req, res) => {
     const { name } = req.body as { name?: string };
+    const trimmedName = validatePlaylistName(name, res);
+    if (!trimmedName) return;
 
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      res.status(400).json({ error: 'name is required.' });
-      return;
-    }
-
-    if (name.length > MAX_NAME_LENGTH) {
-      res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
-      return;
-    }
-
-    const existing = await prisma.playlist.findUnique({
-      where: { id: req.params.id as string },
-    });
-
-    if (!existing) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
-    }
+    const existing = await findPlaylistOr404(req.params.id as string, res);
+    if (!existing) return;
 
     if (!requirePlaylistOwnerOrAdmin(existing, req.user, res, 'rename this playlist')) return;
 
     const playlist = await prisma.playlist.update({
       where: { id: req.params.id as string },
-      data: { name: name.trim() },
+      data: { name: trimmedName },
       include: { _count: { select: { songs: true } } },
     });
 
@@ -236,14 +225,8 @@ router.delete(
   '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const existing = await prisma.playlist.findUnique({
-      where: { id: req.params.id as string },
-    });
-
-    if (!existing) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
-    }
+    const existing = await findPlaylistOr404(req.params.id as string, res);
+    if (!existing) return;
 
     if (!requirePlaylistOwnerOrAdmin(existing, req.user, res, 'delete this playlist')) return;
 
@@ -270,16 +253,10 @@ router.post(
       return;
     }
 
-    const [playlist, song] = await Promise.all([
-      prisma.playlist.findUnique({ where: { id: req.params.id as string } }),
-      prisma.song.findUnique({ where: { id: songId } }),
-    ]);
+    const playlist = await findPlaylistOr404(req.params.id as string, res);
+    if (!playlist) return;
 
-    if (!playlist) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
-    }
-
+    const song = await prisma.song.findUnique({ where: { id: songId } });
     if (!song) {
       res.status(404).json({ error: 'Song not found.' });
       return;
@@ -334,14 +311,8 @@ router.delete(
     const { id: playlistId, songId } = req.params;
 
     // Fetch the playlist to check ownership
-    const playlist = await prisma.playlist.findUnique({
-      where: { id: playlistId as string },
-    });
-
-    if (!playlist) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
-    }
+    const playlist = await findPlaylistOr404(playlistId as string, res);
+    if (!playlist) return;
 
     if (!requirePlaylistOwnerOrAdmin(playlist, req.user, res, 'remove songs')) return;
 
