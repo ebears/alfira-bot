@@ -6,6 +6,7 @@ import {
 } from '@alfira-bot/bot/src/utils/ytdlp';
 import type { QueuedSong, Song } from '@alfira-bot/shared';
 import type { Response } from 'express';
+import { dateToWire } from './socket';
 
 const MAX_URL_LENGTH = 2000;
 
@@ -125,8 +126,7 @@ export function dbSongToQueuedSong(
   requestedBy: string
 ): QueuedSong {
   return {
-    ...song,
-    createdAt: song.createdAt.toISOString(),
+    ...dateToWire(song),
     requestedBy,
   };
 }
