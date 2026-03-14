@@ -1,12 +1,10 @@
 import { formatDuration } from '@alfira-bot/shared';
 import {
   CaretLeftIcon,
-  CassetteTapeIcon,
   CircleNotchIcon,
   CraneTowerIcon,
   DoorOpenIcon,
   GuitarIcon,
-  MusicNoteIcon,
   PauseIcon,
   PlayIcon,
   RepeatIcon,
@@ -14,21 +12,15 @@ import {
   SignOutIcon,
   SkipForwardIcon,
   SparkleIcon,
-  VinylRecordIcon,
 } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import MobileNav from './MobileNav';
 import SettingsMenu from './SettingsMenu';
-
-const NAV_ITEMS = [
-  { to: '/songs', label: 'Songs', icon: MusicNoteIcon },
-  { to: '/playlists', label: 'Playlists', icon: CassetteTapeIcon },
-  { to: '/queue', label: 'Queue', icon: VinylRecordIcon },
-];
 
 export default function Layout() {
   const { user, logout } = useAuth();

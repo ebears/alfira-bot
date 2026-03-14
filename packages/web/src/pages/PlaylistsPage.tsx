@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPlaylist, deletePlaylist, getPlaylists } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
+import ConfirmModal from '../components/ConfirmModal';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
@@ -126,8 +127,15 @@ export default function PlaylistsPage() {
         <CreatePlaylistModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />
       )}
       {deleteTarget && (
-        <ConfirmDeleteModal
-          playlist={deleteTarget}
+        <ConfirmModal
+          title="Delete Playlist"
+          message={
+            <>
+              Delete <span className="text-fg font-semibold">"{deleteTarget.name}"</span>? Songs in
+              the library won't be affected.
+            </>
+          }
+          confirmLabel="Delete"
           onConfirm={() => handleDelete(deleteTarget)}
           onCancel={() => setDeleteTarget(null)}
         />
@@ -269,41 +277,6 @@ function CreatePlaylistModal({
             disabled={loading || !name.trim()}
           >
             Create
-          </button>
-        </div>
-      </div>
-    </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Delete confirm modal
-// ---------------------------------------------------------------------------
-function ConfirmDeleteModal({
-  playlist,
-  onConfirm,
-  onCancel,
-}: {
-  playlist: Playlist;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <Backdrop onClose={onCancel}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
-        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
-          Delete Playlist
-        </h2>
-        <p className="font-body text-sm text-muted mb-4 md:mb-6">
-          Delete <span className="text-fg font-semibold">"{playlist.name}"</span>? Songs in the
-          library won't be affected.
-        </p>
-        <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="btn-danger border-danger/50" onClick={onConfirm}>
-            Delete
           </button>
         </div>
       </div>

@@ -3,59 +3,60 @@ import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
-interface SongMetadata {
+export interface SongMetadata {
   title: string;
   youtubeId: string;
   duration: number; // seconds
   thumbnailUrl: string;
 }
 
-interface PlaylistMetadata {
+export interface PlaylistMetadata {
   title: string;
   playlistId: string;
   videoCount: number;
   videos: { id: string; title: string; duration: number; thumbnailUrl: string }[];
 }
 
-/** Fetch video metadata via yt-dlp --print (no download). Uses execFile to prevent shell injection. */
-export function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
+function execFileAsync(cmd: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile(
-      'yt-dlp',
-      [
-        '--no-playlist',
-        '--print',
-        '%(id)s',
-        '--print',
-        '%(duration)s',
-        '--print',
-        '%(title)s',
-        youtubeUrl,
-      ],
-      (error, stdout) => {
-        if (error) {
-          return reject(new Error(`yt-dlp metadata fetch failed: ${error.message}`));
-        }
-
-        const lines = stdout.trimEnd().split('\n');
-        if (lines.length < 3) {
-          return reject(new Error('yt-dlp returned unexpected output'));
-        }
-
-        const id = lines[0].trim();
-        const durationStr = lines[1].trim();
-        const title = lines.slice(2).join('\n'); // handles newlines in titles
-        const duration = Math.round(parseFloat(durationStr) || 0);
-
-        resolve({
-          title,
-          youtubeId: id,
-          duration,
-          thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-        });
+    execFile(cmd, args, (error, stdout) => {
+      if (error) {
+        return reject(error);
       }
-    );
+      resolve(stdout);
+    });
   });
+}
+
+/** Fetch video metadata via yt-dlp --print (no download). Uses execFile to prevent shell injection. */
+export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
+  const stdout = await execFileAsync('yt-dlp', [
+    '--no-playlist',
+    '--print',
+    '%(id)s',
+    '--print',
+    '%(duration)s',
+    '--print',
+    '%(title)s',
+    youtubeUrl,
+  ]);
+
+  const lines = stdout.trimEnd().split('\n');
+  if (lines.length < 3) {
+    throw new Error('yt-dlp returned unexpected output');
+  }
+
+  const id = lines[0].trim();
+  const durationStr = lines[1].trim();
+  const title = lines.slice(2).join('\n'); // handles newlines in titles
+  const duration = Math.round(parseFloat(durationStr) || 0);
+
+  return {
+    title,
+    youtubeId: id,
+    duration,
+    thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+  };
 }
 
 export interface AudioStreamHandle {
@@ -150,77 +151,66 @@ export function isYouTubePlaylistUrl(url: string): boolean {
   }
 }
 
-function getPlaylistMetadata(playlistUrl: string, maxVideos?: number): Promise<PlaylistMetadata> {
-  return new Promise((resolve, reject) => {
-    const args = [
-      '--flat-playlist',
-      '-I',
-      `1:${maxVideos || 'inf'}`,
-      '--print',
-      '%(playlist_title)s',
-      '--print',
-      '%(playlist_id)s',
-      '--print',
-      '%(playlist_count)s',
-      playlistUrl,
-    ];
+async function getPlaylistMetadata(
+  playlistUrl: string,
+  maxVideos?: number
+): Promise<PlaylistMetadata> {
+  const args = [
+    '--flat-playlist',
+    '-I',
+    `1:${maxVideos || 'inf'}`,
+    '--print',
+    '%(playlist_title)s',
+    '--print',
+    '%(playlist_id)s',
+    '--print',
+    '%(playlist_count)s',
+    playlistUrl,
+  ];
 
-    execFile('yt-dlp', args, (error, stdout) => {
-      if (error) {
-        return reject(new Error(`yt-dlp playlist metadata fetch failed: ${error.message}`));
-      }
+  const stdout = await execFileAsync('yt-dlp', args);
 
-      const lines = stdout.trimEnd().split('\n');
-      if (lines.length < 3) {
-        return reject(new Error('yt-dlp returned unexpected output for playlist'));
-      }
+  const lines = stdout.trimEnd().split('\n');
+  if (lines.length < 3) {
+    throw new Error('yt-dlp returned unexpected output for playlist');
+  }
 
-      const title = lines[0].trim();
-      const playlistId = lines[1].trim();
-      const videoCount = parseInt(lines[2].trim(), 10) || 0;
+  const title = lines[0].trim();
+  const playlistId = lines[1].trim();
+  const videoCount = parseInt(lines[2].trim(), 10) || 0;
 
-      resolve({
-        title,
-        playlistId,
-        videoCount,
-        videos: [], // Will be fetched separately
-      });
-    });
-  });
+  return {
+    title,
+    playlistId,
+    videoCount,
+    videos: [], // Will be fetched separately
+  };
 }
 
-function getPlaylistVideos(
+async function getPlaylistVideos(
   playlistUrl: string,
   maxVideos?: number
 ): Promise<PlaylistMetadata['videos']> {
-  return new Promise((resolve, reject) => {
-    const args = ['--flat-playlist', '--dump-json', '-I', `1:${maxVideos || 'inf'}`, playlistUrl];
+  const args = ['--flat-playlist', '--dump-json', '-I', `1:${maxVideos || 'inf'}`, playlistUrl];
 
-    execFile('yt-dlp', args, (error, stdout) => {
-      if (error) {
-        return reject(new Error(`yt-dlp playlist videos fetch failed: ${error.message}`));
+  const stdout = await execFileAsync('yt-dlp', args);
+
+  const lines = stdout.trimEnd().split('\n');
+  return lines
+    .map((line) => {
+      try {
+        const data = JSON.parse(line);
+        return {
+          id: data.id || '',
+          title: data.title || 'Unknown',
+          duration: Math.round(data.duration) || 0,
+          thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
+        };
+      } catch {
+        return null;
       }
-
-      const lines = stdout.trimEnd().split('\n');
-      const videos = lines
-        .map((line) => {
-          try {
-            const data = JSON.parse(line);
-            return {
-              id: data.id || '',
-              title: data.title || 'Unknown',
-              duration: Math.round(data.duration) || 0,
-              thumbnailUrl: `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`,
-            };
-          } catch {
-            return null;
-          }
-        })
-        .filter((v): v is NonNullable<typeof v> => v !== null);
-
-      resolve(videos);
-    });
-  });
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
 }
 
 export async function getPlaylistMetadataWithVideos(
@@ -238,34 +228,26 @@ export async function getPlaylistMetadataWithVideos(
   };
 }
 
-export function getStreamFormat(youtubeUrl: string): Promise<{ url: string; isWebmOpus: boolean }> {
-  return new Promise((resolve, reject) => {
-    execFile(
-      'yt-dlp',
-      [
-        '-f',
-        'bestaudio[ext=webm]/bestaudio',
-        '--no-playlist',
-        '--print',
-        '%(ext)s', // line 0: container extension
-        '--print',
-        '%(urls)s', // line 1: direct CDN URL (same as -g but via --print)
-        youtubeUrl,
-      ],
-      (error, stdout) => {
-        if (error) {
-          return reject(new Error(`yt-dlp stream URL fetch failed: ${error.message}`));
-        }
+export async function getStreamFormat(
+  youtubeUrl: string
+): Promise<{ url: string; isWebmOpus: boolean }> {
+  const stdout = await execFileAsync('yt-dlp', [
+    '-f',
+    'bestaudio[ext=webm]/bestaudio',
+    '--no-playlist',
+    '--print',
+    '%(ext)s', // line 0: container extension
+    '--print',
+    '%(urls)s', // line 1: direct CDN URL (same as -g but via --print)
+    youtubeUrl,
+  ]);
 
-        const lines = stdout.trim().split('\n');
-        const ext = lines[0].trim();
-        const url = lines[1].trim();
+  const lines = stdout.trim().split('\n');
+  const ext = lines[0].trim();
+  const url = lines[1].trim();
 
-        resolve({
-          url,
-          isWebmOpus: ext === 'webm',
-        });
-      }
-    );
-  });
+  return {
+    url,
+    isWebmOpus: ext === 'webm',
+  };
 }

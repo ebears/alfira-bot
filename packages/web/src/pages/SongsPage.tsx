@@ -20,9 +20,12 @@ import {
   startPlayback,
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
+import ConfirmModal from '../components/ConfirmModal';
+import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
+import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
 
@@ -197,8 +200,21 @@ export default function SongsPage() {
         (() => {
           const songToDelete = songs.find((s) => s.id === deleteId);
           return songToDelete ? (
-            <ConfirmDeleteModal
-              song={songToDelete}
+            <ConfirmModal
+              title="Delete Song"
+              message={
+                <>
+                  Remove{' '}
+                  <span className="text-fg font-semibold">
+                    "{songToDelete.nickname || songToDelete.title}"
+                  </span>{' '}
+                  from the library?{' '}
+                  <span className="font-mono text-xs text-danger/70">
+                    this will remove it from all playlists too.
+                  </span>
+                </>
+              }
+              confirmLabel="Delete"
               onConfirm={() => handleDelete(deleteId)}
               onCancel={() => setDeleteId(null)}
             />
@@ -206,17 +222,7 @@ export default function SongsPage() {
         })()}
 
       {/* Notification Toast */}
-      {notification && (
-        <div
-          className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-mono text-xs animate-fade-up ${
-            notification.type === 'success'
-              ? 'bg-accent/20 border border-accent/40 text-accent'
-              : 'bg-danger/20 border border-danger/40 text-danger'
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
+      {notification && <NotificationToast notification={notification} />}
     </div>
   );
 }
@@ -420,18 +426,8 @@ function AddSongModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [isPlaylist, setIsPlaylist] = useState(false);
-  const [importFullPlaylist, setImportFullPlaylist] = useState(false);
+  const { isPlaylist, importFullPlaylist, setImportFullPlaylist } = usePlaylistUrlDetection(url);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Detect playlist URLs
-  useEffect(() => {
-    const hasListParam = url.includes('list=');
-    setIsPlaylist(hasListParam);
-    if (!hasListParam) {
-      setImportFullPlaylist(false);
-    }
-  }, [url]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -535,44 +531,6 @@ function AddSongModal({
             disabled={loading || !url.trim()}
           >
             {importFullPlaylist ? 'Import' : 'Add'}
-          </button>
-        </div>
-      </div>
-    </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Delete confirm modal
-// ---------------------------------------------------------------------------
-function ConfirmDeleteModal({
-  song,
-  onConfirm,
-  onCancel,
-}: {
-  song: Song;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <Backdrop onClose={onCancel}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
-        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
-          Delete Song
-        </h2>
-        <p className="font-body text-sm text-muted mb-2">
-          Remove <span className="text-fg font-semibold">"{song.nickname || song.title}"</span> from
-          the library?
-        </p>
-        <p className="font-mono text-xs text-danger/70 mb-4 md:mb-6">
-          this will remove it from all playlists too.
-        </p>
-        <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="btn-danger border-danger/50" onClick={onConfirm}>
-            Delete
           </button>
         </div>
       </div>

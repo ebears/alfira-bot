@@ -22,6 +22,7 @@ import {
 import { Backdrop } from '../components/Backdrop';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
+import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { apiErrorMessage } from '../utils/api';
 
 // ---------------------------------------------------------------------------
@@ -568,17 +569,8 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [isPlaylist, setIsPlaylist] = useState(false);
-  const [importFullPlaylist, setImportFullPlaylist] = useState(false);
-
-  // Detect playlist URLs
-  useEffect(() => {
-    const hasListParam = youtubeUrl.includes('list=');
-    setIsPlaylist(hasListParam);
-    if (!hasListParam) {
-      setImportFullPlaylist(false);
-    }
-  }, [youtubeUrl]);
+  const { isPlaylist, importFullPlaylist, setImportFullPlaylist } =
+    usePlaylistUrlDetection(youtubeUrl);
 
   const handleSubmit = async () => {
     if (!youtubeUrl.trim()) return;
