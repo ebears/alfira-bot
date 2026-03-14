@@ -1,11 +1,11 @@
 import type { Response } from 'express';
 
-interface UserContext {
+export interface UserContext {
   discordId?: string;
   isAdmin?: boolean;
 }
 
-interface PlaylistLike {
+export interface PlaylistLike {
   createdBy: string;
   isPrivate: boolean;
 }

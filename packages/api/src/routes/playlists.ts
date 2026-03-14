@@ -1,7 +1,7 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
 import type { Response } from 'express';
 import { Router } from 'express';
-import { canAccessPlaylist } from '../lib/playlistAccess';
+import { canAccessPlaylist, type PlaylistLike, type UserContext } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -9,16 +9,6 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const MAX_NAME_LENGTH = 200;
-
-interface UserContext {
-  discordId?: string;
-  isAdmin?: boolean;
-}
-
-interface PlaylistLike {
-  createdBy: string;
-  isPrivate: boolean;
-}
 
 /** Returns true if user is owner or admin. Sends 403 and returns false if not. */
 function requirePlaylistOwnerOrAdmin(
