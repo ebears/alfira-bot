@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { WEB_UI_ORIGIN } from './lib/config';
 import prisma from './lib/prisma';
 import { emitPlayerUpdate, initSocket } from './lib/socket';
 import { errorHandler } from './middleware/errorHandler';
@@ -61,7 +62,7 @@ app.use(
 
 app.use(
   cors({
-    origin: process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173',
+    origin: WEB_UI_ORIGIN,
     credentials: true,
   })
 );
