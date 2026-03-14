@@ -83,24 +83,14 @@ app.use('/api/playlists', playlistsRouter);
 app.use('/api/player', playerRouter);
 app.use('/auth', authRouter);
 
-// Health check — verifies database connectivity and Discord bot status.
+// Health check — verifies database connectivity.
 app.get('/health', async (_req, res) => {
-  const checks: Record<string, string> = {};
-
-  // Check database connectivity
   try {
     await prisma.$queryRaw`SELECT 1`;
-    checks.database = 'ok';
+    res.json({ status: 'ok' });
   } catch {
-    checks.database = 'error';
+    res.status(503).json({ status: 'degraded' });
   }
-
-  const isHealthy = Object.values(checks).every((v) => v === 'ok');
-
-  res.status(isHealthy ? 200 : 503).json({
-    status: isHealthy ? 'ok' : 'degraded',
-    checks,
-  });
 });
 
 // Global error handler — must be registered last.

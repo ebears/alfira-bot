@@ -338,16 +338,7 @@ export class GuildPlayer {
         `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
         error
       );
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
-        this.sendToTextChannel(
-          `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
-        );
-        this.stop();
-        return;
-      }
-      this.sendToTextChannel(`⚠️ Skipping **${next.title}** — could not resolve the audio stream.`);
-      await this.playNext();
+      await this.handlePlaybackFailure('could not resolve the audio stream');
       return;
     }
 
@@ -365,16 +356,7 @@ export class GuildPlayer {
         `[GuildPlayer:${this.guildId}] Failed to spawn FFmpeg for "${next.title}":`,
         error
       );
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
-        this.sendToTextChannel(
-          `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
-        );
-        this.stop();
-        return;
-      }
-      this.sendToTextChannel(`⚠️ Skipping **${next.title}** — FFmpeg failed to start.`);
-      await this.playNext();
+      await this.handlePlaybackFailure('FFmpeg failed to start');
       return;
     }
     this.killCurrentFfmpeg = kill;
@@ -391,16 +373,7 @@ export class GuildPlayer {
       console.error(
         `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`
       );
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
-        this.sendToTextChannel(
-          `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
-        );
-        this.stop();
-        return;
-      }
-      this.sendToTextChannel(`⚠️ Skipping **${next.title}** — audio failed to start.`);
-      await this.playNext();
+      await this.handlePlaybackFailure('audio failed to start');
       return;
     }
 
@@ -409,6 +382,21 @@ export class GuildPlayer {
     this.pausedAt = null;
     this.broadcast();
     this.sendToTextChannel({ embeds: [buildNowPlayingEmbed(next, this.loopMode)] });
+  }
+
+  private async handlePlaybackFailure(skipMessage: string): Promise<void> {
+    this.consecutiveFailures++;
+    if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
+      this.sendToTextChannel(
+        `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
+      );
+      this.stop();
+      return;
+    }
+    this.sendToTextChannel(
+      `⚠️ Skipping **${this.currentSong?.title ?? 'unknown'}** — ${skipMessage}`
+    );
+    await this.playNext();
   }
 
   private async onTrackEnd(): Promise<void> {
