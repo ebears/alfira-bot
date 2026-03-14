@@ -41,7 +41,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api/package.json ./packages/api/
 COPY packages/bot/package.json ./packages/bot/
 COPY packages/shared/package.json ./packages/shared/
-COPY packages/web/package.json ./packages/web/
 
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --frozen-lockfile
@@ -100,7 +99,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/web/package.json ./packages/web/
 
 # Install only production dependencies (creates proper pnpm structure)
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
@@ -113,8 +112,7 @@ RUN apk add --no-cache \
     python3 \
     ca-certificates \
     openssl \
-    libc6-compat \
-    && rm -rf /var/cache/apk/*
+    libc6-compat
 
 # Copy yt-dlp from shared stage (no re-download needed)
 COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
