@@ -1,3 +1,5 @@
+import { fisherYatesShuffle } from '@alfira-bot/shared';
+
 // ---------------------------------------------------------------------------
 // PlaybackCursor
 //
@@ -94,10 +96,7 @@ export class PlaybackCursor<T> {
     );
 
     // Fisher-Yates shuffle only the remaining items
-    for (let i = remaining.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
-    }
+    fisherYatesShuffle(remaining);
 
     this.playbackOrder = [...played, ...remaining];
   }

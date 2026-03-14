@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { type Prisma, PrismaClient } from '../../../api/src/generated/prisma/client';
+import { PrismaClient } from '../../../api/src/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // Prisma client singleton for the bot package.
@@ -33,4 +33,3 @@ const adapter = new PrismaPg({
 const prisma: PrismaClient = new PrismaClient({ adapter });
 
 export default prisma;
-export type { Prisma };
