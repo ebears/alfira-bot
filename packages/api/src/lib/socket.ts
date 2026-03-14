@@ -1,8 +1,7 @@
 import type { Server as HTTPServer } from 'node:http';
 import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
-import jwt from 'jsonwebtoken';
 import { Server as SocketIOServer } from 'socket.io';
-import type { UserPayload } from '../middleware/requireAuth';
+import { verifySessionToken } from '../middleware/requireAuth';
 import { WEB_UI_ORIGIN } from './config';
 import logger from './logger';
 
@@ -62,13 +61,6 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
   // The session cookie is HttpOnly and set by the OAuth flow in auth.ts.
   // ---------------------------------------------------------------------------
   _io.use((socket, next) => {
-    const { JWT_SECRET } = process.env;
-    if (!JWT_SECRET) {
-      logger.error('JWT_SECRET is not set — cannot verify Socket.io connections');
-      next(new Error('Server misconfiguration.'));
-      return;
-    }
-
     const cookieHeader = socket.handshake.headers.cookie;
     const cookies = parseCookies(cookieHeader);
     const token = cookies.session;
@@ -78,16 +70,16 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
       return;
     }
 
-    try {
-      const payload = jwt.verify(token, JWT_SECRET) as UserPayload;
-
-      // Attach the decoded user to socket.data for potential future use
-      // (e.g., admin-only socket events, user-specific rooms)
-      socket.data.user = payload;
-      next();
-    } catch {
+    const payload = verifySessionToken(token);
+    if (!payload) {
       next(new Error('Session expired or invalid. Please log in again.'));
+      return;
     }
+
+    // Attach the decoded user to socket.data for potential future use
+    // (e.g., admin-only socket events, user-specific rooms)
+    socket.data.user = payload;
+    next();
   });
 
   _io.on('connection', (socket) => {

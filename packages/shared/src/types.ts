@@ -96,6 +96,16 @@ export interface PlaylistDetail extends Omit<Playlist, 'songs'> {
 }
 
 // ---------------------------------------------------------------------------
+// PlaylistSongWithSong
+//
+// A PlaylistSong where the song is guaranteed to be present.
+// Used when fetching playlist details with include: { song: true }
+// ---------------------------------------------------------------------------
+export interface PlaylistSongWithSong extends Omit<PlaylistSong, 'song'> {
+  song: Song;
+}
+
+// ---------------------------------------------------------------------------
 // User
 //
 // Represents an authenticated Discord user. Returned by GET /auth/me
@@ -105,14 +115,4 @@ export interface User {
   username: string;
   avatar: string | null;
   isAdmin: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// PlaylistSongWithSong
-//
-// A PlaylistSong where the song is guaranteed to be present.
-// Used when fetching playlist details with include: { song: true }
-// ---------------------------------------------------------------------------
-export interface PlaylistSongWithSong extends Omit<PlaylistSong, 'song'> {
-  song: Song;
 }

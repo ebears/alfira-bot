@@ -27,6 +27,13 @@ import { requireAuth } from '../middleware/requireAuth';
 const router = Router();
 const USERNAME_FALLBACK = 'Unknown';
 
+function getRequestedBy(req: { user?: { username?: string; discordId?: string } }) {
+  return {
+    username: req.user?.username ?? USERNAME_FALLBACK,
+    discordId: req.user?.discordId ?? USERNAME_FALLBACK,
+  };
+}
+
 // Rate limit player action routes to prevent abuse.
 const playerLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -216,7 +223,7 @@ router.post(
     const targetLoopMode = loop ?? player.getLoopMode();
     player.setLoopMode(targetLoopMode);
 
-    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
+    const { username: requestedBy } = getRequestedBy(req);
     const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
 
     if (startFromSongId) {
@@ -313,13 +320,8 @@ router.post(
     const metadata = await fetchYouTubeMetadata(url, res);
     if (!metadata) return;
 
-    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
-    const queuedSong = buildQueuedSongFromMetadata(
-      metadata,
-      url,
-      requestedBy,
-      req.user?.discordId ?? USERNAME_FALLBACK
-    );
+    const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+    const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
 
     await player.addToPriorityQueue(queuedSong);
 
@@ -350,7 +352,7 @@ router.post(
     const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
     if (!playlistMetadata) return;
 
-    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
+    const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
     const queuedSongs = [];
 
     for (const video of playlistMetadata.videos) {
@@ -363,7 +365,7 @@ router.post(
         },
         `https://www.youtube.com/watch?v=${video.id}`,
         requestedBy,
-        req.user?.discordId ?? USERNAME_FALLBACK
+        addedBy
       );
 
       await player.addToQueue(queuedSong);
@@ -430,7 +432,7 @@ router.post(
     const player = await resolveOrAutoJoinPlayer(req, res);
     if (!player) return;
 
-    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
+    const { username: requestedBy } = getRequestedBy(req);
     const queuedSong = dbSongToQueuedSong(song, requestedBy);
 
     await player.addToPriorityQueue(queuedSong);
@@ -458,13 +460,8 @@ router.post(
     const metadata = await fetchYouTubeMetadata(url, res);
     if (!metadata) return;
 
-    const requestedBy = req.user?.username ?? USERNAME_FALLBACK;
-    const queuedSong = buildQueuedSongFromMetadata(
-      metadata,
-      url,
-      requestedBy,
-      req.user?.discordId ?? USERNAME_FALLBACK
-    );
+    const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+    const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
 
     await player.replaceQueueAndPlay([queuedSong]);
 

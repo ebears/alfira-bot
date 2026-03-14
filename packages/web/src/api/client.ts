@@ -45,6 +45,12 @@ function processQueue(error: AxiosError | null): void {
   failedQueue = [];
 }
 
+function redirectToLogin(): void {
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Response interceptor for automatic token refresh
 //
@@ -71,17 +77,13 @@ client.interceptors.response.use(
     // Don't retry if this is already a retry
     if (originalRequest._retry) {
       // Refresh failed, redirect to login
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+      redirectToLogin();
       return Promise.reject(error);
     }
 
     // If this is a refresh request that failed, don't try to refresh again
     if (originalRequest.url === '/auth/refresh') {
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+      redirectToLogin();
       return Promise.reject(error);
     }
 
@@ -112,9 +114,7 @@ client.interceptors.response.use(
       // Refresh failed, reject queued requests and redirect to login
       processQueue(refreshError as AxiosError);
 
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+      redirectToLogin();
 
       return Promise.reject(refreshError);
     } finally {
