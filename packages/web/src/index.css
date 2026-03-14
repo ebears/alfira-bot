@@ -647,22 +647,30 @@
   }
 
   .btn-primary {
-    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:bg-accent-muted transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-2xl hover:bg-accent-muted transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px -2px color-mix(in srgb, var(--color-accent) 40%, transparent);
   }
 
   .btn-ghost {
-    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-lg md:rounded hover:border-muted hover:bg-elevated transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-2xl hover:border-muted hover:bg-elevated transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
   }
 
   .btn-danger {
-    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-lg md:rounded hover:bg-danger/10 active:bg-danger/20 transition-colors duration-150 min-h-11 md:min-h-0;
+    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-2xl hover:bg-danger/10 active:bg-danger/20 transition-all duration-200 min-h-11 md:min-h-0;
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-3 md:py-2 rounded-lg md:rounded outline-none focus:border-accent/60 transition-colors duration-150 placeholder:text-faint w-full;
+    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-3 md:py-2 rounded-xl outline-none focus:border-accent/60 transition-colors duration-200 placeholder:text-faint w-full;
   }
 
   .card {
-    @apply bg-surface border border-border rounded-lg overflow-hidden;
+    @apply bg-surface border border-border rounded-2xl overflow-hidden;
+  }
+
+  .nav-active-glow {
+    box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--color-accent) 25%, transparent);
   }
 }
