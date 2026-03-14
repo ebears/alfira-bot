@@ -3,21 +3,17 @@ import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
 import jwt from 'jsonwebtoken';
 import { Server as SocketIOServer } from 'socket.io';
 import type { UserPayload } from '../middleware/requireAuth';
+import { WEB_UI_ORIGIN } from './config';
 
 type PrismaPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
 type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
 
-function songToWire(song: PrismaSong): Song {
+export function dateToWire<T extends { createdAt: Date }>(
+  obj: T
+): Omit<T, 'createdAt'> & { createdAt: string } {
   return {
-    ...song,
-    createdAt: song.createdAt.toISOString(),
-  };
-}
-
-function playlistToWire(playlist: PrismaPlaylist): Playlist {
-  return {
-    ...playlist,
-    createdAt: playlist.createdAt.toISOString(),
+    ...obj,
+    createdAt: obj.createdAt.toISOString(),
   };
 }
 
@@ -42,8 +38,6 @@ function parseCookies(cookieHeader: string | undefined): Record<string, string> 
 
   return cookies;
 }
-
-const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173';
 
 /**
  * Attach Socket.io to the HTTP server and store the instance.
@@ -123,7 +117,7 @@ export function emitPlayerUpdate(state: QueueState): void {
  * Allows the Songs page to append the card in real time.
  */
 export function emitSongAdded(song: PrismaSong): void {
-  _io?.emit('songs:added', songToWire(song));
+  _io?.emit('songs:added', dateToWire(song));
 }
 
 /**
@@ -139,5 +133,5 @@ export function emitSongDeleted(id: string): void {
  * Covers: create, rename, song added, song removed.
  */
 export function emitPlaylistUpdated(playlist: PrismaPlaylist): void {
-  _io?.emit('playlists:updated', playlistToWire(playlist));
+  _io?.emit('playlists:updated', dateToWire(playlist));
 }

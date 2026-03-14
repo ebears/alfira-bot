@@ -3,6 +3,7 @@ import axios, { isAxiosError } from 'axios';
 import { type Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import { WEB_UI_ORIGIN } from '../lib/config';
 import prisma from '../lib/prisma';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/requireAuth';
@@ -31,8 +32,6 @@ if (
     'Missing required environment variables: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, DISCORD_BOT_TOKEN, GUILD_ID, JWT_SECRET'
   );
 }
-
-const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173';
 
 const ADMIN_ROLE_ID_SET = new Set(
   (ADMIN_ROLE_IDS ?? '')

@@ -151,52 +151,40 @@ export function isYouTubePlaylistUrl(url: string): boolean {
   }
 }
 
-async function getPlaylistMetadata(
+export async function getPlaylistMetadataWithVideos(
   playlistUrl: string,
   maxVideos?: number
 ): Promise<PlaylistMetadata> {
-  const args = [
-    '--flat-playlist',
-    '-I',
-    `1:${maxVideos || 'inf'}`,
-    '--print',
-    '%(playlist_title)s',
-    '--print',
-    '%(playlist_id)s',
-    '--print',
-    '%(playlist_count)s',
-    playlistUrl,
-  ];
+  const range = `1:${maxVideos || 'inf'}`;
 
-  const stdout = await execFileAsync('yt-dlp', args);
+  const [metadataStdout, videosStdout] = await Promise.all([
+    execFileAsync('yt-dlp', [
+      '--flat-playlist',
+      '-I',
+      range,
+      '--print',
+      '%(playlist_title)s',
+      '--print',
+      '%(playlist_id)s',
+      '--print',
+      '%(playlist_count)s',
+      playlistUrl,
+    ]),
+    execFileAsync('yt-dlp', ['--flat-playlist', '--dump-json', '-I', range, playlistUrl]),
+  ]);
 
-  const lines = stdout.trimEnd().split('\n');
-  if (lines.length < 3) {
+  const metaLines = metadataStdout.trimEnd().split('\n');
+  if (metaLines.length < 3) {
     throw new Error('yt-dlp returned unexpected output for playlist');
   }
 
-  const title = lines[0].trim();
-  const playlistId = lines[1].trim();
-  const videoCount = parseInt(lines[2].trim(), 10) || 0;
+  const title = metaLines[0].trim();
+  const playlistId = metaLines[1].trim();
+  const videoCount = parseInt(metaLines[2].trim(), 10) || 0;
 
-  return {
-    title,
-    playlistId,
-    videoCount,
-    videos: [], // Will be fetched separately
-  };
-}
-
-async function getPlaylistVideos(
-  playlistUrl: string,
-  maxVideos?: number
-): Promise<PlaylistMetadata['videos']> {
-  const args = ['--flat-playlist', '--dump-json', '-I', `1:${maxVideos || 'inf'}`, playlistUrl];
-
-  const stdout = await execFileAsync('yt-dlp', args);
-
-  const lines = stdout.trimEnd().split('\n');
-  return lines
+  const videos = videosStdout
+    .trimEnd()
+    .split('\n')
     .map((line) => {
       try {
         const data = JSON.parse(line);
@@ -211,19 +199,11 @@ async function getPlaylistVideos(
       }
     })
     .filter((v): v is NonNullable<typeof v> => v !== null);
-}
-
-export async function getPlaylistMetadataWithVideos(
-  playlistUrl: string,
-  maxVideos?: number
-): Promise<PlaylistMetadata> {
-  const [metadata, videos] = await Promise.all([
-    getPlaylistMetadata(playlistUrl, maxVideos),
-    getPlaylistVideos(playlistUrl, maxVideos),
-  ]);
 
   return {
-    ...metadata,
+    title,
+    playlistId,
+    videoCount,
     videos,
   };
 }

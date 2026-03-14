@@ -1,5 +1,6 @@
 import { GearIcon, XCircleIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
+import { Backdrop } from './Backdrop';
 import SettingsContent from './SettingsContent';
 
 interface SettingsMenuProps {
@@ -31,35 +32,29 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
       {/* Settings panel overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-          {/* Backdrop */}
-          <button
-            type="button"
-            className="absolute inset-0 bg-base/80 backdrop-blur-sm cursor-default"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close settings"
-          />
+          <Backdrop onClose={() => setIsOpen(false)}>
+            {/* Panel */}
+            <div className="relative w-full max-w-md bg-surface border border-border rounded-t-lg sm:rounded-lg shadow-2xl animate-fade-up max-h-[85vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+                <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                  }}
+                  className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
+                >
+                  <XCircleIcon size={20} weight="duotone" />
+                </button>
+              </div>
 
-          {/* Panel */}
-          <div className="relative w-full max-w-md bg-surface border border-border rounded-t-lg sm:rounded-lg shadow-2xl animate-fade-up max-h-[85vh] overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-              <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                }}
-                className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
-              >
-                <XCircleIcon size={20} weight="duotone" />
-              </button>
+              {/* Content */}
+              <div className="px-5 py-4 overflow-y-auto flex-1">
+                <SettingsContent />
+              </div>
             </div>
-
-            {/* Content */}
-            <div className="px-5 py-4 overflow-y-auto flex-1">
-              <SettingsContent />
-            </div>
-          </div>
+          </Backdrop>
         </div>
       )}
     </>

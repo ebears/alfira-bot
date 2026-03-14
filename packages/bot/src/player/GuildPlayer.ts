@@ -17,23 +17,6 @@ import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
 import { PlaybackCursor } from './PlaybackCursor';
 import { SinglyLinkedList } from './SinglyLinkedList';
 
-async function withRetry<T>(fn: () => Promise<T>, maxRetries: number, delayMs: number): Promise<T> {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-      }
-    }
-  }
-
-  throw lastError;
-}
-
 export class GuildPlayer {
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
   private priorityQueue: SinglyLinkedList<QueuedSong> = new SinglyLinkedList();
@@ -330,11 +313,21 @@ export class GuildPlayer {
     let streamUrl: string;
     let isWebmOpus: boolean;
     try {
-      ({ url: streamUrl, isWebmOpus } = await withRetry(
-        () => getStreamFormat(next.youtubeUrl),
-        2,
-        1_000
-      ));
+      let lastError: unknown;
+      let result: { url: string; isWebmOpus: boolean } | undefined;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          result = await getStreamFormat(next.youtubeUrl);
+          break;
+        } catch (error) {
+          lastError = error;
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 1_000));
+          }
+        }
+      }
+      if (!result) throw lastError;
+      ({ url: streamUrl, isWebmOpus } = result);
     } catch (error) {
       console.error(
         `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
