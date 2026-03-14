@@ -5,6 +5,12 @@ import type { Command } from '../types';
 import { formatLoopMode } from '../utils/format';
 import { requireGuild } from './guards';
 
+const modeLabels: Record<LoopMode, string> = {
+  off: 'off',
+  song: 'the current song',
+  queue: 'the entire queue',
+};
+
 export const loopCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('loop')
@@ -35,12 +41,6 @@ export const loopCommand: Command = {
     const mode = interaction.options.getString('mode', true) as LoopMode;
     player.setLoopMode(mode);
 
-    const confirmations: Record<LoopMode, string> = {
-      off: `${formatLoopMode('off')} Loop is now **off**.`,
-      song: `${formatLoopMode('song')} Looping the **current song**.`,
-      queue: `${formatLoopMode('queue')} Looping the **entire queue**.`,
-    };
-
-    await interaction.reply(confirmations[mode]);
+    await interaction.reply(`${formatLoopMode(mode)} Looping **${modeLabels[mode]}**.`);
   },
 };

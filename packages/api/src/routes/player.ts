@@ -10,6 +10,7 @@ import {
 import type { TextChannel } from 'discord.js';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
+import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import {
   buildQueuedSongFromMetadata,
@@ -144,15 +145,7 @@ router.post(
         return;
       }
 
-      if (playlist.isPrivate) {
-        const isCreator = playlist.createdBy === req.user?.discordId;
-        const isAdmin = req.user?.isAdmin;
-
-        if (!isCreator && !isAdmin) {
-          res.status(403).json({ error: 'Access denied. This playlist is private.' });
-          return;
-        }
-      }
+      if (!canAccessPlaylist(playlist, req.user, res)) return;
 
       dbSongs = playlist.songs.map((ps) => ps.song);
     } else {
