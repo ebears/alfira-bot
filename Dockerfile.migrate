@@ -65,10 +65,6 @@ COPY prisma.config.ts ./prisma.config.ts
 # Copy Prisma schema and migrations
 COPY packages/api/prisma ./packages/api/prisma
 COPY packages/api/package.json ./packages/api/package.json
-COPY packages/shared ./packages/shared
-COPY package.json ./package.json
-COPY pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Run migrations (prisma.config.ts defines schema path, DATABASE_URL from docker-compose)
 CMD ["sh", "-c", "prisma migrate deploy"]
