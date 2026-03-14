@@ -1,6 +1,6 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
 import { createPlayer, getPlayer, removePlayer } from '@alfira-bot/bot/src/player/manager';
-import type { LoopMode } from '@alfira-bot/shared';
+import { fisherYatesShuffle, type LoopMode } from '@alfira-bot/shared';
 import {
   entersState,
   getVoiceConnection,
@@ -178,10 +178,7 @@ router.post(
     }
 
     if (mode === 'random') {
-      for (let i = dbSongs.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [dbSongs[i], dbSongs[j]] = [dbSongs[j], dbSongs[i]];
-      }
+      fisherYatesShuffle(dbSongs);
     }
 
     const targetLoopMode = loop ?? player.getLoopMode();

@@ -4,10 +4,9 @@ import SettingsContent from './SettingsContent';
 
 interface SettingsMenuProps {
   collapsed?: boolean;
-  onClose?: () => void;
 }
 
-export default function SettingsMenu({ collapsed = false, onClose }: SettingsMenuProps) {
+export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -49,7 +48,6 @@ export default function SettingsMenu({ collapsed = false, onClose }: SettingsMen
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
-                  onClose?.();
                 }}
                 className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
               >
