@@ -1,15 +1,15 @@
 import {
-  Desktop,
-  Gear,
-  List,
-  Moon,
-  MusicNotes,
-  Playlist,
-  Queue,
-  ShieldUser,
-  Sun,
-  VinylRecord,
-  X,
+  CassetteTapeIcon,
+  CraneTowerIcon,
+  DesktopIcon,
+  GearIcon,
+  GuitarIcon,
+  ListIcon,
+  MoonIcon,
+  MusicNoteIcon,
+  SunIcon,
+  VinylRecordIcon,
+  XCircleIcon,
 } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
@@ -19,9 +19,9 @@ import { useTheme } from '../context/ThemeContext';
 import SettingsToggle from './settings/SettingsToggle';
 
 const NAV_ITEMS = [
-  { to: '/songs', label: 'Songs', icon: VinylRecord },
-  { to: '/playlists', label: 'Playlists', icon: Playlist },
-  { to: '/queue', label: 'Queue', icon: Queue },
+  { to: '/songs', label: 'Songs', icon: MusicNoteIcon },
+  { to: '/playlists', label: 'Playlists', icon: CassetteTapeIcon },
+  { to: '/queue', label: 'Queue', icon: VinylRecordIcon },
 ];
 
 export default function MobileNav() {
@@ -80,7 +80,7 @@ export default function MobileNav() {
           className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
           aria-label="Open navigation menu"
         >
-          <List size={24} weight="duotone" />
+          <ListIcon size={24} weight="duotone" />
         </button>
 
         {/* Center: Wordmark */}
@@ -139,9 +139,9 @@ export default function MobileNav() {
               }`}
             >
               {isAdminView ? (
-                <ShieldUser size={20} weight="duotone" />
+                <CraneTowerIcon size={20} weight="duotone" />
               ) : (
-                <MusicNotes size={20} weight="duotone" />
+                <GuitarIcon size={20} weight="duotone" />
               )}
             </div>
             <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
@@ -152,7 +152,7 @@ export default function MobileNav() {
             className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
             aria-label="Close navigation menu"
           >
-            <X size={24} weight="duotone" />
+            <XCircleIcon size={24} weight="duotone" />
           </button>
         </div>
 
@@ -185,7 +185,7 @@ export default function MobileNav() {
             onClick={() => setIsSettingsOpen(true)}
             className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-[1rem] font-medium text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
           >
-            <Gear size={20} weight="duotone" />
+            <GearIcon size={20} weight="duotone" />
             Settings
           </button>
 
@@ -256,7 +256,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
             onClick={onClose}
             className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
           >
-            <X size={24} weight="duotone" />
+            <XCircleIcon size={24} weight="duotone" />
           </button>
         </div>
 
@@ -317,7 +317,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
                     : 'bg-elevated text-muted border border-border hover:text-fg'
                 }`}
               >
-                <Desktop size={18} weight="duotone" />
+                <DesktopIcon size={18} weight="duotone" />
                 <span>Auto</span>
               </button>
               <button
@@ -329,7 +329,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
                     : 'bg-elevated text-muted border border-border hover:text-fg'
                 }`}
               >
-                <Sun size={18} weight="duotone" />
+                <SunIcon size={18} weight="duotone" />
                 <span>Light</span>
               </button>
               <button
@@ -341,7 +341,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
                     : 'bg-elevated text-muted border border-border hover:text-fg'
                 }`}
               >
-                <Moon size={18} weight="duotone" />
+                <MoonIcon size={18} weight="duotone" />
                 <span>Dark</span>
               </button>
             </div>

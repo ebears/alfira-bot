@@ -1,15 +1,15 @@
 import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
-  CaretLeft,
-  Ghost,
-  ListDashes,
-  Lock,
-  LockOpen,
-  Play,
-  PlayCircle,
-  Plus,
-  Trash,
+  BombIcon,
+  CaretLeftIcon,
+  GhostIcon,
+  LockIcon,
+  LockOpenIcon,
+  PlayCircleIcon,
+  PlayIcon,
+  PlusCircleIcon,
+  VinylRecordIcon,
 } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -221,7 +221,7 @@ export default function PlaylistDetailPage() {
         onClick={() => navigate('/playlists')}
         className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg active:text-fg transition-colors duration-150 mb-4 md:mb-6 min-h-11 md:min-h-0"
       >
-        <CaretLeft size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
+        <CaretLeftIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
         playlists
       </button>
 
@@ -259,7 +259,7 @@ export default function PlaylistDetailPage() {
               </h1>
               {playlist.isPrivate && (
                 <span className="text-muted text-sm" title="Private playlist">
-                  <Ghost size={14} weight="duotone" className="inline mr-1" />
+                  <GhostIcon size={14} weight="duotone" className="inline mr-1" />
                   private
                 </span>
               )}
@@ -282,7 +282,7 @@ export default function PlaylistDetailPage() {
             disabled={playlist.songs.length === 0}
             title="Add playlist to current queue"
           >
-            <Plus size={14} weight="duotone" /> Add to Queue
+            <PlusCircleIcon size={14} weight="duotone" /> Add to Queue
           </button>
           <button
             type="button"
@@ -290,7 +290,7 @@ export default function PlaylistDetailPage() {
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
           >
-            <Play size={14} weight="duotone" /> Play
+            <PlayIcon size={14} weight="duotone" /> Play
           </button>
           {(user?.discordId === playlist.createdBy || isAdminView) && (
             <button
@@ -302,12 +302,12 @@ export default function PlaylistDetailPage() {
               {playlist.isPrivate ? (
                 <>
                   {' '}
-                  <LockOpen size={14} weight="duotone" className="inline mr-1" /> Make Public{' '}
+                  <LockOpenIcon size={14} weight="duotone" className="inline mr-1" /> Make Public{' '}
                 </>
               ) : (
                 <>
                   {' '}
-                  <Lock size={14} weight="duotone" className="inline mr-1" /> Make Private{' '}
+                  <LockIcon size={14} weight="duotone" className="inline mr-1" /> Make Private{' '}
                 </>
               )}
             </button>
@@ -448,7 +448,7 @@ function SongRow({
             className="hidden md:group-hover:flex items-center justify-center text-accent hover:text-accent/80 active:text-accent-muted transition-colors duration-150 w-11 h-11 md:w-auto md:h-auto"
             title="Play from this song"
           >
-            <Play size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
+            <PlayIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
           </button>
         )}
       </div>
@@ -472,7 +472,7 @@ function SongRow({
         className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
         title="Add to Up Next"
       >
-        <ListDashes size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
+        <VinylRecordIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
       </button>
       {isAdmin && (
         <button
@@ -481,7 +481,7 @@ function SongRow({
           className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
           title="Remove from playlist"
         >
-          <Trash size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
+          <BombIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
         </button>
       )}
     </div>
@@ -677,7 +677,7 @@ function PlayModal({
             ) : (
               <>
                 {' '}
-                <PlayCircle size={12} weight="duotone" className="inline mr-1" /> Play{' '}
+                <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
               </>
             )}
           </button>

@@ -51,6 +51,8 @@ Thumbs.db
 # -----------------------------------------------
 .claude/
 .rules/
+.superpowers/
+docs/superpowers/
 .mcp.json
 AGENT.md
 AGENTS.md

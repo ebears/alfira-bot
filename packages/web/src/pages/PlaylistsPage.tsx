@@ -1,5 +1,5 @@
 import type { Playlist } from '@alfira-bot/shared';
-import { CaretRight, Ghost, List } from '@phosphor-icons/react';
+import { CaretRightIcon, GhostIcon, PlaylistIcon } from '@phosphor-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPlaylist, deletePlaylist, getPlaylists } from '../api/api';
@@ -171,7 +171,7 @@ function PlaylistRow({
     >
       {/* Icon */}
       <div className="w-11 h-11 md:w-10 md:h-10 rounded-xl bg-accent/10 border border-accent/20 shrink-0 flex items-center justify-center">
-        <List size={18} weight="duotone" className="text-accent md:w-4 md:h-4" />
+        <PlaylistIcon size={18} weight="duotone" className="text-accent md:w-4 md:h-4" />
       </div>
       {/* Info */}
       <div className="flex-1 min-w-0">
@@ -181,7 +181,7 @@ function PlaylistRow({
           </p>
           {playlist.isPrivate && (
             <span className="text-muted" title="Private playlist">
-              <Ghost size={14} weight="duotone" />
+              <GhostIcon size={14} weight="duotone" />
             </span>
           )}
         </div>
@@ -201,7 +201,7 @@ function PlaylistRow({
         </button>
       )}
       {/* Arrow */}
-      <CaretRight
+      <CaretRightIcon
         size={18}
         weight="duotone"
         className="text-faint group-hover:text-muted transition-colors duration-150 md:w-4 md:h-4"
