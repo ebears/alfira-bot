@@ -112,7 +112,7 @@ export default function Layout() {
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
                 } ${
                   isActive
-                    ? 'bg-accent/20 text-accent border border-accent/30 nav-active-glow'
+                    ? 'bg-accent/20 text-accent border border-accent/30'
                     : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
                 }`
               }

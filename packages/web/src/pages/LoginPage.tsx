@@ -30,12 +30,6 @@ export default function LoginPage() {
         }}
       />
 
-      {/* Glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                      w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none"
-      />
-
       {/* Card */}
       <div className="relative z-10 w-full max-w-sm mx-4 animate-fade-up">
         <div className="bg-surface border border-border rounded-xl p-6 md:p-8 shadow-2xl">

@@ -166,7 +166,7 @@ export default function MobileNav() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors duration-150 ${
                   isActive
-                    ? 'bg-accent/20 text-accent border border-accent/30 nav-active-glow'
+                    ? 'bg-accent/20 text-accent border border-accent/30'
                     : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
                 }`
               }
