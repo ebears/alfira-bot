@@ -10,7 +10,10 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "paths": {
+      "@alfira-bot/shared/prisma": ["./node_modules/@alfira-bot/shared/dist/lib/prisma"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -21,7 +21,6 @@ import {
   getSongs,
   importPlaylist,
   startPlayback,
-  updateSongNickname,
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import ConfirmModal from '../components/ConfirmModal';
@@ -29,6 +28,7 @@ import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
+import { useNicknameEditor } from '../hooks/useNicknameEditor';
 import { useNotification } from '../hooks/useNotification';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { useSocket } from '../hooks/useSocket';
@@ -309,35 +309,17 @@ function SongCard({
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const [addingToQueue, setAddingToQueue] = useState(false);
-  const [editingNickname, setEditingNickname] = useState(false);
-  const [editValue, setEditValue] = useState('');
-  const [savingNickname, setSavingNickname] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const editInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingNickname) editInputRef.current?.focus();
-  }, [editingNickname]);
-
-  const startEdit = () => {
-    setEditValue(song.nickname || '');
-    setEditingNickname(true);
-  };
-
-  const cancelEdit = () => {
-    setEditingNickname(false);
-    setEditValue('');
-  };
-
-  const saveNickname = async () => {
-    setSavingNickname(true);
-    try {
-      await updateSongNickname(song.id, editValue.trim() || null);
-      setEditingNickname(false);
-    } finally {
-      setSavingNickname(false);
-    }
-  };
+  const {
+    editingNickname,
+    editValue,
+    setEditValue,
+    savingNickname,
+    editInputRef,
+    startEdit,
+    cancelEdit,
+    saveNickname,
+  } = useNicknameEditor(song.id, song.nickname);
 
   // Close playlist menu when clicking outside
   useEffect(() => {
@@ -562,35 +544,17 @@ function LibrarySongRow({
   isPlaying: boolean;
   onAddToQueue: () => void;
 }) {
-  const [editingNickname, setEditingNickname] = useState(false);
-  const [editValue, setEditValue] = useState('');
-  const [savingNickname, setSavingNickname] = useState(false);
   const [addingToQueue, setAddingToQueue] = useState(false);
-  const editInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingNickname) editInputRef.current?.focus();
-  }, [editingNickname]);
-
-  const startEdit = () => {
-    setEditValue(song.nickname || '');
-    setEditingNickname(true);
-  };
-
-  const cancelEdit = () => {
-    setEditingNickname(false);
-    setEditValue('');
-  };
-
-  const saveNickname = async () => {
-    setSavingNickname(true);
-    try {
-      await updateSongNickname(song.id, editValue.trim() || null);
-      setEditingNickname(false);
-    } finally {
-      setSavingNickname(false);
-    }
-  };
+  const {
+    editingNickname,
+    editValue,
+    setEditValue,
+    savingNickname,
+    editInputRef,
+    startEdit,
+    cancelEdit,
+    saveNickname,
+  } = useNicknameEditor(song.id, song.nickname);
 
   const handleAddToQueue = async () => {
     setAddingToQueue(true);
