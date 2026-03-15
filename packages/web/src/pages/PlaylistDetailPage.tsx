@@ -25,6 +25,8 @@ import {
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import ConfirmModal from '../components/ConfirmModal';
+import type { MenuItem } from '../components/ContextMenu';
+import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
@@ -415,6 +417,21 @@ function SongRow({
   isPlaying?: boolean;
   onAddToQueue: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const menuItems: MenuItem[] = isAdmin
+    ? [
+        {
+          id: 'remove',
+          label: 'Remove from playlist',
+          icon: <BombIcon size={14} weight="duotone" />,
+          danger: true,
+          onClick: onRemove,
+        },
+      ]
+    : [];
+
   return (
     <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
       <div className="w-8 md:w-6 shrink-0 flex justify-end">
@@ -462,15 +479,18 @@ function SongRow({
       >
         <VinylRecordIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
       </button>
-      {isAdmin && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
-          title="Remove from playlist"
-        >
-          <BombIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
-        </button>
+      {menuItems.length > 0 && (
+        <>
+          <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
+          {menuOpen && (
+            <ContextMenu
+              items={menuItems}
+              isOpen={menuOpen}
+              onClose={() => setMenuOpen(false)}
+              triggerRef={triggerRef}
+            />
+          )}
+        </>
       )}
     </div>
   );

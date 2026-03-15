@@ -25,6 +25,8 @@ import {
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import ConfirmModal from '../components/ConfirmModal';
+import type { MenuItem } from '../components/ContextMenu';
+import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -305,14 +307,13 @@ function SongCard({
   isPlaying: boolean;
   onAddToQueue: () => void;
 }) {
-  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
-  const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const [addingToQueue, setAddingToQueue] = useState(false);
   const [editingNickname, setEditingNickname] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [savingNickname, setSavingNickname] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -339,20 +340,7 @@ function SongCard({
     }
   };
 
-  // Close playlist menu when clicking outside
-  useEffect(() => {
-    if (!showPlaylistMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowPlaylistMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showPlaylistMenu]);
-
   const handleAddToPlaylist = async (playlistId: string) => {
-    setAddingToPlaylist(playlistId);
     try {
       await addSongToPlaylist(playlistId, song.id);
       setAddedTo((prev) => new Set([...prev, playlistId]));
@@ -360,8 +348,6 @@ function SongCard({
       if (apiErrorMessage(err, '').includes('already')) {
         setAddedTo((prev) => new Set([...prev, playlistId]));
       }
-    } finally {
-      setAddingToPlaylist(null);
     }
   };
 
@@ -373,6 +359,39 @@ function SongCard({
       setAddingToQueue(false);
     }
   };
+
+  const menuItems: MenuItem[] = isAdmin
+    ? [
+        {
+          id: 'add-to-playlist',
+          label: 'Add to playlist',
+          icon: <CassetteTapeIcon size={14} weight="duotone" />,
+          submenu: {
+            title: 'Add to playlist',
+            items: playlists.map((pl) => ({
+              id: pl.id,
+              label: pl.name,
+              disabled: addedTo.has(pl.id),
+            })),
+            onSelect: handleAddToPlaylist,
+            emptyMessage: 'no playlists yet',
+          },
+        },
+        {
+          id: 'edit-nickname',
+          label: 'Edit nickname',
+          icon: <PencilSimpleIcon size={14} weight="duotone" />,
+          onClick: startEdit,
+        },
+        {
+          id: 'delete',
+          label: 'Delete song',
+          icon: <BombIcon size={14} weight="duotone" />,
+          danger: true,
+          onClick: onDelete,
+        },
+      ]
+    : [];
 
   return (
     <div
@@ -483,59 +502,21 @@ function SongCard({
               <VinylRecordIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
             )}
           </button>
-          {isAdmin && (
+          {menuItems.length > 0 && (
             <>
-              {/* Add to playlist */}
-              <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowPlaylistMenu((p) => !p)}
-                  className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
-                  title="Add to playlist"
-                >
-                  <CassetteTapeIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-                </button>
-                {showPlaylistMenu && (
-                  <div className="absolute bottom-full left-0 mb-1 w-44 bg-elevated border border-border rounded shadow-xl z-20 overflow-hidden">
-                    {playlists.length === 0 ? (
-                      <p className="px-3 py-2 text-xs font-mono text-muted">no playlists yet</p>
-                    ) : (
-                      playlists.map((pl) => (
-                        <button
-                          type="button"
-                          key={pl.id}
-                          disabled={addingToPlaylist === pl.id || addedTo.has(pl.id)}
-                          onClick={() => handleAddToPlaylist(pl.id)}
-                          className="w-full text-left px-3 py-2 text-xs font-body text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center justify-between"
-                        >
-                          <span className="truncate">{pl.name}</span>
-                          {addedTo.has(pl.id) && (
-                            <span className="text-accent text-[10px] ml-1">✓</span>
-                          )}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-              {/* Edit nickname */}
-              <button
-                type="button"
-                onClick={startEdit}
-                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
-                title="Edit nickname"
-              >
-                <PencilSimpleIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-              </button>
-              {/* Delete */}
-              <button
-                type="button"
-                onClick={onDelete}
-                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-faint hover:text-danger active:bg-danger/10 border border-border hover:border-danger/30 rounded-xl transition-colors duration-150"
-                title="Delete song"
-              >
-                <BombIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-              </button>
+              <ContextMenuTrigger
+                ref={triggerRef}
+                onOpen={() => setMenuOpen(true)}
+                isOpen={menuOpen}
+              />
+              {menuOpen && (
+                <ContextMenu
+                  items={menuItems}
+                  isOpen={menuOpen}
+                  onClose={() => setMenuOpen(false)}
+                  triggerRef={triggerRef}
+                />
+              )}
             </>
           )}
         </div>
@@ -562,10 +543,12 @@ function LibrarySongRow({
   isPlaying: boolean;
   onAddToQueue: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [editingNickname, setEditingNickname] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [savingNickname, setSavingNickname] = useState(false);
   const [addingToQueue, setAddingToQueue] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -600,6 +583,24 @@ function LibrarySongRow({
       setAddingToQueue(false);
     }
   };
+
+  const menuItems: MenuItem[] = isAdmin
+    ? [
+        {
+          id: 'edit-nickname',
+          label: 'Edit nickname',
+          icon: <PencilSimpleIcon size={14} weight="duotone" />,
+          onClick: startEdit,
+        },
+        {
+          id: 'delete',
+          label: 'Delete song',
+          icon: <BombIcon size={14} weight="duotone" />,
+          danger: true,
+          onClick: onDelete,
+        },
+      ]
+    : [];
 
   return (
     <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
@@ -682,24 +683,17 @@ function LibrarySongRow({
           <VinylRecordIcon size={18} weight="duotone" />
         )}
       </button>
-      {isAdmin && (
+      {menuItems.length > 0 && (
         <>
-          <button
-            type="button"
-            onClick={startEdit}
-            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
-            title="Edit nickname"
-          >
-            <PencilSimpleIcon size={18} weight="duotone" />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
-            title="Delete song"
-          >
-            <BombIcon size={18} weight="duotone" />
-          </button>
+          <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
+          {menuOpen && (
+            <ContextMenu
+              items={menuItems}
+              isOpen={menuOpen}
+              onClose={() => setMenuOpen(false)}
+              triggerRef={triggerRef}
+            />
+          )}
         </>
       )}
     </div>
