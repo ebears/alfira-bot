@@ -1,23 +1,25 @@
 import type { Playlist } from '@alfira-bot/shared';
-import { CaretRightIcon, GhostIcon, PlaylistIcon } from '@phosphor-icons/react';
+import { CaretRightIcon, GhostIcon, PlaylistIcon, PlusCircleIcon } from '@phosphor-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createPlaylist, deletePlaylist, getPlaylists } from '../api/api';
+import { createPlaylist, getPlaylists, startPlayback } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
-import ConfirmModal from '../components/ConfirmModal';
+import NotificationToast from '../components/NotificationToast';
 import { useAdminView } from '../context/AdminViewContext';
-import { useAuth } from '../context/AuthContext';
+import { usePlayer } from '../context/PlayerContext';
+import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
+import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const socket = useSocket();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
+  const { notification, notify } = useNotification();
+  const { state: queueState } = usePlayer();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,10 +80,17 @@ export default function PlaylistsPage() {
     setShowCreate(false);
   };
 
-  const handleDelete = async (pl: Playlist) => {
-    await deletePlaylist(pl.id);
-    setPlaylists((prev) => prev.filter((p) => p.id !== pl.id));
-    setDeleteTarget(null);
+  const handleAddToQueue = async (playlistId: string) => {
+    try {
+      await startPlayback({ playlistId, mode: 'sequential', loop: queueState.loopMode });
+      notify('Playlist added to queue', 'success');
+    } catch (err: unknown) {
+      notify(
+        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
+        'error',
+        5000
+      );
+    }
   };
 
   return (
@@ -110,13 +119,11 @@ export default function PlaylistsPage() {
             <PlaylistRow
               key={pl.id}
               playlist={pl}
-              isAdmin={isAdminView}
-              isOwner={user?.discordId === pl.createdBy}
               style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
               onClick={() => navigate(`/playlists/${pl.id}`)}
-              onDelete={(e) => {
+              onAddToQueue={(e) => {
                 e.stopPropagation();
-                setDeleteTarget(pl);
+                handleAddToQueue(pl.id);
               }}
             />
           ))}
@@ -126,20 +133,7 @@ export default function PlaylistsPage() {
       {showCreate && (
         <CreatePlaylistModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />
       )}
-      {deleteTarget && (
-        <ConfirmModal
-          title="Delete Playlist"
-          message={
-            <>
-              Delete <span className="text-fg font-semibold">"{deleteTarget.name}"</span>? Songs in
-              the library won't be affected.
-            </>
-          }
-          confirmLabel="Delete"
-          onConfirm={() => handleDelete(deleteTarget)}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      )}
+      {notification && <NotificationToast notification={notification} />}
     </div>
   );
 }
@@ -149,18 +143,14 @@ export default function PlaylistsPage() {
 // ---------------------------------------------------------------------------
 function PlaylistRow({
   playlist,
-  isAdmin,
-  isOwner,
   style,
   onClick,
-  onDelete,
+  onAddToQueue,
 }: {
   playlist: Playlist;
-  isAdmin: boolean;
-  isOwner: boolean;
   style?: React.CSSProperties;
   onClick: () => void;
-  onDelete: (e: React.MouseEvent) => void;
+  onAddToQueue: (e: React.MouseEvent) => void;
 }) {
   const count = playlist._count?.songs ?? 0;
   return (
@@ -181,6 +171,15 @@ function PlaylistRow({
       <div className="w-11 h-11 md:w-10 md:h-10 rounded-xl bg-accent/10 border border-accent/20 shrink-0 flex items-center justify-center">
         <PlaylistIcon size={18} weight="duotone" className="text-accent md:w-4 md:h-4" />
       </div>
+      {/* Add to queue button */}
+      <button
+        type="button"
+        onClick={onAddToQueue}
+        className="opacity-0 group-hover:opacity-100 md:opacity-0 text-muted hover:text-accent active:text-accent/80 transition-all duration-150 p-1 shrink-0"
+        title="Add to queue"
+      >
+        <PlusCircleIcon size={20} weight="duotone" />
+      </button>
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -197,17 +196,6 @@ function PlaylistRow({
           {count} {count === 1 ? 'song' : 'songs'}
         </p>
       </div>
-      {/* Admin/Owner actions */}
-      {(isAdmin || isOwner) && (
-        <button
-          type="button"
-          onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 md:opacity-0 font-mono text-xs text-faint hover:text-danger active:text-danger transition-all duration-150 px-3 py-2.5 md:px-2 md:py-1 min-h-11 md:min-h-0"
-          title="Delete playlist"
-        >
-          del
-        </button>
-      )}
       {/* Arrow */}
       <CaretRightIcon
         size={18}
