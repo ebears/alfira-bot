@@ -86,19 +86,7 @@ export default function PlaylistDetailPage() {
     if (editingName) nameInputRef.current?.focus();
   }, [editingName]);
 
-  // ---------------------------------------------------------------------------
-  // Real-time socket wiring
-  //
-  // playlists:updated fires after any mutation: rename, song added, song removed,
-  // or a new playlist being created. We only care about events for this playlist.
-  //
-  // The payload is a Playlist (with _count.songs) but does NOT include the full
-  // songs array — that's a PlaylistDetail shape. So when we receive an update
-  // for this playlist we trigger a full refetch to get the fresh songs list.
-  //
-  // This also handles the case where an admin in another browser tab renames
-  // the playlist or adds/removes songs — the detail view stays in sync.
-  // ---------------------------------------------------------------------------
+  // Refetch on any playlist mutation from other clients (payload lacks full songs array)
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
       if (updated.id !== id) return;
