@@ -19,6 +19,15 @@ export interface PlaylistMetadata {
 
 const YT_DLP_TIMEOUT_MS = 30_000;
 
+// Filter benign FFmpeg stderr messages that occur at stream end.
+const BENIGN_ERROR_PATTERNS = [
+  /Error parsing Opus packet header/,
+  /Invalid packet header/,
+  /out#0\/webm.*muxing overhead/,
+  /out#0\/ogg.*muxing overhead/,
+  /moov atom not found/,
+];
+
 function execFileAsync(cmd: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = execFile(cmd, args, { timeout: YT_DLP_TIMEOUT_MS }, (error, stdout) => {
@@ -104,19 +113,10 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
   const capacitor = new CapacitorWriteStream();
   ffmpeg.stdout?.pipe(capacitor);
 
-  // Filter benign FFmpeg stderr messages that occur at stream end.
-  const benignErrorPatterns = [
-    /Error parsing Opus packet header/,
-    /Invalid packet header/,
-    /out#0\/webm.*muxing overhead/,
-    /out#0\/ogg.*muxing overhead/,
-    /moov atom not found/,
-  ];
-
   ffmpeg.stderr?.on('data', (chunk: Buffer) => {
     const msg = chunk.toString().trim();
     if (!msg) return;
-    if (benignErrorPatterns.some((pattern) => pattern.test(msg))) return;
+    if (BENIGN_ERROR_PATTERNS.some((pattern) => pattern.test(msg))) return;
     console.warn('[FFmpeg]', msg);
   });
 

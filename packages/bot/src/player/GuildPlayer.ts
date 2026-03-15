@@ -45,6 +45,16 @@ export class GuildPlayer {
   private readonly textChannel: TextChannel;
   private readonly onDestroyed: () => void;
 
+  private killFfmpeg(): void {
+    this.killCurrentFfmpeg?.();
+    this.killCurrentFfmpeg = null;
+  }
+
+  private unpause(): void {
+    this.audioPlayer.unpause();
+    this.paused = false;
+  }
+
   constructor(
     connection: VoiceConnection,
     textChannel: TextChannel,
@@ -124,8 +134,7 @@ export class GuildPlayer {
 
       if (!this.intentionallyStopped) {
         this.audioPlayer.stop(true);
-        this.killCurrentFfmpeg?.();
-        this.killCurrentFfmpeg = null;
+        this.killFfmpeg();
         this.queue.clear();
         this.currentSong = null;
         this.broadcast();
@@ -161,8 +170,7 @@ export class GuildPlayer {
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
     this.queue.clear();
     this.priorityQueue.clear();
-    this.killCurrentFfmpeg?.();
-    this.killCurrentFfmpeg = null;
+    this.killFfmpeg();
     this.audioPlayer.stop(true);
     this.consecutiveFailures = 0;
     this.queue.replace(songs);
@@ -175,9 +183,7 @@ export class GuildPlayer {
 
     // Unpause first — .stop() on a paused player doesn't trigger Idle.
     if (this.paused) {
-      this.audioPlayer.unpause();
-      this.paused = false;
-      this.pausedAt = null;
+      this.unpause();
     }
 
     this.audioPlayer.stop();
@@ -218,8 +224,7 @@ export class GuildPlayer {
         }
         this.pausedAt = null;
       }
-      this.audioPlayer.unpause();
-      this.paused = false;
+      this.unpause();
     } else {
       this.pausedAt = Date.now();
       this.audioPlayer.pause(true);
@@ -342,8 +347,7 @@ export class GuildPlayer {
       return;
     }
 
-    this.killCurrentFfmpeg?.();
-    this.killCurrentFfmpeg = null;
+    this.killFfmpeg();
 
     let stream: Readable;
     let kill: () => void;

@@ -112,14 +112,6 @@
   },
   "overrides": [
     {
-      "includes": ["packages/web/**"],
-      "javascript": {
-        "formatter": {
-          "quoteStyle": "single"
-        }
-      }
-    },
-    {
       "includes": ["packages/api/**", "packages/bot/**"],
       "javascript": {
         "globals": ["process", "console", "__dirname", "__filename", "module", "require"]
