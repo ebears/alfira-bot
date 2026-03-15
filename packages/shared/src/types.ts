@@ -20,6 +20,7 @@ export interface Song {
   duration: number; // seconds
   thumbnailUrl: string;
   addedBy: string; // Discord user ID
+  addedByDisplayName?: string; // Resolved Discord display name (not persisted, populated at query time)
   nickname?: string | null; // Custom display name for the song
   createdAt: string; // ISO 8601 string (JSON wire format)
 }
