@@ -26,19 +26,15 @@ export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
 export { getClient, setClient } from './lib/client';
 
 // Player manager (guild-level player lifecycle)
-export { createPlayer, destroyAllPlayers, getPlayer, removePlayer } from './player/manager';
+export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
 
 // YouTube utilities (URL validation, metadata fetching)
 export {
-  type AudioStreamHandle,
-  createAudioStream,
   getMetadata,
   getPlaylistMetadataWithVideos,
-  getStreamFormat,
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
   type PlaylistMetadata,
-  type SongMetadata,
 } from './utils/ytdlp';
 
 export async function deployCommands(

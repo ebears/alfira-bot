@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { GUILD_ID } from '../lib/config';
-import { canAccessPlaylist, type PlaylistLike, type UserContext } from '../lib/playlistAccess';
+import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { requireAuth } from '../middleware/requireAuth';
@@ -46,18 +46,6 @@ async function findPlaylistOr404(id: string, res: Response, include?: Record<str
   return playlist;
 }
 
-/** Returns true if user is owner or admin. Sends 403 and returns false if not. */
-function requirePlaylistOwnerOrAdmin(
-  playlist: PlaylistLike,
-  user: UserContext | undefined,
-  res: Response,
-  action: string
-): boolean {
-  if (playlist.createdBy === user?.discordId || user?.isAdmin) return true;
-  res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
-  return false;
-}
-
 /**
  * Finds a playlist by ID and checks owner/admin access.
  * Sends 404 or 403 and returns null if access is denied.
@@ -71,7 +59,10 @@ async function requirePlaylistAccess(
 ) {
   const playlist = await findPlaylistOr404(id, res, include);
   if (!playlist) return null;
-  if (!requirePlaylistOwnerOrAdmin(playlist, user, res, action)) return null;
+  if (playlist.createdBy !== user?.discordId && !user?.isAdmin) {
+    res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
+    return null;
+  }
   return playlist;
 }
 

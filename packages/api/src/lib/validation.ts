@@ -8,8 +8,12 @@ import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;
 
-/** Validates a YouTube URL for single video endpoints. */
-export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
+function validateUrl(
+  youtubeUrl: unknown,
+  res: Response,
+  validator: (url: string) => boolean,
+  errorMessage: string
+): string | null {
   if (!youtubeUrl || typeof youtubeUrl !== 'string') {
     res.status(400).json({ error: 'youtubeUrl is required.' });
     return null;
@@ -22,37 +26,32 @@ export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string |
     return null;
   }
 
-  if (!isValidYouTubeUrl(url)) {
-    res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
+  if (!validator(url)) {
+    res.status(400).json({ error: errorMessage });
     return null;
   }
 
   return url;
 }
 
+/** Validates a YouTube URL for single video endpoints. */
+export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
+  return validateUrl(
+    youtubeUrl,
+    res,
+    isValidYouTubeUrl,
+    'That does not look like a valid YouTube URL.'
+  );
+}
+
 /** Validates a YouTube playlist URL. */
 export function validateYouTubePlaylistUrl(youtubeUrl: unknown, res: Response): string | null {
-  if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-    res.status(400).json({ error: 'youtubeUrl is required.' });
-    return null;
-  }
-
-  const url = youtubeUrl.trim();
-
-  if (url.length > MAX_URL_LENGTH) {
-    res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-    return null;
-  }
-
-  if (!isYouTubePlaylistUrl(url)) {
-    res.status(400).json({
-      error:
-        'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
-    });
-    return null;
-  }
-
-  return url;
+  return validateUrl(
+    youtubeUrl,
+    res,
+    isYouTubePlaylistUrl,
+    'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.'
+  );
 }
 
 /**
