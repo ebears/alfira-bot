@@ -1,7 +1,6 @@
-import { getClient } from '@alfira-bot/bot';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { GUILD_ID } from '../lib/config';
+import { getUserDisplayName } from '../lib/displayName';
 import prisma from '../lib/prisma';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
@@ -14,19 +13,6 @@ import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-
-async function getUserDisplayName(discordId: string): Promise<string> {
-  const client = getClient();
-  if (!client) return discordId;
-
-  try {
-    const guild = await client.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(discordId);
-    return member.displayName || member.user.username || discordId;
-  } catch {
-    return discordId;
-  }
-}
 
 // Rate limit playlist import to prevent abuse.
 const importLimiter = rateLimit({
