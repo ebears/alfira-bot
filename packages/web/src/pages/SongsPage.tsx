@@ -46,7 +46,7 @@ export default function SongsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
-  const handleAddToQueue = useAddToQueue();
+  const handleAddToQueue = useAddToQueue(notify);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('alfira-library-view');

@@ -51,7 +51,7 @@ export default function PlaylistDetailPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
-  const handleAddToQueue = useAddToQueue();
+  const handleAddToQueue = useAddToQueue(notify);
 
   // Allow editing when:
   // - User is admin AND edit mode is enabled, OR

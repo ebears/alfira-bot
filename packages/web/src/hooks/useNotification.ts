@@ -19,6 +19,8 @@ export interface Notification {
   type: 'success' | 'error';
 }
 
+export type NotifyFn = (message: string, type: 'success' | 'error', ms?: number) => void;
+
 export function useNotification() {
   const [notification, setNotification] = useState<Notification | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

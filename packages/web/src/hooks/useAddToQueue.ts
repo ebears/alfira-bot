@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
 import { addToPriorityQueue } from '../api/api';
 import { apiErrorMessage } from '../utils/api';
-import { useNotification } from './useNotification';
+import type { NotifyFn } from './useNotification';
 
-export function useAddToQueue() {
-  const { notify } = useNotification();
-
+export function useAddToQueue(notify: NotifyFn) {
   return useCallback(
     async (songId: string) => {
       try {
