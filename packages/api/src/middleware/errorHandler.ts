@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import logger from '../lib/logger';
 
 // ---------------------------------------------------------------------------
 // errorHandler
@@ -20,7 +21,7 @@ export function errorHandler(
   const message = err.message || 'Internal server error';
 
   if (status >= 500) {
-    console.error('Unhandled error:', err);
+    logger.error({ err }, 'Unhandled error');
   }
 
   res.status(status).json({ error: message });

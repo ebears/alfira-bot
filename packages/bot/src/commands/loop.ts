@@ -2,14 +2,8 @@ import type { LoopMode } from '@alfira-bot/shared';
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { formatLoopMode } from '../utils/format';
+import { formatLoopMode, LOOP_MODE_DESCRIPTIONS } from '../utils/format';
 import { requireGuild } from './guards';
-
-const modeLabels: Record<LoopMode, string> = {
-  off: 'off',
-  song: 'the current song',
-  queue: 'the entire queue',
-};
 
 export const loopCommand: Command = {
   data: new SlashCommandBuilder()
@@ -41,6 +35,6 @@ export const loopCommand: Command = {
     const mode = interaction.options.getString('mode', true) as LoopMode;
     player.setLoopMode(mode);
 
-    await interaction.reply(`${formatLoopMode(mode)} Looping **${modeLabels[mode]}**.`);
+    await interaction.reply(`${formatLoopMode(mode)} Looping **${LOOP_MODE_DESCRIPTIONS[mode]}**.`);
   },
 };

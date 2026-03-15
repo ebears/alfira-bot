@@ -1,7 +1,8 @@
 import type { QueuedSong } from '@alfira-bot/shared';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
-import prisma from '../lib/prisma';
+import prisma from '../../../shared/dist/lib/prisma';
 import type { Command } from '../types';
+import { pluralize } from '../utils/format';
 import { getOrCreateConnection, requireGuild, requireVoiceChannel } from './guards';
 
 export const playlistCommand: Command = {
@@ -68,7 +69,7 @@ export const playlistCommand: Command = {
 
       const count = queuedSongs.length;
       await interaction.editReply(
-        `✅ Queued **${count}** song${count === 1 ? '' : 's'} from **${playlist.name}**.`
+        `✅ Queued **${pluralize(count, 'song')}** from **${playlist.name}**.`
       );
     }
   },

@@ -2,7 +2,7 @@ import { formatDuration } from '@alfira-bot/shared';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { formatLoopMode } from '../utils/format';
+import { formatLoopMode, pluralize } from '../utils/format';
 import { requireGuild } from './guards';
 
 // Maximum number of queued songs to list before truncating.
@@ -64,7 +64,7 @@ export const queueCommand: Command = {
     const totalSongs = queue.length + (current ? 1 : 0);
 
     embed.setFooter({
-      text: `${totalSongs} song${totalSongs === 1 ? '' : 's'} total  •  Loop: ${formatLoopMode(loopMode)}`,
+      text: `${pluralize(totalSongs, 'song')} total  •  Loop: ${formatLoopMode(loopMode)}`,
     });
 
     await interaction.reply({ embeds: [embed] });

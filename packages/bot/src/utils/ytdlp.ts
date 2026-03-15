@@ -3,7 +3,7 @@ import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
-export interface SongMetadata {
+interface SongMetadata {
   title: string;
   youtubeId: string;
   duration: number; // seconds
@@ -30,16 +30,11 @@ const BENIGN_ERROR_PATTERNS = [
 
 function execFileAsync(cmd: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = execFile(cmd, args, { timeout: YT_DLP_TIMEOUT_MS }, (error, stdout) => {
+    execFile(cmd, args, { timeout: YT_DLP_TIMEOUT_MS }, (error, stdout) => {
       if (error) {
         return reject(error);
       }
       resolve(stdout);
-    });
-
-    // Prevent unhandled error event on timeout kill.
-    child.on('error', () => {
-      // Error is already handled by the execFile callback above.
     });
   });
 }
