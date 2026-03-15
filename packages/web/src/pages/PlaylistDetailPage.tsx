@@ -124,11 +124,6 @@ export default function PlaylistDetailPage() {
     // but the optimistic update above means the user sees the change instantly.
   };
 
-  const toggleEditMode = () => {
-    setIsEditMode((prev) => !prev);
-    setEditingName(false);
-  };
-
   const handleRemoveSong = async (songId: string) => {
     if (!playlist) return;
     await removeSongFromPlaylist(playlist.id, songId);
@@ -258,7 +253,7 @@ export default function PlaylistDetailPage() {
           <p className="font-mono text-xs text-muted mt-1">
             {playlist.songs.length} {playlist.songs.length === 1 ? 'track' : 'tracks'}
             {' • '}
-            {user?.discordId === playlist.createdBy
+            {isOwner
               ? 'Created by you'
               : `Created by ${playlist.createdByDisplayName || playlist.createdBy}`}
           </p>
@@ -282,7 +277,7 @@ export default function PlaylistDetailPage() {
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </button>
-          {(user?.discordId === playlist.createdBy || isAdminView) && (
+          {(isOwner || isAdminView) && (
             <button
               type="button"
               className="btn-ghost text-xs flex items-center gap-1.5"
@@ -325,7 +320,10 @@ export default function PlaylistDetailPage() {
               <button
                 type="button"
                 className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
-                onClick={toggleEditMode}
+                onClick={() => {
+                  setIsEditMode((prev) => !prev);
+                  setEditingName(false);
+                }}
               >
                 {isEditMode ? '✎ Editing' : '✎ Edit'}
               </button>

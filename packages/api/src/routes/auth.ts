@@ -42,7 +42,7 @@ const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_TOKEN_MAX_AGE = (() => {
   const match = REFRESH_TOKEN_EXPIRES_IN.match(/^(\d+)([dhms])$/);
   if (!match) {
-    console.warn(`Invalid JWT_EXPIRES_IN format "${REFRESH_TOKEN_EXPIRES_IN}", defaulting to 7d`);
+    logger.warn(`Invalid JWT_EXPIRES_IN format "${REFRESH_TOKEN_EXPIRES_IN}", defaulting to 7d`);
     return 7 * 24 * 60 * 60 * 1000;
   }
   const multipliers: Record<string, number> = { d: 86400000, h: 3600000, m: 60000, s: 1000 };

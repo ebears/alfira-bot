@@ -1,8 +1,7 @@
-import { getClient } from '@alfira-bot/bot';
 import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { GUILD_ID } from '../lib/config';
+import { getUserDisplayName } from '../lib/displayName';
 import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
@@ -59,24 +58,12 @@ async function requirePlaylistAccess(
 ) {
   const playlist = await findPlaylistOr404(id, res, include);
   if (!playlist) return null;
-  if (playlist.createdBy !== user?.discordId && !user?.isAdmin) {
+  // Treat admins as having admin view for mutation operations
+  if (!canAccessPlaylist(playlist, user, undefined, true)) {
     res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
     return null;
   }
   return playlist;
-}
-
-async function getUserDisplayName(discordId: string): Promise<string> {
-  const client = getClient();
-  if (!client) return discordId;
-
-  try {
-    const guild = await client.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(discordId);
-    return member.displayName || member.user.username || discordId;
-  } catch {
-    return discordId;
-  }
 }
 
 async function emitPlaylistBroadcast(playlistId: string): Promise<void> {

@@ -149,9 +149,9 @@ export function isValidYouTubeUrl(url: string): boolean {
 }
 
 export function isYouTubePlaylistUrl(url: string): boolean {
+  if (!isValidYouTubeUrl(url)) return false;
   try {
-    const parsed = new URL(url);
-    return YOUTUBE_HOSTS.includes(parsed.hostname) && parsed.searchParams.has('list');
+    return new URL(url).searchParams.has('list');
   } catch {
     return false;
   }
