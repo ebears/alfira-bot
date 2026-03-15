@@ -469,7 +469,7 @@ function SongCard({
           <UserIcon size={12} weight="duotone" />
           {song.addedByDisplayName || song.addedBy}
         </span>
-        <div className="flex gap-1.5 mt-auto pt-1">
+        <div className="flex gap-1.5 mt-auto pt-1 justify-end">
           {/* Add to Queue - available to all members */}
           <button
             type="button"
