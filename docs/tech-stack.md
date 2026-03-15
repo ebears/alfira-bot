@@ -4,14 +4,15 @@
 
 | Component | Technology |
 |-----------|------------|
-| **Runtime** | Node.js 25 |
+| **Runtime** | Node.js 24 |
 | **Language** | TypeScript |
 | **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
 | **Audio** | `yt-dlp`, `ffmpeg` |
-| **API** | Express.js |
+| **API** | Express.js 5 |
 | **Real-time** | Socket.io |
-| **Database** | PostgreSQL + Prisma |
-| **Frontend** | React (Vite) + Tailwind CSS |
+| **Database** | PostgreSQL 16 + Prisma 7 |
+| **Frontend** | React 19 + Vite 8 + Tailwind CSS 4 |
+| **Logging** | Pino |
 
 ## Architecture
 
@@ -85,3 +86,41 @@ Top-level scripts:
 | `npm run web:dev` | Start the Vite dev server for the web UI |
 | `npm run db:generate` | Generate Prisma client |
 | `npm run db:migrate` | Run Prisma migrations |
+| `npm run check` | Lint and format with auto-fix (Biome) |
+| `npm run lint:fix` | Lint with auto-fix |
+| `npm run format` | Format with auto-fix |
+
+## Shared Package Exports
+
+`@alfira-bot/shared` provides types and utilities consumed by all other packages:
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| `Song` | Database song model (id, title, youtubeUrl, duration, thumbnailUrl, etc.) |
+| `QueuedSong` | Song with `requestedBy` display name (runtime queue property) |
+| `LoopMode` | `'off'` \| `'song'` \| `'queue'` |
+| `QueueState` | Full player state snapshot for Socket.io broadcasts |
+| `Playlist` | Database playlist model with optional song count |
+| `PlaylistSong` | Join table entry linking a song to a playlist at a position |
+| `PlaylistDetail` | Playlist with fully populated songs array |
+| `PlaylistSongWithSong` | PlaylistSong where the song is guaranteed present |
+| `User` | Authenticated Discord user (discordId, username, avatar, isAdmin) |
+
+### Utilities
+
+| Function | Description |
+|----------|-------------|
+| `formatDuration(seconds)` | Formats seconds as `mm:ss` or `h:mm:ss` |
+| `fisherYatesShuffle(array)` | In-place Fisher-Yates shuffle |
+
+## CI Workflows
+
+Three GitHub Actions workflows run on the repository:
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **typecheck.yml** | PRs and pushes to `main` | Lint with Biome + typecheck all packages |
+| **docker-build.yml** | PRs and pushes to `main` (ignores `docs/`) | Build Docker images; publish to GHCR on `main` |
+| **ytdlp-update-check.yml** | Weekly (Monday 00:00 UTC) | Check for yt-dlp updates, auto-create issues |

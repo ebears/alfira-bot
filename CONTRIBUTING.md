@@ -79,6 +79,26 @@ Commands are auto-registered on startup by default. Set `AUTO_DEPLOY_COMMANDS=fa
 | [Configuration Reference](docs/configuration.md) | Environment variables |
 | [Tech Stack](docs/tech-stack.md) | Project structure overview |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| [Biome Setup](docs/biome-setup.md) | Linting and formatting configuration |
+
+---
+
+## Code Quality
+
+The project uses [Biome](https://biomejs.dev/) for linting and formatting.
+
+```bash
+# Lint + format check with auto-fix (recommended before committing)
+npm run check
+
+# Lint only, with auto-fix
+npm run lint:fix
+
+# Format only, with auto-fix
+npm run format
+```
+
+CI runs `pnpm run lint` in the typecheck workflow — your code must pass before merging. See the [Biome Setup](docs/biome-setup.md) doc for configuration details.
 
 ---
 

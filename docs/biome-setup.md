@@ -17,7 +17,7 @@ Biome is already installed as a dev dependency in the project root:
 npm install
 ```
 
-This installs `@biomejs/biome` version 2.4.6 or later.
+This installs `@biomejs/biome` version 2.4.7 or later.
 
 ## NPM Scripts
 

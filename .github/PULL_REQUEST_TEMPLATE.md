@@ -16,7 +16,7 @@ Closes #
 How was this tested? Describe the steps you took to verify the changes.
 
 ## Checklist
-- [ ] TypeScript compiles without errors (`npm run typecheck` or `tsc --noEmit`)
+- [ ] TypeScript compiles without errors (`pnpm exec tsc --noEmit -p packages/<pkg>/tsconfig.json`)
 - [ ] Docker images build successfully (`docker compose build`)
 - [ ] Documentation updated if needed
 - [ ] Changes follow the project's code style
