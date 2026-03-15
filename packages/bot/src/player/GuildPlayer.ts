@@ -16,13 +16,12 @@ import { broadcastQueueUpdate } from '../lib/broadcast';
 import { buildNowPlayingEmbed } from '../utils/format';
 import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
 import { PlaybackCursor } from './PlaybackCursor';
-import { SinglyLinkedList } from './SinglyLinkedList';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
 
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
-  private priorityQueue: SinglyLinkedList<QueuedSong> = new SinglyLinkedList();
+  private priorityQueue: QueuedSong[] = [];
   private currentSong: QueuedSong | null = null;
   private loopMode: LoopMode = 'off';
   private paused = false;
@@ -160,7 +159,7 @@ export class GuildPlayer {
 
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
     this.queue.clear();
-    this.priorityQueue.clear();
+    this.priorityQueue = [];
     this.killFfmpeg();
     this.audioPlayer.stop(true);
     this.consecutiveFailures = 0;
@@ -249,7 +248,7 @@ export class GuildPlayer {
       isConnectedToVoice: this.connection.state.status !== VoiceConnectionStatus.Destroyed,
       loopMode: this.loopMode,
       currentSong: this.currentSong,
-      priorityQueue: this.priorityQueue.toArray(),
+      priorityQueue: this.priorityQueue,
       queue: this.queue.toArray(),
       trackStartedAt: this.trackStartedAt,
     };
