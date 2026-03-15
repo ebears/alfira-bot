@@ -50,15 +50,6 @@ export function createPlayer(
 }
 
 /**
- * Remove the GuildPlayer for a guild.
- * Call this after GuildPlayer.stop() so the Map doesn't hold stale instances.
- * Safe to call even if the player has already removed itself via onDestroyed.
- */
-export function removePlayer(guildId: string): void {
-  players.delete(guildId);
-}
-
-/**
  * Stop all active players and destroy their voice connections.
  * Used during graceful shutdown to clean up FFmpeg processes and voice connections.
  */

@@ -1,16 +1,6 @@
+import type { User } from '@alfira-bot/shared';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-
-// ---------------------------------------------------------------------------
-// User payload shape — matches what auth.ts encodes into the JWT.
-// Declared here and re-used by requireAdmin.
-// ---------------------------------------------------------------------------
-export interface UserPayload {
-  discordId: string;
-  username: string;
-  avatar: string | null;
-  isAdmin: boolean;
-}
 
 // ---------------------------------------------------------------------------
 // Augment Express's Request type so req.user is available in all route
@@ -19,7 +9,7 @@ export interface UserPayload {
 declare global {
   namespace Express {
     interface Request {
-      user?: UserPayload;
+      user?: User;
     }
   }
 }
@@ -28,12 +18,12 @@ declare global {
  * Verifies a JWT session token and returns the decoded payload.
  * Returns null if JWT_SECRET is not set or the token is invalid.
  */
-export function verifySessionToken(token: string): UserPayload | null {
+export function verifySessionToken(token: string): User | null {
   const { JWT_SECRET } = process.env;
   if (!JWT_SECRET) return null;
 
   try {
-    return jwt.verify(token, JWT_SECRET) as UserPayload;
+    return jwt.verify(token, JWT_SECRET) as User;
   } catch {
     return null;
   }
