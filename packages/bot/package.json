@@ -12,11 +12,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@alfira-bot/api": "workspace:*",
     "@alfira-bot/shared": "workspace:*",
     "@discordjs/voice": "^0.19.1",
-    "@prisma/adapter-pg": "^7.4.2",
-    "@prisma/client": "^7.4.2",
     "@snazzah/davey": "^0.1.10",
     "discord.js": "^14.14.1",
     "dotenv": "^17.3.1",
