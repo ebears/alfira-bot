@@ -22,23 +22,6 @@ export function dateToWire<T extends { createdAt: Date }>(
 
 let _io: SocketIOServer | null = null;
 
-function parseCookies(cookieHeader: string | undefined): Record<string, string> {
-  const cookies: Record<string, string> = {};
-  if (!cookieHeader) return cookies;
-
-  for (const part of cookieHeader.split(';')) {
-    const trimmed = part.trim();
-    const separatorIndex = trimmed.indexOf('=');
-    if (separatorIndex === -1) continue;
-
-    const name = trimmed.substring(0, separatorIndex).trim();
-    const value = trimmed.substring(separatorIndex + 1).trim();
-    cookies[name] = value;
-  }
-
-  return cookies;
-}
-
 /**
  * Attach Socket.io to the HTTP server and store the instance.
  * Must be called before any broadcast helpers are used.
@@ -62,8 +45,18 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
   // ---------------------------------------------------------------------------
   _io.use((socket, next) => {
     const cookieHeader = socket.handshake.headers.cookie;
-    const cookies = parseCookies(cookieHeader);
-    const token = cookies.session;
+    let token: string | undefined;
+    if (cookieHeader) {
+      for (const part of cookieHeader.split(';')) {
+        const trimmed = part.trim();
+        const sep = trimmed.indexOf('=');
+        if (sep === -1) continue;
+        if (trimmed.substring(0, sep).trim() === 'session') {
+          token = trimmed.substring(sep + 1).trim();
+          break;
+        }
+      }
+    }
 
     if (!token) {
       next(new Error('Authentication required. Please log in.'));
