@@ -1,4 +1,4 @@
-import { CaretLeftIcon, DotsThreeVerticalIcon } from '@phosphor-icons/react';
+import { CaretLeftIcon, DotsThreeOutlineVerticalIcon } from '@phosphor-icons/react';
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -68,7 +68,7 @@ export function ContextMenuTrigger({
         ${isOpen ? '!opacity-100' : ''}
       `}
     >
-      <DotsThreeVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
+      <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
     </button>
   );
 }
