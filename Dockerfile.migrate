@@ -16,6 +16,7 @@ WORKDIR /app
 # Copy package files first
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api/package.json ./packages/api/
+COPY packages/bot/package.json ./packages/bot/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install all dependencies including devDependencies at root level
@@ -25,13 +26,13 @@ RUN pnpm install --frozen-lockfile
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY prisma.config.ts ./prisma.config.ts
 
-# Copy Prisma schema (required for generating client)
-COPY packages/api/prisma ./packages/api/prisma
+# Copy Prisma schema (now in shared package)
+COPY packages/shared/prisma ./packages/shared/prisma
 
 # Generate Prisma client (Prisma 7 outputs to src/generated/prisma)
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
 ARG DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
-RUN DATABASE_URL="$DATABASE_URL" pnpm --filter @alfira-bot/api exec prisma generate
+RUN DATABASE_URL="$DATABASE_URL" pnpm --filter @alfira-bot/shared exec prisma generate
 
 # ---------------------------------------------------------------------------
 # Runtime stage
@@ -49,22 +50,22 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Ensure node_modules/.bin is in PATH
-ENV PATH="/app/node_modules/.bin:/app/packages/api/node_modules/.bin:${PATH}"
+ENV PATH="/app/node_modules/.bin:/app/packages/shared/node_modules/.bin:${PATH}"
 ENV NODE_ENV=production
 
 # Copy node_modules with Prisma CLI (pnpm symlinks point into .pnpm store)
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/api/node_modules ./packages/api/node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 
-# Copy Prisma client (Prisma 7 outputs to src/generated/prisma)
-COPY --from=deps /app/packages/api/src/generated ./packages/api/src/generated
+# Copy Prisma client (generated in shared package)
+COPY --from=deps /app/packages/shared/src/generated ./packages/shared/src/generated
 
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY prisma.config.ts ./prisma.config.ts
 
 # Copy Prisma schema and migrations
-COPY packages/api/prisma ./packages/api/prisma
-COPY packages/api/package.json ./packages/api/package.json
+COPY packages/shared/prisma ./packages/shared/prisma
+COPY packages/shared/package.json ./packages/shared/package.json
 
 # Run migrations (prisma.config.ts defines schema path, DATABASE_URL from docker-compose)
 CMD ["sh", "-c", "prisma migrate deploy"]

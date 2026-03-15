@@ -19,8 +19,6 @@
     "@alfira-bot/bot": "workspace:*",
     "@alfira-bot/shared": "workspace:*",
     "@discordjs/voice": "^0.19.1",
-    "@prisma/adapter-pg": "^7.4.2",
-    "@prisma/client": "^7.4.2",
     "axios": "^1.13.6",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -42,7 +40,6 @@
     "@types/express-serve-static-core": "^5.1.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.4.0",
-    "prisma": "^7.4.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }

@@ -54,11 +54,11 @@ COPY prisma.config.ts ./prisma.config.ts
 # Copy all source files (needed for building bot)
 COPY packages ./packages
 
-# Generate Prisma client (required before building bot, since bot imports from api)
+# Generate Prisma client (in shared package, used by both api and bot)
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @alfira-bot/shared run db:generate
 
-# Build shared (required by bot for runtime exports) and bot package
+# Build shared (prisma singleton + runtime exports), then bot
 RUN pnpm --filter @alfira-bot/shared run build && \
     pnpm --filter @alfira-bot/bot run build
 
@@ -77,11 +77,11 @@ COPY prisma.config.ts ./prisma.config.ts
 # Copy all package source files
 COPY packages ./packages
 
-# Generate Prisma client (Prisma 7 outputs to src/generated/prisma)
+# Generate Prisma client (in shared package, used by both api and bot)
 # Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @alfira-bot/shared run db:generate
 
-# Build shared, bot, and API (shared must build first — bot imports runtime code from it)
+# Build shared, bot, and API (shared must build first — both api and bot import from it)
 RUN pnpm --filter @alfira-bot/shared run build && \
     pnpm --filter @alfira-bot/bot run build && \
     pnpm --filter @alfira-bot/api run build
@@ -127,13 +127,14 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/api/node_modules ./packages/api/node_modules
 COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/bot/node_modules ./packages/bot/node_modules
+COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/shared/node_modules ./packages/shared/node_modules
 
 # Copy built applications
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 
-# Copy Prisma client (Prisma 7 outputs to src/generated/prisma)
-COPY --from=builder --chown=nodejs:nodejs /app/packages/api/src/generated ./packages/api/src/generated
+# Copy Prisma client (generated in shared package)
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/src/generated ./packages/shared/src/generated
 
 # Copy prisma.config.ts (Prisma 7 requires it at project root)
 COPY --from=builder --chown=nodejs:nodejs /app/prisma.config.ts ./prisma.config.ts

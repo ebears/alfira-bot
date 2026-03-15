@@ -14,12 +14,26 @@
       "types": "./dist/format.d.ts",
       "source": "./src/format.ts",
       "default": "./dist/format.js"
+    },
+    "./prisma": {
+      "types": "./dist/lib/prisma.d.ts",
+      "source": "./src/lib/prisma.ts",
+      "default": "./dist/lib/prisma.js"
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2"
   },
   "devDependencies": {
+    "prisma": "^7.4.2",
     "typescript": "^5.4.5"
   }
 }
