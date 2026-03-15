@@ -8,7 +8,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import LoginPage from './pages/LoginPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
 import PlaylistsPage from './pages/PlaylistsPage';
-import QueuePage from './pages/QueuePage';
 import SongsPage from './pages/SongsPage';
 
 export default function App() {
@@ -33,7 +32,6 @@ export default function App() {
               <Route path="songs" element={<SongsPage />} />
               <Route path="playlists" element={<PlaylistsPage />} />
               <Route path="playlists/:id" element={<PlaylistDetailPage />} />
-              <Route path="queue" element={<QueuePage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

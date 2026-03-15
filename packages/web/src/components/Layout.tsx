@@ -5,6 +5,7 @@ import {
   CraneTowerIcon,
   DoorOpenIcon,
   GuitarIcon,
+  ListIcon,
   PauseIcon,
   PlayIcon,
   RepeatIcon,
@@ -13,7 +14,7 @@ import {
   SkipForwardIcon,
   SparkleIcon,
 } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
@@ -21,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useConnectionStatus } from '../hooks/useSocket';
 import MobileNav from './MobileNav';
+import QueuePanel from './QueuePanel';
 import SettingsMenu from './SettingsMenu';
 
 export default function Layout() {
@@ -227,6 +229,21 @@ function NowPlayingBar() {
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+
+  // Escape key handler + body scroll lock
+  useEffect(() => {
+    if (!queueOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setQueueOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
+  }, [queueOpen]);
 
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
 
@@ -407,8 +424,39 @@ function NowPlayingBar() {
               </div>
             )}
           </div>
+
+          {/* Queue button */}
+          <button
+            type="button"
+            onClick={() => setQueueOpen(true)}
+            title="Queue"
+            className="w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl text-muted hover:text-fg hover:bg-elevated transition-colors duration-150 shrink-0"
+          >
+            <ListIcon size={20} weight="duotone" className="md:w-4 md:h-4" />
+          </button>
         </div>
       </div>
+
+      {/* Queue slideout */}
+      {queueOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            onClick={() => setQueueOpen(false)}
+          />
+
+          {/* Desktop: right panel */}
+          <div className="hidden md:flex fixed z-60 right-0 top-0 bottom-0 w-96 bg-surface border-l border-border animate-slide-in-right flex-col">
+            <QueuePanel onClose={() => setQueueOpen(false)} />
+          </div>
+
+          {/* Mobile: bottom sheet */}
+          <div className="md:hidden fixed z-60 bottom-0 left-0 right-0 max-h-[85vh] bg-surface rounded-t-2xl border-t border-border animate-slide-up flex flex-col">
+            <QueuePanel onClose={() => setQueueOpen(false)} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

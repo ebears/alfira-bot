@@ -10,8 +10,10 @@ import {
   PlusCircleIcon,
   ShuffleIcon,
   WarningIcon,
+  XIcon,
 } from '@phosphor-icons/react';
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   getPlaylists,
   overridePlay,
@@ -25,10 +27,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { apiErrorMessage } from '../utils/api';
 
-// ---------------------------------------------------------------------------
-// QueuePage
-// ---------------------------------------------------------------------------
-export default function QueuePage() {
+export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const { state, loading, elapsed, shuffle, refetch, clear } = usePlayer();
   const { isAdminView } = useAdminView();
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
@@ -64,267 +63,260 @@ export default function QueuePage() {
     }
   };
 
-  // Loading skeleton
-  // ---------------------------------------------------------------------------
   if (loading) {
     return (
-      <div className="p-8 max-w-3xl mx-auto">
-        <div className="skeleton h-8 w-32 mb-8 rounded" />
-        <div className="skeleton aspect-video w-full rounded-xl mb-6" />
-        <div className="skeleton h-5 w-64 mb-2 rounded" />
-        <div className="skeleton h-3 w-32 rounded" />
+      <div className="flex flex-col h-full">
+        <PanelHeader onClose={onClose} />
+        <div className="flex-1 p-4 space-y-3">
+          <div className="skeleton h-5 w-48 rounded" />
+          <div className="skeleton h-12 w-full rounded" />
+          <div className="skeleton h-12 w-full rounded" />
+          <div className="skeleton h-12 w-full rounded" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-3xl mx-auto">
-      <h1 className="font-display text-4xl md:text-5xl text-fg tracking-wider mb-6 md:mb-8">
-        Queue
-      </h1>
+    <div className="flex flex-col h-full">
+      <PanelHeader onClose={onClose} />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Admin Override Button */}
-      {/* ------------------------------------------------------------------ */}
-      {isAdminView && (
-        <section className="mb-6">
-          <button
-            type="button"
-            onClick={() => setShowOverride(true)}
-            className="flex items-center gap-2 btn-danger"
-          >
-            <PlayIcon size={14} weight="duotone" />
-            <span>Override</span>
-          </button>
-          <p className="font-mono text-[10px] text-muted mt-1">
-            Immediately play a song, clearing all queues
-          </p>
-        </section>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Now Playing card */}
-      {/* ------------------------------------------------------------------ */}
-      {currentSong ? (
-        <NowPlayingCard
-          song={currentSong}
-          isPlaying={isPlaying}
-          elapsed={elapsed}
-          progress={progress}
-        />
-      ) : (
-        <IdleCard />
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Controls */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="mt-4 md:mt-6 space-y-3 md:space-y-4">
-        {/* Load Playlist / Quick Add */}
-        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              type="button"
-              onClick={() => setShowLoadPlaylist(true)}
-              className="flex items-center gap-2 btn-primary"
-            >
-              <ListIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
-              <span className="hidden sm:inline">Load Playlist</span>
-              <span className="sm:hidden">Load</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowQuickAdd(true)}
-              className="flex items-center gap-2 btn-primary"
-            >
-              <PlusCircleIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
-              <span className="hidden sm:inline">Quick Add</span>
-              <span className="sm:hidden">Add</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Admin-only controls (Shuffle and Clear Queue) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Admin Override Button */}
         {isAdminView && (
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <section>
             <button
               type="button"
-              onClick={handleShuffle}
-              disabled={shuffleBusy || queue.length === 0}
-              className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={() => setShowOverride(true)}
+              className="flex items-center gap-2 btn-danger"
             >
-              <ShuffleIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
-              <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
+              <PlayIcon size={14} weight="duotone" />
+              <span>Override</span>
             </button>
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={clearBusy || isQueueEmpty}
-              className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                isQueueEmpty ? 'btn-ghost' : 'btn-danger'
-              }`}
-            >
-              <BombIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
-              <span>Clear Queue</span>
-            </button>
-          </div>
+            <p className="font-mono text-[10px] text-muted mt-1">
+              Immediately play a song, clearing all queues
+            </p>
+          </section>
         )}
-      </section>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Up Next (Priority Queue) */}
-      {/* ------------------------------------------------------------------ */}
-      {priorityQueue.length > 0 && (
-        <section className="mt-6 md:mt-8">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="font-display text-xl md:text-2xl text-fg tracking-wider">
-              <LightningIcon size={18} weight="duotone" className="inline mr-1" />
-              Up Next
-              <span className="ml-2 font-mono text-sm text-accent normal-case tracking-normal">
-                {priorityQueue.length} {priorityQueue.length === 1 ? 'song' : 'songs'}
-              </span>
-            </h2>
-            <span className="font-mono text-[10px] text-muted uppercase tracking-widest hidden sm:block">
-              Priority Queue
-            </span>
-          </div>
-          <div className="space-y-1 border-l-2 border-accent/40 pl-3">
-            {priorityQueue.map((song, i) => (
-              <div
-                key={`priority-${song.id}-${i}`}
-                className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg hover:bg-elevated active:bg-elevated/80 transition-colors duration-100 group"
-              >
-                <span className="font-mono text-xs text-accent w-5 text-right shrink-0">
-                  {i + 1}
-                </span>
-                <img
-                  src={song.thumbnailUrl}
-                  alt={song.nickname || song.title}
-                  className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
-                  loading="lazy"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-body text-sm font-medium text-fg truncate">
-                    {song.nickname || song.title}
-                  </p>
-                  <p className="font-mono text-[10px] text-muted hidden sm:block">
-                    req. {song.requestedBy}
-                  </p>
-                </div>
-                <span className="font-mono text-xs text-muted shrink-0">
-                  {formatDuration(song.duration)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+        {/* Now Playing card */}
+        {currentSong ? (
+          <NowPlayingCard
+            song={currentSong}
+            isPlaying={isPlaying}
+            elapsed={elapsed}
+            progress={progress}
+          />
+        ) : (
+          <IdleCard />
+        )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Queue */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="mt-6 md:mt-8">
-        <div className="flex items-center justify-between mb-3 md:mb-4">
-          <h2 className="font-display text-xl md:text-2xl text-fg tracking-wider">
-            Queue
-            {queue.length > 0 && (
-              <span className="ml-2 font-mono text-sm text-muted normal-case tracking-normal">
-                {queue.length} {queue.length === 1 ? 'song' : 'songs'}
-              </span>
-            )}
-          </h2>
-        </div>
-        {queue.length === 0 ? (
-          <div className="py-8 md:py-12 text-center border border-dashed border-border rounded-xl">
-            <p className="font-mono text-xs text-faint">queue is empty</p>
-            {priorityQueue.length === 0 && (
+        {/* Controls */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 ml-auto">
               <button
                 type="button"
                 onClick={() => setShowLoadPlaylist(true)}
-                className="mt-3 font-mono text-xs text-accent hover:underline"
+                className="flex items-center gap-2 btn-primary"
               >
-                load a playlist to get started
+                <ListIcon size={16} weight="duotone" />
+                <span>Load Playlist</span>
               </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {queue.map((song, i) => (
-              <div
-                key={`${song.id}-${i}`}
-                className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-elevated transition-colors duration-100 group"
+              <button
+                type="button"
+                onClick={() => setShowQuickAdd(true)}
+                className="flex items-center gap-2 btn-primary"
               >
-                <span className="font-mono text-xs text-faint w-5 text-right shrink-0">
-                  {i + 1}
-                </span>
-                <img
-                  src={song.thumbnailUrl}
-                  alt={song.nickname || song.title}
-                  className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
-                  loading="lazy"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-body text-sm font-medium text-fg truncate">
-                    {song.nickname || song.title}
-                  </p>
-                  <p className="font-mono text-[10px] text-muted hidden sm:block">
-                    req. {song.requestedBy}
-                  </p>
-                </div>
-                <span className="font-mono text-xs text-muted shrink-0">
-                  {formatDuration(song.duration)}
-                </span>
-              </div>
-            ))}
+                <PlusCircleIcon size={16} weight="duotone" />
+                <span>Quick Add</span>
+              </button>
+            </div>
           </div>
+
+          {isAdminView && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleShuffle}
+                disabled={shuffleBusy || queue.length === 0}
+                className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ShuffleIcon size={16} weight="duotone" />
+                <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                disabled={clearBusy || isQueueEmpty}
+                className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isQueueEmpty ? 'btn-ghost' : 'btn-danger'
+                }`}
+              >
+                <BombIcon size={16} weight="duotone" />
+                <span>Clear Queue</span>
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Up Next (Priority Queue) */}
+        {priorityQueue.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-display text-lg text-fg tracking-wider">
+                <LightningIcon size={16} weight="duotone" className="inline mr-1" />
+                Up Next
+                <span className="ml-2 font-mono text-xs text-accent normal-case tracking-normal">
+                  {priorityQueue.length}
+                </span>
+              </h2>
+            </div>
+            <div className="space-y-1 border-l-2 border-accent/40 pl-3">
+              {priorityQueue.map((song, i) => (
+                <div
+                  key={`priority-${song.id}-${i}`}
+                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-elevated transition-colors duration-100"
+                >
+                  <span className="font-mono text-[10px] text-accent w-4 text-right shrink-0">
+                    {i + 1}
+                  </span>
+                  <img
+                    src={song.thumbnailUrl}
+                    alt={song.nickname || song.title}
+                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-xs font-medium text-fg truncate">
+                      {song.nickname || song.title}
+                    </p>
+                    <p className="font-mono text-[9px] text-muted hidden sm:block">
+                      req. {song.requestedBy}
+                    </p>
+                  </div>
+                  <span className="font-mono text-[10px] text-muted shrink-0">
+                    {formatDuration(song.duration)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
-      </section>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Load Playlist modal */}
-      {/* ------------------------------------------------------------------ */}
-      {showLoadPlaylist && (
-        <LoadPlaylistModal
-          onClose={() => setShowLoadPlaylist(false)}
-          onLoaded={async () => {
-            setShowLoadPlaylist(false);
-            await delayThenRefetch();
-          }}
-        />
-      )}
+        {/* Queue */}
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-display text-lg text-fg tracking-wider">
+              Queue
+              {queue.length > 0 && (
+                <span className="ml-2 font-mono text-xs text-muted normal-case tracking-normal">
+                  {queue.length}
+                </span>
+              )}
+            </h2>
+          </div>
+          {queue.length === 0 ? (
+            <div className="py-6 text-center border border-dashed border-border rounded-xl">
+              <p className="font-mono text-[11px] text-faint">queue is empty</p>
+              {priorityQueue.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowLoadPlaylist(true)}
+                  className="mt-2 font-mono text-[11px] text-accent hover:underline"
+                >
+                  load a playlist to get started
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {queue.map((song, i) => (
+                <div
+                  key={`${song.id}-${i}`}
+                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-elevated transition-colors duration-100"
+                >
+                  <span className="font-mono text-[10px] text-faint w-4 text-right shrink-0">
+                    {i + 1}
+                  </span>
+                  <img
+                    src={song.thumbnailUrl}
+                    alt={song.nickname || song.title}
+                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-xs font-medium text-fg truncate">
+                      {song.nickname || song.title}
+                    </p>
+                    <p className="font-mono text-[9px] text-muted hidden sm:block">
+                      req. {song.requestedBy}
+                    </p>
+                  </div>
+                  <span className="font-mono text-[10px] text-muted shrink-0">
+                    {formatDuration(song.duration)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Quick Add modal */}
-      {/* ------------------------------------------------------------------ */}
-      {showQuickAdd && (
-        <QuickAddModal
-          onClose={() => setShowQuickAdd(false)}
-          onAdded={async () => {
-            setShowQuickAdd(false);
-            await delayThenRefetch();
-          }}
-        />
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Override modal */}
-      {/* ------------------------------------------------------------------ */}
-      {showOverride && (
-        <OverrideModal
-          onClose={() => setShowOverride(false)}
-          onOverride={async () => {
-            setShowOverride(false);
-            await delayThenRefetch();
-          }}
-        />
-      )}
+      {/* Modals rendered via portal to escape slideout stacking context */}
+      {showLoadPlaylist &&
+        createPortal(
+          <LoadPlaylistModal
+            onClose={() => setShowLoadPlaylist(false)}
+            onLoaded={async () => {
+              setShowLoadPlaylist(false);
+              await delayThenRefetch();
+            }}
+          />,
+          document.body
+        )}
+      {showQuickAdd &&
+        createPortal(
+          <QuickAddModal
+            onClose={() => setShowQuickAdd(false)}
+            onAdded={async () => {
+              setShowQuickAdd(false);
+              await delayThenRefetch();
+            }}
+          />,
+          document.body
+        )}
+      {showOverride &&
+        createPortal(
+          <OverrideModal
+            onClose={() => setShowOverride(false)}
+            onOverride={async () => {
+              setShowOverride(false);
+              await delayThenRefetch();
+            }}
+          />,
+          document.body
+        )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Now Playing card - Redesigned
-// ---------------------------------------------------------------------------
+function PanelHeader({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+      <h1 className="font-display text-xl text-fg tracking-wider">Queue</h1>
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
+        title="Close queue"
+      >
+        <XIcon size={18} weight="bold" />
+      </button>
+    </div>
+  );
+}
+
 function NowPlayingCard({
   song,
   isPlaying,
@@ -338,48 +330,41 @@ function NowPlayingCard({
 }) {
   return (
     <div className="card overflow-hidden">
-      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 p-4 md:p-5">
-        {/* Large square album art */}
-        <div className="relative shrink-0 mx-auto sm:mx-0">
+      <div className="flex gap-3 p-3">
+        <div className="relative shrink-0">
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border border-border shadow-lg object-cover"
+            className="w-20 h-20 rounded-xl border border-border shadow-lg object-cover"
           />
-          {/* Playing indicator */}
           {isPlaying && (
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-lg">
-              <PlayCircleIcon size={14} weight="duotone" className="text-white" />
+            <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg">
+              <PlayCircleIcon size={10} weight="duotone" className="text-white" />
             </div>
           )}
         </div>
-
-        {/* Info */}
-        <div className="flex-1 flex flex-col justify-center">
-          {/* Song title as YouTube link */}
+        <div className="flex-1 flex flex-col justify-center min-w-0">
           <a
             href={song.youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-body font-bold md:text-lg text-fg hover:text-accent active:text-accent-muted transition-colors duration-150 line-clamp-2 text-center sm:text-left"
+            className="font-body font-bold text-sm text-fg hover:text-accent transition-colors duration-150 line-clamp-2"
           >
             {song.nickname || song.title}
           </a>
-
-          {/* Requester */}
-          <p className="font-mono text-xs text-muted mt-1">requested by {song.requestedBy}</p>
-
-          {/* Progress bar */}
-          <div className="mt-3 md:mt-4">
-            <div className="relative h-2 w-full bg-elevated rounded-full overflow-hidden">
+          <p className="font-mono text-[10px] text-muted mt-0.5">requested by {song.requestedBy}</p>
+          <div className="mt-2">
+            <div className="relative h-1.5 w-full bg-elevated rounded-full overflow-hidden">
               <div
                 className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="font-mono text-xs text-muted">{formatDuration(elapsed)}</span>
-              <span className="font-mono text-xs text-muted">{formatDuration(song.duration)}</span>
+            <div className="flex justify-between mt-1">
+              <span className="font-mono text-[9px] text-muted">{formatDuration(elapsed)}</span>
+              <span className="font-mono text-[9px] text-muted">
+                {formatDuration(song.duration)}
+              </span>
             </div>
           </div>
         </div>
@@ -388,28 +373,22 @@ function NowPlayingCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Idle state card
-// ---------------------------------------------------------------------------
 function IdleCard() {
   return (
-    <div className="card flex items-center justify-center py-16 border-dashed">
+    <div className="card flex items-center justify-center py-8 border-dashed">
       <div className="text-center">
-        <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-4">
-          <GuitarIcon size={24} weight="duotone" className="text-faint" />
+        <div className="w-12 h-12 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-3">
+          <GuitarIcon size={20} weight="duotone" className="text-faint" />
         </div>
-        <p className="font-display text-3xl text-faint tracking-wider mb-1">Nothing Playing</p>
-        <p className="font-mono text-xs text-faint">
-          use /join in Discord, then load a playlist below
+        <p className="font-display text-xl text-faint tracking-wider mb-1">Nothing Playing</p>
+        <p className="font-mono text-[10px] text-faint">
+          use /join in Discord, then load a playlist
         </p>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Load Playlist modal
-// ---------------------------------------------------------------------------
 function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoaded: () => void }) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
@@ -419,7 +398,6 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch playlists on mount
   const loadPlaylists = useCallback(async () => {
     try {
       const data = await getPlaylists();
@@ -469,7 +447,6 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
           </p>
         ) : (
           <div className="space-y-4 mb-6">
-            {/* Playlist selector */}
             <div>
               <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">
                 Playlist
@@ -487,7 +464,6 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               </select>
             </div>
 
-            {/* Order */}
             <div>
               <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
               <div className="flex gap-2">
@@ -508,7 +484,6 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               </div>
             </div>
 
-            {/* Loop */}
             <div>
               <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Loop</p>
               <div className="flex gap-2">
@@ -558,9 +533,6 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
   );
 }
 
-// ---------------------------------------------------------------------------
-// Quick Add Modal
-// ---------------------------------------------------------------------------
 function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -664,9 +636,6 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
   );
 }
 
-// ---------------------------------------------------------------------------
-// Override Modal (Admin only)
-// ---------------------------------------------------------------------------
 function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverride: () => void }) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
