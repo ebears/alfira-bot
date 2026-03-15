@@ -6,7 +6,6 @@ import rateLimit from 'express-rate-limit';
 import { GUILD_ID } from '../lib/config';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
-import { dateToWire } from '../lib/socket';
 import {
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
@@ -60,7 +59,8 @@ function dbSongToQueuedSong(
   requestedBy: string
 ): QueuedSong {
   return {
-    ...dateToWire(song),
+    ...song,
+    createdAt: song.createdAt.toISOString(),
     requestedBy,
   };
 }
