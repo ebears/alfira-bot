@@ -8,16 +8,8 @@ import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;
 
-/**
- * Validates a YouTube URL, checking basic requirements and a custom validator function.
- * Sends error response and returns null if invalid, otherwise returns the trimmed URL.
- */
-function validateYouTubeUrlBase(
-  youtubeUrl: unknown,
-  res: Response,
-  validate: (url: string) => boolean,
-  invalidUrlMessage: string
-): string | null {
+/** Validates a YouTube URL for single video endpoints. */
+export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
   if (!youtubeUrl || typeof youtubeUrl !== 'string') {
     res.status(400).json({ error: 'youtubeUrl is required.' });
     return null;
@@ -30,32 +22,37 @@ function validateYouTubeUrlBase(
     return null;
   }
 
-  if (!validate(url)) {
-    res.status(400).json({ error: invalidUrlMessage });
+  if (!isValidYouTubeUrl(url)) {
+    res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
     return null;
   }
 
   return url;
 }
 
-/** Validates a YouTube URL for single video endpoints. */
-export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
-  return validateYouTubeUrlBase(
-    youtubeUrl,
-    res,
-    isValidYouTubeUrl,
-    'That does not look like a valid YouTube URL.'
-  );
-}
-
 /** Validates a YouTube playlist URL. */
 export function validateYouTubePlaylistUrl(youtubeUrl: unknown, res: Response): string | null {
-  return validateYouTubeUrlBase(
-    youtubeUrl,
-    res,
-    isYouTubePlaylistUrl,
-    'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.'
-  );
+  if (!youtubeUrl || typeof youtubeUrl !== 'string') {
+    res.status(400).json({ error: 'youtubeUrl is required.' });
+    return null;
+  }
+
+  const url = youtubeUrl.trim();
+
+  if (url.length > MAX_URL_LENGTH) {
+    res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
+    return null;
+  }
+
+  if (!isYouTubePlaylistUrl(url)) {
+    res.status(400).json({
+      error:
+        'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
+    });
+    return null;
+  }
+
+  return url;
 }
 
 /**

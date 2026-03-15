@@ -21,11 +21,6 @@ export class PlaybackCursor<T> {
   // Getters
   // ---------------------------------------------------------------------------
 
-  /** Total number of items in the buffer */
-  get size(): number {
-    return this.buffer.length;
-  }
-
   /** Whether the buffer is empty */
   get isEmpty(): boolean {
     return this.buffer.length === 0;
