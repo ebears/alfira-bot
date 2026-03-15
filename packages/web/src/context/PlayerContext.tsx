@@ -29,7 +29,6 @@ const EMPTY_STATE: QueueState = {
 interface PlayerContextValue {
   state: QueueState;
   loading: boolean;
-  error: string | null;
   // Elapsed seconds for the current song (client-side simulation).
   elapsed: number;
   // Actions — each calls the API; state updates arrive via Socket.io.
@@ -49,7 +48,6 @@ const PlayerContext = createContext<PlayerContextValue | null>(null);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   // Track the song ID we last started timing so we can reset when it changes.
   const timedSongId = useRef<string | null>(null);
@@ -64,9 +62,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await getQueueState();
       setState(data);
-      setError(null);
     } catch {
-      setError('Failed to load player state. Retrying...');
+      // Silently retry on next socket connect or manual refetch
     } finally {
       setLoading(false);
     }
@@ -187,7 +184,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       value={{
         state,
         loading,
-        error,
         elapsed,
         skip,
         leave,

@@ -5,9 +5,6 @@ import { verifySessionToken } from '../middleware/requireAuth';
 import { WEB_UI_ORIGIN } from './config';
 import logger from './logger';
 
-type PrismaPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
-type PrismaSong = Omit<Song, 'createdAt'> & { createdAt: Date };
-
 export function dateToWire<T extends { createdAt: Date }>(
   obj: T
 ): Omit<T, 'createdAt'> & { createdAt: string } {
@@ -102,7 +99,7 @@ export function emitPlayerUpdate(state: QueueState): void {
  * Emit a newly added song to all connected clients.
  * Allows the Songs page to append the card in real time.
  */
-export function emitSongAdded(song: PrismaSong): void {
+export function emitSongAdded(song: Omit<Song, 'createdAt'> & { createdAt: Date }): void {
   _io?.emit('songs:added', dateToWire(song));
 }
 
@@ -118,7 +115,9 @@ export function emitSongDeleted(id: string): void {
  * Emit an updated playlist object to all connected clients.
  * Covers: create, rename, song added, song removed.
  */
-export function emitPlaylistUpdated(playlist: PrismaPlaylist): void {
+export function emitPlaylistUpdated(
+  playlist: Omit<Playlist, 'createdAt'> & { createdAt: Date }
+): void {
   _io?.emit('playlists:updated', dateToWire(playlist));
 }
 

@@ -1,5 +1,5 @@
 import { getClient } from '@alfira-bot/bot/src/lib/client';
-import { createPlayer, getPlayer, removePlayer } from '@alfira-bot/bot/src/player/manager';
+import { createPlayer, getPlayer } from '@alfira-bot/bot/src/player/manager';
 import { fisherYatesShuffle, type LoopMode, type QueuedSong, type Song } from '@alfira-bot/shared';
 import {
   entersState,
@@ -267,7 +267,6 @@ router.post('/leave', requireAuth, playerLimiter, (_req, res) => {
 
   if (player) player.stop();
   if (connection) connection.destroy();
-  removePlayer(GUILD_ID);
 
   res.json({ message: 'Left the voice channel.' });
 });

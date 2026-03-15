@@ -15,10 +15,7 @@ export const skipCommand: Command = {
     const currentTitle = player.getCurrentSong()?.title;
     player.skip();
 
-    if (player.getCurrentSong()) {
-      await interaction.reply(`⏭️ Skipped **${currentTitle}**.`);
-    } else {
-      await interaction.reply(`⏭️ Skipped **${currentTitle}**. The queue is now empty.`);
-    }
+    const suffix = player.getCurrentSong() ? '' : ' The queue is now empty.';
+    await interaction.reply(`⏭️ Skipped **${currentTitle}**.${suffix}`);
   },
 };
