@@ -3,7 +3,7 @@ import {
   getPlaylistMetadataWithVideos,
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
-} from '@alfira-bot/bot/src/utils/ytdlp';
+} from '@alfira-bot/bot';
 import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;

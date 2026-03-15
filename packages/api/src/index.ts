@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import http from 'node:http';
-import { startBot } from '@alfira-bot/bot';
-import { setBroadcastQueueUpdate } from '@alfira-bot/bot/src/lib/broadcast';
-import { destroyAllPlayers } from '@alfira-bot/bot/src/player/manager';
+import { destroyAllPlayers, setBroadcastQueueUpdate, startBot } from '@alfira-bot/bot';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';

@@ -4,7 +4,8 @@ import type { NextFunction, Request, Response } from 'express';
 // errorHandler
 //
 // A catch-all Express error handler. Register this last, after all routes.
-// Any route that calls next(error) or throws inside an async wrapper lands here.
+// Any route that throws (including async route handlers) lands here.
+// Express 5 forwards async errors to the error handler automatically.
 //
 // Produces consistent JSON error responses so the web UI always has a
 // predictable shape to parse.
@@ -23,22 +24,4 @@ export function errorHandler(
   }
 
   res.status(status).json({ error: message });
-}
-
-// ---------------------------------------------------------------------------
-// asyncHandler
-//
-// Wraps an async route handler so that any thrown error is forwarded to
-// next() automatically. Ensures consistent error handling behavior across
-// async route handlers.
-//
-// Usage:
-//   router.get('/path', asyncHandler(async (req, res) => { ... }));
-// ---------------------------------------------------------------------------
-export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
-) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    fn(req, res, next).catch(next);
-  };
 }
