@@ -1,7 +1,9 @@
+import { getClient } from '@alfira-bot/bot';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { GUILD_ID } from '../lib/config';
 import prisma from '../lib/prisma';
-import { emitSongAdded, emitSongDeleted } from '../lib/socket';
+import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
@@ -12,6 +14,19 @@ import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
+
+async function getUserDisplayName(discordId: string): Promise<string> {
+  const client = getClient();
+  if (!client) return discordId;
+
+  try {
+    const guild = await client.guilds.fetch(GUILD_ID);
+    const member = await guild.members.fetch(discordId);
+    return member.displayName || member.user.username || discordId;
+  } catch {
+    return discordId;
+  }
+}
 
 // Rate limit playlist import to prevent abuse.
 const importLimiter = rateLimit({
@@ -46,7 +61,22 @@ router.get('/', requireAuth, async (_req, res) => {
   const songs = await prisma.song.findMany({
     orderBy: { createdAt: 'desc' },
   });
-  res.json(songs);
+
+  // Resolve Discord display names for unique addedBy IDs
+  const uniqueIds = [...new Set(songs.map((s) => s.addedBy))];
+  const nameMap = new Map<string, string>();
+  await Promise.all(
+    uniqueIds.map(async (id) => {
+      nameMap.set(id, await getUserDisplayName(id));
+    })
+  );
+
+  const songsWithNames = songs.map((s) => ({
+    ...s,
+    addedByDisplayName: nameMap.get(s.addedBy) ?? s.addedBy,
+  }));
+
+  res.json(songsWithNames);
 });
 
 // ---------------------------------------------------------------------------
@@ -211,6 +241,37 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   emitSongDeleted(id);
 
   res.status(204).send();
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /api/songs/:id
+//
+// Updates a song's nickname. Admin only.
+// Clears the nickname by passing null or empty string.
+// ---------------------------------------------------------------------------
+router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = req.params.id as string;
+  const { nickname } = req.body as { nickname?: string | null };
+
+  const trimmed = nickname?.trim() ?? null;
+  if (trimmed && trimmed.length > 50) {
+    res.status(400).json({ error: 'Nickname must be 50 characters or fewer.' });
+    return;
+  }
+
+  const existing = await prisma.song.findUnique({ where: { id } });
+  if (!existing) {
+    res.status(404).json({ error: 'Song not found.' });
+    return;
+  }
+
+  const song = await prisma.song.update({
+    where: { id },
+    data: { nickname: trimmed || null },
+  });
+
+  emitSongUpdated(song);
+  res.json(song);
 });
 
 export default router;

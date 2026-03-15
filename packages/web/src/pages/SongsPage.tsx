@@ -4,8 +4,12 @@ import {
   BombIcon,
   CassetteTapeIcon,
   CircleNotchIcon,
+  ListIcon,
   MagnifyingGlassIcon,
+  PencilSimpleIcon,
   PlayIcon,
+  SquaresFourIcon,
+  UserIcon,
   VinylRecordIcon,
 } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,6 +21,7 @@ import {
   getSongs,
   importPlaylist,
   startPlayback,
+  updateSongNickname,
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import ConfirmModal from '../components/ConfirmModal';
@@ -42,6 +47,16 @@ export default function SongsPage() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
   const handleAddToQueue = useAddToQueue();
+
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('alfira-library-view');
+    return saved === 'list' ? 'list' : 'grid';
+  });
+
+  const toggleViewMode = useCallback((mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem('alfira-library-view', mode);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,12 +85,22 @@ export default function SongsPage() {
       setSongs((prev) => prev.filter((s) => s.id !== id));
     };
 
+    const handleSongUpdated = (updatedSong: Song) => {
+      setSongs((prev) =>
+        prev.map((s) =>
+          s.id === updatedSong.id ? { ...updatedSong, addedByDisplayName: s.addedByDisplayName } : s
+        )
+      );
+    };
+
     socket.on('songs:added', handleSongAdded);
     socket.on('songs:deleted', handleSongDeleted);
+    socket.on('songs:updated', handleSongUpdated);
 
     return () => {
       socket.off('songs:added', handleSongAdded);
       socket.off('songs:deleted', handleSongDeleted);
+      socket.off('songs:updated', handleSongUpdated);
     };
   }, [socket]);
 
@@ -85,7 +110,10 @@ export default function SongsPage() {
     // Socket event will update the songs list
   };
 
-  const filtered = songs.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
+  const q = search.toLowerCase();
+  const filtered = songs.filter(
+    (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
+  );
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
@@ -129,28 +157,57 @@ export default function SongsPage() {
         )}
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4 md:mb-6">
-        <MagnifyingGlassIcon
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-faint w-4 h-4 md:w-3.5 md:h-3.5"
-          size={16}
-          weight="duotone"
-        />
-        <input
-          className="input pl-10"
-          placeholder="Search by title..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Search and view toggle */}
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-faint w-4 h-4 md:w-3.5 md:h-3.5"
+            size={16}
+            weight="duotone"
+          />
+          <input
+            className="input pl-10"
+            placeholder="Search by title or nickname..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        {/* View toggle */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => toggleViewMode('grid')}
+            className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors duration-150 ${
+              viewMode === 'grid'
+                ? 'border-accent text-accent bg-accent/10'
+                : 'border-border text-muted hover:text-fg hover:border-border/80'
+            }`}
+            title="Grid view"
+          >
+            <SquaresFourIcon size={18} weight="duotone" />
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleViewMode('list')}
+            className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors duration-150 ${
+              viewMode === 'list'
+                ? 'border-accent text-accent bg-accent/10'
+                : 'border-border text-muted hover:text-fg hover:border-border/80'
+            }`}
+            title="List view"
+          >
+            <ListIcon size={18} weight="duotone" />
+          </button>
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Song list */}
       {loading ? (
         <SkeletonGrid />
       ) : filtered.length === 0 ? (
         <EmptyState search={search} isAdmin={isAdminView} onAdd={() => setShowAddModal(true)} />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 md:gap-4">
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3 md:gap-4">
           {filtered.map((song, i) => (
             <SongCard
               key={song.id}
@@ -158,6 +215,20 @@ export default function SongsPage() {
               isAdmin={isAdminView}
               playlists={playlists}
               style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+              onDelete={() => setDeleteId(song.id)}
+              onPlay={() => handlePlayFromSong(song.id)}
+              isPlaying={playingId === song.id}
+              onAddToQueue={() => handleAddToQueue(song.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {filtered.map((song) => (
+            <LibrarySongRow
+              key={song.id}
+              song={song}
+              isAdmin={isAdminView}
               onDelete={() => setDeleteId(song.id)}
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
@@ -238,7 +309,35 @@ function SongCard({
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const [addingToQueue, setAddingToQueue] = useState(false);
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [savingNickname, setSavingNickname] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingNickname) editInputRef.current?.focus();
+  }, [editingNickname]);
+
+  const startEdit = () => {
+    setEditValue(song.nickname || '');
+    setEditingNickname(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingNickname(false);
+    setEditValue('');
+  };
+
+  const saveNickname = async () => {
+    setSavingNickname(true);
+    try {
+      await updateSongNickname(song.id, editValue.trim() || null);
+      setEditingNickname(false);
+    } finally {
+      setSavingNickname(false);
+    }
+  };
 
   // Close playlist menu when clicking outside
   useEffect(() => {
@@ -323,9 +422,52 @@ function SongCard({
 
       {/* Info */}
       <div className="p-3 flex-1 flex flex-col gap-2">
-        <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
-          {song.nickname || song.title}
-        </p>
+        {editingNickname ? (
+          <div className="flex items-center gap-1.5">
+            <input
+              className="input text-sm py-1 px-2 flex-1 min-w-0"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveNickname();
+                if (e.key === 'Escape') cancelEdit();
+              }}
+              disabled={savingNickname}
+              ref={editInputRef}
+              placeholder="Nickname (empty to clear)"
+            />
+            <button
+              type="button"
+              onClick={saveNickname}
+              disabled={savingNickname}
+              className="text-xs text-accent hover:text-accent/80 shrink-0"
+            >
+              {savingNickname ? '...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="text-xs text-muted hover:text-fg shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
+              {song.nickname || song.title}
+            </p>
+            {song.nickname && (
+              <p className="text-[11px] text-faint truncate opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                {song.title}
+              </p>
+            )}
+          </>
+        )}
+        <span className="flex items-center gap-1 text-[10px] text-faint opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <UserIcon size={12} weight="duotone" />
+          {song.addedByDisplayName || song.addedBy}
+        </span>
         <div className="flex gap-1.5 mt-auto pt-1">
           {/* Add to Queue - available to all members */}
           <button
@@ -376,6 +518,15 @@ function SongCard({
                   </div>
                 )}
               </div>
+              {/* Edit nickname */}
+              <button
+                type="button"
+                onClick={startEdit}
+                className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
+                title="Edit nickname"
+              >
+                <PencilSimpleIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
+              </button>
               {/* Delete */}
               <button
                 type="button"
@@ -389,6 +540,168 @@ function SongCard({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Song row (list view)
+// ---------------------------------------------------------------------------
+function LibrarySongRow({
+  song,
+  isAdmin,
+  onDelete,
+  onPlay,
+  isPlaying,
+  onAddToQueue,
+}: {
+  song: Song;
+  isAdmin: boolean;
+  onDelete: () => void;
+  onPlay: () => void;
+  isPlaying: boolean;
+  onAddToQueue: () => void;
+}) {
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [savingNickname, setSavingNickname] = useState(false);
+  const [addingToQueue, setAddingToQueue] = useState(false);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingNickname) editInputRef.current?.focus();
+  }, [editingNickname]);
+
+  const startEdit = () => {
+    setEditValue(song.nickname || '');
+    setEditingNickname(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingNickname(false);
+    setEditValue('');
+  };
+
+  const saveNickname = async () => {
+    setSavingNickname(true);
+    try {
+      await updateSongNickname(song.id, editValue.trim() || null);
+      setEditingNickname(false);
+    } finally {
+      setSavingNickname(false);
+    }
+  };
+
+  const handleAddToQueue = async () => {
+    setAddingToQueue(true);
+    try {
+      await onAddToQueue();
+    } finally {
+      setAddingToQueue(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
+      <img
+        src={song.thumbnailUrl}
+        alt={song.nickname || song.title}
+        className="w-20 h-12 md:w-16 md:h-10 object-cover rounded border border-border shrink-0"
+        loading="lazy"
+      />
+      <div className="flex-1 min-w-0">
+        {editingNickname ? (
+          <div className="flex items-center gap-1.5">
+            <input
+              className="input text-sm py-1 px-2 flex-1 min-w-0"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveNickname();
+                if (e.key === 'Escape') cancelEdit();
+              }}
+              disabled={savingNickname}
+              ref={editInputRef}
+              placeholder="Nickname (empty to clear)"
+            />
+            <button
+              type="button"
+              onClick={saveNickname}
+              disabled={savingNickname}
+              className="text-xs text-accent hover:text-accent/80 shrink-0"
+            >
+              {savingNickname ? '...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="text-xs text-muted hover:text-fg shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <p className="font-body text-sm font-medium text-fg truncate">
+              {song.nickname || song.title}
+            </p>
+            {song.nickname && (
+              <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
+            )}
+          </>
+        )}
+      </div>
+      <span className="flex items-center gap-1 text-[10px] text-faint shrink-0">
+        <UserIcon size={12} weight="duotone" />
+        {song.addedByDisplayName || song.addedBy}
+      </span>
+      <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
+      <button
+        type="button"
+        onClick={onPlay}
+        disabled={isPlaying}
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl disabled:opacity-50"
+        title="Play from this song"
+      >
+        {isPlaying ? (
+          <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+        ) : (
+          <PlayIcon size={18} weight="duotone" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={handleAddToQueue}
+        disabled={addingToQueue}
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl disabled:opacity-50"
+        title="Add to Up Next"
+      >
+        {addingToQueue ? (
+          <span className="w-4 h-4 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
+        ) : (
+          <VinylRecordIcon size={18} weight="duotone" />
+        )}
+      </button>
+      {isAdmin && (
+        <>
+          <button
+            type="button"
+            onClick={startEdit}
+            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
+            title="Edit nickname"
+          >
+            <PencilSimpleIcon size={18} weight="duotone" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-faint hover:text-danger active:bg-danger/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
+            title="Delete song"
+          >
+            <BombIcon size={18} weight="duotone" />
+          </button>
+        </>
+      )}
     </div>
   );
 }

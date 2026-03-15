@@ -23,6 +23,8 @@ export const addSong = (youtubeUrl: string, nickname?: string) =>
     .post<Song>('/api/songs', { youtubeUrl, ...(nickname && { nickname }) })
     .then((r) => r.data);
 export const deleteSong = (id: string) => client.delete(`/api/songs/${id}`);
+export const updateSongNickname = (id: string, nickname: string | null) =>
+  client.patch<Song>(`/api/songs/${id}`, { nickname }).then((r) => r.data);
 
 export interface ImportPlaylistResult {
   message: string;

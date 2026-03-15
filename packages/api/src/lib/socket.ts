@@ -6,7 +6,7 @@ import { WEB_UI_ORIGIN } from './config';
 import logger from './logger';
 
 // Socket.io server singleton. Call initSocket(httpServer) once at startup.
-// Events: player:update, songs:added, songs:deleted, playlists:updated
+// Events: player:update, songs:added, songs:updated, songs:deleted, playlists:updated
 
 let _io: SocketIOServer | null = null;
 
@@ -101,6 +101,14 @@ export function emitSongAdded(song: Omit<Song, 'createdAt'> & { createdAt: Date 
  */
 export function emitSongDeleted(id: string): void {
   _io?.emit('songs:deleted', id);
+}
+
+/**
+ * Emit an updated song to all connected clients.
+ * Allows the Library page to reflect nickname changes in real time.
+ */
+export function emitSongUpdated(song: Omit<Song, 'createdAt'> & { createdAt: Date }): void {
+  _io?.emit('songs:updated', { ...song, createdAt: song.createdAt.toISOString() });
 }
 
 /**
