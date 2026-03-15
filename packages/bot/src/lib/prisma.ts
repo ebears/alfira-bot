@@ -15,10 +15,10 @@ import { PrismaClient } from '../../../api/src/generated/prisma/client';
 // Prisma 7 requires a driver adapter for database connections.
 //
 // NOTE: We import directly from the API's generated Prisma client using a
-// relative path. This avoids the circular build dependency that would occur
-// if we imported from @alfira-bot/api/prisma (which requires the API
-// to be built first). The relative path works in both development and Docker
-// production because the directory structure is preserved.
+// relative path. This is necessary because TypeScript's CommonJS
+// moduleResolution doesn't support package.json "exports" subpaths
+// (@alfira-bot/api/prisma). The relative path works because both packages
+// share the same repository structure and are always deployed together.
 // ---------------------------------------------------------------------------
 
 const DATABASE_URL = process.env.DATABASE_URL;

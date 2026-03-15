@@ -1,16 +1,9 @@
-import { getClient } from '@alfira-bot/bot/src/lib/client';
-import { createPlayer, getPlayer } from '@alfira-bot/bot/src/player/manager';
+import { getPlayer } from '@alfira-bot/bot';
 import { fisherYatesShuffle, type LoopMode, type QueuedSong, type Song } from '@alfira-bot/shared';
-import {
-  entersState,
-  getVoiceConnection,
-  joinVoiceChannel,
-  VoiceConnectionStatus,
-} from '@discordjs/voice';
-import type { TextChannel } from 'discord.js';
-import type { Request, Response } from 'express';
+import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { GUILD_ID } from '../lib/config';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { dateToWire } from '../lib/socket';
@@ -20,7 +13,7 @@ import {
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
 } from '../lib/validation';
-import { asyncHandler } from '../middleware/errorHandler';
+import { resolveOrAutoJoinPlayer } from '../lib/voice';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -72,70 +65,6 @@ function dbSongToQueuedSong(
   };
 }
 
-const GUILD_ID = process.env.GUILD_ID as string;
-if (!GUILD_ID) {
-  throw new Error('GUILD_ID environment variable is not set');
-}
-
-/** Returns existing player or auto-joins the user's voice channel. */
-async function resolveOrAutoJoinPlayer(
-  req: Request,
-  res: Response
-): Promise<ReturnType<typeof getPlayer> | null> {
-  const existingPlayer = getPlayer(GUILD_ID);
-  if (existingPlayer) {
-    return existingPlayer;
-  }
-
-  const discordClient = getClient();
-  if (!discordClient) {
-    res.status(503).json({ error: 'Discord bot is not ready yet.' });
-    return null;
-  }
-
-  try {
-    const guild = await discordClient.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(req.user?.discordId ?? '');
-    const voiceChannel = member.voice.channel;
-
-    if (!voiceChannel) {
-      res.status(409).json({
-        error: 'You are not in a voice channel. Join a voice channel in Discord first.',
-      });
-      return null;
-    }
-
-    const connection = joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: GUILD_ID,
-      adapterCreator: guild.voiceAdapterCreator,
-    });
-
-    await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
-
-    const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
-    const textChannel = textChannelId
-      ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
-      : (guild.systemChannel as TextChannel | null);
-
-    if (!textChannel) {
-      res.status(503).json({
-        error:
-          'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
-      });
-      return null;
-    }
-
-    return createPlayer(GUILD_ID, connection, textChannel);
-  } catch (error) {
-    console.error('Failed to auto-join voice channel:', error);
-    res.status(503).json({
-      error: 'Could not connect to your voice channel. Try using /join in Discord first.',
-    });
-    return null;
-  }
-}
-
 // GET /api/player/queue — returns current queue state. Member accessible.
 router.get('/queue', requireAuth, (_req, res) => {
   const player = getPlayer(GUILD_ID);
@@ -159,101 +88,91 @@ router.get('/queue', requireAuth, (_req, res) => {
 });
 
 // POST /api/player/play — load songs and start playback. Member accessible.
-router.post(
-  '/play',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const { playlistId, mode, loop, startFromSongId } = req.body as {
-      playlistId?: string;
-      mode?: 'sequential' | 'random';
-      loop?: LoopMode;
-      startFromSongId?: string;
-    };
+router.post('/play', requireAuth, async (req, res) => {
+  const { playlistId, mode, loop, startFromSongId } = req.body as {
+    playlistId?: string;
+    mode?: 'sequential' | 'random';
+    loop?: LoopMode;
+    startFromSongId?: string;
+  };
 
-    const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return;
+  const player = await resolveOrAutoJoinPlayer(req, res);
+  if (!player) return;
 
-    let dbSongs: Awaited<ReturnType<typeof prisma.song.findMany>>;
+  let dbSongs: Awaited<ReturnType<typeof prisma.song.findMany>>;
 
-    if (playlistId) {
-      const playlist = await prisma.playlist.findUnique({
-        where: { id: playlistId },
-        include: {
-          songs: {
-            orderBy: { position: 'asc' },
-            include: { song: true },
-          },
+  if (playlistId) {
+    const playlist = await prisma.playlist.findUnique({
+      where: { id: playlistId },
+      include: {
+        songs: {
+          orderBy: { position: 'asc' },
+          include: { song: true },
         },
-      });
+      },
+    });
 
-      if (!playlist) {
-        res.status(404).json({ error: 'Playlist not found.' });
-        return;
-      }
-
-      if (!canAccessPlaylist(playlist, req.user, res)) return;
-
-      dbSongs = playlist.songs.map((ps) => ps.song);
-    } else {
-      dbSongs = await prisma.song.findMany({
-        orderBy: { createdAt: 'asc' },
-      });
-    }
-
-    if (dbSongs.length === 0) {
-      res.status(422).json({ error: 'No songs found to play.' });
+    if (!playlist) {
+      res.status(404).json({ error: 'Playlist not found.' });
       return;
     }
 
-    if (startFromSongId) {
-      const startIndex = dbSongs.findIndex((s) => s.id === startFromSongId);
+    if (!canAccessPlaylist(playlist, req.user, res)) return;
 
-      if (startIndex === -1) {
-        res.status(404).json({ error: 'Start song not found in playlist.' });
-        return;
-      }
+    dbSongs = playlist.songs.map((ps) => ps.song);
+  } else {
+    dbSongs = await prisma.song.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+  }
 
-      dbSongs = [...dbSongs.slice(startIndex), ...dbSongs.slice(0, startIndex)];
+  if (dbSongs.length === 0) {
+    res.status(422).json({ error: 'No songs found to play.' });
+    return;
+  }
+
+  if (startFromSongId) {
+    const startIndex = dbSongs.findIndex((s) => s.id === startFromSongId);
+
+    if (startIndex === -1) {
+      res.status(404).json({ error: 'Start song not found in playlist.' });
+      return;
     }
 
-    if (mode === 'random') {
-      fisherYatesShuffle(dbSongs);
-    }
+    dbSongs = [...dbSongs.slice(startIndex), ...dbSongs.slice(0, startIndex)];
+  }
 
-    const targetLoopMode = loop ?? player.getLoopMode();
-    player.setLoopMode(targetLoopMode);
+  if (mode === 'random') {
+    fisherYatesShuffle(dbSongs);
+  }
 
-    const { username: requestedBy } = getRequestedBy(req);
-    const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
+  const targetLoopMode = loop ?? player.getLoopMode();
+  player.setLoopMode(targetLoopMode);
 
-    if (startFromSongId) {
-      await player.replaceQueueAndPlay(queuedSongs);
-    } else {
-      await player.addToQueue(queuedSongs);
-    }
+  const { username: requestedBy } = getRequestedBy(req);
+  const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
 
-    res.json({ message: `Queued ${queuedSongs.length} song(s).` });
-  })
-);
+  if (startFromSongId) {
+    await player.replaceQueueAndPlay(queuedSongs);
+  } else {
+    await player.addToQueue(queuedSongs);
+  }
+
+  res.json({ message: `Queued ${queuedSongs.length} song(s).` });
+});
 
 // POST /api/player/skip — skip current song. Member accessible.
-router.post(
-  '/skip',
-  requireAuth,
-  playerLimiter,
-  // biome-ignore lint/suspicious/useAwait: asyncHandler requires Promise<void> return type
-  asyncHandler(async (_req, res) => {
-    const player = getPlayer(GUILD_ID);
+router.post('/skip', requireAuth, playerLimiter, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
 
-    if (!player || !player.getCurrentSong()) {
-      res.status(409).json({ error: 'Nothing is currently playing.' });
-      return;
-    }
+  if (!player || !player.getCurrentSong()) {
+    res.status(409).json({ error: 'Nothing is currently playing.' });
+    return;
+  }
 
-    player.skip();
-    res.json({ message: 'Skipped.' });
-  })
-);
+  player.skip();
+  res.json({ message: 'Skipped.' });
+});
 
 // POST /api/player/leave — stop and disconnect. Member accessible.
 router.post('/leave', requireAuth, playerLimiter, (_req, res) => {
@@ -305,81 +224,71 @@ router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
 });
 
 // POST /api/player/quick-add — add YouTube URL to priority queue. Member accessible.
-router.post(
-  '/quick-add',
-  requireAuth,
-  playerLimiter,
-  asyncHandler(async (req, res) => {
-    const url = validateYouTubeUrl(req.body.youtubeUrl, res);
-    if (!url) return;
+router.post('/quick-add', requireAuth, playerLimiter, async (req, res) => {
+  const url = validateYouTubeUrl(req.body.youtubeUrl, res);
+  if (!url) return;
 
-    const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return;
+  const player = await resolveOrAutoJoinPlayer(req, res);
+  if (!player) return;
 
-    const metadata = await fetchYouTubeMetadata(url, res);
-    if (!metadata) return;
+  const metadata = await fetchYouTubeMetadata(url, res);
+  if (!metadata) return;
 
-    const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-    const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
+  const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+  const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
 
-    await player.addToPriorityQueue(queuedSong);
+  await player.addToPriorityQueue(queuedSong);
 
-    res.json({
-      message: `Added "${metadata.title}" to the queue.`,
-      song: queuedSong,
-    });
-  })
-);
+  res.json({
+    message: `Added "${metadata.title}" to the queue.`,
+    song: queuedSong,
+  });
+});
 
 // POST /api/player/quick-add-playlist — add playlist to queue. Member accessible.
-router.post(
-  '/quick-add-playlist',
-  requireAuth,
-  playerLimiter,
-  asyncHandler(async (req, res) => {
-    let { maxVideos } = req.body as { maxVideos?: number };
-    // Cap maxVideos to prevent abuse.
-    if (maxVideos !== undefined) {
-      maxVideos = Math.min(Math.max(1, maxVideos), 100);
-    }
-    const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
-    if (!url) return;
+router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) => {
+  let { maxVideos } = req.body as { maxVideos?: number };
+  // Cap maxVideos to prevent abuse.
+  if (maxVideos !== undefined) {
+    maxVideos = Math.min(Math.max(1, maxVideos), 100);
+  }
+  const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
+  if (!url) return;
 
-    const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return;
+  const player = await resolveOrAutoJoinPlayer(req, res);
+  if (!player) return;
 
-    const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
-    if (!playlistMetadata) return;
+  const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
+  if (!playlistMetadata) return;
 
-    const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-    const queuedSongs = [];
+  const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+  const queuedSongs = [];
 
-    for (const video of playlistMetadata.videos) {
-      const queuedSong = buildQueuedSongFromMetadata(
-        {
-          title: video.title,
-          youtubeId: video.id,
-          duration: video.duration,
-          thumbnailUrl: video.thumbnailUrl,
-        },
-        `https://www.youtube.com/watch?v=${video.id}`,
-        requestedBy,
-        addedBy
-      );
+  for (const video of playlistMetadata.videos) {
+    const queuedSong = buildQueuedSongFromMetadata(
+      {
+        title: video.title,
+        youtubeId: video.id,
+        duration: video.duration,
+        thumbnailUrl: video.thumbnailUrl,
+      },
+      `https://www.youtube.com/watch?v=${video.id}`,
+      requestedBy,
+      addedBy
+    );
 
-      await player.addToQueue(queuedSong);
-      queuedSongs.push(queuedSong);
-    }
+    await player.addToQueue(queuedSong);
+    queuedSongs.push(queuedSong);
+  }
 
-    res.json({
-      message: `Added ${queuedSongs.length} song(s) from "${playlistMetadata.title}" to the queue.`,
-      playlistTitle: playlistMetadata.title,
-      totalVideos: playlistMetadata.videoCount,
-      queuedCount: queuedSongs.length,
-      songs: queuedSongs,
-    });
-  })
-);
+  res.json({
+    message: `Added ${queuedSongs.length} song(s) from "${playlistMetadata.title}" to the queue.`,
+    playlistTitle: playlistMetadata.title,
+    totalVideos: playlistMetadata.videoCount,
+    queuedCount: queuedSongs.length,
+    songs: queuedSongs,
+  });
+});
 
 // POST /api/player/pause-toggle — pause/resume. Member accessible.
 router.post('/pause-toggle', requireAuth, playerLimiter, (_req, res) => {
@@ -408,67 +317,57 @@ router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
 });
 
 // POST /api/player/add-to-priority — add library song to Up Next. Member accessible.
-router.post(
-  '/add-to-priority',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const { songId } = req.body as { songId?: string };
+router.post('/add-to-priority', requireAuth, async (req, res) => {
+  const { songId } = req.body as { songId?: string };
 
-    if (!songId || typeof songId !== 'string') {
-      res.status(400).json({ error: 'songId is required.' });
-      return;
-    }
+  if (!songId || typeof songId !== 'string') {
+    res.status(400).json({ error: 'songId is required.' });
+    return;
+  }
 
-    const song = await prisma.song.findUnique({
-      where: { id: songId },
-    });
+  const song = await prisma.song.findUnique({
+    where: { id: songId },
+  });
 
-    if (!song) {
-      res.status(404).json({ error: 'Song not found.' });
-      return;
-    }
+  if (!song) {
+    res.status(404).json({ error: 'Song not found.' });
+    return;
+  }
 
-    const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return;
+  const player = await resolveOrAutoJoinPlayer(req, res);
+  if (!player) return;
 
-    const { username: requestedBy } = getRequestedBy(req);
-    const queuedSong = dbSongToQueuedSong(song, requestedBy);
+  const { username: requestedBy } = getRequestedBy(req);
+  const queuedSong = dbSongToQueuedSong(song, requestedBy);
 
-    await player.addToPriorityQueue(queuedSong);
+  await player.addToPriorityQueue(queuedSong);
 
-    res.json({
-      message: `Added "${song.nickname || song.title}" to Up Next.`,
-      song: queuedSong,
-    });
-  })
-);
+  res.json({
+    message: `Added "${song.nickname || song.title}" to Up Next.`,
+    song: queuedSong,
+  });
+});
 
 // POST /api/player/override — immediately play YouTube URL. Admin only.
-router.post(
-  '/override',
-  requireAuth,
-  requireAdmin,
-  playerLimiter,
-  asyncHandler(async (req, res) => {
-    const url = validateYouTubeUrl(req.body.youtubeUrl, res);
-    if (!url) return;
+router.post('/override', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
+  const url = validateYouTubeUrl(req.body.youtubeUrl, res);
+  if (!url) return;
 
-    const player = await resolveOrAutoJoinPlayer(req, res);
-    if (!player) return;
+  const player = await resolveOrAutoJoinPlayer(req, res);
+  if (!player) return;
 
-    const metadata = await fetchYouTubeMetadata(url, res);
-    if (!metadata) return;
+  const metadata = await fetchYouTubeMetadata(url, res);
+  if (!metadata) return;
 
-    const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-    const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
+  const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+  const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
 
-    await player.replaceQueueAndPlay([queuedSong]);
+  await player.replaceQueueAndPlay([queuedSong]);
 
-    res.json({
-      message: `Now playing "${metadata.title}".`,
-      song: queuedSong,
-    });
-  })
-);
+  res.json({
+    message: `Now playing "${metadata.title}".`,
+    song: queuedSong,
+  });
+});
 
 export default router;

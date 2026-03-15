@@ -11,6 +11,36 @@ import { commands } from './commands';
 import { setClient } from './lib/client';
 import type { Command } from './types';
 
+// ---------------------------------------------------------------------------
+// Public API re-exports
+//
+// These are the symbols the API package needs from the bot. By re-exporting
+// them here, consumers import from '@alfira-bot/bot' instead of reaching
+// into internal paths like '@alfira-bot/bot/src/lib/client'.
+// ---------------------------------------------------------------------------
+
+// Broadcast indirection (API injects emit function at boot)
+export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
+
+// Discord client singleton
+export { getClient, setClient } from './lib/client';
+
+// Player manager (guild-level player lifecycle)
+export { createPlayer, destroyAllPlayers, getPlayer, removePlayer } from './player/manager';
+
+// YouTube utilities (URL validation, metadata fetching)
+export {
+  type AudioStreamHandle,
+  createAudioStream,
+  getMetadata,
+  getPlaylistMetadataWithVideos,
+  getStreamFormat,
+  isValidYouTubeUrl,
+  isYouTubePlaylistUrl,
+  type PlaylistMetadata,
+  type SongMetadata,
+} from './utils/ytdlp';
+
 export async function deployCommands(
   clientId: string,
   guildId: string,
