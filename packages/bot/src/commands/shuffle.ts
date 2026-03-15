@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
+import { pluralize } from '../utils/format';
 import { requireGuild } from './guards';
 
 export const shuffleCommand: Command = {
@@ -25,8 +26,6 @@ export const shuffleCommand: Command = {
 
     player.shuffle();
 
-    await interaction.reply(
-      `🔀 Shuffled ${queue.length} song${queue.length === 1 ? '' : 's'} in the queue.`
-    );
+    await interaction.reply(`🔀 Shuffled ${pluralize(queue.length, 'song')} in the queue.`);
   },
 };

@@ -5,7 +5,7 @@ export interface UserContext {
   isAdmin?: boolean;
 }
 
-export interface PlaylistLike {
+interface PlaylistLike {
   createdBy: string;
   isPrivate: boolean;
 }

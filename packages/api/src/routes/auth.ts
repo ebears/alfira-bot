@@ -4,11 +4,13 @@ import { type Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import { WEB_UI_ORIGIN } from '../lib/config';
+import logger from '../lib/logger';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
+// These are validated at boot in index.ts, so they're guaranteed to be set.
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -17,20 +19,7 @@ const {
   GUILD_ID,
   JWT_SECRET,
   ADMIN_ROLE_IDS,
-} = process.env;
-
-if (
-  !DISCORD_CLIENT_ID ||
-  !DISCORD_CLIENT_SECRET ||
-  !DISCORD_REDIRECT_URI ||
-  !DISCORD_BOT_TOKEN ||
-  !GUILD_ID ||
-  !JWT_SECRET
-) {
-  throw new Error(
-    'Missing required environment variables: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, DISCORD_BOT_TOKEN, GUILD_ID, JWT_SECRET'
-  );
-}
+} = process.env as Record<string, string>;
 
 const ADMIN_ROLE_ID_SET = new Set(
   (ADMIN_ROLE_IDS ?? '')
@@ -38,6 +27,10 @@ const ADMIN_ROLE_ID_SET = new Set(
     .map((id) => id.trim())
     .filter(Boolean)
 );
+
+function isAdminUser(memberRoles: string[]): boolean {
+  return memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
+}
 
 // Access tokens are short-lived (1h). Refresh tokens are long-lived (7d default),
 // stored as SHA-256 hashes, and single-use.
@@ -121,7 +114,7 @@ async function fetchUserAdminStatus(
       }
     );
     const memberRoles: string[] = memberRes.data.roles ?? [];
-    const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
+    const isAdmin = isAdminUser(memberRoles);
 
     return {
       isAdmin,
@@ -134,9 +127,9 @@ async function fetchUserAdminStatus(
       return null;
     }
     // Discord error - log and return null
-    console.error(
-      'Failed to fetch user info from Discord:',
-      err instanceof Error ? err.message : String(err)
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err) },
+      'Failed to fetch user info from Discord'
     );
     return null;
   }
@@ -225,11 +218,9 @@ router.get('/callback', authLimiter, async (req, res) => {
     }
     // Discord is unreachable or returned an unexpected error.
     // Log the detail server-side; return a generic message to the client.
-    console.error(
-      'Failed to fetch guild member roles for user',
-      discordUser.id,
-      '— denying login.',
-      err instanceof Error ? err.message : String(err)
+    logger.error(
+      { userId: discordUser.id, err: err instanceof Error ? err.message : String(err) },
+      'Failed to fetch guild member roles — denying login'
     );
     res
       .status(503)
@@ -238,7 +229,7 @@ router.get('/callback', authLimiter, async (req, res) => {
   }
 
   // 4. Determine isAdmin.
-  const isAdmin = memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
+  const isAdmin = isAdminUser(memberRoles);
 
   // 5. Generate tokens.
   const payload = {

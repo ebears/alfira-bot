@@ -186,12 +186,12 @@ export default function PlaylistDetailPage() {
     }
   };
 
-  const handleAddPlaylistToQueue = async (mode: 'sequential' | 'random' = 'sequential') => {
+  const handleAddPlaylistToQueue = async () => {
     if (!playlist) return;
     try {
       await startPlayback({
         playlistId: playlist.id,
-        mode,
+        mode: 'sequential',
         loop: queueState.loopMode,
       });
       notify(`Added "${playlist.name}" to queue`, 'success');
