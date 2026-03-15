@@ -150,21 +150,12 @@ export class GuildPlayer {
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
     const arr = Array.isArray(songs) ? songs : [songs];
     this.queue.append(...arr);
-
-    if (this.currentSong === null) {
-      await this.playNext();
-    } else {
-      this.broadcast();
-    }
+    await this.ensurePlaying();
   }
 
   async addToPriorityQueue(song: QueuedSong): Promise<void> {
     this.priorityQueue.push(song);
-    if (this.currentSong === null) {
-      await this.playNext();
-    } else {
-      this.broadcast();
-    }
+    await this.ensurePlaying();
   }
 
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
@@ -262,6 +253,14 @@ export class GuildPlayer {
       queue: this.queue.toArray(),
       trackStartedAt: this.trackStartedAt,
     };
+  }
+
+  private async ensurePlaying(): Promise<void> {
+    if (this.currentSong === null) {
+      await this.playNext();
+    } else {
+      this.broadcast();
+    }
   }
 
   private broadcast(): void {

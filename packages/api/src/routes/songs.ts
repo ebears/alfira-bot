@@ -13,6 +13,21 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
+function buildSongData(
+  metadata: { title: string; youtubeId: string; duration: number; thumbnailUrl: string | null },
+  youtubeUrl: string,
+  addedBy: string
+) {
+  return {
+    title: metadata.title,
+    youtubeUrl,
+    youtubeId: metadata.youtubeId,
+    duration: metadata.duration,
+    thumbnailUrl: metadata.thumbnailUrl as string,
+    addedBy,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/songs
 //
@@ -73,12 +88,7 @@ router.post(
 
     const song = await prisma.song.create({
       data: {
-        title: metadata.title,
-        youtubeUrl: url,
-        youtubeId: metadata.youtubeId,
-        duration: metadata.duration,
-        thumbnailUrl: metadata.thumbnailUrl,
-        addedBy: req.user?.discordId ?? '',
+        ...buildSongData(metadata, url, req.user?.discordId ?? ''),
         nickname: trimmedNickname || null,
       },
     });
@@ -154,14 +164,16 @@ router.post(
     const createdSongs = await prisma.$transaction(
       newVideos.map((video) =>
         prisma.song.create({
-          data: {
-            title: video.title,
-            youtubeUrl: video.canonicalUrl,
-            youtubeId: video.id,
-            duration: video.duration,
-            thumbnailUrl: video.thumbnailUrl,
-            addedBy: req.user?.discordId ?? '',
-          },
+          data: buildSongData(
+            {
+              title: video.title,
+              youtubeId: video.id,
+              duration: video.duration,
+              thumbnailUrl: video.thumbnailUrl,
+            },
+            video.canonicalUrl,
+            req.user?.discordId ?? ''
+          ),
         })
       )
     );

@@ -218,16 +218,13 @@ router.patch(
     const trimmedName = validatePlaylistName(name, res);
     if (!trimmedName) return;
 
-    const existing = await requirePlaylistAccess(
-      req.params.id as string,
-      req.user,
-      res,
-      'rename this playlist'
-    );
+    const id = req.params.id as string;
+
+    const existing = await requirePlaylistAccess(id, req.user, res, 'rename this playlist');
     if (!existing) return;
 
     const playlist = await prisma.playlist.update({
-      where: { id: req.params.id as string },
+      where: { id },
       data: { name: trimmedName },
       include: PLAYLIST_WITH_COUNT,
     });
@@ -247,15 +244,12 @@ router.delete(
   '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const existing = await requirePlaylistAccess(
-      req.params.id as string,
-      req.user,
-      res,
-      'delete this playlist'
-    );
+    const id = req.params.id as string;
+
+    const existing = await requirePlaylistAccess(id, req.user, res, 'delete this playlist');
     if (!existing) return;
 
-    await prisma.playlist.delete({ where: { id: req.params.id as string } });
+    await prisma.playlist.delete({ where: { id } });
 
     res.status(204).send();
   })
@@ -278,12 +272,9 @@ router.post(
       return;
     }
 
-    const playlist = await requirePlaylistAccess(
-      req.params.id as string,
-      req.user,
-      res,
-      'add songs to this playlist'
-    );
+    const id = req.params.id as string;
+
+    const playlist = await requirePlaylistAccess(id, req.user, res, 'add songs to this playlist');
     if (!playlist) return;
 
     const song = await prisma.song.findUnique({ where: { id: songId } });
@@ -337,21 +328,18 @@ router.delete(
   requireAuth,
   asyncHandler(async (req, res) => {
     const { id: playlistId, songId } = req.params;
+    const pid = playlistId as string;
+    const sid = songId as string;
 
     // Fetch the playlist and check ownership
-    const playlist = await requirePlaylistAccess(
-      playlistId as string,
-      req.user,
-      res,
-      'remove songs'
-    );
+    const playlist = await requirePlaylistAccess(pid, req.user, res, 'remove songs');
     if (!playlist) return;
 
     const entry = await prisma.playlistSong.findUnique({
       where: {
         playlistId_songId: {
-          playlistId: playlistId as string,
-          songId: songId as string,
+          playlistId: pid,
+          songId: sid,
         },
       },
     });
@@ -366,15 +354,15 @@ router.delete(
       await tx.playlistSong.delete({
         where: {
           playlistId_songId: {
-            playlistId: playlistId as string,
-            songId: songId as string,
+            playlistId: pid,
+            songId: sid,
           },
         },
       });
 
       // Re-index remaining songs to close the gap in positions.
       const remaining = await tx.playlistSong.findMany({
-        where: { playlistId: playlistId as string },
+        where: { playlistId: pid },
         orderBy: { position: 'asc' },
       });
 
@@ -388,7 +376,7 @@ router.delete(
       );
     });
 
-    await emitPlaylistBroadcast(playlistId as string);
+    await emitPlaylistBroadcast(pid);
     res.status(204).send();
   })
 );
