@@ -418,7 +418,17 @@ function SongRow({
   onAddToQueue: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [addingToQueue, setAddingToQueue] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const handleAddToQueue = async () => {
+    setAddingToQueue(true);
+    try {
+      await onAddToQueue();
+    } finally {
+      setAddingToQueue(false);
+    }
+  };
 
   const menuItems: MenuItem[] = isAdmin
     ? [
@@ -473,11 +483,16 @@ function SongRow({
       {/* Add to Queue - available to all members */}
       <button
         type="button"
-        onClick={onAddToQueue}
-        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl"
+        onClick={handleAddToQueue}
+        disabled={addingToQueue}
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl disabled:opacity-50"
         title="Add to Up Next"
       >
-        <VinylRecordIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
+        {addingToQueue ? (
+          <span className="w-4 h-4 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
+        ) : (
+          <VinylRecordIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
+        )}
       </button>
       {menuItems.length > 0 && (
         <>
