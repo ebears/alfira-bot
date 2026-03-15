@@ -23,7 +23,7 @@ import type { Command } from './types';
 export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
 
 // Discord client singleton
-export { getClient, setClient } from './lib/client';
+export { getClient } from './lib/client';
 
 // Player manager (guild-level player lifecycle)
 export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
