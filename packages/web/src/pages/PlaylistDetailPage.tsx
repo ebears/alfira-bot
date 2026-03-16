@@ -52,6 +52,7 @@ export default function PlaylistDetailPage() {
   const [showAddSongs, setShowAddSongs] = useState(false);
   const [showPlay, setShowPlay] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
   const handleAddToQueue = useAddToQueue(notify);
@@ -216,7 +217,7 @@ export default function PlaylistDetailPage() {
             label: 'Delete',
             icon: <BombIcon size={14} weight="duotone" />,
             danger: true,
-            onClick: () => handleDeletePlaylist(),
+            onClick: () => setDeleteConfirm(true),
           } as MenuItem,
         ]
       : []),
@@ -377,6 +378,18 @@ export default function PlaylistDetailPage() {
           confirmLabel="Remove"
           onConfirm={() => handleRemoveSong(removeId)}
           onCancel={() => setRemoveId(null)}
+        />
+      )}
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Delete Playlist"
+          message="This playlist will be permanently deleted. This cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={() => {
+            setDeleteConfirm(false);
+            handleDeletePlaylist();
+          }}
+          onCancel={() => setDeleteConfirm(false)}
         />
       )}
     </div>

@@ -22,6 +22,7 @@ import {
   startPlayback,
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
+import ConfirmModal from '../components/ConfirmModal';
 import { ContextMenu, type MenuItem } from '../components/ContextMenu';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -35,6 +36,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showOverride, setShowOverride] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -79,11 +81,11 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
         icon: <BombIcon size={14} weight="duotone" />,
         danger: true,
         disabled: clearBusy || isQueueEmpty,
-        onClick: handleClear,
+        onClick: () => setClearConfirm(true),
       });
     }
     return items;
-  }, [isAdminView, clearBusy, isQueueEmpty, handleClear]);
+  }, [isAdminView, clearBusy, isQueueEmpty]);
 
   if (loading) {
     return (
@@ -283,6 +285,20 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
               setShowOverride(false);
               await delayThenRefetch();
             }}
+          />,
+          document.body
+        )}
+      {clearConfirm &&
+        createPortal(
+          <ConfirmModal
+            title="Clear Queue"
+            message="All songs in the queue will be removed. This cannot be undone."
+            confirmLabel="Clear"
+            onConfirm={async () => {
+              setClearConfirm(false);
+              await handleClear();
+            }}
+            onCancel={() => setClearConfirm(false)}
           />,
           document.body
         )}
