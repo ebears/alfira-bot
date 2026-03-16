@@ -261,7 +261,7 @@ export function ContextMenu({
       role="menu"
       aria-label="Song actions"
       style={{ position: 'fixed', top: position.top, left: position.left }}
-      className="z-50 min-w-48"
+      className="z-[9999] min-w-48"
       onKeyDown={activeEditItemId ? undefined : handleKeyDown}
     >
       <div className="bg-elevated border border-border rounded-xl shadow-xl overflow-hidden animate-fade-up">

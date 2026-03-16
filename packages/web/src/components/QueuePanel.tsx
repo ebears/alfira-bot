@@ -2,6 +2,7 @@ import type { LoopMode, Playlist, QueuedSong } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
   BombIcon,
+  DotsThreeOutlineVerticalIcon,
   GuitarIcon,
   LightningIcon,
   ListIcon,
@@ -11,7 +12,7 @@ import {
   WarningIcon,
   XIcon,
 } from '@phosphor-icons/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   getPlaylists,
@@ -21,6 +22,7 @@ import {
   startPlayback,
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
+import { ContextMenu, type MenuItem } from '../components/ContextMenu';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
@@ -33,6 +35,8 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showOverride, setShowOverride] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
@@ -43,14 +47,43 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
     await refetch();
   }, [refetch]);
 
-  const handleClear = async () => {
+  const handleClear = useCallback(async () => {
     setClearBusy(true);
     try {
       await clear();
     } finally {
       setClearBusy(false);
     }
-  };
+  }, [clear]);
+
+  const menuItems: MenuItem[] = useMemo(() => {
+    const items: MenuItem[] = [
+      {
+        id: 'quick-add',
+        label: 'Quick Add',
+        icon: <PlusCircleIcon size={14} weight="duotone" />,
+        onClick: () => setShowQuickAdd(true),
+      },
+    ];
+    if (isAdminView) {
+      items.push({
+        id: 'override',
+        label: 'Override',
+        icon: <PlayIcon size={14} weight="duotone" />,
+        danger: true,
+        onClick: () => setShowOverride(true),
+      });
+      items.push({
+        id: 'clear-queue',
+        label: 'Clear Queue',
+        icon: <BombIcon size={14} weight="duotone" />,
+        danger: true,
+        disabled: clearBusy || isQueueEmpty,
+        onClick: handleClear,
+      });
+    }
+    return items;
+  }, [isAdminView, clearBusy, isQueueEmpty, handleClear]);
 
   if (loading) {
     return (
@@ -71,23 +104,6 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
       <PanelHeader onClose={onClose} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Admin Override Button */}
-        {isAdminView && (
-          <section>
-            <button
-              type="button"
-              onClick={() => setShowOverride(true)}
-              className="flex items-center gap-2 btn-danger"
-            >
-              <PlayIcon size={14} weight="duotone" />
-              <span>Override</span>
-            </button>
-            <p className="font-mono text-[10px] text-muted mt-1">
-              Immediately play a song, clearing all queues
-            </p>
-          </section>
-        )}
-
         {/* Now Playing card */}
         {currentSong ? (
           <NowPlayingCard
@@ -100,44 +116,27 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           <IdleCard />
         )}
 
-        {/* Controls */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                type="button"
-                onClick={() => setShowLoadPlaylist(true)}
-                className="flex items-center gap-2 btn-primary"
-              >
-                <ListIcon size={16} weight="duotone" />
-                <span>Load Playlist</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowQuickAdd(true)}
-                className="flex items-center gap-2 btn-primary"
-              >
-                <PlusCircleIcon size={16} weight="duotone" />
-                <span>Quick Add</span>
-              </button>
-            </div>
-          </div>
-
-          {isAdminView && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={clearBusy || isQueueEmpty}
-                className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                  isQueueEmpty ? 'btn-ghost' : 'btn-danger'
-                }`}
-              >
-                <BombIcon size={16} weight="duotone" />
-                <span>Clear Queue</span>
-              </button>
-            </div>
-          )}
+        {/* Actions */}
+        <section className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setShowLoadPlaylist(true)}
+            className="flex items-center gap-2 btn-primary"
+          >
+            <ListIcon size={16} weight="duotone" />
+            <span>Load Playlist</span>
+          </button>
+          <button
+            ref={triggerRef}
+            type="button"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            title="More actions"
+            onClick={() => setMenuOpen(true)}
+            className="flex items-center justify-center w-8 h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
+          >
+            <DotsThreeOutlineVerticalIcon size={16} weight="duotone" />
+          </button>
         </section>
 
         {/* Up Next (Priority Queue) */}
@@ -242,6 +241,16 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           )}
         </section>
       </div>
+
+      {menuOpen && (
+        <ContextMenu
+          items={menuItems}
+          isOpen={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          triggerRef={triggerRef}
+          align="right"
+        />
+      )}
 
       {/* Modals rendered via portal to escape slideout stacking context */}
       {showLoadPlaylist &&
