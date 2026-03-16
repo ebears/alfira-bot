@@ -47,6 +47,7 @@ export default function SongsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
   const handleAddToQueue = useAddToQueue(notify);
 
@@ -105,6 +106,13 @@ export default function SongsPage() {
       socket.off('songs:updated', handleSongUpdated);
     };
   }, [socket]);
+
+  useEffect(() => {
+    if (!activeCardId) return;
+    const handler = () => setActiveCardId(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [activeCardId]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);
@@ -221,6 +229,8 @@ export default function SongsPage() {
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
               onAddToQueue={() => handleAddToQueue(song.id)}
+              isActive={activeCardId === song.id}
+              onToggleActive={() => setActiveCardId(activeCardId === song.id ? null : song.id)}
             />
           ))}
         </div>
@@ -297,6 +307,8 @@ function SongCard({
   onPlay,
   isPlaying,
   onAddToQueue,
+  isActive: _isActive,
+  onToggleActive: _onToggleActive,
 }: {
   song: Song;
   isAdmin: boolean;
@@ -306,6 +318,8 @@ function SongCard({
   onPlay: () => void;
   isPlaying: boolean;
   onAddToQueue: () => void;
+  isActive: boolean;
+  onToggleActive: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
