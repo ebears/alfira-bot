@@ -26,6 +26,16 @@ export interface MenuItem {
   disabled?: boolean;
   onClick?: () => void;
   submenu?: SubmenuConfig;
+  editSubmenu?: {
+    title: string;
+    value: string;
+    onChange: (val: string) => void;
+    onSave: () => void;
+    onCancel: () => void;
+    saving: boolean;
+    placeholder?: string;
+  };
+  info?: { label: string; icon?: ReactNode };
 }
 
 interface ContextMenuProps {
@@ -88,6 +98,7 @@ export function ContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [activeSubmenu, setActiveSubmenu] = useState<SubmenuConfig | null>(null);
+  const [activeEditSubmenu, setActiveEditSubmenu] = useState<MenuItem['editSubmenu'] | null>(null);
   const [submenuParentIndex, setSubmenuParentIndex] = useState(0);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
@@ -98,7 +109,9 @@ export function ContextMenu({
         icon: item.icon,
         disabled: item.disabled,
       }))
-    : items;
+    : activeEditSubmenu
+      ? []
+      : items;
 
   // Position calculation
   useEffect(() => {
@@ -140,6 +153,7 @@ export function ContextMenu({
   useEffect(() => {
     if (isOpen) {
       setActiveSubmenu(null);
+      setActiveEditSubmenu(null);
       setFocusedIndex(0);
     }
   }, [isOpen]);
@@ -181,8 +195,10 @@ export function ContextMenu({
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (activeSubmenu) {
+        if (activeSubmenu || activeEditSubmenu) {
+          activeEditSubmenu?.onCancel();
           setActiveSubmenu(null);
+          setActiveEditSubmenu(null);
           setFocusedIndex(submenuParentIndex);
         } else {
           onClose();
@@ -193,7 +209,7 @@ export function ContextMenu({
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [isOpen, onClose, triggerRef, activeSubmenu, submenuParentIndex]);
+  }, [isOpen, onClose, triggerRef, activeSubmenu, activeEditSubmenu, submenuParentIndex]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -248,23 +264,45 @@ export function ContextMenu({
               onClose();
             }}
           />
+        ) : activeEditSubmenu ? (
+          <EditSubmenuPanel
+            config={activeEditSubmenu}
+            onBack={() => {
+              activeEditSubmenu.onCancel();
+              setActiveEditSubmenu(null);
+              setFocusedIndex(submenuParentIndex);
+            }}
+            onSave={() => {
+              activeEditSubmenu.onSave();
+              onClose();
+            }}
+          />
         ) : (
-          items.map((item) => (
-            <MenuItemButton
-              key={item.id}
-              item={item}
-              onClick={() => {
-                if (item.submenu) {
-                  setActiveSubmenu(item.submenu);
-                  setSubmenuParentIndex(focusedIndex);
-                  setFocusedIndex(0);
-                } else {
-                  item.onClick?.();
-                  onClose();
-                }
-              }}
-            />
-          ))
+          items.map((item) => {
+            if (item.info) {
+              return <InfoRow key={item.id} item={item} />;
+            }
+            return (
+              <MenuItemButton
+                key={item.id}
+                item={item}
+                onClick={() => {
+                  if (item.submenu) {
+                    setActiveSubmenu(item.submenu);
+                    setSubmenuParentIndex(focusedIndex);
+                    setFocusedIndex(0);
+                  } else if (item.editSubmenu) {
+                    setActiveEditSubmenu(item.editSubmenu);
+                    setSubmenuParentIndex(focusedIndex);
+                    setFocusedIndex(0);
+                  } else {
+                    item.onClick?.();
+                    onClose();
+                  }
+                }}
+              />
+            );
+          })
         )}
       </div>
     </div>,
@@ -285,6 +323,7 @@ function MenuItemButton({
     danger?: boolean;
     disabled?: boolean;
     submenu?: SubmenuConfig;
+    editSubmenu?: MenuItem['editSubmenu'];
   };
   onClick: () => void;
 }) {
@@ -296,7 +335,7 @@ function MenuItemButton({
       disabled={item.disabled}
       onClick={onClick}
       className={`
-        w-full text-left px-3 py-2.5 text-sm font-mono
+        w-full text-left px-3 py-1.5 text-xs font-mono
         flex items-center gap-2
         transition-colors duration-100
         disabled:opacity-50 disabled:cursor-not-allowed
@@ -305,7 +344,7 @@ function MenuItemButton({
     >
       {item.icon && <span className="shrink-0">{item.icon}</span>}
       <span className="truncate">{item.label}</span>
-      {item.submenu && <span className="ml-auto text-muted">›</span>}
+      {(item.submenu || item.editSubmenu) && <span className="ml-auto text-muted">›</span>}
     </button>
   );
 }
@@ -346,13 +385,88 @@ function SubmenuPanel({
               tabIndex={-1}
               disabled={item.disabled}
               onClick={() => onSelect(item.id)}
-              className="w-full text-left px-3 py-2.5 text-sm font-mono text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-xs font-mono text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center gap-2"
             >
               {item.icon && <span className="shrink-0">{item.icon}</span>}
               <span className="truncate">{item.label}</span>
             </button>
           ))
         )}
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ item }: { item: MenuItem }) {
+  return (
+    <div
+      role="presentation"
+      className="px-3 py-1.5 text-xs font-mono text-muted flex items-center gap-2"
+    >
+      {item.icon && <span className="shrink-0">{item.icon}</span>}
+      <span className="truncate">{item.info?.label}</span>
+    </div>
+  );
+}
+
+function EditSubmenuPanel({
+  config,
+  onBack,
+  onSave,
+}: {
+  config: NonNullable<MenuItem['editSubmenu']>;
+  onBack: () => void;
+  onSave: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="animate-fade-up">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <button
+          type="button"
+          aria-label="Back to main menu"
+          onClick={onBack}
+          className="text-muted hover:text-fg p-1 rounded transition-colors"
+        >
+          <CaretLeftIcon size={14} weight="duotone" />
+        </button>
+        <span className="font-mono text-xs text-muted truncate">{config.title}</span>
+      </div>
+      <div className="px-2 py-2">
+        <input
+          ref={inputRef}
+          className="input text-xs py-1.5 px-2 w-full mb-2"
+          value={config.value}
+          onChange={(e) => config.onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onSave();
+            if (e.key === 'Escape') onBack();
+          }}
+          disabled={config.saving}
+          placeholder={config.placeholder ?? 'Enter value...'}
+        />
+        <div className="flex gap-1 justify-end">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-xs text-muted hover:text-fg px-2 py-1 rounded transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={config.saving}
+            className="text-xs text-accent hover:text-accent/80 px-2 py-1 rounded transition-colors disabled:opacity-50"
+          >
+            {config.saving ? '...' : 'Save'}
+          </button>
+        </div>
       </div>
     </div>
   );
