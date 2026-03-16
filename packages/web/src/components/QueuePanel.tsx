@@ -8,7 +8,6 @@ import {
   PlayCircleIcon,
   PlayIcon,
   PlusCircleIcon,
-  ShuffleIcon,
   WarningIcon,
   XIcon,
 } from '@phosphor-icons/react';
@@ -28,12 +27,11 @@ import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { apiErrorMessage } from '../utils/api';
 
 export default function QueuePanel({ onClose }: { onClose: () => void }) {
-  const { state, loading, elapsed, shuffle, refetch, clear } = usePlayer();
+  const { state, loading, elapsed, refetch, clear } = usePlayer();
   const { isAdminView } = useAdminView();
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showOverride, setShowOverride] = useState(false);
-  const [shuffleBusy, setShuffleBusy] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
@@ -44,15 +42,6 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
     await new Promise((r) => setTimeout(r, 600));
     await refetch();
   }, [refetch]);
-
-  const handleShuffle = async () => {
-    setShuffleBusy(true);
-    try {
-      await shuffle();
-    } finally {
-      setShuffleBusy(false);
-    }
-  };
 
   const handleClear = async () => {
     setClearBusy(true);
@@ -136,15 +125,6 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
 
           {isAdminView && (
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleShuffle}
-                disabled={shuffleBusy || queue.length === 0}
-                className="flex items-center gap-2 btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ShuffleIcon size={16} weight="duotone" />
-                <span>Shuffle{queue.length > 0 ? ` (${queue.length})` : ''}</span>
-              </button>
               <button
                 type="button"
                 onClick={handleClear}

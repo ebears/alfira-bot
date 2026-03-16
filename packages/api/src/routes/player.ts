@@ -76,6 +76,7 @@ router.get('/queue', requireAuth, (_req, res) => {
       isPaused: false,
       isConnectedToVoice: !!connection,
       loopMode: 'off',
+      isShuffled: false,
       currentSong: null,
       priorityQueue: [],
       queue: [],
@@ -221,6 +222,19 @@ router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
 
   player.shuffle();
   res.json({ message: 'Queue shuffled.' });
+});
+
+// POST /api/player/unshuffle — restore original queue order. Admin only.
+router.post('/unshuffle', requireAuth, requireAdmin, (_req, res) => {
+  const player = getPlayer(GUILD_ID);
+
+  if (!player) {
+    res.status(409).json({ error: 'Nothing is playing.' });
+    return;
+  }
+
+  player.unshuffle();
+  res.json({ message: 'Queue order restored.' });
 });
 
 // POST /api/player/quick-add — add YouTube URL to priority queue. Member accessible.

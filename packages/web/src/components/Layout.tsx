@@ -10,6 +10,7 @@ import {
   PlayIcon,
   RepeatIcon,
   RepeatOnceIcon,
+  ShuffleIcon,
   SignOutIcon,
   SkipForwardIcon,
   SparkleIcon,
@@ -222,13 +223,14 @@ export default function Layout() {
 // Now Playing bar — wired to PlayerContext
 // ---------------------------------------------------------------------------
 function NowPlayingBar() {
-  const { state, elapsed, skip, leave, pause, setLoop } = usePlayer();
-  const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode } = state;
+  const { state, elapsed, skip, leave, pause, setLoop, shuffle, unshuffle } = usePlayer();
+  const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode, isShuffled } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
+  const [shuffleBusy, setShuffleBusy] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
 
   // Escape key handler + body scroll lock
@@ -284,6 +286,20 @@ function NowPlayingBar() {
     }
   };
 
+  const handleShuffleToggle = async () => {
+    if (shuffleBusy) return;
+    setShuffleBusy(true);
+    try {
+      if (isShuffled) {
+        await unshuffle();
+      } else {
+        await shuffle();
+      }
+    } finally {
+      setShuffleBusy(false);
+    }
+  };
+
   const loopIcon =
     loopMode === 'song' ? (
       <RepeatOnceIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
@@ -304,7 +320,7 @@ function NowPlayingBar() {
       </div>
 
       <div className="h-26 md:h-24 flex items-center px-3 md:px-5 gap-2 md:gap-3">
-        {/* Left: Playback controls */}
+        {/* Playback controls: Play/Pause, Skip, Leave */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
           {currentSong && (
             <>
@@ -349,31 +365,57 @@ function NowPlayingBar() {
         {/* Divider */}
         {currentSong && <div className="w-px h-8 md:h-10 bg-border shrink-0 mx-0.5 md:mx-1" />}
 
-        {/* Loop button */}
-        {currentSong && (
-          <button
-            type="button"
-            onClick={handleCycleLoop}
-            disabled={loopBusy}
-            title={`Loop: ${loopMode}`}
-            className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150 shrink-0 disabled:opacity-50 ${
-              isLoopActive
-                ? 'text-accent hover:text-accent-muted'
-                : 'text-muted hover:text-fg hover:bg-elevated'
-            }`}
-            style={
-              isLoopActive
-                ? { boxShadow: '0 0 10px 1px var(--color-accent, currentColor)', opacity: 0.85 }
-                : undefined
-            }
-          >
-            {loopBusy ? (
-              <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
-            ) : (
-              loopIcon
-            )}
-          </button>
-        )}
+        {/* Loop + Shuffle */}
+        <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
+          {currentSong && (
+            <button
+              type="button"
+              onClick={handleCycleLoop}
+              disabled={loopBusy}
+              title={`Loop: ${loopMode}`}
+              className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150 shrink-0 disabled:opacity-50 ${
+                isLoopActive
+                  ? 'text-accent hover:text-accent-muted'
+                  : 'text-muted hover:text-fg hover:bg-elevated'
+              }`}
+              style={
+                isLoopActive
+                  ? { boxShadow: '0 0 10px 1px var(--color-accent, currentColor)', opacity: 0.85 }
+                  : undefined
+              }
+            >
+              {loopBusy ? (
+                <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
+              ) : (
+                loopIcon
+              )}
+            </button>
+          )}
+
+          {currentSong && (
+            <button
+              type="button"
+              onClick={handleShuffleToggle}
+              disabled={shuffleBusy}
+              title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
+              className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-colors duration-150 shrink-0 disabled:opacity-50 ${
+                isShuffled
+                  ? 'text-accent hover:text-accent-muted'
+                  : 'text-muted hover:text-fg hover:bg-elevated'
+              }`}
+            >
+              {shuffleBusy ? (
+                <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
+              ) : (
+                <ShuffleIcon
+                  size={20}
+                  weight={isShuffled ? 'fill' : 'duotone'}
+                  className="md:w-4 md:h-4"
+                />
+              )}
+            </button>
+          )}
+        </div>
 
         {/* Desktop: centered progress bar */}
         <div className="hidden md:flex flex-1 items-center px-4">
@@ -385,56 +427,59 @@ function NowPlayingBar() {
           </div>
         </div>
 
-        {/* Right: Song info + album art */}
-        <div className="flex items-center gap-2 md:gap-3 flex-1 md:flex-none justify-end min-w-0">
-          <div className="min-w-0 text-right hidden sm:block">
-            {currentSong ? (
-              <>
-                <p className="font-body text-sm font-semibold text-fg truncate leading-tight max-w-48">
-                  {currentSong.title}
-                </p>
-                <p className="font-mono text-[11px] md:text-[10px] text-muted leading-tight">
-                  {formatDuration(elapsed)} / {formatDuration(currentSong.duration)}
-                </p>
-              </>
-            ) : (
-              <span className="font-mono text-xs text-faint">nothing playing</span>
-            )}
-          </div>
-
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated border border-border shrink-0 overflow-hidden relative">
-            {currentSong && isPlaying && !isPaused && (
-              <div className="absolute -top-1.5 -right-1.5 z-10">
-                <SparkleIcon
-                  size={12}
-                  weight="duotone"
-                  className="text-accent animate-pulse-gentle"
-                />
-              </div>
-            )}
-            {currentSong ? (
-              <img
-                src={currentSong.thumbnailUrl}
-                alt={currentSong.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <GuitarIcon size={18} weight="duotone" className="text-faint" />
-              </div>
-            )}
-          </div>
-
-          {/* Queue button */}
-          <button
-            type="button"
-            onClick={() => setQueueOpen(true)}
-            title="Queue"
-            className="w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl text-muted hover:text-fg hover:bg-elevated transition-colors duration-150 shrink-0"
-          >
-            <ListIcon size={20} weight="duotone" className="md:w-4 md:h-4" />
-          </button>
+        {/* Metadata info */}
+        <div className="min-w-0 text-right hidden sm:block">
+          {currentSong ? (
+            <>
+              <p className="font-body text-sm font-semibold text-fg truncate leading-tight max-w-48">
+                {currentSong.title}
+              </p>
+              <p className="font-mono text-[11px] md:text-[10px] text-muted leading-tight">
+                {formatDuration(elapsed)} / {formatDuration(currentSong.duration)}
+              </p>
+            </>
+          ) : (
+            <span className="font-mono text-xs text-faint">nothing playing</span>
+          )}
         </div>
+
+        {/* Album art */}
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated border border-border shrink-0 overflow-hidden relative">
+          {currentSong && isPlaying && !isPaused && (
+            <div className="absolute -top-1.5 -right-1.5 z-10">
+              <SparkleIcon
+                size={12}
+                weight="duotone"
+                className="text-accent animate-pulse-gentle"
+              />
+            </div>
+          )}
+          {currentSong ? (
+            <img
+              src={currentSong.thumbnailUrl}
+              alt={currentSong.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <GuitarIcon size={18} weight="duotone" className="text-faint" />
+            </div>
+          )}
+        </div>
+
+        {/* Queue button */}
+        <button
+          type="button"
+          onClick={() => setQueueOpen(true)}
+          title="Queue"
+          className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-colors duration-150 shrink-0 ${
+            queueOpen
+              ? 'text-accent hover:text-accent-muted'
+              : 'text-muted hover:text-fg hover:bg-elevated'
+          }`}
+        >
+          <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
+        </button>
       </div>
 
       {/* Queue slideout */}

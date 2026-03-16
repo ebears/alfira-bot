@@ -9,6 +9,7 @@ import {
   shuffleQueue,
   skipTrack,
   togglePause,
+  unshuffleQueue,
 } from '../api/api';
 import { useSocket } from '../hooks/useSocket';
 
@@ -20,6 +21,7 @@ const EMPTY_STATE: QueueState = {
   isPaused: false,
   isConnectedToVoice: false,
   loopMode: 'off',
+  isShuffled: false,
   currentSong: null,
   priorityQueue: [],
   queue: [],
@@ -39,6 +41,7 @@ interface PlayerContextValue {
   clear: () => Promise<void>;
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
+  unshuffle: () => Promise<void>;
   // Force an immediate REST refetch (e.g. after starting playback from QueuePage).
   refetch: () => Promise<void>;
 }
@@ -174,6 +177,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // Same as above — the socket event arrives before a refetch would.
   }, []);
 
+  const unshuffle = useCallback(async () => {
+    await unshuffleQueue();
+    // Same as above — the socket event arrives before a refetch would.
+  }, []);
+
   const clear = useCallback(async () => {
     await clearQueue();
     await refetch();
@@ -191,6 +199,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         clear,
         setLoop,
         shuffle,
+        unshuffle,
         refetch,
       }}
     >
