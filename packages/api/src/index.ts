@@ -58,7 +58,11 @@ app.set('trust proxy', process.env.TRUSTED_PROXY_IP ?? false);
 // should set its own Content-Security-Policy.
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+      },
+    },
   })
 );
 

@@ -128,7 +128,10 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
 // 5. Emit songs:added for each new song.
 // ---------------------------------------------------------------------------
 router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async (req, res) => {
-  const { maxVideos } = req.body as { maxVideos?: number };
+  let { maxVideos } = req.body as { maxVideos?: number };
+  if (maxVideos !== undefined) {
+    maxVideos = Math.min(Math.max(1, maxVideos), 100);
+  }
   const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
   if (!url) return;
 
