@@ -28,6 +28,8 @@ const ADMIN_ROLE_ID_SET = new Set(
     .filter(Boolean)
 );
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 function isAdminUser(memberRoles: string[]): boolean {
   return memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
 }
@@ -71,8 +73,6 @@ function generateRefreshToken(discordId: string): string {
 }
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
-  const isProduction = process.env.NODE_ENV === 'production';
-
   // Access token cookie - short-lived
   res.cookie(ACCESS_COOKIE_NAME, accessToken, {
     httpOnly: true,
@@ -91,8 +91,8 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
 }
 
 function clearAuthCookies(res: Response): void {
-  res.clearCookie(ACCESS_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
-  res.clearCookie(REFRESH_COOKIE_NAME, { httpOnly: true, sameSite: 'lax' });
+  res.clearCookie(ACCESS_COOKIE_NAME, { httpOnly: true, sameSite: 'lax', secure: isProduction });
+  res.clearCookie(REFRESH_COOKIE_NAME, { httpOnly: true, sameSite: 'lax', secure: isProduction });
 }
 
 /** Returns null if the user is not in the guild or Discord is unreachable. */
