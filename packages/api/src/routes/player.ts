@@ -7,10 +7,12 @@ import { GUILD_ID } from '../lib/config';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import {
+  clampMaxVideos,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
+  youTubeUrl,
 } from '../lib/validation';
 import { resolveOrAutoJoinPlayer } from '../lib/voice';
 import { requireAdmin } from '../middleware/requireAdmin';
@@ -261,11 +263,7 @@ router.post('/quick-add', requireAuth, playerLimiter, async (req, res) => {
 
 // POST /api/player/quick-add-playlist — add playlist to queue. Member accessible.
 router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) => {
-  let { maxVideos } = req.body as { maxVideos?: number };
-  // Cap maxVideos to prevent abuse.
-  if (maxVideos !== undefined) {
-    maxVideos = Math.min(Math.max(1, maxVideos), 100);
-  }
+  const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
   const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
   if (!url) return;
 
@@ -286,7 +284,7 @@ router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) 
         duration: video.duration,
         thumbnailUrl: video.thumbnailUrl,
       },
-      `https://www.youtube.com/watch?v=${video.id}`,
+      youTubeUrl(video.id),
       requestedBy,
       addedBy
     );

@@ -1,6 +1,6 @@
 import type { QueuedSong } from '@alfira-bot/shared';
+import prisma from '@alfira-bot/shared/prisma';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
-import prisma from '../../../shared/dist/lib/prisma';
 import type { Command } from '../types';
 import { getMetadata, isValidYouTubeUrl } from '../utils/ytdlp';
 import { getOrCreateConnection, requireGuild, requireVoiceChannel } from './guards';

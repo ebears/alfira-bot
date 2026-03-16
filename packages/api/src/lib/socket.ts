@@ -5,6 +5,9 @@ import { verifySessionToken } from '../middleware/requireAuth';
 import { WEB_UI_ORIGIN } from './config';
 import logger from './logger';
 
+type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: Date };
+type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
+
 // Socket.io server singleton. Call initSocket(httpServer) once at startup.
 // Events: player:update, songs:added, songs:updated, songs:deleted, playlists:updated
 
@@ -91,7 +94,7 @@ export function emitPlayerUpdate(state: QueueState): void {
  * Emit a newly added song to all connected clients.
  * Allows the Songs page to append the card in real time.
  */
-export function emitSongAdded(song: Omit<Song, 'createdAt'> & { createdAt: Date }): void {
+export function emitSongAdded(song: SerializedSong): void {
   _io?.emit('songs:added', { ...song, createdAt: song.createdAt.toISOString() });
 }
 
@@ -107,7 +110,7 @@ export function emitSongDeleted(id: string): void {
  * Emit an updated song to all connected clients.
  * Allows the Library page to reflect nickname changes in real time.
  */
-export function emitSongUpdated(song: Omit<Song, 'createdAt'> & { createdAt: Date }): void {
+export function emitSongUpdated(song: SerializedSong): void {
   _io?.emit('songs:updated', { ...song, createdAt: song.createdAt.toISOString() });
 }
 
@@ -115,9 +118,7 @@ export function emitSongUpdated(song: Omit<Song, 'createdAt'> & { createdAt: Dat
  * Emit an updated playlist object to all connected clients.
  * Covers: create, rename, song added, song removed.
  */
-export function emitPlaylistUpdated(
-  playlist: Omit<Playlist, 'createdAt'> & { createdAt: Date }
-): void {
+export function emitPlaylistUpdated(playlist: SerializedPlaylist): void {
   _io?.emit('playlists:updated', { ...playlist, createdAt: playlist.createdAt.toISOString() });
 }
 

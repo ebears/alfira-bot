@@ -12,6 +12,8 @@ const LOOP_MODE_LABELS: Record<LoopMode, string> = {
   queue: '🔁 Queue',
 };
 
+export const EMBED_COLOR = 0x5865f2;
+
 export const LOOP_MODE_DESCRIPTIONS: Record<LoopMode, string> = {
   off: 'off',
   song: 'the current song',
@@ -24,7 +26,7 @@ export function formatLoopMode(mode: LoopMode): string {
 
 export function buildNowPlayingEmbed(song: QueuedSong, loopMode: LoopMode): EmbedBuilder {
   return new EmbedBuilder()
-    .setColor(0x5865f2)
+    .setColor(EMBED_COLOR)
     .setTitle('▶️  Now Playing')
     .setDescription(`**[${song.title}](${song.youtubeUrl})**`)
     .setThumbnail(song.thumbnailUrl)

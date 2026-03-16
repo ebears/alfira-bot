@@ -26,7 +26,7 @@ export const deleteSong = (id: string) => client.delete(`/api/songs/${id}`);
 export const updateSongNickname = (id: string, nickname: string | null) =>
   client.patch<Song>(`/api/songs/${id}`, { nickname }).then((r) => r.data);
 
-export interface ImportPlaylistResult {
+interface ImportPlaylistResult {
   message: string;
   playlistTitle: string;
   totalVideos: number;
@@ -109,7 +109,7 @@ export const togglePause = () =>
 export const quickAddToQueue = (youtubeUrl: string) =>
   client.post<SongAddedResponse>('/api/player/quick-add', { youtubeUrl }).then((r) => r.data);
 
-export interface QuickAddPlaylistResult {
+interface QuickAddPlaylistResult {
   message: string;
   playlistTitle: string;
   totalVideos: number;
