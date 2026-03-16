@@ -100,6 +100,7 @@ export const leaveVoice = () => client.post('/api/player/leave');
 
 export const setLoopMode = (mode: LoopMode) => client.post('/api/player/loop', { mode });
 export const shuffleQueue = () => client.post('/api/player/shuffle');
+export const unshuffleQueue = () => client.post('/api/player/unshuffle');
 export const clearQueue = () => client.post('/api/player/clear');
 
 export const togglePause = () =>

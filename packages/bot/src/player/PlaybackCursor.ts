@@ -31,6 +31,11 @@ export class PlaybackCursor<T> {
     return this.readIndex >= this.buffer.length;
   }
 
+  /** Whether the queue is currently shuffled */
+  get isShuffled(): boolean {
+    return this.playbackOrder !== null;
+  }
+
   // ---------------------------------------------------------------------------
   // Core Operations
   // ---------------------------------------------------------------------------
@@ -94,6 +99,15 @@ export class PlaybackCursor<T> {
     fisherYatesShuffle(remaining);
 
     this.playbackOrder = [...played, ...remaining];
+  }
+
+  /**
+   * Restore original buffer order by clearing the playback order.
+   * The buffer itself is already in canonical order, so this just removes
+   * the shuffled index array.
+   */
+  unshuffle(): void {
+    this.playbackOrder = null;
   }
 
   // ---------------------------------------------------------------------------

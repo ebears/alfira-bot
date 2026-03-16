@@ -198,6 +198,11 @@ export class GuildPlayer {
     this.broadcast();
   }
 
+  unshuffle(): void {
+    this.queue.unshuffle();
+    this.broadcast();
+  }
+
   setLoopMode(mode: LoopMode): void {
     this.loopMode = mode;
     this.broadcast();
@@ -247,6 +252,7 @@ export class GuildPlayer {
       isPaused: this.paused,
       isConnectedToVoice: this.connection.state.status !== VoiceConnectionStatus.Destroyed,
       loopMode: this.loopMode,
+      isShuffled: this.queue.isShuffled,
       currentSong: this.currentSong,
       priorityQueue: this.priorityQueue,
       queue: this.queue.toArray(),
