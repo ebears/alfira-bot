@@ -15,6 +15,7 @@ import {
   SkipForwardIcon,
   SparkleIcon,
 } from '@phosphor-icons/react';
+import type React from 'react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';

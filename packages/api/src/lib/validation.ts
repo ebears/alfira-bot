@@ -91,3 +91,13 @@ export async function fetchPlaylistMetadata(
     return null;
   }
 }
+
+/** Clamps maxVideos to the [1, 100] range, or returns undefined if not set. */
+export function clampMaxVideos(value: number | undefined): number | undefined {
+  return value === undefined ? undefined : Math.min(Math.max(1, value), 100);
+}
+
+/** Returns a canonical YouTube watch URL for a given video ID. */
+export function youTubeUrl(videoId: string): string {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}

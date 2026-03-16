@@ -1,5 +1,6 @@
 import type { Playlist } from '@alfira-bot/shared';
 import { CaretRightIcon, GhostIcon, PlaylistIcon, PlusCircleIcon } from '@phosphor-icons/react';
+import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPlaylist, getPlaylists, startPlayback } from '../api/api';

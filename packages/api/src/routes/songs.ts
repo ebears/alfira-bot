@@ -1,18 +1,30 @@
+import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { getUserDisplayName } from '../lib/displayName';
 import prisma from '../lib/prisma';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
+  clampMaxVideos,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
+  youTubeUrl,
 } from '../lib/validation';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
+
+async function findSongOr404(id: string, res: Response) {
+  const song = await prisma.song.findUnique({ where: { id } });
+  if (!song) {
+    res.status(404).json({ error: 'Song not found.' });
+    return null;
+  }
+  return song;
+}
 
 // Rate limit playlist import to prevent abuse.
 const importLimiter = rateLimit({
@@ -128,10 +140,7 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
 // 5. Emit songs:added for each new song.
 // ---------------------------------------------------------------------------
 router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async (req, res) => {
-  let { maxVideos } = req.body as { maxVideos?: number };
-  if (maxVideos !== undefined) {
-    maxVideos = Math.min(Math.max(1, maxVideos), 100);
-  }
+  const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
   const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
   if (!url) return;
 
@@ -141,7 +150,7 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
   // Build the canonical URL format for each video
   const videosWithUrls = playlistMetadata.videos.map((v) => ({
     ...v,
-    canonicalUrl: `https://www.youtube.com/watch?v=${v.id}`,
+    canonicalUrl: youTubeUrl(v.id),
   }));
 
   // Get existing songs that match either by youtubeId OR youtubeUrl
@@ -217,12 +226,8 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = req.params.id as string;
 
-  const existing = await prisma.song.findUnique({ where: { id } });
-
-  if (!existing) {
-    res.status(404).json({ error: 'Song not found.' });
-    return;
-  }
+  const existing = await findSongOr404(id, res);
+  if (!existing) return;
 
   await prisma.song.delete({ where: { id } });
 
@@ -248,11 +253,8 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
     return;
   }
 
-  const existing = await prisma.song.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: 'Song not found.' });
-    return;
-  }
+  const existing = await findSongOr404(id, res);
+  if (!existing) return;
 
   const song = await prisma.song.update({
     where: { id },

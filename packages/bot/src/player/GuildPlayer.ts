@@ -3,7 +3,6 @@ import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
 import {
   type AudioPlayer,
   AudioPlayerStatus,
-  type AudioResource,
   createAudioPlayer,
   createAudioResource,
   entersState,
@@ -369,7 +368,7 @@ export class GuildPlayer {
     }
     this.killCurrentFfmpeg = kill;
 
-    const resource: AudioResource = createAudioResource(stream, {
+    const resource = createAudioResource(stream, {
       inputType: isWebmOpus ? StreamType.WebmOpus : StreamType.OggOpus,
     });
 

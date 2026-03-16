@@ -2,7 +2,7 @@ import { formatDuration } from '@alfira-bot/shared';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { formatLoopMode, pluralize } from '../utils/format';
+import { EMBED_COLOR, formatLoopMode, pluralize } from '../utils/format';
 import { requireGuild } from './guards';
 
 // Maximum number of queued songs to list before truncating.
@@ -27,7 +27,7 @@ export const queueCommand: Command = {
       return;
     }
 
-    const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🎵  Queue');
+    const embed = new EmbedBuilder().setColor(EMBED_COLOR).setTitle('🎵  Queue');
 
     // ---------------------------------------------------------------------------
     // Now playing section

@@ -95,6 +95,26 @@ function clearAuthCookies(res: Response): void {
   res.clearCookie(REFRESH_COOKIE_NAME, { httpOnly: true, sameSite: 'lax', secure: isProduction });
 }
 
+/** Fetches guild member roles. Returns 'not-in-guild' on 404, null on other errors. */
+async function fetchGuildMemberRoles(discordId: string): Promise<string[] | null | 'not-in-guild'> {
+  try {
+    const memberRes = await axios.get(
+      `https://discord.com/api/guilds/${GUILD_ID}/members/${discordId}`,
+      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
+    );
+    return memberRes.data.roles ?? [];
+  } catch (err: unknown) {
+    if (isAxiosError(err) && err.response?.status === 404) {
+      return 'not-in-guild';
+    }
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err) },
+      'Failed to fetch guild member roles'
+    );
+    return null;
+  }
+}
+
 /** Returns null if the user is not in the guild or Discord is unreachable. */
 async function fetchUserAdminStatus(
   discordId: string
@@ -106,27 +126,15 @@ async function fetchUserAdminStatus(
     });
     const { username, avatar } = userRes.data;
 
-    // Fetch member roles to determine admin status
-    const memberRes = await axios.get(
-      `https://discord.com/api/guilds/${GUILD_ID}/members/${discordId}`,
-      {
-        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` },
-      }
-    );
-    const memberRoles: string[] = memberRes.data.roles ?? [];
-    const isAdmin = isAdminUser(memberRoles);
+    const roles = await fetchGuildMemberRoles(discordId);
+    if (roles === null || roles === 'not-in-guild') return null;
 
     return {
-      isAdmin,
+      isAdmin: isAdminUser(roles),
       username,
       avatar: avatar ? `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png` : null,
     };
   } catch (err: unknown) {
-    // User not in guild
-    if (isAxiosError(err) && err.response?.status === 404) {
-      return null;
-    }
-    // Discord error - log and return null
     logger.error(
       { err: err instanceof Error ? err.message : String(err) },
       'Failed to fetch user info from Discord'
@@ -204,29 +212,18 @@ router.get('/callback', authLimiter, async (req, res) => {
   // a token. Logging in with an assumed role list would mean a Discord
   // outage silently grants or revokes admin access depending on which
   // direction we default. Refusing is the only safe option.
-  let memberRoles: string[];
-  try {
-    const memberRes = await axios.get(
-      `https://discord.com/api/guilds/${GUILD_ID}/members/${discordUser.id}`,
-      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
-    );
-    memberRoles = memberRes.data.roles ?? [];
-  } catch (err: unknown) {
-    if (isAxiosError(err) && err.response?.status === 404) {
-      res.status(403).json({ error: 'You must be a member of the server to use this app.' });
-      return;
-    }
-    // Discord is unreachable or returned an unexpected error.
-    // Log the detail server-side; return a generic message to the client.
-    logger.error(
-      { userId: discordUser.id, err: err instanceof Error ? err.message : String(err) },
-      'Failed to fetch guild member roles — denying login'
-    );
+  const rolesResult = await fetchGuildMemberRoles(discordUser.id);
+  if (rolesResult === 'not-in-guild') {
+    res.status(403).json({ error: 'You must be a member of the server to use this app.' });
+    return;
+  }
+  if (rolesResult === null) {
     res
       .status(503)
       .json({ error: 'Could not verify your server membership. Please try again in a moment.' });
     return;
   }
+  const memberRoles = rolesResult;
 
   // 4. Determine isAdmin.
   const isAdmin = isAdminUser(memberRoles);
