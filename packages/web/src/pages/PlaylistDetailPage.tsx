@@ -1,6 +1,7 @@
 import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
+  ArrowSquareOutIcon,
   BombIcon,
   CaretLeftIcon,
   GhostIcon,
@@ -406,29 +407,33 @@ function SongRow({
   onAddToQueue: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [addingToQueue, setAddingToQueue] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const handleAddToQueue = async () => {
-    setAddingToQueue(true);
-    try {
-      await onAddToQueue();
-    } finally {
-      setAddingToQueue(false);
-    }
-  };
-
-  const menuItems: MenuItem[] = isAdmin
-    ? [
-        {
-          id: 'remove',
-          label: 'Remove from playlist',
-          icon: <BombIcon size={14} weight="duotone" />,
-          danger: true,
-          onClick: onRemove,
-        },
-      ]
-    : [];
+  const menuItems: MenuItem[] = [
+    {
+      id: 'add-to-queue',
+      label: 'Add to Up Next',
+      icon: <VinylRecordIcon size={14} weight="duotone" />,
+      onClick: onAddToQueue,
+    },
+    {
+      id: 'open-link',
+      label: 'Open Link',
+      icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
+      onClick: () => window.open(song.youtubeUrl, '_blank'),
+    },
+    ...(isAdmin
+      ? [
+          {
+            id: 'remove',
+            label: 'Remove from playlist',
+            icon: <BombIcon size={14} weight="duotone" />,
+            danger: true,
+            onClick: onRemove,
+          } as MenuItem,
+        ]
+      : []),
+  ];
 
   return (
     <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
@@ -468,32 +473,14 @@ function SongRow({
         {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
       </div>
       <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
-      {/* Add to Queue - available to all members */}
-      <button
-        type="button"
-        onClick={handleAddToQueue}
-        disabled={addingToQueue}
-        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl disabled:opacity-50"
-        title="Add to Up Next"
-      >
-        {addingToQueue ? (
-          <span className="w-4 h-4 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
-        ) : (
-          <VinylRecordIcon size={18} weight="duotone" className="md:w-3.5 md:h-3.5" />
-        )}
-      </button>
-      {menuItems.length > 0 && (
-        <>
-          <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
-          {menuOpen && (
-            <ContextMenu
-              items={menuItems}
-              isOpen={menuOpen}
-              onClose={() => setMenuOpen(false)}
-              triggerRef={triggerRef}
-            />
-          )}
-        </>
+      <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
+      {menuOpen && (
+        <ContextMenu
+          items={menuItems}
+          isOpen={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          triggerRef={triggerRef}
+        />
       )}
     </div>
   );

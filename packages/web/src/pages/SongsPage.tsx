@@ -1,6 +1,7 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
+  ArrowSquareOutIcon,
   BombIcon,
   CassetteTapeIcon,
   CircleNotchIcon,
@@ -241,6 +242,7 @@ export default function SongsPage() {
               key={song.id}
               song={song}
               isAdmin={isAdminView}
+              playlists={playlists}
               onDelete={() => setDeleteId(song.id)}
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
@@ -323,18 +325,11 @@ function SongCard({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
-  const [addingToQueue, setAddingToQueue] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const {
-    editingNickname,
-    editValue,
-    setEditValue,
-    savingNickname,
-    editInputRef,
-    startEdit,
-    cancelEdit,
-    saveNickname,
-  } = useNicknameEditor(song.id, song.nickname);
+  const { editValue, setEditValue, savingNickname, cancelEdit, saveNickname } = useNicknameEditor(
+    song.id,
+    song.nickname
+  );
 
   const handleAddToPlaylist = async (playlistId: string) => {
     try {
@@ -347,47 +342,69 @@ function SongCard({
     }
   };
 
-  const handleAddToQueue = async () => {
-    setAddingToQueue(true);
-    try {
-      await onAddToQueue();
-    } finally {
-      setAddingToQueue(false);
-    }
-  };
-
-  const menuItems: MenuItem[] = isAdmin
-    ? [
-        {
-          id: 'add-to-playlist',
-          label: 'Add to playlist',
-          icon: <CassetteTapeIcon size={14} weight="duotone" />,
-          submenu: {
-            title: 'Add to playlist',
-            items: playlists.map((pl) => ({
-              id: pl.id,
-              label: pl.name,
-              disabled: addedTo.has(pl.id),
-            })),
-            onSelect: handleAddToPlaylist,
-            emptyMessage: 'no playlists yet',
-          },
-        },
-        {
-          id: 'edit-nickname',
-          label: 'Edit nickname',
-          icon: <PencilSimpleIcon size={14} weight="duotone" />,
-          onClick: startEdit,
-        },
-        {
-          id: 'delete',
-          label: 'Delete song',
-          icon: <BombIcon size={14} weight="duotone" />,
-          danger: true,
-          onClick: onDelete,
-        },
-      ]
-    : [];
+  const menuItems: MenuItem[] = [
+    {
+      id: 'add-to-queue',
+      label: 'Add to Up Next',
+      icon: <VinylRecordIcon size={14} weight="duotone" />,
+      onClick: onAddToQueue,
+    },
+    {
+      id: 'open-link',
+      label: 'Open Link',
+      icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
+      onClick: () => window.open(song.youtubeUrl, '_blank'),
+    },
+    {
+      id: 'user-info',
+      label: '',
+      icon: <UserIcon size={14} weight="duotone" />,
+      info: {
+        label: song.addedByDisplayName || song.addedBy || '',
+        icon: <UserIcon size={14} weight="duotone" />,
+      },
+    },
+    ...(isAdmin
+      ? [
+          {
+            id: 'add-to-playlist',
+            label: 'Add to playlist',
+            icon: <CassetteTapeIcon size={14} weight="duotone" />,
+            submenu: {
+              title: 'Add to playlist',
+              items: playlists.map((pl) => ({
+                id: pl.id,
+                label: pl.name,
+                disabled: addedTo.has(pl.id),
+              })),
+              onSelect: handleAddToPlaylist,
+              emptyMessage: 'no playlists yet',
+            },
+          } as MenuItem,
+          {
+            id: 'edit-nickname',
+            label: 'Rename',
+            icon: <PencilSimpleIcon size={14} weight="duotone" />,
+            editSubmenu: {
+              title: 'Rename',
+              value: editValue,
+              onChange: setEditValue,
+              onSave: saveNickname,
+              onCancel: cancelEdit,
+              saving: savingNickname,
+              placeholder: 'Nickname (empty to clear)',
+            },
+          } as MenuItem,
+          {
+            id: 'delete',
+            label: 'Delete song',
+            icon: <BombIcon size={14} weight="duotone" />,
+            danger: true,
+            onClick: onDelete,
+          } as MenuItem,
+        ]
+      : []),
+  ];
 
   return (
     <div
@@ -452,39 +469,9 @@ function SongCard({
           </div>
         </button>
 
-        {/* Add to Queue — top left */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddToQueue();
-          }}
-          disabled={addingToQueue}
-          className={`
-            absolute top-2 left-2 z-20
-            flex items-center justify-center w-8 h-8 rounded-xl
-            bg-black/50 backdrop-blur-sm border border-white/15
-            text-white/70 hover:text-white
-            transition-all duration-200
-            opacity-0 pointer-events-none
-            group-hover:opacity-100 group-hover:pointer-events-auto
-            ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
-            disabled:opacity-50
-          `}
-          title="Add to Up Next"
-        >
-          {addingToQueue ? (
-            <span className="w-3.5 h-3.5 border-2 border-white/70 border-t-transparent rounded-full animate-spin inline-block" />
-          ) : (
-            <VinylRecordIcon size={16} weight="duotone" />
-          )}
-        </button>
-
         {/* Context menu trigger — top right */}
-        {menuItems.length > 0 && (
-          <>
-            <div
-              className={`
+        <div
+          className={`
               absolute top-2 right-2 z-20
               transition-all duration-200
               opacity-0 pointer-events-none
@@ -492,85 +479,33 @@ function SongCard({
               ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
               ${menuOpen ? '!opacity-100' : ''}
             `}
-            >
-              <ContextMenuTrigger
-                ref={triggerRef}
-                onOpen={() => setMenuOpen(true)}
-                isOpen={menuOpen}
-                className="!w-8 !h-8 md:!w-8 md:!h-8 !text-white/70 hover:!text-white !border-white/15 hover:!border-white/30 !bg-black/50 !backdrop-blur-sm !rounded-xl !opacity-100 md:!opacity-100"
-              />
-            </div>
-            {menuOpen && (
-              <ContextMenu
-                items={menuItems}
-                isOpen={menuOpen}
-                onClose={() => setMenuOpen(false)}
-                triggerRef={triggerRef}
-              />
-            )}
-          </>
-        )}
-
-        {/* Added by — bottom left */}
-        <span
-          className={`
-          absolute bottom-2 left-2 z-20
-          flex items-center gap-1
-          text-[10px] text-white/80 bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded
-          transition-opacity duration-200
-          opacity-0 pointer-events-none
-          group-hover:opacity-100 group-hover:pointer-events-auto
-          ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
-        `}
         >
-          <UserIcon size={10} weight="duotone" />
-          {song.addedByDisplayName || song.addedBy}
-        </span>
+          <ContextMenuTrigger
+            ref={triggerRef}
+            onOpen={() => setMenuOpen(true)}
+            isOpen={menuOpen}
+            className="!w-8 !h-8 md:!w-8 md:!h-8 !text-white/70 hover:!text-white !border-white/15 hover:!border-white/30 !bg-black/50 !backdrop-blur-sm !rounded-xl !opacity-100 md:!opacity-100"
+          />
+        </div>
+        {menuOpen && (
+          <ContextMenu
+            items={menuItems}
+            isOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            triggerRef={triggerRef}
+          />
+        )}
       </div>
 
       {/* Info */}
       <div className="p-3 flex-1">
-        {editingNickname ? (
-          <div className="flex items-center gap-1.5">
-            <input
-              className="input text-sm py-1 px-2 flex-1 min-w-0"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveNickname();
-                if (e.key === 'Escape') cancelEdit();
-              }}
-              disabled={savingNickname}
-              ref={editInputRef}
-              placeholder="Nickname (empty to clear)"
-            />
-            <button
-              type="button"
-              onClick={saveNickname}
-              disabled={savingNickname}
-              className="text-xs text-accent hover:text-accent/80 shrink-0"
-            >
-              {savingNickname ? '...' : 'Save'}
-            </button>
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="text-xs text-muted hover:text-fg shrink-0"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <>
-            <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
-              {song.nickname || song.title}
-            </p>
-            {song.nickname && (
-              <p className="text-[11px] text-faint truncate opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                {song.title}
-              </p>
-            )}
-          </>
+        <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
+          {song.nickname || song.title}
+        </p>
+        {song.nickname && (
+          <p className="text-[11px] text-faint truncate opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {song.title}
+          </p>
         )}
       </div>
     </div>
@@ -583,6 +518,7 @@ function SongCard({
 function LibrarySongRow({
   song,
   isAdmin,
+  playlists,
   onDelete,
   onPlay,
   isPlaying,
@@ -590,51 +526,94 @@ function LibrarySongRow({
 }: {
   song: Song;
   isAdmin: boolean;
+  playlists: Playlist[];
   onDelete: () => void;
   onPlay: () => void;
   isPlaying: boolean;
   onAddToQueue: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [addingToQueue, setAddingToQueue] = useState(false);
+  const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const {
-    editingNickname,
-    editValue,
-    setEditValue,
-    savingNickname,
-    editInputRef,
-    startEdit,
-    cancelEdit,
-    saveNickname,
-  } = useNicknameEditor(song.id, song.nickname);
+  const { editValue, setEditValue, savingNickname, cancelEdit, saveNickname } = useNicknameEditor(
+    song.id,
+    song.nickname
+  );
 
-  const handleAddToQueue = async () => {
-    setAddingToQueue(true);
+  const handleAddToPlaylist = async (playlistId: string) => {
     try {
-      await onAddToQueue();
-    } finally {
-      setAddingToQueue(false);
+      await addSongToPlaylist(playlistId, song.id);
+      setAddedTo((prev) => new Set([...prev, playlistId]));
+    } catch (err: unknown) {
+      if (apiErrorMessage(err, '').includes('already')) {
+        setAddedTo((prev) => new Set([...prev, playlistId]));
+      }
     }
   };
 
-  const menuItems: MenuItem[] = isAdmin
-    ? [
-        {
-          id: 'edit-nickname',
-          label: 'Edit nickname',
-          icon: <PencilSimpleIcon size={14} weight="duotone" />,
-          onClick: startEdit,
-        },
-        {
-          id: 'delete',
-          label: 'Delete song',
-          icon: <BombIcon size={14} weight="duotone" />,
-          danger: true,
-          onClick: onDelete,
-        },
-      ]
-    : [];
+  const menuItems: MenuItem[] = [
+    {
+      id: 'add-to-queue',
+      label: 'Add to Up Next',
+      icon: <VinylRecordIcon size={14} weight="duotone" />,
+      onClick: onAddToQueue,
+    },
+    {
+      id: 'open-link',
+      label: 'Open Link',
+      icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
+      onClick: () => window.open(song.youtubeUrl, '_blank'),
+    },
+    {
+      id: 'user-info',
+      label: '',
+      icon: <UserIcon size={14} weight="duotone" />,
+      info: {
+        label: song.addedByDisplayName || song.addedBy || '',
+        icon: <UserIcon size={14} weight="duotone" />,
+      },
+    },
+    ...(isAdmin
+      ? [
+          {
+            id: 'add-to-playlist',
+            label: 'Add to playlist',
+            icon: <CassetteTapeIcon size={14} weight="duotone" />,
+            submenu: {
+              title: 'Add to playlist',
+              items: playlists.map((pl) => ({
+                id: pl.id,
+                label: pl.name,
+                disabled: addedTo.has(pl.id),
+              })),
+              onSelect: handleAddToPlaylist,
+              emptyMessage: 'no playlists yet',
+            },
+          } as MenuItem,
+          {
+            id: 'edit-nickname',
+            label: 'Rename',
+            icon: <PencilSimpleIcon size={14} weight="duotone" />,
+            editSubmenu: {
+              title: 'Rename',
+              value: editValue,
+              onChange: setEditValue,
+              onSave: saveNickname,
+              onCancel: cancelEdit,
+              saving: savingNickname,
+              placeholder: 'Nickname (empty to clear)',
+            },
+          } as MenuItem,
+          {
+            id: 'delete',
+            label: 'Delete song',
+            icon: <BombIcon size={14} weight="duotone" />,
+            danger: true,
+            onClick: onDelete,
+          } as MenuItem,
+        ]
+      : []),
+  ];
 
   return (
     <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
@@ -645,51 +624,11 @@ function LibrarySongRow({
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        {editingNickname ? (
-          <div className="flex items-center gap-1.5">
-            <input
-              className="input text-sm py-1 px-2 flex-1 min-w-0"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveNickname();
-                if (e.key === 'Escape') cancelEdit();
-              }}
-              disabled={savingNickname}
-              ref={editInputRef}
-              placeholder="Nickname (empty to clear)"
-            />
-            <button
-              type="button"
-              onClick={saveNickname}
-              disabled={savingNickname}
-              className="text-xs text-accent hover:text-accent/80 shrink-0"
-            >
-              {savingNickname ? '...' : 'Save'}
-            </button>
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="text-xs text-muted hover:text-fg shrink-0"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <>
-            <p className="font-body text-sm font-medium text-fg truncate">
-              {song.nickname || song.title}
-            </p>
-            {song.nickname && (
-              <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
-            )}
-          </>
-        )}
+        <p className="font-body text-sm font-medium text-fg truncate">
+          {song.nickname || song.title}
+        </p>
+        {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
       </div>
-      <span className="flex items-center gap-1 text-[10px] text-faint shrink-0">
-        <UserIcon size={12} weight="duotone" />
-        {song.addedByDisplayName || song.addedBy}
-      </span>
       <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
       <button
         type="button"
@@ -704,31 +643,14 @@ function LibrarySongRow({
           <PlayIcon size={18} weight="duotone" />
         )}
       </button>
-      <button
-        type="button"
-        onClick={handleAddToQueue}
-        disabled={addingToQueue}
-        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl disabled:opacity-50"
-        title="Add to Up Next"
-      >
-        {addingToQueue ? (
-          <span className="w-4 h-4 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
-        ) : (
-          <VinylRecordIcon size={18} weight="duotone" />
-        )}
-      </button>
-      {menuItems.length > 0 && (
-        <>
-          <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
-          {menuOpen && (
-            <ContextMenu
-              items={menuItems}
-              isOpen={menuOpen}
-              onClose={() => setMenuOpen(false)}
-              triggerRef={triggerRef}
-            />
-          )}
-        </>
+      <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
+      {menuOpen && (
+        <ContextMenu
+          items={menuItems}
+          isOpen={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          triggerRef={triggerRef}
+        />
       )}
     </div>
   );
