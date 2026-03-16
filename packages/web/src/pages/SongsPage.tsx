@@ -415,9 +415,42 @@ function SongCard({
         />
 
         {/* Duration badge — bottom right */}
-        <span className="absolute bottom-2 right-2 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
+        <span className="absolute bottom-2 right-2 z-20 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
           {formatDuration(song.duration)}
         </span>
+
+        {/* Play button — center (rendered before action buttons so they receive clicks) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlay();
+          }}
+          disabled={isPlaying}
+          className={`
+            absolute inset-0 z-[15] flex items-center justify-center
+            transition-opacity duration-200
+            ${isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}
+            ${isActive && !isPlaying ? '!opacity-100 !pointer-events-auto' : ''}
+            disabled:cursor-default
+          `}
+          title="Play from this song"
+        >
+          <div
+            className={`btn-primary flex items-center gap-2 px-5 py-2.5 text-sm transition-transform duration-150 ${
+              isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
+            }`}
+          >
+            {isPlaying ? (
+              <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+            ) : (
+              <>
+                <PlayIcon size={18} weight="duotone" />
+                <span className="hidden md:inline">Play</span>
+              </>
+            )}
+          </div>
+        </button>
 
         {/* Add to Queue — top left */}
         <button
@@ -477,39 +510,6 @@ function SongCard({
             )}
           </>
         )}
-
-        {/* Play button — center */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlay();
-          }}
-          disabled={isPlaying}
-          className={`
-            absolute inset-0 z-20 flex items-center justify-center
-            transition-opacity duration-200
-            ${isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}
-            ${isActive && !isPlaying ? '!opacity-100 !pointer-events-auto' : ''}
-            disabled:cursor-default
-          `}
-          title="Play from this song"
-        >
-          <div
-            className={`btn-primary flex items-center gap-2 px-5 py-2.5 text-sm transition-transform duration-150 ${
-              isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
-            }`}
-          >
-            {isPlaying ? (
-              <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
-            ) : (
-              <>
-                <PlayIcon size={18} weight="duotone" />
-                <span className="hidden md:inline">Play</span>
-              </>
-            )}
-          </div>
-        </button>
 
         {/* Added by — bottom left */}
         <span
