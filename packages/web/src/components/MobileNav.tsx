@@ -245,11 +245,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
 
         {/* Logout button at bottom */}
         <div className="p-4 border-t border-border safe-area-bottom">
-          <button
-            type="button"
-            onClick={onLogout}
-            className="w-full text-center py-3 rounded-lg text-sm font-medium text-danger hover:bg-danger/10 transition-colors duration-150"
-          >
+          <button type="button" onClick={onLogout} className="btn-danger w-full text-center">
             Log out
           </button>
         </div>

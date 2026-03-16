@@ -197,7 +197,7 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-xs font-mono text-muted hover:text-fg hover:bg-elevated rounded transition-colors duration-150"
+                className="btn-ghost w-full text-left text-xs"
               >
                 log out
               </button>
@@ -355,7 +355,7 @@ function NowPlayingBar() {
               type="button"
               onClick={handleStop}
               title="Stop playback"
-              className="w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
+              className="btn-icon text-muted hover:text-danger"
             >
               <DoorOpenIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
             </button>
@@ -373,10 +373,8 @@ function NowPlayingBar() {
               onClick={handleCycleLoop}
               disabled={loopBusy}
               title={`Loop: ${loopMode}`}
-              className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150 shrink-0 disabled:opacity-50 ${
-                isLoopActive
-                  ? 'text-accent hover:text-accent-muted'
-                  : 'text-muted hover:text-fg hover:bg-elevated'
+              className={`btn-icon shrink-0 disabled:opacity-50 ${
+                isLoopActive ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
               }`}
               style={
                 isLoopActive
@@ -398,10 +396,8 @@ function NowPlayingBar() {
               onClick={handleShuffleToggle}
               disabled={shuffleBusy}
               title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
-              className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-colors duration-150 shrink-0 disabled:opacity-50 ${
-                isShuffled
-                  ? 'text-accent hover:text-accent-muted'
-                  : 'text-muted hover:text-fg hover:bg-elevated'
+              className={`btn-icon shrink-0 disabled:opacity-50 ${
+                isShuffled ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
               }`}
             >
               {shuffleBusy ? (
@@ -532,10 +528,10 @@ function BarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150 ${
+      className={`btn-icon ${
         busy
-          ? 'opacity-40 cursor-not-allowed text-muted'
-          : `${pulse ? 'text-accent animate-pulse-gentle' : 'text-muted'} ${hoverColor} hover:bg-elevated active:bg-elevated/80 cursor-pointer`
+          ? 'text-muted'
+          : `${pulse ? 'text-accent animate-pulse-gentle' : 'text-muted'} ${hoverColor} cursor-pointer`
       } disabled:pointer-events-none`}
     >
       {busy ? (
