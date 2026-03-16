@@ -583,7 +583,7 @@
   --color-faint: var(--color-faint);
   --color-danger: var(--color-danger);
   --font-display: "Cherry Bomb One", regular;
-  --font-body: Yomogi, regular;
+  --font-body: "Chiron GoRound TC", regular;
   --font-mono: "JetBrains Mono", monospace;
   --animate-fade-up: fadeUp 0.3s ease forwards;
   --animate-shimmer: shimmer 1.4s infinite linear;
@@ -606,8 +606,11 @@
   body {
     background-color: var(--color-base);
     color: var(--color-fg);
-    font-family: 'Yomogi', regular;
+    font-family: 'Chiron GoRound TC', regular;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-variant-ligatures: common-ligatures;
     transition: background-color 0.3s ease, color 0.3s ease;
     /* Prevent horizontal scroll on mobile */
     overflow-x: hidden;
@@ -668,7 +671,7 @@
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-body text-sm px-3 py-3 md:py-2 rounded-xl outline-none focus:border-accent/60 transition-colors duration-200 placeholder:text-faint w-full;
+    @apply bg-elevated border border-border text-fg font-mono text-sm px-3 py-3 md:py-2 rounded-xl outline-none focus:border-accent/60 transition-colors duration-200 placeholder:text-faint w-full;
   }
 
   .card {
