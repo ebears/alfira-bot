@@ -296,7 +296,7 @@ function MenuItemButton({
       disabled={item.disabled}
       onClick={onClick}
       className={`
-        w-full text-left px-3 py-2.5 text-sm font-body
+        w-full text-left px-3 py-2.5 text-sm font-mono
         flex items-center gap-2
         transition-colors duration-100
         disabled:opacity-50 disabled:cursor-not-allowed
@@ -346,7 +346,7 @@ function SubmenuPanel({
               tabIndex={-1}
               disabled={item.disabled}
               onClick={() => onSelect(item.id)}
-              className="w-full text-left px-3 py-2.5 text-sm font-body text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center gap-2"
+              className="w-full text-left px-3 py-2.5 text-sm font-mono text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center gap-2"
             >
               {item.icon && <span className="shrink-0">{item.icon}</span>}
               <span className="truncate">{item.label}</span>

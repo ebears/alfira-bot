@@ -454,7 +454,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               <select
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
-                className="input font-body"
+                className="input"
               >
                 {playlists.map((pl) => (
                   <option key={pl.id} value={pl.id}>
@@ -585,7 +585,7 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
                 setSuccessMsg('');
               }}
               placeholder="https://youtube.com/watch?v=..."
-              className="input font-body w-full"
+              className="input w-full"
               disabled={submitting}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && youtubeUrl.trim()) {
@@ -676,7 +676,7 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
                 setError('');
               }}
               placeholder="https://youtube.com/watch?v=..."
-              className="input font-body w-full"
+              className="input w-full"
               disabled={submitting}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && youtubeUrl.trim()) {
