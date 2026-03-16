@@ -4,6 +4,7 @@ import {
   ArrowSquareOutIcon,
   BombIcon,
   CaretLeftIcon,
+  DotsThreeOutlineVerticalIcon,
   GhostIcon,
   LockIcon,
   LockOpenIcon,
@@ -294,12 +295,20 @@ export default function PlaylistDetailPage() {
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </button>
-          <ContextMenuTrigger
+          <button
             ref={menuTriggerRef}
-            onOpen={() => setMenuOpen(true)}
-            isOpen={menuOpen}
-            className="!md:opacity-100"
-          />
+            type="button"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            title="More actions"
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen(true);
+            }}
+            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
+          >
+            <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
+          </button>
           {menuOpen && (
             <ContextMenu
               items={menuItems}
