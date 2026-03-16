@@ -421,7 +421,9 @@ function EditSubmenuPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    // Delay focus to let the fade-up animation start (element is opacity:0 initially)
+    const timer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -444,6 +446,7 @@ function EditSubmenuPanel({
           value={config.value}
           onChange={(e) => config.onChange(e.target.value)}
           onKeyDown={(e) => {
+            e.stopPropagation();
             if (e.key === 'Enter') onSave();
             if (e.key === 'Escape') onBack();
           }}
