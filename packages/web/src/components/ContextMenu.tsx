@@ -98,9 +98,14 @@ export function ContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [activeSubmenu, setActiveSubmenu] = useState<SubmenuConfig | null>(null);
-  const [activeEditSubmenu, setActiveEditSubmenu] = useState<MenuItem['editSubmenu'] | null>(null);
+  // Store the item ID, not the object, so we always get fresh values from items
+  const [activeEditItemId, setActiveEditItemId] = useState<string | null>(null);
   const [submenuParentIndex, setSubmenuParentIndex] = useState(0);
   const [focusedIndex, setFocusedIndex] = useState(0);
+
+  // Look up the current editSubmenu config from items (always fresh)
+  const activeEditItem = activeEditItemId ? items.find((i) => i.id === activeEditItemId) : null;
+  const activeEditSubmenu = activeEditItem?.editSubmenu ?? null;
 
   const currentItems = activeSubmenu
     ? activeSubmenu.items.map((item) => ({
@@ -109,7 +114,7 @@ export function ContextMenu({
         icon: item.icon,
         disabled: item.disabled,
       }))
-    : activeEditSubmenu
+    : activeEditItemId
       ? []
       : items;
 
@@ -153,7 +158,7 @@ export function ContextMenu({
   useEffect(() => {
     if (isOpen) {
       setActiveSubmenu(null);
-      setActiveEditSubmenu(null);
+      setActiveEditItemId(null);
       setFocusedIndex(0);
     }
   }, [isOpen]);
@@ -195,10 +200,10 @@ export function ContextMenu({
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (activeSubmenu || activeEditSubmenu) {
+        if (activeSubmenu || activeEditItemId) {
           activeEditSubmenu?.onCancel();
           setActiveSubmenu(null);
-          setActiveEditSubmenu(null);
+          setActiveEditItemId(null);
           setFocusedIndex(submenuParentIndex);
         } else {
           onClose();
@@ -209,7 +214,15 @@ export function ContextMenu({
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [isOpen, onClose, triggerRef, activeSubmenu, activeEditSubmenu, submenuParentIndex]);
+  }, [
+    isOpen,
+    onClose,
+    triggerRef,
+    activeSubmenu,
+    activeEditItemId,
+    activeEditSubmenu,
+    submenuParentIndex,
+  ]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -249,7 +262,7 @@ export function ContextMenu({
       aria-label="Song actions"
       style={{ position: 'fixed', top: position.top, left: position.left }}
       className="z-50 min-w-48"
-      onKeyDown={handleKeyDown}
+      onKeyDown={activeEditItemId ? undefined : handleKeyDown}
     >
       <div className="bg-elevated border border-border rounded-xl shadow-xl overflow-hidden animate-fade-up">
         {activeSubmenu ? (
@@ -269,7 +282,7 @@ export function ContextMenu({
             config={activeEditSubmenu}
             onBack={() => {
               activeEditSubmenu.onCancel();
-              setActiveEditSubmenu(null);
+              setActiveEditItemId(null);
               setFocusedIndex(submenuParentIndex);
             }}
             onSave={() => {
@@ -292,7 +305,7 @@ export function ContextMenu({
                     setSubmenuParentIndex(focusedIndex);
                     setFocusedIndex(0);
                   } else if (item.editSubmenu) {
-                    setActiveEditSubmenu(item.editSubmenu);
+                    setActiveEditItemId(item.id);
                     setSubmenuParentIndex(focusedIndex);
                     setFocusedIndex(0);
                   } else {
