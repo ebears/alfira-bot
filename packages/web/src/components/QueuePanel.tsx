@@ -324,10 +324,10 @@ function NowPlayingCard({
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-20 h-20 rounded-xl border border-border shadow-lg object-cover"
+            className="w-20 h-20 rounded-xl border border-border object-cover"
           />
           {isPlaying && (
-            <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg">
+            <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
               <PlayCircleIcon size={10} weight="duotone" className="text-white" />
             </div>
           )}

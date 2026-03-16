@@ -773,4 +773,35 @@
       0 10px 30px -8px rgba(0, 0, 0, 0.5),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
   }
+
+  .btn-icon {
+    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-elevated) 80%, white) 0%,
+      var(--color-elevated) 100%
+    );
+    box-shadow:
+      0 2px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 3px 6px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .btn-icon:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 5px 10px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .btn-icon:active {
+    transform: translateY(2px);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.15);
+  }
+  .btn-icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
