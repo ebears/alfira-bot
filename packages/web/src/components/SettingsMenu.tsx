@@ -34,7 +34,7 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
           <Backdrop onClose={() => setIsOpen(false)}>
             {/* Panel */}
-            <div className="relative w-full max-w-md bg-surface border border-border rounded-t-lg sm:rounded-lg shadow-2xl animate-fade-up max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-md bg-surface border border-border rounded-t-lg sm:rounded-lg modal-clay animate-fade-up max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
                 <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
