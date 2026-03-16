@@ -655,26 +655,122 @@
   }
 
   .btn-primary {
-    @apply bg-accent text-base font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-2xl hover:bg-accent-muted transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
-    box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--color-accent) 30%, transparent);
+    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-2xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    color: var(--color-base);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent) 95%, white) 0%,
+      var(--color-accent) 100%
+    );
+    box-shadow:
+      0 4px 0 0 color-mix(in srgb, var(--color-accent) 65%, black),
+      0 6px 12px -2px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn-primary:hover {
-    box-shadow: 0 6px 20px -2px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    transform: translateY(-1px);
+    box-shadow:
+      0 5px 0 0 color-mix(in srgb, var(--color-accent) 65%, black),
+      0 8px 16px -2px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .btn-primary:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 1px 0 0 color-mix(in srgb, var(--color-accent) 65%, black),
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
   }
 
   .btn-ghost {
-    @apply bg-transparent border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-2xl hover:border-muted hover:bg-elevated transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    @apply border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-2xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-elevated) 80%, white) 0%,
+      var(--color-elevated) 100%
+    );
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 4px 8px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .btn-ghost:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-muted);
+    box-shadow:
+      0 4px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 6px 12px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .btn-ghost:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.15);
   }
 
   .btn-danger {
-    @apply bg-transparent border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-2xl hover:bg-danger/10 active:bg-danger/20 transition-all duration-200 min-h-11 md:min-h-0;
+    @apply border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-2xl transition-all duration-200 min-h-11 md:min-h-0;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-danger) 12%, var(--color-elevated)) 0%,
+      var(--color-elevated) 100%
+    );
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 4px 8px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .btn-danger:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-danger) 18%, var(--color-elevated)) 0%,
+      var(--color-elevated) 100%
+    );
+    box-shadow:
+      0 4px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 6px 12px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .btn-danger:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.15);
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-mono text-sm px-3 py-3 md:py-2 rounded-xl outline-none focus:border-accent/60 transition-colors duration-200 placeholder:text-faint w-full;
+    @apply bg-elevated border border-border text-fg font-mono text-sm px-3 py-3 md:py-2 rounded-xl outline-none focus:border-accent/60 transition-all duration-200 placeholder:text-faint w-full;
+    box-shadow:
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
+      inset 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  }
+  .input:focus {
+    box-shadow:
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
+      inset 0 1px 2px 0 rgba(0, 0, 0, 0.1),
+      0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
   }
 
   .card {
-    @apply bg-surface border border-border rounded-2xl overflow-hidden;
+    @apply bg-surface border border-border rounded-2xl overflow-hidden transition-all duration-200;
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 6px 16px -4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 5px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 10px 24px -4px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .modal-clay {
+    box-shadow:
+      0 6px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 10px 30px -8px rgba(0, 0, 0, 0.5),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
   }
 }

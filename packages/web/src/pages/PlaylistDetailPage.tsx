@@ -535,7 +535,7 @@ function AddSongsModal({
   return (
     <Backdrop onClose={onClose}>
       <div
-        className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl
+        className="bg-surface border border-border rounded-xl w-full max-w-lg modal-clay
  flex flex-col max-h-[80vh] animate-fade-up"
       >
         <div className="p-4 md:p-5 border-b border-border">
@@ -637,7 +637,7 @@ function PlayModal({
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 shadow-2xl animate-fade-up">
+      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
           Play Playlist
         </h2>
