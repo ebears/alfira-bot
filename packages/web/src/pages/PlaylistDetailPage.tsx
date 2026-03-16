@@ -51,17 +51,15 @@ export default function PlaylistDetailPage() {
   const [showAddSongs, setShowAddSongs] = useState(false);
   const [showPlay, setShowPlay] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
   const handleAddToQueue = useAddToQueue(notify);
 
-  // Allow editing when:
-  // - User is admin AND edit mode is enabled, OR
-  // - User is the playlist owner AND edit mode is enabled
   const isOwner = user?.discordId === playlist?.createdBy;
-  const canEdit = (isAdminView || isOwner) && isEditMode;
+  const canEdit = isAdminView || isOwner;
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { state: queueState } = usePlayer();
 
@@ -186,6 +184,43 @@ export default function PlaylistDetailPage() {
     }
   };
 
+  const menuItems: MenuItem[] = [
+    {
+      id: 'add-to-queue',
+      label: 'Add to Queue',
+      icon: <PlusCircleIcon size={14} weight="duotone" />,
+      disabled: playlist?.songs.length === 0,
+      onClick: () => handleAddPlaylistToQueue(),
+    },
+    ...(isOwner || isAdminView
+      ? [
+          {
+            id: 'toggle-visibility',
+            label: playlist?.isPrivate ? 'Make Public' : 'Make Private',
+            icon: playlist?.isPrivate ? (
+              <LockOpenIcon size={14} weight="duotone" />
+            ) : (
+              <LockIcon size={14} weight="duotone" />
+            ),
+            onClick: () => handleToggleVisibility(),
+          } as MenuItem,
+          {
+            id: 'add-songs',
+            label: 'Add Songs',
+            icon: <PlayCircleIcon size={14} weight="duotone" />,
+            onClick: () => setShowAddSongs(true),
+          } as MenuItem,
+          {
+            id: 'delete',
+            label: 'Delete',
+            icon: <BombIcon size={14} weight="duotone" />,
+            danger: true,
+            onClick: () => handleDeletePlaylist(),
+          } as MenuItem,
+        ]
+      : []),
+  ];
+
   if (loading) return <DetailSkeleton />;
   if (!playlist) return null;
 
@@ -250,16 +285,7 @@ export default function PlaylistDetailPage() {
           </p>
         </div>
 
-        <div className="flex gap-2 shrink-0 flex-wrap">
-          <button
-            type="button"
-            className="btn-ghost text-xs flex items-center gap-1.5"
-            onClick={() => handleAddPlaylistToQueue()}
-            disabled={playlist.songs.length === 0}
-            title="Add playlist to current queue"
-          >
-            <PlusCircleIcon size={14} weight="duotone" /> Add to Queue
-          </button>
+        <div className="flex gap-2 shrink-0 items-center">
           <button
             type="button"
             className="btn-primary text-xs flex items-center gap-1.5"
@@ -268,57 +294,19 @@ export default function PlaylistDetailPage() {
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </button>
-          {(isOwner || isAdminView) && (
-            <button
-              type="button"
-              className="btn-ghost text-xs flex items-center gap-1.5"
-              onClick={handleToggleVisibility}
-              title={playlist.isPrivate ? 'Make playlist public' : 'Make playlist private'}
-            >
-              {playlist.isPrivate ? (
-                <>
-                  {' '}
-                  <LockOpenIcon size={14} weight="duotone" className="inline mr-1" /> Make Public{' '}
-                </>
-              ) : (
-                <>
-                  {' '}
-                  <LockIcon size={14} weight="duotone" className="inline mr-1" /> Make Private{' '}
-                </>
-              )}
-            </button>
-          )}
-          {(isAdminView || isOwner) && (
-            <>
-              {isEditMode && (
-                <>
-                  <button
-                    type="button"
-                    className="btn-ghost text-xs"
-                    onClick={() => setShowAddSongs(true)}
-                  >
-                    + Add Songs
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-danger text-xs"
-                    onClick={handleDeletePlaylist}
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                className={`btn-ghost text-xs ${isEditMode ? 'text-accent' : ''}`}
-                onClick={() => {
-                  setIsEditMode((prev) => !prev);
-                  setEditingName(false);
-                }}
-              >
-                {isEditMode ? '✎ Editing' : '✎ Edit'}
-              </button>
-            </>
+          <ContextMenuTrigger
+            ref={menuTriggerRef}
+            onOpen={() => setMenuOpen(true)}
+            isOpen={menuOpen}
+            className="!md:opacity-100"
+          />
+          {menuOpen && (
+            <ContextMenu
+              items={menuItems}
+              isOpen={menuOpen}
+              onClose={() => setMenuOpen(false)}
+              triggerRef={menuTriggerRef}
+            />
           )}
         </div>
       </div>
