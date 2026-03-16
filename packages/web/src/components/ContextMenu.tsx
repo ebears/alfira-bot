@@ -42,10 +42,12 @@ export function ContextMenuTrigger({
   onOpen,
   isOpen,
   ref,
+  className,
 }: {
   onOpen: () => void;
   isOpen: boolean;
   ref: RefObject<HTMLButtonElement | null>;
+  className?: string;
 }) {
   return (
     <button
@@ -66,6 +68,7 @@ export function ContextMenuTrigger({
         transition-colors duration-150
         opacity-100 md:opacity-0 md:group-hover:opacity-100
         ${isOpen ? '!opacity-100' : ''}
+        ${className ?? ''}
       `}
     >
       <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />

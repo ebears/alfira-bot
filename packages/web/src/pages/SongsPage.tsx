@@ -47,6 +47,7 @@ export default function SongsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
   const handleAddToQueue = useAddToQueue(notify);
 
@@ -105,6 +106,13 @@ export default function SongsPage() {
       socket.off('songs:updated', handleSongUpdated);
     };
   }, [socket]);
+
+  useEffect(() => {
+    if (!activeCardId) return;
+    const handler = () => setActiveCardId(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [activeCardId]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);
@@ -221,6 +229,8 @@ export default function SongsPage() {
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
               onAddToQueue={() => handleAddToQueue(song.id)}
+              isActive={activeCardId === song.id}
+              onToggleActive={() => setActiveCardId(activeCardId === song.id ? null : song.id)}
             />
           ))}
         </div>
@@ -297,6 +307,8 @@ function SongCard({
   onPlay,
   isPlaying,
   onAddToQueue,
+  isActive,
+  onToggleActive,
 }: {
   song: Song;
   isAdmin: boolean;
@@ -306,6 +318,8 @@ function SongCard({
   onPlay: () => void;
   isPlaying: boolean;
   onAddToQueue: () => void;
+  isActive: boolean;
+  onToggleActive: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
@@ -389,40 +403,133 @@ function SongCard({
           loading="lazy"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-        <span className="absolute bottom-2 right-2 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
+
+        {/* Mobile tap target — invisible overlay that toggles active state */}
+        <div
+          className="absolute inset-0 z-10 md:pointer-events-none"
+          onClick={(e) => {
+            if (e.target !== e.currentTarget) return;
+            e.stopPropagation();
+            onToggleActive();
+          }}
+        />
+
+        {/* Duration badge — bottom right */}
+        <span className="absolute bottom-2 right-2 z-20 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
           {formatDuration(song.duration)}
         </span>
 
-        {/* Play button overlay — visible on hover or while loading */}
+        {/* Play button — center (rendered before action buttons so they receive clicks) */}
         <button
           type="button"
-          onClick={onPlay}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlay();
+          }}
           disabled={isPlaying}
-          className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-            isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 md:opacity-0'
-          } disabled:cursor-default`}
+          className={`
+            absolute inset-0 z-[15] flex items-center justify-center
+            transition-opacity duration-200
+            ${isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}
+            ${isActive && !isPlaying ? '!opacity-100 !pointer-events-auto' : ''}
+            disabled:cursor-default
+          `}
           title="Play from this song"
         >
           <div
-            className={`w-14 h-14 md:w-12 md:h-12 rounded-full bg-black/60 border border-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl transition-transform duration-150 ${
+            className={`btn-primary flex items-center gap-2 px-5 py-2.5 text-sm transition-transform duration-150 ${
               isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
             }`}
           >
             {isPlaying ? (
-              <CircleNotchIcon
-                size={24}
-                weight="bold"
-                className="text-accent animate-spin md:w-5 md:h-5"
-              />
+              <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
             ) : (
-              <PlayIcon size={24} weight="duotone" className="text-white md:w-5 md:h-5" />
+              <>
+                <PlayIcon size={18} weight="duotone" />
+                <span className="hidden md:inline">Play</span>
+              </>
             )}
           </div>
         </button>
+
+        {/* Add to Queue — top left */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddToQueue();
+          }}
+          disabled={addingToQueue}
+          className={`
+            absolute top-2 left-2 z-20
+            flex items-center justify-center w-8 h-8 rounded-xl
+            bg-black/50 backdrop-blur-sm border border-white/15
+            text-white/70 hover:text-white
+            transition-all duration-200
+            opacity-0 pointer-events-none
+            group-hover:opacity-100 group-hover:pointer-events-auto
+            ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
+            disabled:opacity-50
+          `}
+          title="Add to Up Next"
+        >
+          {addingToQueue ? (
+            <span className="w-3.5 h-3.5 border-2 border-white/70 border-t-transparent rounded-full animate-spin inline-block" />
+          ) : (
+            <VinylRecordIcon size={16} weight="duotone" />
+          )}
+        </button>
+
+        {/* Context menu trigger — top right */}
+        {menuItems.length > 0 && (
+          <>
+            <div
+              className={`
+              absolute top-2 right-2 z-20
+              transition-all duration-200
+              opacity-0 pointer-events-none
+              group-hover:opacity-100 group-hover:pointer-events-auto
+              ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
+              ${menuOpen ? '!opacity-100' : ''}
+            `}
+            >
+              <ContextMenuTrigger
+                ref={triggerRef}
+                onOpen={() => setMenuOpen(true)}
+                isOpen={menuOpen}
+                className="!w-8 !h-8 md:!w-8 md:!h-8 !text-white/70 hover:!text-white !border-white/15 hover:!border-white/30 !bg-black/50 !backdrop-blur-sm !rounded-xl !opacity-100 md:!opacity-100"
+              />
+            </div>
+            {menuOpen && (
+              <ContextMenu
+                items={menuItems}
+                isOpen={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                triggerRef={triggerRef}
+              />
+            )}
+          </>
+        )}
+
+        {/* Added by — bottom left */}
+        <span
+          className={`
+          absolute bottom-2 left-2 z-20
+          flex items-center gap-1
+          text-[10px] text-white/80 bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded
+          transition-opacity duration-200
+          opacity-0 pointer-events-none
+          group-hover:opacity-100 group-hover:pointer-events-auto
+          ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
+        `}
+        >
+          <UserIcon size={10} weight="duotone" />
+          {song.addedByDisplayName || song.addedBy}
+        </span>
       </div>
 
       {/* Info */}
-      <div className="p-3 flex-1 flex flex-col gap-2">
+      <div className="p-3 flex-1">
         {editingNickname ? (
           <div className="flex items-center gap-1.5">
             <input
@@ -465,43 +572,6 @@ function SongCard({
             )}
           </>
         )}
-        <span className="flex items-center gap-1 text-[10px] text-faint opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <UserIcon size={12} weight="duotone" />
-          {song.addedByDisplayName || song.addedBy}
-        </span>
-        <div className="flex gap-1.5 mt-auto pt-1 justify-end">
-          {/* Add to Queue - available to all members */}
-          <button
-            type="button"
-            onClick={handleAddToQueue}
-            disabled={addingToQueue}
-            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-accent active:bg-accent/10 border border-border hover:border-accent/30 rounded-xl transition-colors duration-150 disabled:opacity-50"
-            title="Add to Up Next"
-          >
-            {addingToQueue ? (
-              <span className="w-4 h-4 md:w-3 md:h-3 border-2 md:border border-accent border-t-transparent rounded-full animate-spin inline-block" />
-            ) : (
-              <VinylRecordIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-            )}
-          </button>
-          {menuItems.length > 0 && (
-            <>
-              <ContextMenuTrigger
-                ref={triggerRef}
-                onOpen={() => setMenuOpen(true)}
-                isOpen={menuOpen}
-              />
-              {menuOpen && (
-                <ContextMenu
-                  items={menuItems}
-                  isOpen={menuOpen}
-                  onClose={() => setMenuOpen(false)}
-                  triggerRef={triggerRef}
-                />
-              )}
-            </>
-          )}
-        </div>
       </div>
     </div>
   );
