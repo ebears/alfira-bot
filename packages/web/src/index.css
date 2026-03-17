@@ -776,7 +776,13 @@
   --animate-slide-in-right: slideInRight 0.3s ease forwards;
   --animate-slide-up: slideUp 0.3s ease forwards;
   --animate-pulse-gentle: pulseGentle 2.4s ease-in-out infinite;
-  /* Clay elevation tokens */
+  /* Clay radius tokens — consistent "pebble" proportions */
+  --clay-radius-sm: 12px;
+  --clay-radius-md: 16px;
+  --clay-radius-lg: 20px;
+  /* Clay highlight — top-light gradient endpoint */
+  --clay-highlight: color-mix(in srgb, var(--color-elevated) 85%, white);
+  /* Clay elevation tokens — 4 deliberate depth levels */
   --clay-shadow-resting:
     0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
     0 6px 16px -4px rgba(0, 0, 0, 0.25),
@@ -859,13 +865,14 @@
   }
 
   .btn-primary {
-    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-[20px]
+    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-200 disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    border-radius: var(--clay-radius-lg);
     color: var(--color-base);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-accent) 95%, white) 0%,
+      color-mix(in srgb, var(--color-accent) 85%, white) 0%,
       var(--color-accent) 100%
     );
     box-shadow:
@@ -888,13 +895,14 @@
   }
 
   .btn-secondary {
-    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-[20px]
+    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-200 disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    border-radius: var(--clay-radius-lg);
     color: var(--color-secondary);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%
     );
     box-shadow: var(--clay-shadow-resting);
@@ -909,13 +917,14 @@
   }
 
   .btn-foreground {
-    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-[20px]
+    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-200 disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    border-radius: var(--clay-radius-lg);
     color: var(--color-fg);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%
     );
     box-shadow: var(--clay-shadow-resting);
@@ -930,13 +939,14 @@
   }
 
   .btn-danger {
-    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-[20px]
+    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-200 disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    border-radius: var(--clay-radius-lg);
     color: #fff;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-danger) 95%, white) 0%,
+      color-mix(in srgb, var(--color-danger) 85%, white) 0%,
       var(--color-danger) 100%
     );
     box-shadow:
@@ -959,7 +969,14 @@
   }
 
   .input {
-    @apply bg-elevated border border-border text-fg font-mono text-sm px-3 py-3 md:py-2 rounded-2xl outline-none focus:border-accent/60 transition-all duration-200 placeholder:text-faint w-full;
+    @apply text-fg font-mono text-sm px-3 py-3 md:py-2 outline-none focus:border-accent/60 transition-all duration-200 placeholder:text-faint w-full;
+    border-radius: var(--clay-radius-md);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-elevated) 90%, black) 0%,
+      var(--color-elevated) 100%
+    );
+    border: 1px solid var(--color-border);
     box-shadow: var(--clay-shadow-flat);
   }
   .input:focus {
@@ -969,26 +986,42 @@
   }
 
   .card {
-    @apply bg-surface border border-border rounded-[20px] overflow-hidden transition-all duration-200;
+    @apply overflow-hidden transition-all duration-200;
+    border-radius: var(--clay-radius-lg);
+    background: linear-gradient(
+      180deg,
+      var(--clay-highlight) 0%,
+      var(--color-surface) 100%
+    );
     box-shadow: var(--clay-shadow-resting);
   }
   .card:hover {
     transform: translateY(-2px);
     box-shadow: var(--clay-shadow-raised);
   }
+  .card:active {
+    transform: translateY(2px);
+    box-shadow: var(--clay-shadow-flat);
+  }
 
   .modal-clay {
-    @apply rounded-[20px];
+    border-radius: var(--clay-radius-lg);
     box-shadow: var(--clay-shadow-floating);
+    background: linear-gradient(
+      180deg,
+      var(--clay-highlight) 0%,
+      var(--color-surface) 100%
+    );
   }
 
   .btn-icon {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           rounded-[14px] transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 disabled:opacity-40
            disabled:cursor-not-allowed;
+    border-radius: var(--clay-radius-md);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%
     );
     box-shadow: var(--clay-shadow-resting);
@@ -1009,8 +1042,9 @@
 
   .btn-icon-primary {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           rounded-[14px] transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 disabled:opacity-40
            disabled:cursor-not-allowed;
+    border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
       color-mix(in srgb, var(--color-accent) 80%, white) 0%,
       var(--color-accent) 100%);
@@ -1035,10 +1069,11 @@
 
   .btn-icon-secondary {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           rounded-[14px] transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 disabled:opacity-40
            disabled:cursor-not-allowed;
+    border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%);
     color: var(--color-secondary);
     box-shadow: var(--clay-shadow-resting);
@@ -1054,10 +1089,11 @@
 
   .btn-icon-foreground {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           rounded-[14px] transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 disabled:opacity-40
            disabled:cursor-not-allowed;
+    border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%);
     box-shadow: var(--clay-shadow-resting);
   }
@@ -1072,8 +1108,9 @@
 
   .btn-icon-danger {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           rounded-[14px] transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 disabled:opacity-40
            disabled:cursor-not-allowed;
+    border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
       color-mix(in srgb, var(--color-danger) 80%, white) 0%,
       var(--color-danger) 100%);
@@ -1099,9 +1136,13 @@
   .btn-nav-active {
     color: var(--color-accent);
     background: linear-gradient(180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%);
     box-shadow: var(--clay-shadow-raised);
+  }
+  .btn-nav-active:active {
+    transform: translateY(2px);
+    box-shadow: var(--clay-shadow-flat);
   }
   .btn-nav-inactive {
     color: var(--color-muted);
@@ -1111,9 +1152,13 @@
   .btn-nav-inactive:hover {
     color: var(--color-fg);
     background: linear-gradient(180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, white) 0%,
+      var(--clay-highlight) 0%,
       var(--color-elevated) 100%);
     box-shadow: var(--clay-shadow-resting);
+  }
+  .btn-nav-inactive:active {
+    transform: translateY(2px);
+    box-shadow: var(--clay-shadow-flat);
   }
 }
 
