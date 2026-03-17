@@ -1124,4 +1124,30 @@
       0 0 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
       inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
   }
+
+  .btn-nav-active {
+    color: var(--color-base);
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-secondary) 95%, white) 0%,
+      var(--color-secondary) 100%);
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      0 4px 8px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-nav-inactive {
+    color: var(--color-muted);
+    background: transparent;
+    box-shadow: none;
+  }
+  .btn-nav-inactive:hover {
+    color: var(--color-fg);
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-foreground) 80%, white) 0%,
+      var(--color-foreground) 100%);
+    box-shadow:
+      0 2px 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
+      0 3px 6px -1px rgba(0, 0, 0, 0.15),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
 }
