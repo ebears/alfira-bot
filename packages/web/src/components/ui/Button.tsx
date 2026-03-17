@@ -1,4 +1,4 @@
-import type React from 'react';
+import React, { forwardRef } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'foreground' | 'danger';
 type ButtonSize = 'default' | 'icon';
@@ -22,17 +22,18 @@ const iconClasses: Record<ButtonVariant, string> = {
   danger: 'btn-icon-danger',
 };
 
-export function Button({
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
   variant = 'primary',
   size = 'default',
   className,
   ...props
-}: ButtonProps) {
+}: ButtonProps, ref) {
   const base = size === 'icon' ? iconClasses[variant] : defaultClasses[variant];
   return (
     <button
+      ref={ref}
       className={className ? `${base} ${className}` : base}
       {...props}
     />
   );
-}
+});

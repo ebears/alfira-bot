@@ -28,6 +28,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { apiErrorMessage } from '../utils/api';
+import { Button } from './ui/Button';
 
 export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const { state, loading, elapsed, refetch, clear } = usePlayer();
@@ -120,25 +121,27 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
 
         {/* Actions */}
         <section className="flex items-center justify-between">
-          <button
+          <Button
+            variant="primary"
             type="button"
             onClick={() => setShowLoadPlaylist(true)}
-            className="flex items-center gap-2 btn-primary"
+            className="flex items-center gap-2"
           >
             <ListIcon size={16} weight="duotone" />
             <span>Load Playlist</span>
-          </button>
-          <button
+          </Button>
+          <Button
             ref={triggerRef}
+            variant="secondary"
+            size="icon"
             type="button"
             aria-haspopup="true"
             aria-expanded={menuOpen}
             title="More actions"
             onClick={() => setMenuOpen(true)}
-            className="flex items-center justify-center w-8 h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
           >
             <DotsThreeOutlineVerticalIcon size={16} weight="duotone" />
-          </button>
+          </Button>
         </section>
 
         {/* Up Next (Priority Queue) */}
@@ -310,14 +313,15 @@ function PanelHeader({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
       <h1 className="font-display text-xl text-fg tracking-wider">Queue</h1>
-      <button
+      <Button
+        variant="foreground"
+        size="icon"
         type="button"
         onClick={onClose}
-        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
         title="Close queue"
       >
         <XIcon size={18} weight="bold" />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -473,18 +477,15 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
               <div className="flex gap-2">
                 {(['sequential', 'random'] as const).map((m) => (
-                  <button
+                  <Button
+                    variant="foreground"
                     type="button"
                     key={m}
                     onClick={() => setMode(m)}
-                    className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
-                      mode === m
-                        ? 'bg-accent/10 border-accent/40 text-accent'
-                        : 'border-border text-muted hover:border-muted'
-                    }`}
+                    className={`flex-1 ${mode === m ? 'border-accent/40 text-accent' : ''}`}
                   >
                     {m}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -493,18 +494,15 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
               <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Loop</p>
               <div className="flex gap-2">
                 {(['off', 'song', 'queue'] as const).map((l) => (
-                  <button
+                  <Button
+                    variant="foreground"
                     type="button"
                     key={l}
                     onClick={() => setLoop(l)}
-                    className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
-                      loop === l
-                        ? 'bg-accent/10 border-accent/40 text-accent'
-                        : 'border-border text-muted hover:border-muted'
-                    }`}
+                    className={`flex-1 ${loop === l ? 'border-accent/40 text-accent' : ''}`}
                   >
                     {l}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -514,12 +512,12 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose} disabled={submitting}>
+          <Button variant="foreground" type="button" onClick={onClose} disabled={submitting}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             type="button"
-            className="btn-primary"
             onClick={handlePlay}
             disabled={submitting || !selectedId || loadingPlaylists}
           >
@@ -531,7 +529,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
                 <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
@@ -624,17 +622,17 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
         )}
 
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose} disabled={submitting}>
+          <Button variant="foreground" type="button" onClick={onClose} disabled={submitting}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             type="button"
-            className="btn-primary"
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}
           >
             {submitting ? 'Adding...' : importFullPlaylist ? 'Add Playlist' : 'Add to Up Next'}
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
@@ -702,17 +700,17 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
         )}
 
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose} disabled={submitting}>
+          <Button variant="foreground" type="button" onClick={onClose} disabled={submitting}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             type="button"
-            className="btn-danger"
             onClick={handleSubmit}
             disabled={submitting || !youtubeUrl.trim()}
           >
             {submitting ? 'Overriding...' : 'Override & Play'}
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
