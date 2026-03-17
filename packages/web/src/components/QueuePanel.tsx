@@ -440,7 +440,7 @@ function LoadPlaylistModal({ onClose, onLoaded }: { onClose: () => void; onLoade
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
+      <div className="p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
           Load Playlist
         </h2>
@@ -568,7 +568,7 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
+      <div className="p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Quick Add</h2>
         <p className="font-mono text-xs text-muted mb-4 md:mb-6">
           add a song to Up Next without saving to library
@@ -659,7 +659,7 @@ function OverrideModal({ onClose, onOverride }: { onClose: () => void; onOverrid
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
+      <div className="p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Override</h2>
         <p className="font-mono text-xs text-danger mb-4 md:mb-6">
           <WarningIcon size={14} weight="duotone" className="inline mr-1" /> This will stop current

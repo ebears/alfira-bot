@@ -53,7 +53,7 @@ export default function Layout() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 clay-sidebar-edge ${
+        } shrink-0 flex-col bg-surface transition-[width] duration-200 overflow-hidden border-t-2 clay-sidebar-edge ${
           isAdminView ? 'border-t-accent' : 'border-t-member'
         }`}
       >
@@ -310,9 +310,9 @@ function NowPlayingBar() {
   const isLoopActive = loopMode !== 'off';
 
   return (
-    <div className="shrink-0 border-t border-border bg-surface fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom">
+    <div className="shrink-0 bg-surface fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom clay-resting">
       {/* Mobile: progress bar on top */}
-      <div className="md:hidden h-1 w-full bg-elevated relative overflow-hidden">
+      <div className="md:hidden h-1 w-full bg-elevated relative overflow-hidden" style={{ boxShadow: 'var(--clay-shadow-flat)' }}>
         <div
           className="absolute inset-y-0 left-0 bg-accent transition-all duration-1000 ease-linear"
           style={{ width: `${progress}%` }}
@@ -443,7 +443,7 @@ function NowPlayingBar() {
         </div>
 
         {/* Album art */}
-        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated border border-border shrink-0 overflow-hidden relative">
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated shrink-0 overflow-hidden relative clay-resting">
           {currentSong && isPlaying && !isPaused && (
             <div className="absolute -top-1.5 -right-1.5 z-10">
               <SparkleIcon
@@ -492,12 +492,12 @@ function NowPlayingBar() {
           />
 
           {/* Desktop: right panel */}
-          <div className="hidden md:flex fixed z-60 right-0 top-0 bottom-0 w-96 bg-surface border-l border-border animate-slide-in-right flex-col">
+          <div className="hidden md:flex fixed z-60 right-0 top-0 bottom-0 w-96 bg-surface animate-slide-in-right flex-col clay-floating">
             <QueuePanel onClose={() => setQueueOpen(false)} />
           </div>
 
           {/* Mobile: bottom sheet */}
-          <div className="md:hidden fixed z-60 bottom-0 left-0 right-0 max-h-[85vh] bg-surface rounded-t-2xl border-t border-border animate-slide-up flex flex-col">
+          <div className="md:hidden fixed z-60 bottom-0 left-0 right-0 max-h-[85vh] bg-surface rounded-t-2xl animate-slide-up flex flex-col clay-floating">
             <QueuePanel onClose={() => setQueueOpen(false)} />
           </div>
         </>
