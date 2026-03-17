@@ -264,7 +264,7 @@ export function ContextMenu({
       className="z-[9999] min-w-48"
       onKeyDown={activeEditItemId ? undefined : handleKeyDown}
     >
-      <div className="bg-elevated border border-border rounded-xl shadow-xl overflow-hidden animate-fade-up">
+      <div className="bg-elevated border border-border rounded-[20px] clay-floating overflow-hidden animate-fade-up">
         {activeSubmenu ? (
           <SubmenuPanel
             config={activeSubmenu}

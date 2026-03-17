@@ -53,7 +53,7 @@ export default function Layout() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 ${
+        } shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 overflow-hidden border-t-2 clay-sidebar-edge ${
           isAdminView ? 'border-t-accent' : 'border-t-member'
         }`}
       >
