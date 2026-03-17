@@ -15,7 +15,7 @@ RUN apk add --no-cache curl && \
 # ---------------------------------------------------------------------------
 # Dependencies stage - install system deps and pnpm packages
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS deps
+FROM node:25-alpine AS deps
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -89,7 +89,7 @@ RUN pnpm --filter @alfira-bot/shared run build && \
 # ---------------------------------------------------------------------------
 # Production deps stage - install only production dependencies
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS prod-deps
+FROM node:25-alpine AS prod-deps
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -104,7 +104,7 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal production image
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS runtime
+FROM node:25-alpine AS runtime
 
 # Install only runtime system dependencies (no build tools, no curl)
 RUN apk add --no-cache \
