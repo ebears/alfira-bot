@@ -36,6 +36,7 @@ import { useNicknameEditor } from '../hooks/useNicknameEditor';
 import { useNotification } from '../hooks/useNotification';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { useSocket } from '../hooks/useSocket';
+import { Button } from '../components/ui/Button';
 import { apiErrorMessage } from '../utils/api';
 
 export default function SongsPage() {
@@ -163,9 +164,9 @@ export default function SongsPage() {
           </p>
         </div>
         {isAdminView && (
-          <button type="button" className="btn-primary" onClick={() => setShowAddModal(true)}>
+          <Button variant="primary" onClick={() => setShowAddModal(true)}>
             + Add Song
-          </button>
+          </Button>
         )}
       </div>
 
@@ -186,30 +187,24 @@ export default function SongsPage() {
         </div>
         {/* View toggle */}
         <div className="flex items-center gap-1">
-          <button
-            type="button"
+          <Button
+            variant="foreground"
+            size="icon"
             onClick={() => toggleViewMode('grid')}
-            className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors duration-150 ${
-              viewMode === 'grid'
-                ? 'border-accent text-accent bg-accent/10'
-                : 'border-border text-muted hover:text-fg hover:border-border/80'
-            }`}
+            className={viewMode === 'grid' ? 'border-accent text-accent bg-accent/10' : ''}
             title="Grid view"
           >
             <SquaresFourIcon size={18} weight="duotone" />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="foreground"
+            size="icon"
             onClick={() => toggleViewMode('list')}
-            className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors duration-150 ${
-              viewMode === 'list'
-                ? 'border-accent text-accent bg-accent/10'
-                : 'border-border text-muted hover:text-fg hover:border-border/80'
-            }`}
+            className={viewMode === 'list' ? 'border-accent text-accent bg-accent/10' : ''}
             title="List view"
           >
             <ListIcon size={18} weight="duotone" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -454,8 +449,10 @@ function SongCard({
           `}
           title="Play from this song"
         >
-          <div
-            className={`btn-primary flex items-center gap-2 px-5 py-2.5 text-sm transition-transform duration-150 ${
+          <Button
+            variant="primary"
+            size="icon"
+            className={`flex items-center gap-2 px-5 py-2.5 text-sm transition-transform duration-150 ${
               isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
             }`}
           >
@@ -467,7 +464,7 @@ function SongCard({
                 <span className="hidden md:inline">Play</span>
               </>
             )}
-          </div>
+          </Button>
         </button>
 
         {/* Context menu trigger — top right */}
@@ -631,11 +628,12 @@ function LibrarySongRow({
         {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
       </div>
       <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
-      <button
-        type="button"
+      <Button
+        variant="foreground"
+        size="icon"
         onClick={onPlay}
         disabled={isPlaying}
-        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center text-muted hover:text-accent active:bg-accent/10 transition-all duration-150 p-2.5 md:p-1 rounded-xl disabled:opacity-50"
+        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:text-accent active:bg-accent/10 p-2.5 md:p-1 disabled:opacity-50"
         title="Play from this song"
       >
         {isPlaying ? (
@@ -643,7 +641,7 @@ function LibrarySongRow({
         ) : (
           <PlayIcon size={18} weight="duotone" />
         )}
-      </button>
+      </Button>
       <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
       {menuOpen && (
         <ContextMenu
@@ -767,17 +765,16 @@ function AddSongModal({
         )}
 
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose} disabled={loading}>
+          <Button variant="foreground" onClick={onClose} disabled={loading}>
             Cancel
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={loading || !url.trim()}
           >
             {importFullPlaylist ? 'Import' : 'Add'}
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
