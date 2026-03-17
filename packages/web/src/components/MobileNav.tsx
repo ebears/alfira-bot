@@ -4,6 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
+import { Button } from './ui/Button';
 import SettingsContent from './SettingsContent';
 
 export default function MobileNav() {
@@ -56,14 +57,14 @@ export default function MobileNav() {
       {/* Mobile header bar */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 flex items-center justify-between px-4 bg-surface border-b border-border safe-area-top">
         {/* Left: Menu button */}
-        <button
-          type="button"
+        <Button
+          variant="foreground"
+          size="icon"
           onClick={() => setIsOpen(true)}
-          className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
           aria-label="Open navigation menu"
         >
           <ListIcon size={24} weight="duotone" />
-        </button>
+        </Button>
 
         {/* Center: Wordmark */}
         <div className="flex items-center gap-2">
@@ -128,14 +129,14 @@ export default function MobileNav() {
             </div>
             <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="foreground"
+            size="icon"
             onClick={() => setIsOpen(false)}
-            className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
             aria-label="Close navigation menu"
           >
             <XCircleIcon size={24} weight="duotone" />
-          </button>
+          </Button>
         </div>
 
         {/* Navigation links */}
@@ -162,14 +163,14 @@ export default function MobileNav() {
         {/* Settings button and User info at bottom */}
         <div className="mt-auto border-t border-border">
           {/* Settings button */}
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            className="w-full flex items-center gap-3"
             onClick={() => setIsSettingsOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-[1rem] font-medium text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
           >
             <GearIcon size={20} weight="duotone" />
             Settings
-          </button>
+          </Button>
 
           {/* User info */}
           <div className="p-4 border-t border-border safe-area-bottom">
@@ -229,13 +230,13 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
-          <button
-            type="button"
+          <Button
+            variant="foreground"
+            size="icon"
             onClick={onClose}
-            className="w-11 h-11 flex items-center justify-center rounded-lg text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
           >
             <XCircleIcon size={24} weight="duotone" />
-          </button>
+          </Button>
         </div>
 
         {/* Content - scrollable */}
@@ -245,9 +246,9 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
 
         {/* Logout button at bottom */}
         <div className="p-4 border-t border-border safe-area-bottom">
-          <button type="button" onClick={onLogout} className="btn-danger w-full text-center">
+          <Button variant="danger" className="w-full text-center" onClick={onLogout}>
             Log out
-          </button>
+          </Button>
         </div>
       </div>
     </>
