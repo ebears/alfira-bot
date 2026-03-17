@@ -23,6 +23,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useConnectionStatus } from '../hooks/useSocket';
+import { Button } from './ui/Button';
 import MobileNav from './MobileNav';
 import QueuePanel from './QueuePanel';
 import SettingsMenu from './SettingsMenu';
@@ -88,14 +89,15 @@ export default function Layout() {
               )}
             </div>
           )}
-          <button
-            type="button"
+          <Button
+            variant="foreground"
+            size="icon"
+            className="!w-7 !h-7 shrink-0"
             onClick={() => setCollapsed((c) => !c)}
-            className="w-7 h-7 shrink-0 flex items-center justify-center rounded text-muted hover:text-fg hover:bg-elevated transition-colors duration-150"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <CaretLeftIcon size={16} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
-          </button>
+          </Button>
         </div>
 
         {/* Nav */}
@@ -106,13 +108,9 @@ export default function Layout() {
               to={to}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center rounded-xl text-sm font-body font-medium transition-colors duration-150 ${
+                `flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 ${
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-accent/20 text-accent border border-accent/30'
-                    : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
-                }`
+                } ${isActive ? 'btn-nav-active' : 'btn-nav-inactive'}`
               }
             >
               <Icon size={16} weight="duotone" />
@@ -168,14 +166,15 @@ export default function Layout() {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
+              <Button
+                variant="danger"
+                size="icon"
+                className="!w-7 !h-7"
                 onClick={handleLogout}
-                className="w-7 h-7 flex items-center justify-center rounded text-muted hover:text-danger hover:bg-elevated transition-colors duration-150"
                 title="Log out"
               >
                 <SignOutIcon size={14} weight="duotone" />
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -195,13 +194,13 @@ export default function Layout() {
                 )}
                 <span className="text-sm font-body text-fg truncate flex-1">{user?.username}</span>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="danger"
                 onClick={handleLogout}
-                className="btn-ghost w-full text-left text-xs"
+                className="w-full text-left text-xs"
               >
                 log out
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -352,14 +351,15 @@ function NowPlayingBar() {
           )}
 
           {isConnectedToVoice && (
-            <button
-              type="button"
+            <Button
+              variant="foreground"
+              size="icon"
               onClick={handleStop}
               title="Stop playback"
-              className="btn-icon text-muted hover:text-danger"
+              className="text-muted hover:text-danger"
             >
               <DoorOpenIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -369,12 +369,13 @@ function NowPlayingBar() {
         {/* Loop + Shuffle */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
           {currentSong && (
-            <button
-              type="button"
+            <Button
+              variant="foreground"
+              size="icon"
               onClick={handleCycleLoop}
               disabled={loopBusy}
               title={`Loop: ${loopMode}`}
-              className={`btn-icon shrink-0 disabled:opacity-50 ${
+              className={`shrink-0 disabled:opacity-50 ${
                 isLoopActive ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
               }`}
               style={
@@ -388,16 +389,17 @@ function NowPlayingBar() {
               ) : (
                 loopIcon
               )}
-            </button>
+            </Button>
           )}
 
           {currentSong && (
-            <button
-              type="button"
+            <Button
+              variant="foreground"
+              size="icon"
               onClick={handleShuffleToggle}
               disabled={shuffleBusy}
               title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
-              className={`btn-icon shrink-0 disabled:opacity-50 ${
+              className={`shrink-0 disabled:opacity-50 ${
                 isShuffled ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
               }`}
             >
@@ -410,7 +412,7 @@ function NowPlayingBar() {
                   className="md:w-4 md:h-4"
                 />
               )}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -465,18 +467,19 @@ function NowPlayingBar() {
         </div>
 
         {/* Queue button */}
-        <button
-          type="button"
+        <Button
+          variant="foreground"
+          size="icon"
           onClick={() => setQueueOpen(true)}
           title="Queue"
-          className={`w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-colors duration-150 shrink-0 ${
+          className={`shrink-0 ${
             queueOpen
               ? 'text-accent hover:text-accent-muted'
-              : 'text-muted hover:text-fg hover:bg-elevated'
+              : 'text-muted hover:text-fg'
           }`}
         >
           <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
-        </button>
+        </Button>
       </div>
 
       {/* Queue slideout */}
@@ -524,12 +527,13 @@ function BarButton({
   pulse?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="foreground"
+      size="icon"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`btn-icon ${
+      className={`${
         busy
           ? 'text-muted'
           : `${pulse ? 'text-accent animate-pulse-gentle' : 'text-muted'} ${hoverColor} cursor-pointer`
@@ -540,6 +544,6 @@ function BarButton({
       ) : (
         children
       )}
-    </button>
+    </Button>
   );
 }
