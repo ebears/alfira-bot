@@ -10,6 +10,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
+import { Button } from '../components/ui/Button';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistsPage() {
@@ -104,9 +105,9 @@ export default function PlaylistsPage() {
             {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <button type="button" className="btn-primary" onClick={() => setShowCreate(true)}>
+        <Button variant="primary" onClick={() => setShowCreate(true)}>
           + New Playlist
-        </button>
+        </Button>
       </div>
 
       {/* List */}
@@ -173,14 +174,15 @@ function PlaylistRow({
         <PlaylistIcon size={18} weight="duotone" className="text-accent md:w-4 md:h-4" />
       </div>
       {/* Add to queue button */}
-      <button
-        type="button"
+      <Button
+        variant="foreground"
+        size="icon"
         onClick={onAddToQueue}
-        className="opacity-0 group-hover:opacity-100 md:opacity-0 text-muted hover:text-accent active:text-accent/80 transition-all duration-150 p-1 shrink-0"
+        className="opacity-0 group-hover:opacity-100 md:opacity-0"
         title="Add to queue"
       >
         <PlusCircleIcon size={20} weight="duotone" />
-      </button>
+      </Button>
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -256,17 +258,16 @@ function CreatePlaylistModal({
         />
         {error && <p className="font-mono text-xs text-danger mb-3">{error}</p>}
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose} disabled={loading}>
+          <Button variant="foreground" onClick={onClose} disabled={loading}>
             Cancel
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={loading || !name.trim()}
           >
             Create
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
