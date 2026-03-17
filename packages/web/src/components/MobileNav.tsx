@@ -147,10 +147,10 @@ export default function MobileNav() {
               to={to}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors duration-150 ${
+                `flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-accent/20 text-accent border border-accent/30'
-                    : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
+                    ? 'bg-elevated text-accent clay-raised'
+                    : 'text-muted hover:text-fg hover:bg-elevated hover:clay-resting'
                 }`
               }
             >

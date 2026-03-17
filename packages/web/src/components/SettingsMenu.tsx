@@ -16,10 +16,11 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
       {/* Settings button in sidebar */}
       <div className={collapsed ? 'flex justify-center px-2 pb-2' : 'px-3 pb-2'}>
         <Button
-          variant="secondary"
+          variant={collapsed ? 'foreground' : 'secondary'}
+          size={collapsed ? 'icon' : 'default'}
           onClick={() => setIsOpen(true)}
           title={collapsed ? 'Settings' : undefined}
-          className={collapsed ? 'w-7 h-7 flex items-center justify-center' : 'w-full flex items-center gap-3'}
+          className={collapsed ? '' : 'w-full flex items-center gap-3'}
         >
           <GearIcon size={16} weight="duotone" />
           {!collapsed && <span>Settings</span>}

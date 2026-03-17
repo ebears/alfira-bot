@@ -452,17 +452,14 @@ function SongCard({
           <Button
             variant="primary"
             size="icon"
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm transition-transform duration-150 ${
+            className={`transition-transform duration-150 ${
               isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
             }`}
           >
             {isPlaying ? (
               <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
             ) : (
-              <>
-                <PlayIcon size={18} weight="duotone" />
-                <span className="hidden md:inline">Play</span>
-              </>
+              <PlayIcon size={18} weight="duotone" />
             )}
           </Button>
         </button>
