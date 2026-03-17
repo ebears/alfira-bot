@@ -3,6 +3,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import SettingsToggle from './settings/SettingsToggle';
+import { Button } from './ui/Button';
 
 export default function SettingsContent() {
   const { user } = useAuth();
@@ -29,22 +30,18 @@ export default function SettingsContent() {
         <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Color Theme</h3>
         <div className="grid grid-cols-2 gap-2">
           {colorThemes.map((t) => (
-            <button
+            <Button
               key={t.name}
-              type="button"
+              variant="foreground"
+              className={`flex items-center gap-2 ${colorTheme === t.name ? 'border-accent/40 text-accent' : ''}`}
               onClick={() => setColorTheme(t.name)}
-              className={`flex items-center gap-2 px-3 py-2 rounded text-sm font-body transition-colors duration-150 ${
-                colorTheme === t.name
-                  ? 'bg-accent/10 text-accent border border-accent/30'
-                  : 'text-muted hover:text-fg hover:bg-elevated border border-transparent'
-              }`}
             >
               <span
                 className="w-3 h-3 rounded-full shrink-0"
                 style={{ backgroundColor: t.accentColor }}
               />
               <span className="truncate">{t.displayName}</span>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -53,42 +50,30 @@ export default function SettingsContent() {
       <div className="space-y-2">
         <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Appearance</h3>
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
+            variant="foreground"
+            className={`flex-1 ${mode === 'auto' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('auto')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-body transition-colors duration-150 ${
-              mode === 'auto'
-                ? 'bg-accent/10 text-accent border border-accent/30'
-                : 'bg-elevated text-muted border border-border hover:text-fg'
-            }`}
           >
             <DesktopIcon size={16} weight="duotone" />
             <span>Auto</span>
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="foreground"
+            className={`flex-1 ${mode === 'light' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('light')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-body transition-colors duration-150 ${
-              mode === 'light'
-                ? 'bg-accent/10 text-accent border border-accent/30'
-                : 'bg-elevated text-muted border border-border hover:text-fg'
-            }`}
           >
             <SunIcon size={16} weight="duotone" />
             <span>Light</span>
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="foreground"
+            className={`flex-1 ${mode === 'dark' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('dark')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-body transition-colors duration-150 ${
-              mode === 'dark'
-                ? 'bg-accent/10 text-accent border border-accent/30'
-                : 'bg-elevated text-muted border border-border hover:text-fg'
-            }`}
           >
             <MoonIcon size={16} weight="duotone" />
             <span>Dark</span>
-          </button>
+          </Button>
         </div>
         <p className="text-xs text-faint">
           {colorThemes.find((t) => t.name === colorTheme)?.description}
