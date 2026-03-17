@@ -64,7 +64,7 @@ Commands must be registered with Discord before they appear in the client.
 
 ```bash
 # Register commands manually
-docker compose exec api npm run bot:deploy
+docker compose exec api pnpm run bot:deploy
 ```
 
 Commands are auto-registered on startup by default. Set `AUTO_DEPLOY_COMMANDS=false` to disable. See [Configuration Reference](docs/configuration.md) for details.
@@ -89,13 +89,13 @@ The project uses [Biome](https://biomejs.dev/) for linting and formatting.
 
 ```bash
 # Lint + format check with auto-fix (recommended before committing)
-npm run check
+pnpm run check
 
 # Lint only, with auto-fix
-npm run lint:fix
+pnpm run lint:fix
 
 # Format only, with auto-fix
-npm run format
+pnpm run format
 ```
 
 CI runs `pnpm run lint` in the typecheck workflow — your code must pass before merging. See the [Biome Setup](docs/biome-setup.md) doc for configuration details.

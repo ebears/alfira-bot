@@ -189,7 +189,7 @@ docker compose build api
 docker compose up -d api
 
 # Manually register slash commands with Discord
-docker compose exec api npm run bot:deploy
+docker compose exec api pnpm run bot:deploy
 ```
 
 ### Slash Commands Registration
@@ -203,7 +203,7 @@ Commands are automatically registered when the bot starts. Set `AUTO_DEPLOY_COMM
 If you add, remove, or rename commands while the bot is running, run this to update Discord:
 
 ```bash
-docker compose exec api npm run bot:deploy
+docker compose exec api pnpm run bot:deploy
 ```
 
 > **Note:** Guild commands update instantly (no propagation delay). Without registered commands, slash commands won't appear in Discord.
@@ -235,7 +235,7 @@ cp .env.example .env
 docker compose -f docker-compose.prod.yml up -d
 
 # 5. Register slash commands (automatic on startup, but can be run manually)
-docker compose -f docker-compose.prod.yml exec api npm run bot:deploy
+docker compose -f docker-compose.prod.yml exec api pnpm run bot:deploy
 ```
 
 That's it! The stack will pull the pre-built images and start:
@@ -279,7 +279,7 @@ Commands are automatically registered when the bot starts. Set `AUTO_DEPLOY_COMM
 If you add, remove, or rename commands, run this to update Discord:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec api npm run bot:deploy
+docker compose -f docker-compose.prod.yml exec api pnpm run bot:deploy
 ```
 
 > **Important:** Without registered commands, slash commands won't appear in Discord. Guild commands update instantly (no propagation delay).

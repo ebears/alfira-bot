@@ -82,13 +82,13 @@ Top-level scripts:
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start the API + bot |
-| `npm run web:dev` | Start the Vite dev server for the web UI |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:migrate` | Run Prisma migrations |
-| `npm run check` | Lint and format with auto-fix (Biome) |
-| `npm run lint:fix` | Lint with auto-fix |
-| `npm run format` | Format with auto-fix |
+| `pnpm run dev` | Start the API + bot |
+| `pnpm run web:dev` | Start the Vite dev server for the web UI |
+| `pnpm run db:generate` | Generate Prisma client |
+| `pnpm run db:migrate` | Run Prisma migrations |
+| `pnpm run check` | Lint and format with auto-fix (Biome) |
+| `pnpm run lint:fix` | Lint with auto-fix |
+| `pnpm run format` | Format with auto-fix |
 
 ## Shared Package Exports
 
