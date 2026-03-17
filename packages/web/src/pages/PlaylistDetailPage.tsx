@@ -36,6 +36,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
+import { Button } from '../components/ui/Button';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistDetailPage() {
@@ -229,14 +230,14 @@ export default function PlaylistDetailPage() {
   return (
     <div className="p-4 md:p-8">
       {/* Back */}
-      <button
-        type="button"
+      <Button
+        variant="foreground"
         onClick={() => navigate('/playlists')}
-        className="flex items-center gap-1.5 font-mono text-xs text-muted hover:text-fg active:text-fg transition-colors duration-150 mb-4 md:mb-6 min-h-11 md:min-h-0"
+        className="flex items-center gap-1.5 font-mono text-xs mb-4 md:mb-6 min-h-11 md:min-h-0"
       >
         <CaretLeftIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
         playlists
-      </button>
+      </Button>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 md:mb-8 gap-4">
@@ -288,17 +289,18 @@ export default function PlaylistDetailPage() {
         </div>
 
         <div className="flex gap-2 shrink-0 items-center">
-          <button
-            type="button"
-            className="btn-primary text-xs flex items-center gap-1.5"
+          <Button
+            variant="primary"
+            className="text-xs flex items-center gap-1.5"
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
           >
             <PlayIcon size={14} weight="duotone" /> Play
-          </button>
-          <button
+          </Button>
+          <Button
             ref={menuTriggerRef}
-            type="button"
+            variant="secondary"
+            size="icon"
             aria-haspopup="true"
             aria-expanded={menuOpen}
             title="More actions"
@@ -306,10 +308,9 @@ export default function PlaylistDetailPage() {
               e.stopPropagation();
               setMenuOpen(true);
             }}
-            className="flex items-center justify-center w-11 h-11 md:w-8 md:h-8 text-muted hover:text-fg active:bg-elevated border border-border hover:border-accent/30 rounded-xl transition-colors duration-150"
           >
             <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-          </button>
+          </Button>
           {menuOpen && (
             <ContextMenu
               items={menuItems}
@@ -460,14 +461,15 @@ function SongRow({
             <span className="animate-pulse text-accent text-xs">●</span>
           </span>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="foreground"
+            size="icon"
             onClick={onPlay}
-            className="hidden md:group-hover:flex items-center justify-center text-accent hover:text-accent/80 active:text-accent-muted transition-colors duration-150 w-11 h-11 md:w-auto md:h-auto"
+            className="hidden md:group-hover:flex w-11 h-11 md:w-auto md:h-auto"
             title="Play from this song"
           >
             <PlayIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
-          </button>
+          </Button>
         )}
       </div>
       <img
@@ -591,18 +593,18 @@ function AddSongsModal({
                   <span className="font-mono text-xs text-muted hidden sm:block">
                     {formatDuration(song.duration)}
                   </span>
-                  <button
-                    type="button"
+                  <Button
+                    variant="foreground"
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
-                    className={`font-mono text-xs px-3 py-2 md:py-1 rounded-xl border transition-colors duration-150 min-h-11 md:min-h-0 ${
+                    className={`font-mono text-xs px-3 py-2 md:py-1 min-h-11 md:min-h-0 ${
                       isAdded
                         ? 'border-accent/30 text-accent bg-accent/5 cursor-default'
-                        : 'border-border text-muted hover:border-accent/40 hover:text-accent active:bg-accent/10'
+                        : ''
                     }`}
                   >
                     {isAdding ? '...' : isAdded ? '✓' : 'add'}
-                  </button>
+                  </Button>
                 </div>
               );
             })
@@ -610,9 +612,9 @@ function AddSongsModal({
         </div>
 
         <div className="p-4 border-t border-border flex justify-end">
-          <button type="button" className="btn-primary" onClick={hasAddedNew ? onAdded : onClose}>
+          <Button variant="primary" onClick={hasAddedNew ? onAdded : onClose}>
             {hasAddedNew ? 'Done' : 'Close'}
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
@@ -657,18 +659,18 @@ function PlayModal({
           <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
           <div className="flex gap-2">
             {(['sequential', 'random'] as const).map((m) => (
-              <button
-                type="button"
+              <Button
+                variant="foreground"
                 key={m}
                 onClick={() => setMode(m)}
-                className={`flex-1 py-2 text-xs font-mono rounded border transition-colors duration-150 ${
+                className={`flex-1 py-2 text-xs font-mono ${
                   mode === m
                     ? 'bg-accent/10 border-accent/40 text-accent'
-                    : 'border-border text-muted hover:border-muted'
+                    : ''
                 }`}
               >
                 {m}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -676,10 +678,10 @@ function PlayModal({
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose} disabled={loading}>
+          <Button variant="foreground" onClick={onClose} disabled={loading}>
             Cancel
-          </button>
-          <button type="button" className="btn-primary" onClick={handlePlay} disabled={loading}>
+          </Button>
+          <Button variant="primary" onClick={handlePlay} disabled={loading}>
             {loading ? (
               'Starting...'
             ) : (
@@ -688,7 +690,7 @@ function PlayModal({
                 <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </Backdrop>
