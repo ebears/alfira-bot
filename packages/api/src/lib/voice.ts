@@ -2,8 +2,7 @@ import { createPlayer, getClient, getPlayer } from '@alfira-bot/bot';
 import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
 import type { TextChannel } from 'discord.js';
 import type { Request, Response } from 'express';
-import { GUILD_ID } from './config';
-import logger from './logger';
+import { GUILD_ID, logger } from './config';
 
 // ---------------------------------------------------------------------------
 // Voice channel helpers
@@ -64,7 +63,7 @@ export async function resolveOrAutoJoinPlayer(
 
     return createPlayer(GUILD_ID, connection, textChannel);
   } catch (error) {
-    logger.error({ err: error }, 'Failed to auto-join voice channel');
+    logger.error({ err: error as Error }, 'Failed to auto-join voice channel');
     res.status(503).json({
       error: 'Could not connect to your voice channel. Try using /join in Discord first.',
     });

@@ -2,8 +2,7 @@ import type { Server as HTTPServer } from 'node:http';
 import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
 import { Server as SocketIOServer } from 'socket.io';
 import { verifySessionToken } from '../middleware/requireAuth';
-import { WEB_UI_ORIGIN } from './config';
-import logger from './logger';
+import { logger, WEB_UI_ORIGIN } from './config';
 
 type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: Date };
 type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };

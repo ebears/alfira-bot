@@ -3,8 +3,7 @@ import axios, { isAxiosError } from 'axios';
 import { type Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
-import { WEB_UI_ORIGIN } from '../lib/config';
-import logger from '../lib/logger';
+import { logger, WEB_UI_ORIGIN } from '../lib/config';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/requireAuth';
 
