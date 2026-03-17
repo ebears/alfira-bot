@@ -840,8 +840,14 @@
     border-radius: 4px;
   }
 
+  .btn-clay {
+    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-2xl
+           transition-all duration-200 disabled:opacity-40
+           disabled:cursor-not-allowed min-h-11 md:min-h-0;
+  }
+
   .btn-primary {
-    @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 rounded-2xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    @apply btn-clay;
     color: var(--color-base);
     background: linear-gradient(
       180deg,
@@ -849,21 +855,75 @@
       var(--color-accent) 100%
     );
     box-shadow:
-      0 4px 0 0 color-mix(in srgb, var(--color-accent) 65%, black),
+      0 4px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
       0 6px 12px -2px rgba(0, 0, 0, 0.3),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn-primary:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 5px 0 0 color-mix(in srgb, var(--color-accent) 65%, black),
+      0 5px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
       0 8px 16px -2px rgba(0, 0, 0, 0.35),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn-primary:active {
     transform: translateY(3px);
     box-shadow:
-      0 1px 0 0 color-mix(in srgb, var(--color-accent) 65%, black),
+      0 1px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-secondary {
+    @apply btn-clay;
+    color: var(--color-base);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-secondary) 95%, white) 0%,
+      var(--color-secondary) 100%
+    );
+    box-shadow:
+      0 4px 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      0 6px 12px -2px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 5px 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      0 8px 16px -2px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .btn-secondary:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 1px 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-foreground {
+    @apply btn-clay;
+    color: var(--color-fg);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-foreground) 90%, white) 0%,
+      var(--color-foreground) 100%
+    );
+    box-shadow:
+      0 4px 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
+      0 6px 12px -2px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .btn-foreground:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 5px 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
+      0 8px 16px -2px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .btn-foreground:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 1px 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
       inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
   }
 
@@ -895,34 +955,30 @@
   }
 
   .btn-danger {
-    @apply border border-danger/30 text-danger font-body text-sm px-4 py-2.5 md:py-1.5 rounded-2xl transition-all duration-200 min-h-11 md:min-h-0;
+    @apply btn-clay;
+    color: #fff;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-danger) 12%, var(--color-elevated)) 0%,
-      var(--color-elevated) 100%
+      color-mix(in srgb, var(--color-danger) 95%, white) 0%,
+      var(--color-danger) 100%
     );
     box-shadow:
-      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
-      0 4px 8px -1px rgba(0, 0, 0, 0.2),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+      0 4px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 6px 12px -2px rgba(0, 0, 0, 0.3),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn-danger:hover {
     transform: translateY(-1px);
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-danger) 18%, var(--color-elevated)) 0%,
-      var(--color-elevated) 100%
-    );
     box-shadow:
-      0 4px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
-      0 6px 12px -1px rgba(0, 0, 0, 0.25),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+      0 5px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 8px 16px -2px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
   }
   .btn-danger:active {
     transform: translateY(3px);
     box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--color-base) 80%, black),
-      inset 0 2px 4px 0 rgba(0, 0, 0, 0.15);
+      0 1px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
   }
 
   .input {
@@ -961,33 +1017,111 @@
   }
 
   .btn-icon {
-    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded-xl transition-all duration-150;
+    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
+           rounded-xl transition-all duration-150 disabled:opacity-40
+           disabled:cursor-not-allowed;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-elevated) 80%, white) 0%,
-      var(--color-elevated) 100%
+      color-mix(in srgb, var(--color-foreground) 80%, white) 0%,
+      var(--color-foreground) 100%
     );
     box-shadow:
-      0 2px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 2px 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
       0 3px 6px -1px rgba(0, 0, 0, 0.2),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
   }
   .btn-icon:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 3px 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
       0 5px 10px -1px rgba(0, 0, 0, 0.25),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
   }
   .btn-icon:active {
     transform: translateY(2px);
     box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--color-base) 80%, black),
+      0 0 0 0 color-mix(in srgb, var(--color-foreground-muted) 100%, black 35%),
       inset 0 2px 3px 0 rgba(0, 0, 0, 0.15);
   }
   .btn-icon:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
+  }
+
+  .btn-icon-primary {
+    @apply btn-icon;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-accent) 80%, white) 0%,
+      var(--color-accent) 100%);
+    box-shadow:
+      0 2px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      0 3px 6px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-icon-primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      0 5px 10px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-icon-primary:active {
+    transform: translateY(2px);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-icon-secondary {
+    @apply btn-icon;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-secondary) 80%, white) 0%,
+      var(--color-secondary) 100%);
+    box-shadow:
+      0 2px 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      0 3px 6px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-icon-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      0 5px 10px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-icon-secondary:active {
+    transform: translateY(2px);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-secondary-muted) 100%, black 35%),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-icon-foreground {
+    @apply btn-icon;
+  }
+
+  .btn-icon-danger {
+    @apply btn-icon;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-danger) 80%, white) 0%,
+      var(--color-danger) 100%);
+    box-shadow:
+      0 2px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 3px 6px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-icon-danger:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 3px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 5px 10px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .btn-icon-danger:active {
+    transform: translateY(2px);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
   }
 }
