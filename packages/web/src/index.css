@@ -927,33 +927,6 @@
       inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
   }
 
-  .btn-ghost {
-    @apply border border-border text-fg font-body text-sm px-4 py-2.5 md:py-2 rounded-2xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-elevated) 80%, white) 0%,
-      var(--color-elevated) 100%
-    );
-    box-shadow:
-      0 3px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
-      0 4px 8px -1px rgba(0, 0, 0, 0.2),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
-  }
-  .btn-ghost:hover {
-    transform: translateY(-1px);
-    border-color: var(--color-muted);
-    box-shadow:
-      0 4px 0 0 color-mix(in srgb, var(--color-base) 80%, black),
-      0 6px 12px -1px rgba(0, 0, 0, 0.25),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
-  }
-  .btn-ghost:active {
-    transform: translateY(3px);
-    box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--color-base) 80%, black),
-      inset 0 2px 4px 0 rgba(0, 0, 0, 0.15);
-  }
-
   .btn-danger {
     @apply btn-clay;
     color: #fff;
