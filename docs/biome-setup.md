@@ -14,30 +14,30 @@ Biome is a fast, all-in-one toolchain for web projects that provides:
 Biome is already installed as a dev dependency in the project root:
 
 ```bash
-npm install
+pnpm install
 ```
 
 This installs `@biomejs/biome` version 2.4.7 or later.
 
-## NPM Scripts
+## pnpm Scripts
 
 The following scripts are available in the root `package.json`:
 
 ```bash
 # Check for linting issues
-npm run lint
+pnpm run lint
 
 # Auto-fix linting issues
-npm run lint:fix
+pnpm run lint:fix
 
 # Format all code
-npm run format
+pnpm run format
 
 # Check formatting without making changes
-npm run format:check
+pnpm run format:check
 
 # Combined: lint + format in one command
-npm run check
+pnpm run check
 ```
 
 ## Editor Integration
@@ -79,7 +79,7 @@ Biome is integrated into the GitHub Actions workflow (`.github/workflows/typeche
 
 ```yaml
 - name: Lint with Biome
-  run: npm run lint
+  run: pnpm run lint
 ```
 
 This ensures all code passes linting checks before merging.
@@ -90,27 +90,27 @@ This ensures all code passes linting checks before merging.
 
 ```bash
 # Run both linting and formatting
-npm run check
+pnpm run check
 ```
 
 ### Fixing All Issues
 
 ```bash
 # Auto-fix all safe fixes
-npm run lint:fix
+pnpm run lint:fix
 
 # Format all files
-npm run format
+pnpm run format
 ```
 
 ### Checking Specific Files
 
 ```bash
 # Check a specific file
-npx biome lint packages/api/src/index.ts
+pnpm exec biome lint packages/api/src/index.ts
 
 # Format a specific file
-npx biome format packages/api/src/index.ts
+pnpm exec biome format packages/api/src/index.ts
 ```
 
 ## Resources
