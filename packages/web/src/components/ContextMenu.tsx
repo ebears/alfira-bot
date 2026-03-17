@@ -1,6 +1,7 @@
 import { CaretLeftIcon, DotsThreeOutlineVerticalIcon } from '@phosphor-icons/react';
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Button } from './ui/Button';
 
 // --- Types ---
 
@@ -60,8 +61,10 @@ export function ContextMenuTrigger({
   className?: string;
 }) {
   return (
-    <button
+    <Button
       ref={ref}
+      variant="secondary"
+      size="icon"
       type="button"
       aria-haspopup="true"
       aria-expanded={isOpen}
@@ -71,18 +74,13 @@ export function ContextMenuTrigger({
         onOpen();
       }}
       className={`
-        flex items-center justify-center
-        w-11 h-11 md:w-8 md:h-8
-        text-muted hover:text-fg active:bg-elevated
-        border border-border hover:border-accent/30 rounded-xl
-        transition-colors duration-150
         opacity-100 md:opacity-0 md:group-hover:opacity-100
         ${isOpen ? '!opacity-100' : ''}
         ${className ?? ''}
       `}
     >
       <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-    </button>
+    </Button>
   );
 }
 
@@ -341,24 +339,19 @@ function MenuItemButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
+      variant={item.danger ? 'danger' : 'secondary'}
       type="button"
       role="menuitem"
       tabIndex={-1}
       disabled={item.disabled}
       onClick={onClick}
-      className={`
-        w-full text-left px-3 py-1.5 text-xs font-mono
-        flex items-center gap-2
-        transition-colors duration-100
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${item.danger ? 'text-danger hover:bg-danger/10' : 'text-fg hover:bg-border/50'}
-      `}
+      className="w-full text-left px-3 py-1.5 text-xs font-mono flex items-center gap-2"
     >
       {item.icon && <span className="shrink-0">{item.icon}</span>}
       <span className="truncate">{item.label}</span>
       {(item.submenu || item.editSubmenu) && <span className="ml-auto text-muted">›</span>}
-    </button>
+    </Button>
   );
 }
 
@@ -374,14 +367,15 @@ function SubmenuPanel({
   return (
     <div className="animate-fade-up">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <button
+        <Button
+          variant="foreground"
           type="button"
           aria-label="Back to main menu"
           onClick={onBack}
-          className="text-muted hover:text-fg p-1 rounded transition-colors"
+          className="p-1"
         >
           <CaretLeftIcon size={14} weight="duotone" />
-        </button>
+        </Button>
         <span className="font-mono text-xs text-muted truncate">{config.title}</span>
       </div>
       <div className="max-h-48 overflow-y-auto">
@@ -391,18 +385,19 @@ function SubmenuPanel({
           </p>
         ) : (
           config.items.map((item) => (
-            <button
+            <Button
               key={item.id}
+              variant="foreground"
               type="button"
               role="menuitem"
               tabIndex={-1}
               disabled={item.disabled}
               onClick={() => onSelect(item.id)}
-              className="w-full text-left px-3 py-1.5 text-xs font-mono text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-xs font-mono flex items-center gap-2"
             >
               {item.icon && <span className="shrink-0">{item.icon}</span>}
               <span className="truncate">{item.label}</span>
-            </button>
+            </Button>
           ))
         )}
       </div>
@@ -442,14 +437,15 @@ function EditSubmenuPanel({
   return (
     <div className="animate-fade-up">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <button
+        <Button
+          variant="foreground"
           type="button"
           aria-label="Back to main menu"
           onClick={onBack}
-          className="text-muted hover:text-fg p-1 rounded transition-colors"
+          className="p-1"
         >
           <CaretLeftIcon size={14} weight="duotone" />
-        </button>
+        </Button>
         <span className="font-mono text-xs text-muted truncate">{config.title}</span>
       </div>
       <div className="px-2 py-2">
@@ -467,21 +463,23 @@ function EditSubmenuPanel({
           placeholder={config.placeholder ?? 'Enter value...'}
         />
         <div className="flex gap-1 justify-end">
-          <button
+          <Button
+            variant="foreground"
             type="button"
             onClick={onBack}
-            className="text-xs text-muted hover:text-fg px-2 py-1 rounded transition-colors"
+            className="text-xs px-2 py-1"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             type="button"
             onClick={onSave}
             disabled={config.saving}
-            className="text-xs text-accent hover:text-accent/80 px-2 py-1 rounded transition-colors disabled:opacity-50"
+            className="text-xs px-2 py-1"
           >
             {config.saving ? '...' : 'Save'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
