@@ -49,7 +49,8 @@ export default function LoginPage() {
           {/* Login button — redirects to Express OAuth handler */}
           <a
             href="/auth/login"
-            className="flex items-center justify-center gap-3 w-full bg-[#5865F2] hover:bg-[#4752C4] active:bg-[#4752C4] text-white font-body font-bold text-sm px-6 py-3.5 md:py-3 rounded-lg md:rounded transition-colors duration-150 min-h-12"
+            className="btn-primary flex items-center justify-center gap-3 w-full"
+            style={{ '--color-accent': '#5865F2', '--color-accent-muted': '#4752C4' } as React.CSSProperties}
           >
             <DiscordLogoIcon size={18} weight="duotone" />
             Login with Discord

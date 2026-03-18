@@ -145,7 +145,7 @@ export default function SongsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
         <div>
-          <h1 className="font-display text-4xl md:text-5xl text-fg tracking-wider">Library</h1>
+          <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Library</h1>
           <p className="font-mono text-xs text-muted mt-1">
             {loading ? '—' : `${songs.length} track${songs.length !== 1 ? 's' : ''}`}
           </p>
@@ -370,9 +370,6 @@ function SongCard({
               <Button
                 variant="primary"
                 size="icon"
-                className={`transition-transform duration-150 ${
-                  isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
-                }`}
               >
                 {isPlaying ? (
                   <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
@@ -385,7 +382,6 @@ function SongCard({
               ref={triggerRef}
               onOpen={() => setMenuOpen(true)}
               isOpen={menuOpen}
-              className="scale-90 group-hover:scale-100 transition-transform duration-150"
             />
           </div>
         </div>
@@ -428,7 +424,7 @@ function LibrarySongRow({
   });
 
   return (
-    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
+    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group clay-resting hover:clay-raised hover:bg-elevated active:bg-elevated/80 transition-all duration-100">
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}

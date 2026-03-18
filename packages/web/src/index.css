@@ -795,6 +795,10 @@
     0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
     0 10px 30px -8px rgba(0, 0, 0, 0.4),
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+  --clay-shadow-prominent:
+    0 8px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
+    0 14px 40px -8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   --clay-shadow-flat:
     inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
     inset 0 1px 2px 0 rgba(0, 0, 0, 0.1);
@@ -888,7 +892,7 @@
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-primary:active {
-    transform: translateY(3px);
+    transform: translateY(4px);
     box-shadow:
       0 1px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
       inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
@@ -962,7 +966,7 @@
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-danger:active {
-    transform: translateY(3px);
+    transform: translateY(4px);
     box-shadow:
       0 1px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
       inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
@@ -1015,7 +1019,7 @@
   }
 
   .btn-icon {
-    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
+    @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
@@ -1041,7 +1045,7 @@
   }
 
   .btn-icon-primary {
-    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
+    @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
@@ -1068,7 +1072,7 @@
   }
 
   .btn-icon-secondary {
-    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
+    @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
@@ -1088,7 +1092,7 @@
   }
 
   .btn-icon-foreground {
-    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
+    @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
@@ -1107,7 +1111,7 @@
   }
 
   .btn-icon-danger {
-    @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
+    @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
@@ -1177,6 +1181,10 @@
   .clay-sidebar-edge {
     box-shadow: var(--clay-shadow-sidebar);
   }
+  .clay-1 { box-shadow: var(--clay-shadow-resting); }
+  .clay-2 { box-shadow: var(--clay-shadow-raised); }
+  .clay-3 { box-shadow: var(--clay-shadow-floating); }
+  .clay-4 { box-shadow: var(--clay-shadow-prominent); }
 }
 
 /* ============================================
@@ -1185,16 +1193,18 @@
    ============================================ */
 
 [data-mode="dark"] {
-  /* Override clay shadow tokens: remove inset white highlight */
   --clay-shadow-resting:
-    0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 6px 16px -4px rgba(0, 0, 0, 0.25);
+    0 3px 0 0 rgba(0, 0, 0, 0.6),
+    0 6px 16px -4px rgba(0, 0, 0, 0.35);
   --clay-shadow-raised:
-    0 5px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 8px 24px -4px rgba(0, 0, 0, 0.3);
+    0 5px 0 0 rgba(0, 0, 0, 0.65),
+    0 8px 24px -4px rgba(0, 0, 0, 0.4);
   --clay-shadow-floating:
-    0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 10px 30px -8px rgba(0, 0, 0, 0.4);
+    0 7px 0 0 rgba(0, 0, 0, 0.7),
+    0 12px 36px -8px rgba(0, 0, 0, 0.5);
+  --clay-shadow-prominent:
+    0 8px 0 0 rgba(0, 0, 0, 0.75),
+    0 14px 40px -8px rgba(0, 0, 0, 0.55);
 }
 
 /* Remove glossy gradients — primary/danger buttons */
@@ -1226,14 +1236,22 @@
 /* Remove glossy gradients — secondary/foreground/nav buttons */
 [data-mode="dark"] .btn-secondary,
 [data-mode="dark"] .btn-foreground {
-  background: var(--color-elevated);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-elevated) 85%, white) 0%,
+    var(--color-elevated) 100%
+  );
 }
 
 /* Remove glossy gradients — icon buttons */
 [data-mode="dark"] .btn-icon,
 [data-mode="dark"] .btn-icon-secondary,
 [data-mode="dark"] .btn-icon-foreground {
-  background: var(--color-elevated);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-elevated) 85%, white) 0%,
+    var(--color-elevated) 100%
+  );
 }
 [data-mode="dark"] .btn-icon-primary {
   background: var(--color-accent);
