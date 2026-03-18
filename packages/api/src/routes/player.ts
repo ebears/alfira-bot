@@ -4,6 +4,7 @@ import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { GUILD_ID } from '../lib/config';
+import { requirePlayer, requirePlaying } from '../lib/player';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import {
@@ -166,12 +167,8 @@ router.post('/play', requireAuth, async (req, res) => {
 
 // POST /api/player/skip — skip current song. Member accessible.
 router.post('/skip', requireAuth, playerLimiter, (_req, res) => {
-  const player = getPlayer(GUILD_ID);
-
-  if (!player || !player.getCurrentSong()) {
-    res.status(409).json({ error: 'Nothing is currently playing.' });
-    return;
-  }
+  const player = requirePlaying(res);
+  if (!player) return;
 
   player.skip();
   res.json({ message: 'Skipped.' });
@@ -202,12 +199,8 @@ router.post('/loop', requireAuth, playerLimiter, (req, res) => {
     return;
   }
 
-  const player = getPlayer(GUILD_ID);
-
-  if (!player) {
-    res.status(409).json({ error: 'Nothing is playing.' });
-    return;
-  }
+  const player = requirePlayer(res);
+  if (!player) return;
 
   player.setLoopMode(mode);
   res.json({ loopMode: mode });
@@ -228,12 +221,8 @@ router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
 
 // POST /api/player/unshuffle — restore original queue order. Admin only.
 router.post('/unshuffle', requireAuth, requireAdmin, (_req, res) => {
-  const player = getPlayer(GUILD_ID);
-
-  if (!player) {
-    res.status(409).json({ error: 'Nothing is playing.' });
-    return;
-  }
+  const player = requirePlayer(res);
+  if (!player) return;
 
   player.unshuffle();
   res.json({ message: 'Queue order restored.' });
@@ -304,12 +293,8 @@ router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) 
 
 // POST /api/player/pause-toggle — pause/resume. Member accessible.
 router.post('/pause-toggle', requireAuth, playerLimiter, (_req, res) => {
-  const player = getPlayer(GUILD_ID);
-
-  if (!player || !player.getCurrentSong()) {
-    res.status(409).json({ error: 'Nothing is currently playing.' });
-    return;
-  }
+  const player = requirePlaying(res);
+  if (!player) return;
 
   const isPaused = player.togglePause();
   res.json({ isPaused });
@@ -317,12 +302,8 @@ router.post('/pause-toggle', requireAuth, playerLimiter, (_req, res) => {
 
 // POST /api/player/clear — clear queue. Admin only.
 router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
-  const player = getPlayer(GUILD_ID);
-
-  if (!player) {
-    res.status(409).json({ error: 'Nothing is playing.' });
-    return;
-  }
+  const player = requirePlayer(res);
+  if (!player) return;
 
   player.clearQueue();
   res.json({ message: 'Queue cleared.' });

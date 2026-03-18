@@ -1,8 +1,7 @@
-import { getClient } from '@alfira-bot/bot';
 import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { GUILD_ID } from '../lib/config';
+import { getUserDisplayName } from '../lib/displayName';
 import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
@@ -10,19 +9,6 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const MAX_NAME_LENGTH = 200;
-
-async function getUserDisplayName(discordId: string): Promise<string> {
-  const client = getClient();
-  if (!client) return discordId;
-
-  try {
-    const guild = await client.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(discordId);
-    return member.displayName || member.user.username || discordId;
-  } catch {
-    return discordId;
-  }
-}
 
 const PLAYLIST_WITH_COUNT = { _count: { select: { songs: true } } };
 
