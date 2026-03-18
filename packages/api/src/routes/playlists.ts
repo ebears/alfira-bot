@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { getUserDisplayName } from '../lib/displayName';
+import { findOr404 } from '../lib/findOr404';
 import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
@@ -33,16 +34,12 @@ function validatePlaylistName(name: unknown, res: Response): string | null {
   return name.trim();
 }
 
-async function findPlaylistOr404(id: string, res: Response, include?: Record<string, unknown>) {
-  const playlist = await prisma.playlist.findUnique({
-    where: { id },
-    ...(include ? { include } : {}),
-  });
-  if (!playlist) {
-    res.status(404).json({ error: 'Playlist not found.' });
-    return null;
-  }
-  return playlist;
+function findPlaylistOr404(id: string, res: Response, include?: Record<string, unknown>) {
+  return findOr404(
+    () => prisma.playlist.findUnique({ where: { id }, ...(include ? { include } : {}) }),
+    res,
+    'Playlist'
+  );
 }
 
 /**

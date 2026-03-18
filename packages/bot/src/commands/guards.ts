@@ -5,9 +5,10 @@ import {
   VoiceConnectionStatus,
 } from '@discordjs/voice';
 import type { ChatInputCommandInteraction, Guild, GuildMember, TextChannel } from 'discord.js';
-import { ChannelType } from 'discord.js';
+import { ChannelType, type SlashCommandBuilder } from 'discord.js';
 import type { GuildPlayer } from '../player/GuildPlayer';
 import { createPlayer, getPlayer } from '../player/manager';
+import type { Command } from '../types';
 
 export async function requireGuild(
   interaction: ChatInputCommandInteraction
@@ -87,4 +88,27 @@ export async function getOrCreateConnection(
   }
 
   return createPlayer(guildId, connection, interaction.channel as TextChannel);
+}
+
+/**
+ * Creates a Command that requires an active guild + playing player before
+ * delegating to `handler`.  Absorbs the repeated requireGuild / requirePlaying
+ * boilerplate from skip, pause, etc.
+ */
+export function requirePlayingCommand(
+  data: SlashCommandBuilder,
+  handler: (interaction: ChatInputCommandInteraction, player: GuildPlayer) => Promise<void>
+): Command {
+  return {
+    data,
+    async execute(interaction) {
+      const guild = await requireGuild(interaction);
+      if (!guild) return;
+
+      const player = await requirePlaying(interaction, guild.id);
+      if (!player) return;
+
+      await handler(interaction, player);
+    },
+  };
 }

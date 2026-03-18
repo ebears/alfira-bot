@@ -41,7 +41,7 @@ function getStatus() {
   return connectionStatus;
 }
 
-function getSocket(): Socket {
+export function useSocket(): Socket {
   if (!_socket) {
     _socket = io({
       withCredentials: true,
@@ -62,12 +62,8 @@ function getSocket(): Socket {
   return _socket;
 }
 
-export function useSocket(): Socket {
-  return getSocket();
-}
-
 export function useConnectionStatus(): ConnectionStatus {
   // Ensure socket is initialized
-  getSocket();
+  useSocket();
   return useSyncExternalStore(subscribeStatus, getStatus, getStatus);
 }
