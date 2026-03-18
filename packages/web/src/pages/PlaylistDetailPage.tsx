@@ -265,13 +265,13 @@ export default function PlaylistDetailPage() {
                   setNameValue(playlist.name);
                 }
               }}
-              className="font-display text-4xl md:text-5xl bg-transparent text-fg tracking-wider border-b-2 border-accent outline-none w-full"
-              style={{ fontSize: '2.5rem', lineHeight: 1 }}
+              className="font-display text-3xl md:text-4xl bg-transparent text-fg tracking-wider border-b-2 border-accent outline-none w-full"
+              style={{ fontSize: '2rem', lineHeight: 1 }}
             />
           ) : (
             <div className="flex items-center gap-2">
               <h1
-                className={`font-display text-4xl md:text-5xl text-fg tracking-wider ${
+                className={`font-display text-3xl md:text-4xl text-fg tracking-wider ${
                   canEdit
                     ? 'cursor-pointer hover:text-accent/90 active:text-accent transition-colors duration-150'
                     : ''
