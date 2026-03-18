@@ -8,27 +8,21 @@ import {
   SquaresFourIcon,
 } from '@phosphor-icons/react';
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  addSong,
-  deleteSong,
-  getPlaylists,
-  getSongs,
-  importPlaylist,
-  startPlayback,
-} from '../api/api';
-import { Backdrop } from '../components/Backdrop';
+import { useCallback, useEffect, useState } from 'react';
+import { deleteSong, getPlaylists, getSongs, startPlayback } from '../api/api';
+import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
+import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
-import { useSongActions } from '../hooks/useSongActions';
 import { useSocket } from '../hooks/useSocket';
-import { apiErrorMessage } from '../utils/api';
+import { useSongActions } from '../hooks/useSongActions';
 import { createAddToQueueHandler } from '../utils/addToQueue';
+import { apiErrorMessage } from '../utils/api';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
@@ -195,7 +189,19 @@ export default function SongsPage() {
       {loading ? (
         <SkeletonGrid />
       ) : filtered.length === 0 ? (
-        <EmptyState search={search} isAdmin={isAdminView} onAdd={() => setShowAddModal(true)} />
+        search ? (
+          <div className="text-center py-24">
+            <p className="font-display text-4xl text-faint tracking-wider mb-2">No Results</p>
+            <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
+          </div>
+        ) : (
+          <EmptyState
+            title="Empty Library"
+            isAdmin={isAdminView}
+            onAdd={() => setShowAddModal(true)}
+            addLabel="add the first song"
+          />
+        )
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
           {filtered.map((song, i) => (
@@ -454,129 +460,6 @@ function LibrarySongRow({
 }
 
 // ---------------------------------------------------------------------------
-// Add Song modal
-// ---------------------------------------------------------------------------
-function AddSongModal({
-  onClose,
-  onAdded,
-}: {
-  onClose: () => void;
-  onAdded: (song: Song) => void;
-}) {
-  const [url, setUrl] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-  const isPlaylist = url.includes('list=');
-  const [importFullPlaylist, setImportFullPlaylist] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleSubmit = async () => {
-    if (!url.trim()) return;
-    setLoading(true);
-    setError('');
-    setSuccessMsg('');
-
-    try {
-      if (importFullPlaylist) {
-        // Import playlist
-        const result = await importPlaylist(url.trim());
-        setSuccessMsg(result.message);
-        // Close modal after a short delay to show success message
-        // The socket events will update the song list automatically
-        setTimeout(() => {
-          onClose();
-        }, 1500);
-      } else {
-        // Add single song
-        const song = await addSong(url.trim(), nickname.trim() || undefined);
-        onAdded(song);
-      }
-    } catch (err: unknown) {
-      setError(apiErrorMessage(err, 'Something went wrong. Try again.'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSubmit();
-    if (e.key === 'Escape') onClose();
-  };
-
-  return (
-    <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-md mx-4 modal-clay animate-fade-up">
-        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">Add Song</h2>
-        <p className="font-mono text-xs text-muted mb-4 md:mb-6">paste a youtube url</p>
-
-        <input
-          ref={inputRef}
-          className="input mb-3"
-          placeholder="https://youtube.com/watch?v=..."
-          value={url}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            setError('');
-            setSuccessMsg('');
-          }}
-          onKeyDown={handleKeyDown}
-          disabled={loading}
-        />
-
-        {isPlaylist && (
-          <label className="flex items-center gap-2 mb-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={importFullPlaylist}
-              onChange={(e) => setImportFullPlaylist(e.target.checked)}
-              disabled={loading}
-              className="w-4 h-4 rounded border-border bg-surface accent-accent"
-            />
-            <span className="font-mono text-xs text-fg">Import full playlist</span>
-          </label>
-        )}
-
-        {!importFullPlaylist && (
-          <input
-            className="input mb-3"
-            placeholder="Nickname (optional)"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            disabled={loading}
-          />
-        )}
-
-        {error && <p className="font-mono text-xs text-danger mb-3">{error}</p>}
-
-        {successMsg && <p className="font-mono text-xs text-success mb-3">{successMsg}</p>}
-
-        {loading && (
-          <p className="font-mono text-xs text-muted mb-3 flex items-center gap-2">
-            <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin inline-block" />
-            {importFullPlaylist ? 'importing playlist...' : 'fetching metadata...'}
-          </p>
-        )}
-
-        <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={loading || !url.trim()}>
-            {importFullPlaylist ? 'Import' : 'Add'}
-          </Button>
-        </div>
-      </div>
-    </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Skeleton loading grid
 // ---------------------------------------------------------------------------
 function SkeletonGrid() {
@@ -591,44 +474,6 @@ function SkeletonGrid() {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Empty state
-// ---------------------------------------------------------------------------
-function EmptyState({
-  search,
-  isAdmin,
-  onAdd,
-}: {
-  search: string;
-  isAdmin: boolean;
-  onAdd: () => void;
-}) {
-  if (search) {
-    return (
-      <div className="text-center py-24">
-        <p className="font-display text-4xl text-faint tracking-wider mb-2">No Results</p>
-        <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="text-center py-24">
-      <p className="font-display text-4xl text-faint tracking-wider mb-2">Empty Library</p>
-      {isAdmin ? (
-        <p className="font-mono text-xs text-faint">
-          <button type="button" className="text-accent hover:underline" onClick={onAdd}>
-            add the first song
-          </button>{' '}
-          to get started
-        </p>
-      ) : (
-        <p className="font-mono text-xs text-faint">no songs have been added yet</p>
-      )}
     </div>
   );
 }

@@ -14,29 +14,29 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  addSongToPlaylist,
   deletePlaylist,
   getPlaylist,
-  getSongs,
   removeSongFromPlaylist,
   renamePlaylist,
   startPlayback,
   togglePlaylistVisibility,
 } from '../api/api';
-import { Backdrop } from '../components/Backdrop';
+import AddSongsModal from '../components/AddSongsModal';
 import ConfirmModal from '../components/ConfirmModal';
 import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
+import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
+import PlayModal from '../components/PlayModal';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
-import { useSongActions } from '../hooks/useSongActions';
 import { useSocket } from '../hooks/useSocket';
-import { apiErrorMessage } from '../utils/api';
+import { useSongActions } from '../hooks/useSongActions';
 import { createAddToQueueHandler } from '../utils/addToQueue';
+import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -323,7 +323,12 @@ export default function PlaylistDetailPage() {
 
       {/* Song list */}
       {playlist.songs.length === 0 ? (
-        <EmptyState isAdmin={canEdit} onAdd={() => setShowAddSongs(true)} />
+        <EmptyState
+          title="Empty Playlist"
+          isAdmin={canEdit}
+          onAdd={() => setShowAddSongs(true)}
+          addLabel="add some songs"
+        />
       ) : (
         <div className="space-y-1">
           {playlist.songs.map((ps, i) => (
@@ -478,201 +483,6 @@ function SongRow({
 }
 
 // ---------------------------------------------------------------------------
-// Add Songs modal — shows full library, lets admin pick songs to add
-// ---------------------------------------------------------------------------
-function AddSongsModal({
-  playlist,
-  onClose,
-  onAdded,
-}: {
-  playlist: PlaylistDetail;
-  onClose: () => void;
-  onAdded: () => void;
-}) {
-  const [allSongs, setAllSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState<Set<string>>(new Set());
-  const [added, setAdded] = useState<Set<string>>(new Set(playlist.songs.map((ps) => ps.songId)));
-  const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    getSongs().then((s) => {
-      setAllSongs(s);
-      setLoading(false);
-    });
-  }, []);
-
-  const filtered = allSongs.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
-
-  const handleAdd = async (song: Song) => {
-    setAdding((prev) => new Set([...prev, song.id]));
-    try {
-      await addSongToPlaylist(playlist.id, song.id);
-      setAdded((prev) => new Set([...prev, song.id]));
-    } catch {
-      /* already added — mark as added */
-      setAdded((prev) => new Set([...prev, song.id]));
-    } finally {
-      setAdding((prev) => {
-        const n = new Set(prev);
-        n.delete(song.id);
-        return n;
-      });
-    }
-  };
-
-  const hasAddedNew = added.size > playlist.songs.length;
-
-  return (
-    <Backdrop onClose={onClose}>
-      <div
-        className="bg-surface border border-border rounded-xl w-full max-w-lg modal-clay
- flex flex-col max-h-[80vh] animate-fade-up"
-      >
-        <div className="p-4 md:p-5 border-b border-border">
-          <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider">Add Songs</h2>
-          <p className="font-mono text-xs text-muted mt-0.5">to "{playlist.name}"</p>
-          <input
-            className="input mt-3 md:mt-4"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="p-4 md:p-6 space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="flex items-center gap-3">
-                  <div className="skeleton w-12 h-8 md:w-10 md:h-7 rounded" />
-                  <div className="skeleton h-3 flex-1" />
-                </div>
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <p className="p-4 md:p-6 font-mono text-xs text-muted text-center">no songs found</p>
-          ) : (
-            filtered.map((song) => {
-              const isAdded = added.has(song.id);
-              const isAdding = adding.has(song.id);
-              return (
-                <div
-                  key={song.id}
-                  className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-3 hover:bg-elevated active:bg-elevated/80 transition-colors duration-100"
-                >
-                  <img
-                    src={song.thumbnailUrl}
-                    alt={song.nickname || song.title}
-                    className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
-                    loading="lazy"
-                  />
-                  <span className="flex-1 font-body text-sm text-fg truncate">
-                    {song.nickname || song.title}
-                  </span>
-                  <span className="font-mono text-xs text-muted hidden sm:block">
-                    {formatDuration(song.duration)}
-                  </span>
-                  <Button
-                    variant="foreground"
-                    disabled={isAdded || isAdding}
-                    onClick={() => handleAdd(song)}
-                    className={`font-mono text-xs px-3 py-2 md:py-1 min-h-11 md:min-h-0 ${
-                      isAdded ? 'border-accent/30 text-accent bg-accent/5 cursor-default' : ''
-                    }`}
-                  >
-                    {isAdding ? '...' : isAdded ? '✓' : 'add'}
-                  </Button>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="p-4 border-t border-border flex justify-end">
-          <Button variant="primary" onClick={hasAddedNew ? onAdded : onClose}>
-            {hasAddedNew ? 'Done' : 'Close'}
-          </Button>
-        </div>
-      </div>
-    </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Play modal — mode selector
-// ---------------------------------------------------------------------------
-function PlayModal({
-  onClose,
-  onPlay,
-}: {
-  onClose: () => void;
-  onPlay: (mode: 'sequential' | 'random') => void;
-}) {
-  const [mode, setMode] = useState<'sequential' | 'random'>('sequential');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handlePlay = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await onPlay(mode);
-      onClose();
-    } catch (err: unknown) {
-      setError(apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'));
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
-        <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
-          Play Playlist
-        </h2>
-        <p className="font-mono text-xs text-muted mb-6">configure playback</p>
-
-        <div className="mb-6">
-          <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
-          <div className="flex gap-2">
-            {(['sequential', 'random'] as const).map((m) => (
-              <Button
-                variant="foreground"
-                key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 py-2 text-xs font-mono ${
-                  mode === m ? 'bg-accent/10 border-accent/40 text-accent' : ''
-                }`}
-              >
-                {m}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
-
-        <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handlePlay} disabled={loading}>
-            {loading ? (
-              'Starting...'
-            ) : (
-              <>
-                {' '}
-                <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Skeleton / empty state
 // ---------------------------------------------------------------------------
 function DetailSkeleton() {
@@ -689,24 +499,6 @@ function DetailSkeleton() {
           <div className="skeleton h-3 w-12 rounded" />
         </div>
       ))}
-    </div>
-  );
-}
-
-function EmptyState({ isAdmin, onAdd }: { isAdmin: boolean; onAdd: () => void }) {
-  return (
-    <div className="text-center py-24">
-      <p className="font-display text-4xl text-faint tracking-wider mb-2">Empty Playlist</p>
-      {isAdmin ? (
-        <p className="font-mono text-xs text-faint">
-          <button type="button" className="text-accent hover:underline" onClick={onAdd}>
-            add some songs
-          </button>{' '}
-          to get started
-        </p>
-      ) : (
-        <p className="font-mono text-xs text-faint">no songs in this playlist yet</p>
-      )}
     </div>
   );
 }
