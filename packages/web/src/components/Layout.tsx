@@ -23,10 +23,10 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useConnectionStatus } from '../hooks/useSocket';
-import { Button } from './ui/Button';
 import MobileNav from './MobileNav';
 import QueuePanel from './QueuePanel';
 import SettingsMenu from './SettingsMenu';
+import { Button } from './ui/Button';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -194,11 +194,7 @@ export default function Layout() {
                 )}
                 <span className="text-sm font-body text-fg truncate flex-1">{user?.username}</span>
               </div>
-              <Button
-                variant="danger"
-                onClick={handleLogout}
-                className="w-full text-left text-xs"
-              >
+              <Button variant="danger" onClick={handleLogout} className="w-full text-left text-xs">
                 log out
               </Button>
             </>
@@ -312,7 +308,10 @@ function NowPlayingBar() {
   return (
     <div className="shrink-0 bg-surface fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom clay-resting">
       {/* Mobile: progress bar on top */}
-      <div className="md:hidden h-1 w-full bg-elevated relative overflow-hidden" style={{ boxShadow: 'var(--clay-shadow-flat)' }}>
+      <div
+        className="md:hidden h-1 w-full bg-elevated relative overflow-hidden"
+        style={{ boxShadow: 'var(--clay-shadow-flat)' }}
+      >
         <div
           className="absolute inset-y-0 left-0 bg-accent transition-all duration-1000 ease-linear"
           style={{ width: `${progress}%` }}
@@ -473,9 +472,7 @@ function NowPlayingBar() {
           onClick={() => setQueueOpen(true)}
           title="Queue"
           className={`shrink-0 ${
-            queueOpen
-              ? 'text-accent hover:text-accent-muted'
-              : 'text-muted hover:text-fg'
+            queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
           }`}
         >
           <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
@@ -487,7 +484,7 @@ function NowPlayingBar() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm cursor-pointer"
             onClick={() => setQueueOpen(false)}
           />
 

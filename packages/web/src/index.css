@@ -866,7 +866,7 @@
 
   .btn-primary {
     @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 disabled:opacity-40
+           transition-all duration-200 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
     border-radius: var(--clay-radius-lg);
     color: var(--color-base);
@@ -896,7 +896,7 @@
 
   .btn-secondary {
     @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 disabled:opacity-40
+           transition-all duration-200 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
     border-radius: var(--clay-radius-lg);
     color: var(--color-secondary);
@@ -918,7 +918,7 @@
 
   .btn-foreground {
     @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 disabled:opacity-40
+           transition-all duration-200 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
     border-radius: var(--clay-radius-lg);
     color: var(--color-fg);
@@ -940,7 +940,7 @@
 
   .btn-danger {
     @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 disabled:opacity-40
+           transition-all duration-200 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
     border-radius: var(--clay-radius-lg);
     color: #fff;
@@ -1016,7 +1016,7 @@
 
   .btn-icon {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
     background: linear-gradient(
@@ -1042,7 +1042,7 @@
 
   .btn-icon-primary {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
@@ -1069,7 +1069,7 @@
 
   .btn-icon-secondary {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
@@ -1089,7 +1089,7 @@
 
   .btn-icon-foreground {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
@@ -1108,7 +1108,7 @@
 
   .btn-icon-danger {
     @apply w-11 h-11 md:w-9 md:h-9 flex items-center justify-center
-           transition-all duration-150 disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
@@ -1134,6 +1134,7 @@
   }
 
   .btn-nav-active {
+    @apply cursor-pointer;
     color: var(--color-accent);
     background: linear-gradient(180deg,
       var(--clay-highlight) 0%,
@@ -1145,6 +1146,7 @@
     box-shadow: var(--clay-shadow-flat);
   }
   .btn-nav-inactive {
+    @apply cursor-pointer;
     color: var(--color-muted);
     background: transparent;
     box-shadow: none;
