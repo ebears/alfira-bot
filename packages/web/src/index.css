@@ -781,23 +781,23 @@
   --clay-radius-md: 16px;
   --clay-radius-lg: 20px;
   /* Clay highlight — top-light gradient endpoint */
-  --clay-highlight: color-mix(in srgb, var(--color-elevated) 85%, white);
+  --clay-highlight: color-mix(in srgb, var(--color-elevated) 65%, white);
   /* Clay elevation tokens — 4 deliberate depth levels */
   --clay-shadow-resting:
     0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
     0 6px 16px -4px rgba(0, 0, 0, 0.25),
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   --clay-shadow-raised:
-    0 5px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 8px 24px -4px rgba(0, 0, 0, 0.3),
+    0 7px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 12px 28px -4px rgba(0, 0, 0, 0.3),
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   --clay-shadow-floating:
-    0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 10px 30px -8px rgba(0, 0, 0, 0.4),
+    0 12px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 18px 40px -8px rgba(0, 0, 0, 0.4),
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   --clay-shadow-prominent:
-    0 8px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
-    0 14px 40px -8px rgba(0, 0, 0, 0.5),
+    0 18px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
+    0 26px 56px -8px rgba(0, 0, 0, 0.5),
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   --clay-shadow-flat:
     inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
@@ -893,9 +893,7 @@
   }
   .btn-primary:active {
     transform: translateY(4px);
-    box-shadow:
-      0 1px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-      inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: var(--clay-shadow-flat);
   }
 
   .btn-secondary {
@@ -967,9 +965,7 @@
   }
   .btn-danger:active {
     transform: translateY(4px);
-    box-shadow:
-      0 1px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-      inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: var(--clay-shadow-flat);
   }
 
   .input {
@@ -1178,6 +1174,9 @@
   .clay-floating {
     box-shadow: var(--clay-shadow-floating);
   }
+  .clay-flat {
+    box-shadow: var(--clay-shadow-flat);
+  }
   .clay-sidebar-edge {
     box-shadow: var(--clay-shadow-sidebar);
   }
@@ -1185,6 +1184,14 @@
   .clay-2 { box-shadow: var(--clay-shadow-raised); }
   .clay-3 { box-shadow: var(--clay-shadow-floating); }
   .clay-4 { box-shadow: var(--clay-shadow-prominent); }
+}
+
+.clay-sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--clay-highlight) 0%,
+    var(--color-surface) 100%
+  );
 }
 
 /* ============================================
@@ -1197,14 +1204,18 @@
     0 3px 0 0 rgba(0, 0, 0, 0.6),
     0 6px 16px -4px rgba(0, 0, 0, 0.35);
   --clay-shadow-raised:
-    0 5px 0 0 rgba(0, 0, 0, 0.65),
-    0 8px 24px -4px rgba(0, 0, 0, 0.4);
+    0 7px 0 0 rgba(0, 0, 0, 0.65),
+    0 12px 28px -4px rgba(0, 0, 0, 0.4);
   --clay-shadow-floating:
-    0 7px 0 0 rgba(0, 0, 0, 0.7),
-    0 12px 36px -8px rgba(0, 0, 0, 0.5);
+    0 12px 0 0 rgba(0, 0, 0, 0.7),
+    0 18px 40px -8px rgba(0, 0, 0, 0.5);
   --clay-shadow-prominent:
-    0 8px 0 0 rgba(0, 0, 0, 0.75),
-    0 14px 40px -8px rgba(0, 0, 0, 0.55);
+    0 18px 0 0 rgba(0, 0, 0, 0.75),
+    0 26px 56px -8px rgba(0, 0, 0, 0.55);
+}
+
+[data-mode="dark"] .clay-sidebar {
+  background: var(--color-surface);
 }
 
 /* Remove glossy gradients — primary/danger buttons */
