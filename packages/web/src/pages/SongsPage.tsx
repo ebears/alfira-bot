@@ -24,12 +24,11 @@ import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
-import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
-import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { useSongActions } from '../hooks/useSongActions';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
+import { createAddToQueueHandler } from '../utils/addToQueue';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
@@ -43,7 +42,7 @@ export default function SongsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
-  const handleAddToQueue = useAddToQueue(notify);
+  const handleAddToQueue = createAddToQueueHandler(notify);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('alfira-library-view');
@@ -469,7 +468,8 @@ function AddSongModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const { isPlaylist, importFullPlaylist, setImportFullPlaylist } = usePlaylistUrlDetection(url);
+  const isPlaylist = url.includes('list=');
+  const [importFullPlaylist, setImportFullPlaylist] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

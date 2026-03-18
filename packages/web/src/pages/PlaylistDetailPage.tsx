@@ -1,7 +1,6 @@
 import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
-  ArrowSquareOutIcon,
   BombIcon,
   CaretLeftIcon,
   DotsThreeOutlineVerticalIcon,
@@ -11,7 +10,6 @@ import {
   PlayCircleIcon,
   PlayIcon,
   PlusCircleIcon,
-  VinylRecordIcon,
 } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -34,10 +32,11 @@ import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
-import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
+import { useSongActions } from '../hooks/useSongActions';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
+import { createAddToQueueHandler } from '../utils/addToQueue';
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +55,7 @@ export default function PlaylistDetailPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
-  const handleAddToQueue = useAddToQueue(notify);
+  const handleAddToQueue = createAddToQueueHandler(notify);
 
   const isOwner = user?.discordId === playlist?.createdBy;
   const canEdit = isAdminView || isOwner;
@@ -417,34 +416,14 @@ function SongRow({
   isPlaying?: boolean;
   onAddToQueue: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  const menuItems: MenuItem[] = [
-    {
-      id: 'add-to-queue',
-      label: 'Add to Up Next',
-      icon: <VinylRecordIcon size={14} weight="duotone" />,
-      onClick: onAddToQueue,
-    },
-    {
-      id: 'open-link',
-      label: 'Open Link',
-      icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
-      onClick: () => window.open(song.youtubeUrl, '_blank'),
-    },
-    ...(isAdmin
-      ? [
-          {
-            id: 'remove',
-            label: 'Remove from playlist',
-            icon: <BombIcon size={14} weight="duotone" />,
-            danger: true,
-            onClick: onRemove,
-          } as MenuItem,
-        ]
-      : []),
-  ];
+  const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
+    song,
+    isAdmin,
+    playlists: [],
+    onAddToQueue,
+    onRemove,
+    removeLabel: 'Remove from playlist',
+  });
 
   return (
     <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">

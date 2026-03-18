@@ -26,7 +26,6 @@ import ConfirmModal from '../components/ConfirmModal';
 import { ContextMenu, type MenuItem } from '../components/ContextMenu';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
-import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { apiErrorMessage } from '../utils/api';
 import { Button } from './ui/Button';
 
@@ -535,8 +534,8 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const { isPlaylist, importFullPlaylist, setImportFullPlaylist } =
-    usePlaylistUrlDetection(youtubeUrl);
+  const isPlaylist = youtubeUrl.includes('list=');
+  const [importFullPlaylist, setImportFullPlaylist] = useState(false);
 
   const handleSubmit = async () => {
     if (!youtubeUrl.trim()) return;
