@@ -34,6 +34,19 @@ function validateUrl(
   return url;
 }
 
+async function fetchMetadata<T>(
+  fetcher: () => Promise<T>,
+  res: Response,
+  errorMessage: string
+): Promise<T | null> {
+  try {
+    return await fetcher();
+  } catch {
+    res.status(422).json({ error: errorMessage });
+    return null;
+  }
+}
+
 /** Validates a YouTube URL for single video endpoints. */
 export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
   return validateUrl(
@@ -58,38 +71,31 @@ export function validateYouTubePlaylistUrl(youtubeUrl: unknown, res: Response): 
  * Fetches YouTube metadata for a single video URL.
  * Sends error response and returns null if fetch fails.
  */
-export async function fetchYouTubeMetadata(
+export function fetchYouTubeMetadata(
   url: string,
   res: Response
 ): Promise<Awaited<ReturnType<typeof getMetadata>> | null> {
-  try {
-    return await getMetadata(url);
-  } catch {
-    res.status(422).json({
-      error:
-        'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
-    });
-    return null;
-  }
+  return fetchMetadata(
+    () => getMetadata(url),
+    res,
+    'Could not fetch video info. The video may be private, age-restricted, or unavailable.'
+  );
 }
 
 /**
  * Fetches YouTube playlist metadata with videos.
  * Sends error response and returns null if fetch fails.
  */
-export async function fetchPlaylistMetadata(
+export function fetchPlaylistMetadata(
   url: string,
   res: Response,
   maxVideos?: number
 ): Promise<Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> | null> {
-  try {
-    return await getPlaylistMetadataWithVideos(url, maxVideos);
-  } catch {
-    res.status(422).json({
-      error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
-    });
-    return null;
-  }
+  return fetchMetadata(
+    () => getPlaylistMetadataWithVideos(url, maxVideos),
+    res,
+    'Could not fetch playlist info. The playlist may be private or unavailable.'
+  );
 }
 
 /** Clamps maxVideos to the [1, 100] range, or returns undefined if not set. */

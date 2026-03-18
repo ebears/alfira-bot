@@ -1,23 +1,16 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
-  ArrowSquareOutIcon,
-  BombIcon,
-  CassetteTapeIcon,
   CircleNotchIcon,
   ListIcon,
   MagnifyingGlassIcon,
-  PencilSimpleIcon,
   PlayIcon,
   SquaresFourIcon,
-  UserIcon,
-  VinylRecordIcon,
 } from '@phosphor-icons/react';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   addSong,
-  addSongToPlaylist,
   deleteSong,
   getPlaylists,
   getSongs,
@@ -26,16 +19,15 @@ import {
 } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import ConfirmModal from '../components/ConfirmModal';
-import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
-import { useNicknameEditor } from '../hooks/useNicknameEditor';
 import { useNotification } from '../hooks/useNotification';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
+import { useSongActions } from '../hooks/useSongActions';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
 
@@ -109,7 +101,7 @@ export default function SongsPage() {
     };
   }, [socket]);
 
-const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     await deleteSong(id);
     setDeleteId(null);
     // Socket event will update the songs list
@@ -218,7 +210,6 @@ const handleDelete = async (id: string) => {
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
               onAddToQueue={() => handleAddToQueue(song.id)}
-
             />
           ))}
         </div>
@@ -306,88 +297,13 @@ function SongCard({
   isPlaying: boolean;
   onAddToQueue: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const { editValue, setEditValue, savingNickname, cancelEdit, saveNickname } = useNicknameEditor(
-    song.id,
-    song.nickname
-  );
-
-  const handleAddToPlaylist = async (playlistId: string) => {
-    try {
-      await addSongToPlaylist(playlistId, song.id);
-      setAddedTo((prev) => new Set([...prev, playlistId]));
-    } catch (err: unknown) {
-      if (apiErrorMessage(err, '').includes('already')) {
-        setAddedTo((prev) => new Set([...prev, playlistId]));
-      }
-    }
-  };
-
-  const menuItems: MenuItem[] = [
-    {
-      id: 'add-to-queue',
-      label: 'Add to Up Next',
-      icon: <VinylRecordIcon size={14} weight="duotone" />,
-      onClick: onAddToQueue,
-    },
-    {
-      id: 'open-link',
-      label: 'Open Link',
-      icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
-      onClick: () => window.open(song.youtubeUrl, '_blank'),
-    },
-    {
-      id: 'user-info',
-      label: '',
-      icon: <UserIcon size={14} weight="duotone" />,
-      info: {
-        label: song.addedByDisplayName || song.addedBy || '',
-        icon: <UserIcon size={14} weight="duotone" />,
-      },
-    },
-    ...(isAdmin
-      ? [
-          {
-            id: 'add-to-playlist',
-            label: 'Add to playlist',
-            icon: <CassetteTapeIcon size={14} weight="duotone" />,
-            submenu: {
-              title: 'Add to playlist',
-              items: playlists.map((pl) => ({
-                id: pl.id,
-                label: pl.name,
-                disabled: addedTo.has(pl.id),
-              })),
-              onSelect: handleAddToPlaylist,
-              emptyMessage: 'no playlists yet',
-            },
-          } as MenuItem,
-          {
-            id: 'edit-nickname',
-            label: 'Rename',
-            icon: <PencilSimpleIcon size={14} weight="duotone" />,
-            editSubmenu: {
-              title: 'Rename',
-              value: editValue,
-              onChange: setEditValue,
-              onSave: saveNickname,
-              onCancel: cancelEdit,
-              saving: savingNickname,
-              placeholder: 'Nickname (empty to clear)',
-            },
-          } as MenuItem,
-          {
-            id: 'delete',
-            label: 'Delete song',
-            icon: <BombIcon size={14} weight="duotone" />,
-            danger: true,
-            onClick: onDelete,
-          } as MenuItem,
-        ]
-      : []),
-  ];
+  const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
+    song,
+    isAdmin,
+    playlists,
+    onAddToQueue,
+    onDelete,
+  });
 
   return (
     <div
@@ -488,88 +404,13 @@ function LibrarySongRow({
   isPlaying: boolean;
   onAddToQueue: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const { editValue, setEditValue, savingNickname, cancelEdit, saveNickname } = useNicknameEditor(
-    song.id,
-    song.nickname
-  );
-
-  const handleAddToPlaylist = async (playlistId: string) => {
-    try {
-      await addSongToPlaylist(playlistId, song.id);
-      setAddedTo((prev) => new Set([...prev, playlistId]));
-    } catch (err: unknown) {
-      if (apiErrorMessage(err, '').includes('already')) {
-        setAddedTo((prev) => new Set([...prev, playlistId]));
-      }
-    }
-  };
-
-  const menuItems: MenuItem[] = [
-    {
-      id: 'add-to-queue',
-      label: 'Add to Up Next',
-      icon: <VinylRecordIcon size={14} weight="duotone" />,
-      onClick: onAddToQueue,
-    },
-    {
-      id: 'open-link',
-      label: 'Open Link',
-      icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
-      onClick: () => window.open(song.youtubeUrl, '_blank'),
-    },
-    {
-      id: 'user-info',
-      label: '',
-      icon: <UserIcon size={14} weight="duotone" />,
-      info: {
-        label: song.addedByDisplayName || song.addedBy || '',
-        icon: <UserIcon size={14} weight="duotone" />,
-      },
-    },
-    ...(isAdmin
-      ? [
-          {
-            id: 'add-to-playlist',
-            label: 'Add to playlist',
-            icon: <CassetteTapeIcon size={14} weight="duotone" />,
-            submenu: {
-              title: 'Add to playlist',
-              items: playlists.map((pl) => ({
-                id: pl.id,
-                label: pl.name,
-                disabled: addedTo.has(pl.id),
-              })),
-              onSelect: handleAddToPlaylist,
-              emptyMessage: 'no playlists yet',
-            },
-          } as MenuItem,
-          {
-            id: 'edit-nickname',
-            label: 'Rename',
-            icon: <PencilSimpleIcon size={14} weight="duotone" />,
-            editSubmenu: {
-              title: 'Rename',
-              value: editValue,
-              onChange: setEditValue,
-              onSave: saveNickname,
-              onCancel: cancelEdit,
-              saving: savingNickname,
-              placeholder: 'Nickname (empty to clear)',
-            },
-          } as MenuItem,
-          {
-            id: 'delete',
-            label: 'Delete song',
-            icon: <BombIcon size={14} weight="duotone" />,
-            danger: true,
-            onClick: onDelete,
-          } as MenuItem,
-        ]
-      : []),
-  ];
+  const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
+    song,
+    isAdmin,
+    playlists,
+    onAddToQueue,
+    onDelete,
+  });
 
   return (
     <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
