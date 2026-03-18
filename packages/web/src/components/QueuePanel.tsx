@@ -263,7 +263,7 @@ function QueueSongItem({
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 px-2 py-2 rounded-lg clay-resting hover:clay-raised hover:bg-elevated transition-all duration-100">
+    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-elevated hover:bg-surface transition-all duration-100">
       <span
         className={`font-mono text-[10px] w-4 text-right shrink-0 ${accent ? 'text-accent' : 'text-faint'}`}
       >

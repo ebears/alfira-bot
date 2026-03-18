@@ -53,7 +53,7 @@ export default function Layout() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col bg-surface transition-[width] duration-200 overflow-hidden border-t-2 clay-sidebar-edge ${
+        } shrink-0 flex-col clay-sidebar clay-raised transition-[width] duration-200 overflow-hidden border-t-2 clay-sidebar-edge ${
           isAdminView ? 'border-t-accent' : 'border-t-member'
         }`}
       >
@@ -442,7 +442,7 @@ function NowPlayingBar() {
         </div>
 
         {/* Album art */}
-        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated shrink-0 overflow-hidden relative clay-resting">
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated shrink-0 overflow-hidden relative clay-flat">
           {currentSong && isPlaying && !isPaused && (
             <div className="absolute -top-1.5 -right-1.5 z-10">
               <SparkleIcon

@@ -322,11 +322,11 @@ function SongCard({
 
   return (
     <div
-      className="card group animate-fade-up opacity-0 flex flex-col hover:border-border/80 hover:bg-elevated transition-colors duration-150"
+      className="card group animate-fade-up opacity-0 flex flex-col hover:bg-elevated transition-colors duration-150"
       style={style}
     >
       {/* Thumbnail with play overlay */}
-      <div className="relative aspect-video bg-elevated overflow-hidden">
+      <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-2 mb-0">
         <img
           src={song.thumbnailUrl}
           alt={song.nickname || song.title}
