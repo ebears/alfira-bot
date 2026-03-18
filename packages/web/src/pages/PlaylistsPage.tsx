@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { createPlaylist, getPlaylists, startPlayback } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import NotificationToast from '../components/NotificationToast';
+import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
-import { Button } from '../components/ui/Button';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistsPage() {
@@ -261,11 +261,7 @@ function CreatePlaylistModal({
           <Button variant="foreground" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={loading || !name.trim()}
-          >
+          <Button variant="primary" onClick={handleSubmit} disabled={loading || !name.trim()}>
             Create
           </Button>
         </div>

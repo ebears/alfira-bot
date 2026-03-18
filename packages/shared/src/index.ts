@@ -1,11 +1,11 @@
 export { formatDuration } from './format';
 export { fisherYatesShuffle } from './shuffle';
 export type {
-  Song,
-  QueuedSong,
   LoopMode,
-  QueueState,
   Playlist,
   PlaylistDetail,
+  QueuedSong,
+  QueueState,
+  Song,
   User,
 } from './types';

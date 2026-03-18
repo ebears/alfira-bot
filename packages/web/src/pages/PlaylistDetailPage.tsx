@@ -30,13 +30,13 @@ import ConfirmModal from '../components/ConfirmModal';
 import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import NotificationToast from '../components/NotificationToast';
+import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
-import { Button } from '../components/ui/Button';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistDetailPage() {
@@ -598,9 +598,7 @@ function AddSongsModal({
                     disabled={isAdded || isAdding}
                     onClick={() => handleAdd(song)}
                     className={`font-mono text-xs px-3 py-2 md:py-1 min-h-11 md:min-h-0 ${
-                      isAdded
-                        ? 'border-accent/30 text-accent bg-accent/5 cursor-default'
-                        : ''
+                      isAdded ? 'border-accent/30 text-accent bg-accent/5 cursor-default' : ''
                     }`}
                   >
                     {isAdding ? '...' : isAdded ? '✓' : 'add'}
@@ -664,9 +662,7 @@ function PlayModal({
                 key={m}
                 onClick={() => setMode(m)}
                 className={`flex-1 py-2 text-xs font-mono ${
-                  mode === m
-                    ? 'bg-accent/10 border-accent/40 text-accent'
-                    : ''
+                  mode === m ? 'bg-accent/10 border-accent/40 text-accent' : ''
                 }`}
               >
                 {m}
