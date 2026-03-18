@@ -313,13 +313,7 @@ function PanelHeader({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
       <h1 className="font-display text-xl text-fg tracking-wider">Queue</h1>
-      <Button
-        variant="foreground"
-        size="icon"
-        type="button"
-        onClick={onClose}
-        title="Close queue"
-      >
+      <Button variant="foreground" size="icon" type="button" onClick={onClose} title="Close queue">
         <XIcon size={18} weight="bold" />
       </Button>
     </div>

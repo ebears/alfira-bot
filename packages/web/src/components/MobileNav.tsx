@@ -4,8 +4,8 @@ import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
-import { Button } from './ui/Button';
 import SettingsContent from './SettingsContent';
+import { Button } from './ui/Button';
 
 export default function MobileNav() {
   const { user } = useAuth();
@@ -230,11 +230,7 @@ function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: (
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
-          <Button
-            variant="foreground"
-            size="icon"
-            onClick={onClose}
-          >
+          <Button variant="foreground" size="icon" onClick={onClose}>
             <XCircleIcon size={24} weight="duotone" />
           </Button>
         </div>

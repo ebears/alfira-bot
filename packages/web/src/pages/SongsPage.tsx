@@ -29,6 +29,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import NotificationToast from '../components/NotificationToast';
+import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
@@ -36,7 +37,6 @@ import { useNicknameEditor } from '../hooks/useNicknameEditor';
 import { useNotification } from '../hooks/useNotification';
 import { usePlaylistUrlDetection } from '../hooks/usePlaylistUrlDetection';
 import { useSocket } from '../hooks/useSocket';
-import { Button } from '../components/ui/Button';
 import { apiErrorMessage } from '../utils/api';
 
 export default function SongsPage() {
@@ -765,11 +765,7 @@ function AddSongModal({
           <Button variant="foreground" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={loading || !url.trim()}
-          >
+          <Button variant="primary" onClick={handleSubmit} disabled={loading || !url.trim()}>
             {importFullPlaylist ? 'Import' : 'Add'}
           </Button>
         </div>
