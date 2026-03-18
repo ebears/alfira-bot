@@ -1,7 +1,7 @@
-import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { getUserDisplayName } from '../lib/displayName';
+import { findOr404 } from '../lib/findOr404';
 import prisma from '../lib/prisma';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
@@ -16,15 +16,6 @@ import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-
-async function findSongOr404(id: string, res: Response) {
-  const song = await prisma.song.findUnique({ where: { id } });
-  if (!song) {
-    res.status(404).json({ error: 'Song not found.' });
-    return null;
-  }
-  return song;
-}
 
 // Rate limit playlist import to prevent abuse.
 const importLimiter = rateLimit({
@@ -226,7 +217,7 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = req.params.id as string;
 
-  const existing = await findSongOr404(id, res);
+  const existing = await findOr404(() => prisma.song.findUnique({ where: { id } }), res, 'Song');
   if (!existing) return;
 
   await prisma.song.delete({ where: { id } });
@@ -253,7 +244,7 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
     return;
   }
 
-  const existing = await findSongOr404(id, res);
+  const existing = await findOr404(() => prisma.song.findUnique({ where: { id } }), res, 'Song');
   if (!existing) return;
 
   const song = await prisma.song.update({

@@ -34,7 +34,6 @@ export function useSongActions({
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Nickname editor state (inlined from useNicknameEditor)
   const [editValue, setEditValue] = useState('');
   const [savingNickname, setSavingNickname] = useState(false);
 
