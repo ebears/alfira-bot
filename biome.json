@@ -131,8 +131,7 @@
       "includes": [
         "packages/web/src/pages/PlaylistsPage.tsx",
         "packages/web/src/pages/SongsPage.tsx",
-        "packages/web/src/pages/PlaylistDetailPage.tsx",
-        "packages/web/src/pages/QueuePage.tsx"
+        "packages/web/src/pages/PlaylistDetailPage.tsx"
       ],
       "linter": {
         "rules": {

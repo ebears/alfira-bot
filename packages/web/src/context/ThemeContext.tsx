@@ -121,26 +121,6 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getInitialColorTheme(): ColorThemeName {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem(COLOR_THEME_STORAGE_KEY);
-    if (stored && COLOR_THEMES.some((t) => t.name === stored)) {
-      return stored as ColorThemeName;
-    }
-  }
-  return 'bard'; // Default to Bard (Spotify-inspired)
-}
-
-function getInitialMode(): ColorMode {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem(MODE_STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark' || stored === 'auto') {
-      return stored;
-    }
-  }
-  return 'auto'; // Default to auto (follows system)
-}
-
 function resolveMode(mode: ColorMode): 'light' | 'dark' {
   if (mode !== 'auto') return mode;
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
@@ -150,10 +130,30 @@ function resolveMode(mode: ColorMode): 'light' | 'dark' {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [colorTheme, setColorThemeState] = useState<ColorThemeName>(getInitialColorTheme);
-  const [mode, setModeState] = useState<ColorMode>(getInitialMode);
+  const [colorTheme, setColorThemeState] = useState<ColorThemeName>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(COLOR_THEME_STORAGE_KEY);
+      if (stored && COLOR_THEMES.some((t) => t.name === stored)) {
+        return stored as ColorThemeName;
+      }
+    }
+    return 'bard';
+  });
+  const [mode, setModeState] = useState<ColorMode>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(MODE_STORAGE_KEY);
+      if (stored === 'light' || stored === 'dark' || stored === 'auto') {
+        return stored;
+      }
+    }
+    return 'auto';
+  });
   const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>(() =>
-    resolveMode(getInitialMode())
+    resolveMode(
+      typeof window !== 'undefined'
+        ? ((localStorage.getItem(MODE_STORAGE_KEY) as ColorMode | null) ?? 'auto')
+        : 'auto'
+    )
   );
 
   // Resolve mode and listen for system preference changes
