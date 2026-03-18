@@ -9,7 +9,7 @@ import {
 } from '@phosphor-icons/react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { deleteSong, getPlaylists, getSongs, startPlayback } from '../api/api';
+import { addToPriorityQueue, deleteSong, getPlaylists, getSongs, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
@@ -21,7 +21,6 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { useSongActions } from '../hooks/useSongActions';
-import { createAddToQueueHandler } from '../utils/addToQueue';
 import { apiErrorMessage } from '../utils/api';
 
 export default function SongsPage() {
@@ -36,7 +35,18 @@ export default function SongsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
-  const handleAddToQueue = createAddToQueueHandler(notify);
+  const handleAddToQueue = async (songId: string) => {
+    try {
+      await addToPriorityQueue(songId);
+      notify('Added to Up Next', 'success');
+    } catch (err: unknown) {
+      notify(
+        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
+        'error',
+        5000
+      );
+    }
+  };
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('alfira-library-view');

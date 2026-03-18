@@ -11,21 +11,17 @@ interface AdminViewContextValue {
 
 const AdminViewContext = createContext<AdminViewContextValue | null>(null);
 
-function getInitialAdminView(): boolean {
-  // Check localStorage first
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) {
-      return stored === 'true';
-    }
-  }
-  // Default to true for admins
-  return true;
-}
-
 export function AdminViewProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [adminViewOn, setAdminViewOn] = useState(getInitialAdminView);
+  const [adminViewOn, setAdminViewOn] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored !== null) {
+        return stored === 'true';
+      }
+    }
+    return true;
+  });
 
   // Persist to localStorage when adminViewOn changes
   useEffect(() => {

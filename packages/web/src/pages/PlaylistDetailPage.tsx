@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  addToPriorityQueue,
   deletePlaylist,
   getPlaylist,
   removeSongFromPlaylist,
@@ -35,7 +36,6 @@ import { usePlayer } from '../context/PlayerContext';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { useSongActions } from '../hooks/useSongActions';
-import { createAddToQueueHandler } from '../utils/addToQueue';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistDetailPage() {
@@ -55,7 +55,18 @@ export default function PlaylistDetailPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
-  const handleAddToQueue = createAddToQueueHandler(notify);
+  const handleAddToQueue = async (songId: string) => {
+    try {
+      await addToPriorityQueue(songId);
+      notify('Added to Up Next', 'success');
+    } catch (err: unknown) {
+      notify(
+        apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
+        'error',
+        5000
+      );
+    }
+  };
 
   const isOwner = user?.discordId === playlist?.createdBy;
   const canEdit = isAdminView || isOwner;

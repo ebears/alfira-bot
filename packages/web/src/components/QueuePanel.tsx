@@ -37,10 +37,10 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
   const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
 
-  const delayThenRefetch = useCallback(async () => {
+  const delayThenRefetch = async () => {
     await new Promise((r) => setTimeout(r, 600));
     await refetch();
-  }, [refetch]);
+  };
 
   const handleClear = useCallback(async () => {
     setClearBusy(true);
@@ -150,31 +150,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
             </div>
             <div className="space-y-1 border-l-2 border-accent/40 pl-3">
               {priorityQueue.map((song, i) => (
-                <div
-                  key={`priority-${song.id}-${i}`}
-                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-elevated transition-colors duration-100"
-                >
-                  <span className="font-mono text-[10px] text-accent w-4 text-right shrink-0">
-                    {i + 1}
-                  </span>
-                  <img
-                    src={song.thumbnailUrl}
-                    alt={song.nickname || song.title}
-                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
-                    loading="lazy"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-body text-xs font-medium text-fg truncate">
-                      {song.nickname || song.title}
-                    </p>
-                    <p className="font-mono text-[9px] text-muted hidden sm:block">
-                      req. {song.requestedBy}
-                    </p>
-                  </div>
-                  <span className="font-mono text-[10px] text-muted shrink-0">
-                    {formatDuration(song.duration)}
-                  </span>
-                </div>
+                <QueueSongItem key={`priority-${song.id}-${i}`} song={song} index={i} accent />
               ))}
             </div>
           </section>
@@ -208,31 +184,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           ) : (
             <div className="space-y-1">
               {queue.map((song, i) => (
-                <div
-                  key={`${song.id}-${i}`}
-                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-elevated transition-colors duration-100"
-                >
-                  <span className="font-mono text-[10px] text-faint w-4 text-right shrink-0">
-                    {i + 1}
-                  </span>
-                  <img
-                    src={song.thumbnailUrl}
-                    alt={song.nickname || song.title}
-                    className="w-10 h-7 object-cover rounded border border-border shrink-0"
-                    loading="lazy"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-body text-xs font-medium text-fg truncate">
-                      {song.nickname || song.title}
-                    </p>
-                    <p className="font-mono text-[9px] text-muted hidden sm:block">
-                      req. {song.requestedBy}
-                    </p>
-                  </div>
-                  <span className="font-mono text-[10px] text-muted shrink-0">
-                    {formatDuration(song.duration)}
-                  </span>
-                </div>
+                <QueueSongItem key={`${song.id}-${i}`} song={song} index={i} />
               ))}
             </div>
           )}
@@ -297,6 +249,41 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           />,
           document.body
         )}
+    </div>
+  );
+}
+
+function QueueSongItem({
+  song,
+  index,
+  accent,
+}: {
+  song: QueuedSong;
+  index: number;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-elevated transition-colors duration-100">
+      <span
+        className={`font-mono text-[10px] w-4 text-right shrink-0 ${accent ? 'text-accent' : 'text-faint'}`}
+      >
+        {index + 1}
+      </span>
+      <img
+        src={song.thumbnailUrl}
+        alt={song.nickname || song.title}
+        className="w-10 h-7 object-cover rounded border border-border shrink-0"
+        loading="lazy"
+      />
+      <div className="flex-1 min-w-0">
+        <p className="font-body text-xs font-medium text-fg truncate">
+          {song.nickname || song.title}
+        </p>
+        <p className="font-mono text-[9px] text-muted hidden sm:block">req. {song.requestedBy}</p>
+      </div>
+      <span className="font-mono text-[10px] text-muted shrink-0">
+        {formatDuration(song.duration)}
+      </span>
     </div>
   );
 }
