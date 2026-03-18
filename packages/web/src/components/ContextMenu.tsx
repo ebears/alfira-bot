@@ -2,6 +2,8 @@ import { CaretLeftIcon, DotsThreeOutlineVerticalIcon } from '@phosphor-icons/rea
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { Button } from './ui/Button';
+
 // --- Types ---
 
 export interface SubmenuItem {
@@ -60,9 +62,10 @@ export function ContextMenuTrigger({
   className?: string;
 }) {
   return (
-    <button
+    <Button
       ref={ref}
-      type="button"
+      variant="foreground"
+      size="icon"
       aria-haspopup="true"
       aria-expanded={isOpen}
       title="More actions"
@@ -70,19 +73,10 @@ export function ContextMenuTrigger({
         e.stopPropagation();
         onOpen();
       }}
-      className={`
-        flex items-center justify-center
-        w-11 h-11 md:w-8 md:h-8
-        text-muted hover:text-fg active:bg-elevated
-        border border-border hover:border-accent/30 rounded-xl
-        transition-colors duration-150
-        opacity-100 md:opacity-0 md:group-hover:opacity-100
-        ${isOpen ? '!opacity-100' : ''}
-        ${className ?? ''}
-      `}
+      className={className}
     >
-      <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-    </button>
+      <DotsThreeOutlineVerticalIcon size={18} weight="duotone" />
+    </Button>
   );
 }
 

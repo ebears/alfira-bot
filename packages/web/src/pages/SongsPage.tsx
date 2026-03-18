@@ -50,7 +50,6 @@ export default function SongsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const { notification, notify } = useNotification();
   const handleAddToQueue = useAddToQueue(notify);
 
@@ -110,14 +109,7 @@ export default function SongsPage() {
     };
   }, [socket]);
 
-  useEffect(() => {
-    if (!activeCardId) return;
-    const handler = () => setActiveCardId(null);
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [activeCardId]);
-
-  const handleDelete = async (id: string) => {
+const handleDelete = async (id: string) => {
     await deleteSong(id);
     setDeleteId(null);
     // Socket event will update the songs list
@@ -214,7 +206,7 @@ export default function SongsPage() {
       ) : filtered.length === 0 ? (
         <EmptyState search={search} isAdmin={isAdminView} onAdd={() => setShowAddModal(true)} />
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
           {filtered.map((song, i) => (
             <SongCard
               key={song.id}
@@ -226,8 +218,7 @@ export default function SongsPage() {
               onPlay={() => handlePlayFromSong(song.id)}
               isPlaying={playingId === song.id}
               onAddToQueue={() => handleAddToQueue(song.id)}
-              isActive={activeCardId === song.id}
-              onToggleActive={() => setActiveCardId(activeCardId === song.id ? null : song.id)}
+
             />
           ))}
         </div>
@@ -305,8 +296,6 @@ function SongCard({
   onPlay,
   isPlaying,
   onAddToQueue,
-  isActive,
-  onToggleActive,
 }: {
   song: Song;
   isAdmin: boolean;
@@ -316,8 +305,6 @@ function SongCard({
   onPlay: () => void;
   isPlaying: boolean;
   onAddToQueue: () => void;
-  isActive: boolean;
-  onToggleActive: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
@@ -417,71 +404,11 @@ function SongCard({
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
 
-        {/* Mobile tap target — invisible overlay that toggles active state */}
-        <div
-          className="absolute inset-0 z-10 md:pointer-events-none"
-          onClick={(e) => {
-            if (e.target !== e.currentTarget) return;
-            e.stopPropagation();
-            onToggleActive();
-          }}
-        />
-
         {/* Duration badge — bottom right */}
         <span className="absolute bottom-2 right-2 z-20 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
           {formatDuration(song.duration)}
         </span>
 
-        {/* Play button — center (rendered before action buttons so they receive clicks) */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlay();
-          }}
-          disabled={isPlaying}
-          className={`
-            absolute inset-0 z-[15] flex items-center justify-center
-            transition-opacity duration-200
-            ${isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}
-            ${isActive && !isPlaying ? '!opacity-100 !pointer-events-auto' : ''}
-            disabled:cursor-default
-          `}
-          title="Play from this song"
-        >
-          <Button
-            variant="primary"
-            size="icon"
-            className={`transition-transform duration-150 ${
-              isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
-            }`}
-          >
-            {isPlaying ? (
-              <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
-            ) : (
-              <PlayIcon size={18} weight="duotone" />
-            )}
-          </Button>
-        </button>
-
-        {/* Context menu trigger — top right */}
-        <div
-          className={`
-              absolute top-2 right-2 z-20
-              transition-all duration-200
-              opacity-0 pointer-events-none
-              group-hover:opacity-100 group-hover:pointer-events-auto
-              ${isActive ? '!opacity-100 !pointer-events-auto' : ''}
-              ${menuOpen ? '!opacity-100' : ''}
-            `}
-        >
-          <ContextMenuTrigger
-            ref={triggerRef}
-            onOpen={() => setMenuOpen(true)}
-            isOpen={menuOpen}
-            className="!w-8 !h-8 md:!w-8 md:!h-8 !text-white/70 hover:!text-white !border-white/15 hover:!border-white/30 !bg-black/50 !backdrop-blur-sm !rounded-xl !opacity-100 md:!opacity-100"
-          />
-        </div>
         {menuOpen && (
           <ContextMenu
             items={menuItems}
@@ -494,9 +421,43 @@ function SongCard({
 
       {/* Info */}
       <div className="p-3 flex-1">
-        <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2">
-          {song.nickname || song.title}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2 min-w-0">
+            {song.nickname || song.title}
+          </p>
+          <div className="flex items-center gap-1 shrink-0 ml-auto">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlay();
+              }}
+              disabled={isPlaying}
+              className="shrink-0 transition-transform duration-150 disabled:cursor-default cursor-pointer"
+              title="Play from this song"
+            >
+              <Button
+                variant="primary"
+                size="icon"
+                className={`transition-transform duration-150 ${
+                  isPlaying ? 'scale-100' : 'scale-90 group-hover:scale-100'
+                }`}
+              >
+                {isPlaying ? (
+                  <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+                ) : (
+                  <PlayIcon size={18} weight="duotone" />
+                )}
+              </Button>
+            </button>
+            <ContextMenuTrigger
+              ref={triggerRef}
+              onOpen={() => setMenuOpen(true)}
+              isOpen={menuOpen}
+              className="scale-90 group-hover:scale-100 transition-transform duration-150"
+            />
+          </div>
+        </div>
         {song.nickname && (
           <p className="text-[11px] text-faint truncate opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {song.title}
