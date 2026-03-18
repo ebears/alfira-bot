@@ -1,16 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export function usePlaylistUrlDetection(url: string) {
-  const [isPlaylist, setIsPlaylist] = useState(false);
+  const isPlaylist = useMemo(() => url.includes('list='), [url]);
   const [importFullPlaylist, setImportFullPlaylist] = useState(false);
-
-  useEffect(() => {
-    const hasListParam = url.includes('list=');
-    setIsPlaylist(hasListParam);
-    if (!hasListParam) {
-      setImportFullPlaylist(false);
-    }
-  }, [url]);
 
   return { isPlaylist, importFullPlaylist, setImportFullPlaylist };
 }
