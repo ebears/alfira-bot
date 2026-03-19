@@ -3,6 +3,7 @@ import { formatDuration } from '@alfira-bot/shared';
 import {
   BombIcon,
   CaretLeftIcon,
+  CircleNotchIcon,
   DotsThreeOutlineVerticalIcon,
   GhostIcon,
   LockIcon,
@@ -342,10 +343,9 @@ export default function PlaylistDetailPage() {
         />
       ) : (
         <div className="space-y-1">
-          {playlist.songs.map((ps, i) => (
+          {playlist.songs.map((ps) => (
             <SongRow
               key={ps.id}
-              position={i + 1}
               song={ps.song}
               isAdmin={canEdit}
               onRemove={() => setRemoveId(ps.songId)}
@@ -416,7 +416,6 @@ export default function PlaylistDetailPage() {
 // Song row
 // ---------------------------------------------------------------------------
 function SongRow({
-  position,
   song,
   isAdmin,
   onRemove,
@@ -424,7 +423,6 @@ function SongRow({
   isPlaying,
   onAddToQueue,
 }: {
-  position: number;
   song: Song;
   isAdmin: boolean;
   onRemove: () => void;
@@ -442,35 +440,11 @@ function SongRow({
   });
 
   return (
-    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
-      <div className="w-8 md:w-6 shrink-0 flex justify-end">
-        <span
-          className={`font-mono text-xs text-faint text-right ${
-            isPlaying ? 'hidden' : 'group-hover:hidden'
-          }`}
-        >
-          {position}
-        </span>
-        {isPlaying ? (
-          <span className="flex items-center justify-center">
-            <span className="animate-pulse text-accent text-xs">●</span>
-          </span>
-        ) : (
-          <Button
-            variant="foreground"
-            size="icon"
-            onClick={onPlay}
-            className="hidden md:group-hover:flex w-11 h-11 md:w-auto md:h-auto"
-            title="Play from this song"
-          >
-            <PlayIcon size={16} weight="duotone" className="md:w-3.5 md:h-3.5" />
-          </Button>
-        )}
-      </div>
+    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised active:clay-flat transition-all duration-100">
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}
-        className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
+        className="w-20 h-12 md:w-16 md:h-10 object-cover rounded border border-border shrink-0"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
@@ -480,6 +454,20 @@ function SongRow({
         {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
       </div>
       <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
+      <Button
+        variant="primary"
+        size="icon"
+        onClick={onPlay}
+        disabled={isPlaying}
+        className="p-2.5 md:p-1 disabled:opacity-50 disabled:cursor-default"
+        title="Play from this song"
+      >
+        {isPlaying ? (
+          <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+        ) : (
+          <PlayIcon size={18} weight="duotone" />
+        )}
+      </Button>
       <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
       {menuOpen && (
         <ContextMenu

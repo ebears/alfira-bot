@@ -26,11 +26,11 @@ export default function SettingsToggle({
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={`relative shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-surface ${
-          checked ? 'bg-accent' : 'bg-elevated border border-border'
+          checked ? 'bg-accent' : 'bg-elevated clay-resting'
         } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform duration-200 ${
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform duration-200 clay-resting ${
             checked ? 'translate-x-5 bg-base' : 'translate-x-0 bg-muted'
           }`}
         />

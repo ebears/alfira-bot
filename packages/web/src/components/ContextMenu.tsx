@@ -73,7 +73,7 @@ export function ContextMenuTrigger({
         e.stopPropagation();
         onOpen();
       }}
-      className={className}
+      className={`${className ?? ''} ${isOpen ? 'pressed text-accent' : ''}`}
     >
       <DotsThreeOutlineVerticalIcon size={18} weight="duotone" />
     </Button>
@@ -258,7 +258,7 @@ export function ContextMenu({
       className="z-[9999] min-w-48"
       onKeyDown={activeEditItemId ? undefined : handleKeyDown}
     >
-      <div className="bg-elevated border border-border rounded-[20px] clay-floating overflow-hidden animate-fade-up">
+      <div className="bg-elevated rounded-2xl clay-floating overflow-hidden animate-fade-up">
         {activeSubmenu ? (
           <SubmenuPanel
             config={activeSubmenu}

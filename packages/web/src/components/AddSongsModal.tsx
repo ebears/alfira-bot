@@ -52,7 +52,7 @@ export default function AddSongsModal({
     <Backdrop onClose={onClose}>
       <div
         className="bg-surface border border-border rounded-xl w-full max-w-lg modal-clay
- flex flex-col max-h-[80vh] animate-fade-up"
+        flex flex-col max-h-[80vh] animate-fade-up"
       >
         <div className="p-4 md:p-5 border-b border-border">
           <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider">Add Songs</h2>
@@ -67,8 +67,8 @@ export default function AddSongsModal({
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-4 md:p-6 space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="flex items-center gap-3">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={`skeleton-${n}`} className="flex items-center gap-3">
                   <div className="skeleton w-12 h-8 md:w-10 md:h-7 rounded" />
                   <div className="skeleton h-3 flex-1" />
                 </div>
