@@ -109,7 +109,7 @@ export default function MobileNav() {
       {/* Slide-out drawer */}
       <div
         ref={drawerRef}
-        className={`md:hidden fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85vw] bg-surface border-r border-border flex flex-col transform transition-transform duration-300 ease-out safe-area-top ${
+        className={`md:hidden fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85vw] bg-elevated border-r border-border flex flex-col transform transition-transform duration-300 ease-out safe-area-top clay-sidebar-edge ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -148,14 +148,12 @@ export default function MobileNav() {
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'bg-elevated text-accent clay-raised'
-                    : 'text-muted hover:text-fg hover:bg-elevated hover:clay-resting'
+                  isActive ? 'btn-nav-active pressed text-accent' : 'btn-nav-inactive text-fg/90'
                 }`
               }
             >
               <Icon size={20} weight="duotone" />
-              {label}
+              <span className="block">{label}</span>
             </NavLink>
           ))}
         </nav>

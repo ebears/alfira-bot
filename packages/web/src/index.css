@@ -3,7 +3,7 @@
 /* Custom utilities for Now Playing bar heights */
 @layer utilities {
   .h-26 {
-    height: 6.5rem;
+    height: 5.5rem;
   }
 }
 
@@ -785,25 +785,38 @@
   /* Clay elevation tokens — 4 deliberate depth levels */
   --clay-shadow-resting:
     0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 6px 16px -4px rgba(0, 0, 0, 0.25),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    0 5px 14px -3px rgba(0, 0, 0, 0.25),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+  --clay-shadow-lifted:
+    0 5px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 7px 18px -3px rgba(0, 0, 0, 0.27),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
   --clay-shadow-raised:
-    0 7px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 12px 28px -4px rgba(0, 0, 0, 0.3),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 8px 20px -3px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+  --clay-shadow-raised-top:
+    0 -8px 20px -3px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
   --clay-shadow-floating:
-    0 12px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-    0 18px 40px -8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    0 10px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 13px 30px -6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
   --clay-shadow-prominent:
-    0 18px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
-    0 26px 56px -8px rgba(0, 0, 0, 0.5),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    0 14px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
+    0 18px 40px -6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
   --clay-shadow-flat:
     inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
     inset 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --clay-shadow-sunken:
+    inset 0 3px 6px 0 rgba(0, 0, 0, 0.2),
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
   --clay-shadow-sidebar:
-    2px 0 8px -2px rgba(0, 0, 0, 0.15);
+    6px 0 20px -4px rgba(0, 0, 0, 0.2);
+  --clay-shadow-player:
+    0 -6px 20px -4px rgba(0, 0, 0, 0.2);
 }
 
 @layer base {
@@ -880,15 +893,15 @@
       var(--color-accent) 100%
     );
     box-shadow:
-      0 4px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-      0 6px 12px -2px rgba(0, 0, 0, 0.3),
+      0 3px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      0 4px 8px -2px rgba(0, 0, 0, 0.3),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-primary:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 5px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-      0 8px 16px -2px rgba(0, 0, 0, 0.35),
+      0 4px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      0 6px 12px -2px rgba(0, 0, 0, 0.35),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-primary:active {
@@ -952,15 +965,15 @@
       var(--color-danger) 100%
     );
     box-shadow:
-      0 4px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-      0 6px 12px -2px rgba(0, 0, 0, 0.3),
+      0 3px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 4px 8px -2px rgba(0, 0, 0, 0.3),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-danger:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 5px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-      0 8px 16px -2px rgba(0, 0, 0, 0.35),
+      0 4px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 6px 12px -2px rgba(0, 0, 0, 0.35),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-danger:active {
@@ -973,11 +986,11 @@
     border-radius: var(--clay-radius-md);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--color-elevated) 90%, black) 0%,
-      var(--color-elevated) 100%
+      var(--color-elevated) 0%,
+      color-mix(in srgb, var(--color-elevated) 90%, black) 100%
     );
     border: 1px solid var(--color-border);
-    box-shadow: var(--clay-shadow-flat);
+    box-shadow: var(--clay-shadow-flat), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
   }
   .input:focus {
     box-shadow:
@@ -994,6 +1007,7 @@
       var(--color-surface) 100%
     );
     box-shadow: var(--clay-shadow-resting);
+    border-bottom: 3px solid color-mix(in srgb, var(--color-surface) 70%, black);
   }
   .card:hover {
     transform: translateY(-2px);
@@ -1049,15 +1063,15 @@
       color-mix(in srgb, var(--color-accent) 80%, white) 0%,
       var(--color-accent) 100%);
     box-shadow:
-      0 2px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-      0 3px 6px -1px rgba(0, 0, 0, 0.2),
+      0 1px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-icon-primary:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 3px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-      0 5px 10px -1px rgba(0, 0, 0, 0.25),
+      0 2px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+      0 3px 6px -1px rgba(0, 0, 0, 0.25),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-icon-primary:active {
@@ -1093,17 +1107,34 @@
            disabled:cursor-not-allowed;
     border-radius: var(--clay-radius-md);
     background: linear-gradient(180deg,
-      var(--clay-highlight) 0%,
+      color-mix(in srgb, var(--color-elevated) 80%, white) 0%,
       var(--color-elevated) 100%);
-    box-shadow: var(--clay-shadow-resting);
+    box-shadow:
+      0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-icon-foreground:hover {
     transform: translateY(-1px);
-    box-shadow: var(--clay-shadow-raised);
+    box-shadow:
+      0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+      0 3px 6px -1px rgba(0, 0, 0, 0.25),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-icon-foreground:active {
     transform: translateY(2px);
-    box-shadow: var(--clay-shadow-flat);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+  }
+  .btn-icon-foreground.pressed {
+    transform: translateY(2px);
+    background: linear-gradient(180deg,
+      var(--color-elevated) 0%,
+      color-mix(in srgb, var(--color-elevated) 85%, black) 100%);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
   }
 
   .btn-icon-danger {
@@ -1115,15 +1146,15 @@
       color-mix(in srgb, var(--color-danger) 80%, white) 0%,
       var(--color-danger) 100%);
     box-shadow:
-      0 2px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-      0 3px 6px -1px rgba(0, 0, 0, 0.2),
+      0 1px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-icon-danger:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 3px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-      0 5px 10px -1px rgba(0, 0, 0, 0.25),
+      0 2px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+      0 3px 6px -1px rgba(0, 0, 0, 0.25),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-icon-danger:active {
@@ -1145,18 +1176,25 @@
     transform: translateY(2px);
     box-shadow: var(--clay-shadow-flat);
   }
+  .btn-nav-active.pressed {
+    transform: translateY(3px);
+    background: linear-gradient(180deg,
+      var(--color-elevated) 0%,
+      color-mix(in srgb, var(--color-elevated) 75%, black) 100%);
+    box-shadow: var(--clay-shadow-sunken);
+  }
   .btn-nav-inactive {
     @apply cursor-pointer;
     color: var(--color-muted);
-    background: transparent;
-    box-shadow: none;
-  }
-  .btn-nav-inactive:hover {
-    color: var(--color-fg);
     background: linear-gradient(180deg,
       var(--clay-highlight) 0%,
       var(--color-elevated) 100%);
     box-shadow: var(--clay-shadow-resting);
+  }
+  .btn-nav-inactive:hover {
+    color: var(--color-fg);
+    transform: translateY(-1px);
+    box-shadow: var(--clay-shadow-lifted);
   }
   .btn-nav-inactive:active {
     transform: translateY(2px);
@@ -1177,8 +1215,20 @@
   .clay-flat {
     box-shadow: var(--clay-shadow-flat);
   }
+  .clay-inset {
+    background: linear-gradient(
+      180deg,
+      var(--color-elevated) 0%,
+      color-mix(in srgb, var(--color-elevated) 90%, black) 100%
+    );
+    box-shadow: var(--clay-shadow-flat), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  }
   .clay-sidebar-edge {
-    box-shadow: var(--clay-shadow-sidebar);
+    box-shadow: var(--clay-shadow-sidebar), var(--clay-shadow-raised-top);
+  }
+  .clay-player-edge {
+    box-shadow: var(--clay-shadow-player);
+    background-color: color-mix(in srgb, var(--color-elevated) 95%, black);
   }
   .clay-1 { box-shadow: var(--clay-shadow-resting); }
   .clay-2 { box-shadow: var(--clay-shadow-raised); }
@@ -1186,13 +1236,6 @@
   .clay-4 { box-shadow: var(--clay-shadow-prominent); }
 }
 
-.clay-sidebar {
-  background: linear-gradient(
-    180deg,
-    var(--clay-highlight) 0%,
-    var(--color-surface) 100%
-  );
-}
 
 /* ============================================
    DARK MODE OVERRIDES
@@ -1201,47 +1244,58 @@
 
 [data-mode="dark"] {
   --clay-shadow-resting:
-    0 3px 0 0 rgba(0, 0, 0, 0.6),
-    0 6px 16px -4px rgba(0, 0, 0, 0.35);
+    0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 5px 14px -3px rgba(0, 0, 0, 0.25);
+  --clay-shadow-lifted:
+    0 5px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 7px 18px -3px rgba(0, 0, 0, 0.27);
   --clay-shadow-raised:
-    0 7px 0 0 rgba(0, 0, 0, 0.65),
-    0 12px 28px -4px rgba(0, 0, 0, 0.4);
+    0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 8px 20px -3px rgba(0, 0, 0, 0.3);
+  --clay-shadow-raised-top:
+    0 -8px 20px -3px rgba(0, 0, 0, 0.3);
   --clay-shadow-floating:
-    0 12px 0 0 rgba(0, 0, 0, 0.7),
-    0 18px 40px -8px rgba(0, 0, 0, 0.5);
+    0 10px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+    0 13px 30px -6px rgba(0, 0, 0, 0.4);
   --clay-shadow-prominent:
-    0 18px 0 0 rgba(0, 0, 0, 0.75),
-    0 26px 56px -8px rgba(0, 0, 0, 0.55);
+    0 14px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
+    0 18px 40px -6px rgba(0, 0, 0, 0.5);
+  --clay-shadow-sunken:
+    inset 0 3px 6px 0 rgba(0, 0, 0, 0.2),
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --clay-shadow-player:
+    0 -6px 20px -4px rgba(0, 0, 0, 0.15);
 }
 
-[data-mode="dark"] .clay-sidebar {
-  background: var(--color-surface);
+[data-mode="dark"] .card {
+  border-bottom-color: transparent;
 }
 
 /* Remove glossy gradients — primary/danger buttons */
 [data-mode="dark"] .btn-primary {
   background: var(--color-accent);
   box-shadow:
-    0 4px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-    0 6px 12px -2px rgba(0, 0, 0, 0.3);
+    0 3px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+    0 4px 8px -2px rgba(0, 0, 0, 0.3);
 }
 [data-mode="dark"] .btn-primary:hover {
   box-shadow:
-    0 5px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-    0 8px 16px -2px rgba(0, 0, 0, 0.35);
+    0 4px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+    0 6px 12px -2px rgba(0, 0, 0, 0.35);
 }
 
 [data-mode="dark"] .btn-danger {
   background: var(--color-danger);
   color: var(--color-base);
   box-shadow:
-    0 4px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-    0 6px 12px -2px rgba(0, 0, 0, 0.3);
+    0 3px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+    0 4px 8px -2px rgba(0, 0, 0, 0.3);
 }
 [data-mode="dark"] .btn-danger:hover {
   box-shadow:
-    0 5px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-    0 8px 16px -2px rgba(0, 0, 0, 0.35);
+    0 4px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
+    0 6px 12px -2px rgba(0, 0, 0, 0.35);
 }
 
 /* Remove glossy gradients — secondary/foreground/nav buttons */
@@ -1266,30 +1320,23 @@
 }
 [data-mode="dark"] .btn-icon-primary {
   background: var(--color-accent);
-  box-shadow:
-    0 2px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-    0 3px 6px -1px rgba(0, 0, 0, 0.2);
-}
-[data-mode="dark"] .btn-icon-primary:hover {
-  box-shadow:
-    0 3px 0 0 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
-    0 5px 10px -1px rgba(0, 0, 0, 0.25);
 }
 [data-mode="dark"] .btn-icon-danger {
   background: var(--color-danger);
-  box-shadow:
-    0 2px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-    0 3px 6px -1px rgba(0, 0, 0, 0.2);
-}
-[data-mode="dark"] .btn-icon-danger:hover {
-  box-shadow:
-    0 3px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-    0 5px 10px -1px rgba(0, 0, 0, 0.25);
 }
 
 /* Remove glossy gradients — nav buttons */
-[data-mode="dark"] .btn-nav-active,
+[data-mode="dark"] .btn-nav-active:not(.pressed),
+[data-mode="dark"] .btn-nav-inactive,
 [data-mode="dark"] .btn-nav-inactive:hover {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-elevated) 85%, white) 0%,
+    var(--color-elevated) 100%
+  );
+}
+
+[data-mode="dark"] .btn-nav-active.pressed {
   background: var(--color-elevated);
 }
 
@@ -1298,6 +1345,7 @@
 [data-mode="dark"] .modal-clay {
   background: var(--color-surface);
 }
-[data-mode="dark"] .input {
+[data-mode="dark"] .input,
+[data-mode="dark"] .clay-inset {
   background: var(--color-elevated);
 }

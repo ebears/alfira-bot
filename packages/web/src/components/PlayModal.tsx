@@ -29,7 +29,7 @@ export default function PlayModal({
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
+      <div className="bg-surface rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
           Play Playlist
         </h2>

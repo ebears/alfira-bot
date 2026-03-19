@@ -53,9 +53,7 @@ export default function Layout() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col clay-sidebar clay-raised transition-[width] duration-200 overflow-hidden border-t-2 clay-sidebar-edge ${
-          isAdminView ? 'border-t-accent' : 'border-t-member'
-        }`}
+        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-sidebar-edge`}
       >
         {/* Wordmark + collapse toggle */}
         <div
@@ -110,7 +108,7 @@ export default function Layout() {
               className={({ isActive }) =>
                 `flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 ${
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-                } ${isActive ? 'btn-nav-active' : 'btn-nav-inactive'}`
+                } ${isActive ? 'btn-nav-active pressed' : 'btn-nav-inactive'}`
               }
             >
               <Icon size={16} weight="duotone" />
@@ -147,11 +145,11 @@ export default function Layout() {
         )}
 
         {/* User section */}
-        <div className="p-3 border-t border-border">
+        <div className="p-3">
           {collapsed ? (
             <div className="flex flex-col items-center gap-2">
               <div
-                className="w-7 h-7 rounded-full bg-elevated border border-border flex items-center justify-center overflow-hidden"
+                className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center overflow-hidden"
                 title={user?.username}
               >
                 {user?.avatar ? (
@@ -183,10 +181,10 @@ export default function Layout() {
                   <img
                     src={user.avatar}
                     alt={user.username}
-                    className="w-7 h-7 rounded-full border border-border"
+                    className="w-7 h-7 rounded-full"
                   />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-elevated border border-border flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
                     <span className="font-mono text-xs text-muted">
                       {user?.username?.[0]?.toUpperCase()}
                     </span>
@@ -306,10 +304,10 @@ function NowPlayingBar() {
   const isLoopActive = loopMode !== 'off';
 
   return (
-    <div className="shrink-0 bg-surface fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom clay-resting">
+    <div className="shrink-0 bg-elevated fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom clay-player-edge">
       {/* Mobile: progress bar on top */}
       <div
-        className="md:hidden h-1 w-full bg-elevated relative overflow-hidden"
+        className="md:hidden h-1 w-full clay-inset relative overflow-hidden"
         style={{ boxShadow: 'var(--clay-shadow-flat)' }}
       >
         <div
@@ -318,7 +316,7 @@ function NowPlayingBar() {
         />
       </div>
 
-      <div className="h-26 md:h-24 flex items-center px-3 md:px-5 gap-2 md:gap-3">
+      <div className="h-26 md:h-24 flex flex-row-reverse md:flex-row items-center px-3 md:px-5 gap-2 md:gap-3">
         {/* Playback controls: Play/Pause, Skip, Leave */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
           {currentSong && (
@@ -417,7 +415,7 @@ function NowPlayingBar() {
 
         {/* Desktop: centered progress bar */}
         <div className="hidden md:flex flex-1 items-center px-4">
-          <div className="w-full h-2 bg-elevated rounded-full relative overflow-hidden">
+          <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
               style={{ width: `${progress}%` }}
@@ -441,8 +439,21 @@ function NowPlayingBar() {
           )}
         </div>
 
+        {/* Queue button */}
+        <Button
+          variant="foreground"
+          size="icon"
+          onClick={() => setQueueOpen(true)}
+          title="Queue"
+          className={`shrink-0 ${
+            queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+          }`}
+        >
+          <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
+        </Button>
+
         {/* Album art */}
-        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-elevated shrink-0 overflow-hidden relative clay-flat">
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl clay-inset shrink-0 overflow-hidden relative">
           {currentSong && isPlaying && !isPaused && (
             <div className="absolute -top-1.5 -right-1.5 z-10">
               <SparkleIcon
@@ -464,19 +475,6 @@ function NowPlayingBar() {
             </div>
           )}
         </div>
-
-        {/* Queue button */}
-        <Button
-          variant="foreground"
-          size="icon"
-          onClick={() => setQueueOpen(true)}
-          title="Queue"
-          className={`shrink-0 ${
-            queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
-          }`}
-        >
-          <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
-        </Button>
       </div>
 
       {/* Queue slideout */}
