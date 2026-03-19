@@ -150,7 +150,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
             </div>
             <div className="space-y-1 border-l-2 border-accent/40 pl-3">
               {priorityQueue.map((song, i) => (
-                <QueueSongItem key={`priority-${song.id}-${i}`} song={song} index={i} accent />
+                <QueueSongItem key={song.id} song={song} index={i} accent />
               ))}
             </div>
           </section>
@@ -184,7 +184,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           ) : (
             <div className="space-y-1">
               {queue.map((song, i) => (
-                <QueueSongItem key={`${song.id}-${i}`} song={song} index={i} />
+                <QueueSongItem key={song.id} song={song} index={i} />
               ))}
             </div>
           )}

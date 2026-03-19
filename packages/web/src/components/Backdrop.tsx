@@ -13,6 +13,9 @@ export function Backdrop({
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
       role="presentation"
     >
       {children}

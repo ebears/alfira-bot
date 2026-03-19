@@ -178,11 +178,7 @@ export default function Layout() {
             <>
               <div className="flex items-center gap-3 px-2 py-2 mb-1">
                 {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.username}
-                    className="w-7 h-7 rounded-full"
-                  />
+                  <img src={user.avatar} alt={user.username} className="w-7 h-7 rounded-full" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
                     <span className="font-mono text-xs text-muted">
@@ -484,6 +480,10 @@ function NowPlayingBar() {
           <div
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm cursor-pointer"
             onClick={() => setQueueOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setQueueOpen(false);
+            }}
+            role="presentation"
           />
 
           {/* Desktop: right panel */}

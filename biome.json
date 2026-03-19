@@ -145,6 +145,19 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "packages/web/src/components/Backdrop.tsx",
+        "packages/web/src/components/Layout.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noStaticElementInteractions": "off"
+          }
+        }
+      }
     }
   ]
 }

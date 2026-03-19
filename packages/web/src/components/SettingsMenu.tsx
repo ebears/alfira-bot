@@ -16,6 +16,7 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
       {/* Settings button in sidebar */}
       <div className={collapsed ? 'flex justify-center px-2 pb-2' : 'px-3 pb-2'}>
         <button
+          type="button"
           onClick={() => setIsOpen(true)}
           title={collapsed ? 'Settings' : undefined}
           className={`flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 w-full ${
