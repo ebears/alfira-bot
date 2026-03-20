@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPlaylist, getPlaylists, startPlayback } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
+import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
@@ -114,7 +115,12 @@ export default function PlaylistsPage() {
       {loading ? (
         <SkeletonList />
       ) : playlists.length === 0 ? (
-        <EmptyState isAdmin={isAdminView} onCreate={() => setShowCreate(true)} />
+        <EmptyState
+        title="No Playlists"
+        isAdmin={isAdminView}
+        onAdd={() => setShowCreate(true)}
+        addLabel="create the first playlist"
+      />
       ) : (
         <div className="grid gap-2 md:gap-3">
           {playlists.map((pl, i) => (
@@ -289,19 +295,3 @@ function SkeletonList() {
   );
 }
 
-function EmptyState({ isAdmin, onCreate }: { isAdmin: boolean; onCreate: () => void }) {
-  return (
-    <div className="text-center py-24">
-      <p className="font-display text-4xl text-faint tracking-wider mb-2">No Playlists</p>
-      {isAdmin ? (
-        <p className="font-mono text-xs text-faint">
-          <button type="button" className="text-accent hover:underline" onClick={onCreate}>
-            create the first playlist
-          </button>
-        </p>
-      ) : (
-        <p className="font-mono text-xs text-faint">no playlists have been created yet</p>
-      )}
-    </div>
-  );
-}
