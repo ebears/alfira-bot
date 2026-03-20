@@ -1,4 +1,5 @@
 export { formatDuration } from './format';
+export { logger } from './logger';
 export { fisherYatesShuffle } from './shuffle';
 export type {
   LoopMode,

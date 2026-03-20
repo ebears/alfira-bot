@@ -1,5 +1,6 @@
 import type { Readable } from 'node:stream';
 import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared';
 import {
   type AudioPlayer,
   AudioPlayerStatus,
@@ -71,18 +72,17 @@ export class GuildPlayer {
     this.audioPlayer.on(AudioPlayerStatus.Idle, () => this.onTrackEnd());
 
     this.audioPlayer.on('error', (error) => {
-      console.error(
-        `[GuildPlayer:${this.guildId}] AudioPlayer error:`,
-        error.message,
-        '| Track:',
-        this.currentSong?.title ?? 'unknown'
+      logger.error(
+        { guildId: this.guildId, track: this.currentSong?.title ?? 'unknown' },
+        `AudioPlayer error: ${error.message}`
       );
       this.onTrackEnd();
     });
 
     this.audioPlayer.on(AudioPlayerStatus.AutoPaused, () => {
-      console.warn(
-        `[GuildPlayer:${this.guildId}] AudioPlayer AutoPaused — voice connection may be temporarily unavailable.`
+      logger.warn(
+        { guildId: this.guildId },
+        'AudioPlayer AutoPaused — voice connection may be temporarily unavailable.'
       );
     });
 
@@ -105,8 +105,9 @@ export class GuildPlayer {
       if (this.isReconnecting) return;
       this.isReconnecting = true;
 
-      console.warn(
-        `[GuildPlayer:${this.guildId}] Voice connection disconnected — attempting recovery.`
+      logger.warn(
+        { guildId: this.guildId },
+        'Voice connection disconnected — attempting recovery.'
       );
 
       try {
@@ -114,11 +115,12 @@ export class GuildPlayer {
           entersState(this.connection, VoiceConnectionStatus.Signalling, 5_000),
           entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000),
         ]);
-        console.info(`[GuildPlayer:${this.guildId}] Voice connection is reconnecting.`);
+        logger.info({ guildId: this.guildId }, 'Voice connection is reconnecting.');
       } catch {
         if (this.connection.state.status !== VoiceConnectionStatus.Destroyed) {
-          console.error(
-            `[GuildPlayer:${this.guildId}] Voice connection could not recover — destroying.`
+          logger.error(
+            { guildId: this.guildId },
+            'Voice connection could not recover — destroying.'
           );
           this.connection.destroy();
         }
@@ -128,7 +130,7 @@ export class GuildPlayer {
     });
 
     this.connection.on(VoiceConnectionStatus.Destroyed, () => {
-      console.info(`[GuildPlayer:${this.guildId}] Voice connection destroyed.`);
+      logger.info({ guildId: this.guildId }, 'Voice connection destroyed.');
 
       if (!this.intentionallyStopped) {
         this.audioPlayer.stop(true);
@@ -275,7 +277,7 @@ export class GuildPlayer {
     this.textChannel
       .send(message)
       .catch((err) =>
-        console.error(`[GuildPlayer:${this.guildId}] Failed to send message to text channel:`, err)
+        logger.error({ guildId: this.guildId, err }, 'Failed to send message to text channel')
       );
   }
 
@@ -342,9 +344,9 @@ export class GuildPlayer {
       if (!result) throw lastError;
       ({ url: streamUrl, isWebmOpus } = result);
     } catch (error) {
-      console.error(
-        `[GuildPlayer:${this.guildId}] Failed to get stream URL for "${next.title}" after 3 attempts:`,
-        error
+      logger.error(
+        { guildId: this.guildId, track: next.title, error },
+        'Failed to get stream URL after 3 attempts'
       );
       await this.handlePlaybackFailure('could not resolve the audio stream');
       return;
@@ -359,10 +361,7 @@ export class GuildPlayer {
       stream = handle.stream;
       kill = handle.kill;
     } catch (error) {
-      console.error(
-        `[GuildPlayer:${this.guildId}] Failed to spawn FFmpeg for "${next.title}":`,
-        error
-      );
+      logger.error({ guildId: this.guildId, track: next.title, error }, 'Failed to spawn FFmpeg');
       await this.handlePlaybackFailure('FFmpeg failed to start');
       return;
     }
@@ -377,8 +376,9 @@ export class GuildPlayer {
     try {
       await entersState(this.audioPlayer, AudioPlayerStatus.Playing, 5_000);
     } catch {
-      console.error(
-        `[GuildPlayer:${this.guildId}] AudioPlayer failed to enter Playing state for "${next.title}"`
+      logger.error(
+        { guildId: this.guildId, track: next.title },
+        'AudioPlayer failed to enter Playing state'
       );
       await this.handlePlaybackFailure('audio failed to start');
       return;

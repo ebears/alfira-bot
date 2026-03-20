@@ -1,6 +1,6 @@
 import type { LoopMode, QueueState } from '@alfira-bot/shared';
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import {
   clearQueue,
   getQueueState,
@@ -11,6 +11,7 @@ import {
   togglePause,
   unshuffleQueue,
 } from '../api/api';
+import { useElapsedTimer } from '../hooks/useElapsedTimer';
 import { useSocket } from '../hooks/useSocket';
 
 // ---------------------------------------------------------------------------
@@ -51,11 +52,10 @@ const PlayerContext = createContext<PlayerContextValue | null>(null);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
-  const [elapsed, setElapsed] = useState(0);
-  // Track the song ID we last started timing so we can reset when it changes.
-  const timedSongId = useRef<string | null>(null);
-  const elapsedRef = useRef(0);
   const socket = useSocket();
+
+  // Use the extracted elapsed timer hook
+  const elapsed = useElapsedTimer(state);
 
   // ---------------------------------------------------------------------------
   // REST fetch — used for initial load and after actions where we want the
@@ -105,111 +105,72 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [socket, refetch]);
 
   // ---------------------------------------------------------------------------
-  // Client-side elapsed-time counter.
-  //
-  // The API doesn't return a playback position, so we simulate it locally.
-  // We reset whenever the current song changes. This gives a best-effort
-  // progress bar that resets cleanly on skip/stop/song-end.
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    const songId = state.currentSong?.id ?? null;
-    const songChanged = songId !== timedSongId.current;
-
-    if (songChanged) {
-      timedSongId.current = songId;
-      elapsedRef.current = 0;
-      setElapsed(0);
-    }
-
-    if (!songId) return;
-
-    // Seed elapsed from server timestamp on first mount or song change.
-    // This is what fixes the refresh bug — instead of always starting at 0,
-    // we calculate how far along the track actually is.
-    if (state.trackStartedAt && state.isPlaying && !state.isPaused) {
-      const serverElapsed = Math.floor((Date.now() - state.trackStartedAt) / 1000);
-      const clamped = Math.min(serverElapsed, state.currentSong?.duration ?? 0);
-      elapsedRef.current = clamped;
-      setElapsed(clamped);
-    }
-
-    if (!state.isPlaying || state.isPaused) return;
-
-    const id = setInterval(() => {
-      elapsedRef.current = Math.min(elapsedRef.current + 1, state.currentSong?.duration ?? 0);
-      setElapsed(elapsedRef.current);
-    }, 1000);
-
-    return () => clearInterval(id);
-  }, [state.isPlaying, state.isPaused, state.currentSong, state.trackStartedAt]);
-
-  // ---------------------------------------------------------------------------
   // Action helpers
   //
   // Each action calls the API and then does a short-delay refetch as a
   // safety net. The socket player:update event will usually arrive first
-  // (triggered by GuildPlayer on the server), so the refetch is redundant
-  // in the happy path — but it guards against any missed events.
+  // (within ~10-50ms), but the refetch ensures we don't get stuck in an
+  // inconsistent state if the socket event is missed.
   // ---------------------------------------------------------------------------
   const skip = useCallback(async () => {
     await skipTrack();
-    // No manual refetch needed — the bot broadcasts player:update via socket
-    // when the skip takes effect, which arrives almost instantly.
-  }, []);
+    setTimeout(refetch, 100);
+  }, [refetch]);
 
   const leave = useCallback(async () => {
     await leaveVoice();
-    await refetch();
+    setTimeout(refetch, 100);
   }, [refetch]);
 
   const pause = useCallback(async () => {
     await togglePause();
-  }, []);
-
-  const setLoop = useCallback(async (mode: LoopMode) => {
-    await setLoopMode(mode);
-    // No refetch needed — setLoopMode triggers a broadcastQueueUpdate
-    // in GuildPlayer which arrives via the socket immediately.
-  }, []);
-
-  const shuffle = useCallback(async () => {
-    await shuffleQueue();
-    // Same as above — the socket event arrives before a refetch would.
-  }, []);
-
-  const unshuffle = useCallback(async () => {
-    await unshuffleQueue();
-    // Same as above — the socket event arrives before a refetch would.
-  }, []);
+    setTimeout(refetch, 100);
+  }, [refetch]);
 
   const clear = useCallback(async () => {
     await clearQueue();
-    await refetch();
+    setTimeout(refetch, 100);
   }, [refetch]);
 
-  return (
-    <PlayerContext.Provider
-      value={{
-        state,
-        loading,
-        elapsed,
-        skip,
-        leave,
-        pause,
-        clear,
-        setLoop,
-        shuffle,
-        unshuffle,
-        refetch,
-      }}
-    >
-      {children}
-    </PlayerContext.Provider>
+  const setLoop = useCallback(
+    async (mode: LoopMode) => {
+      await setLoopMode(mode);
+      setTimeout(refetch, 100);
+    },
+    [refetch]
   );
+
+  const shuffle = useCallback(async () => {
+    await shuffleQueue();
+    setTimeout(refetch, 100);
+  }, [refetch]);
+
+  const unshuffle = useCallback(async () => {
+    await unshuffleQueue();
+    setTimeout(refetch, 100);
+  }, [refetch]);
+
+  const value: PlayerContextValue = {
+    state,
+    loading,
+    elapsed,
+    skip,
+    leave,
+    pause,
+    clear,
+    setLoop,
+    shuffle,
+    unshuffle,
+    refetch,
+  };
+
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
 export function usePlayer(): PlayerContextValue {
-  const ctx = useContext(PlayerContext);
-  if (!ctx) throw new Error('usePlayer must be used inside PlayerProvider');
-  return ctx;
+  const context = useContext(PlayerContext);
+  if (!context) {
+    throw new Error('usePlayer must be used within a PlayerProvider');
+  }
+  return context;
 }
