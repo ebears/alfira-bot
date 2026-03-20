@@ -107,3 +107,26 @@ export function clampMaxVideos(value: number | undefined): number | undefined {
 export function youTubeUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
+
+/** Validates and trims a playlist name. */
+export function validatePlaylistName(name: unknown, res: Response): string | null {
+  const MAX_NAME_LENGTH = 200;
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    res.status(400).json({ error: 'name is required.' });
+    return null;
+  }
+  if (name.length > MAX_NAME_LENGTH) {
+    res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
+    return null;
+  }
+  return name.trim();
+}
+
+/** Validates and trims a nickname. Returns null if invalid, otherwise the trimmed value or null. */
+export function validateNickname(nickname: unknown, res: Response): string | null | null {
+  if (nickname !== undefined && nickname !== null && typeof nickname !== 'string') {
+    res.status(400).json({ error: 'nickname must be a string.' });
+    return null;
+  }
+  return nickname ? (nickname as string).trim() || null : null;
+}

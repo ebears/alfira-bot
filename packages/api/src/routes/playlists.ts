@@ -6,10 +6,10 @@ import { findOr404 } from '../lib/findOr404';
 import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
+import { validatePlaylistName } from '../lib/validation';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-const MAX_NAME_LENGTH = 200;
 
 const PLAYLIST_WITH_COUNT = { _count: { select: { songs: true } } };
 
@@ -21,18 +21,6 @@ const playlistLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please slow down.' },
 });
-
-function validatePlaylistName(name: unknown, res: Response): string | null {
-  if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    res.status(400).json({ error: 'name is required.' });
-    return null;
-  }
-  if (name.length > MAX_NAME_LENGTH) {
-    res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
-    return null;
-  }
-  return name.trim();
-}
 
 function findPlaylistOr404(id: string, res: Response, include?: Record<string, unknown>) {
   return findOr404(

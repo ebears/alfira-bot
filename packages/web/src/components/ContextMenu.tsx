@@ -1,8 +1,10 @@
-import { CaretLeftIcon, DotsThreeOutlineVerticalIcon } from '@phosphor-icons/react';
+import { DotsThreeOutlineVerticalIcon } from '@phosphor-icons/react';
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-
 import { Button } from './ui/Button';
+import { EditSubmenuPanel } from './ContextMenu/EditSubmenuPanel';
+import { MenuItemButton } from './ContextMenu/MenuItemButton';
+import { SubmenuPanel } from './ContextMenu/SubmenuPanel';
 
 // --- Types ---
 
@@ -319,91 +321,6 @@ export function ContextMenu({
 
 // --- Sub-components ---
 
-function MenuItemButton({
-  item,
-  onClick,
-}: {
-  item: {
-    id: string;
-    label: string;
-    icon?: ReactNode;
-    danger?: boolean;
-    disabled?: boolean;
-    submenu?: SubmenuConfig;
-    editSubmenu?: MenuItem['editSubmenu'];
-  };
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      tabIndex={-1}
-      disabled={item.disabled}
-      onClick={onClick}
-      className={`
-        w-full text-left px-3 py-1.5 text-xs font-mono
-        flex items-center gap-2
-        transition-colors duration-100
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${item.danger ? 'text-danger hover:bg-danger/10' : 'text-fg hover:bg-border/50'}
-      `}
-    >
-      {item.icon && <span className="shrink-0">{item.icon}</span>}
-      <span className="truncate">{item.label}</span>
-      {(item.submenu || item.editSubmenu) && <span className="ml-auto text-muted">›</span>}
-    </button>
-  );
-}
-
-function SubmenuPanel({
-  config,
-  onBack,
-  onSelect,
-}: {
-  config: SubmenuConfig;
-  onBack: () => void;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className="animate-fade-up">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <button
-          type="button"
-          aria-label="Back to main menu"
-          onClick={onBack}
-          className="text-muted hover:text-fg p-1 rounded transition-colors"
-        >
-          <CaretLeftIcon size={14} weight="duotone" />
-        </button>
-        <span className="font-mono text-xs text-muted truncate">{config.title}</span>
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {config.items.length === 0 ? (
-          <p className="px-3 py-2 text-xs font-mono text-muted">
-            {config.emptyMessage ?? 'no items'}
-          </p>
-        ) : (
-          config.items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="menuitem"
-              tabIndex={-1}
-              disabled={item.disabled}
-              onClick={() => onSelect(item.id)}
-              className="w-full text-left px-3 py-1.5 text-xs font-mono text-fg hover:bg-border/50 transition-colors duration-100 disabled:opacity-50 flex items-center gap-2"
-            >
-              {item.icon && <span className="shrink-0">{item.icon}</span>}
-              <span className="truncate">{item.label}</span>
-            </button>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
 function InfoRow({ item }: { item: MenuItem }) {
   return (
     <div
@@ -412,72 +329,6 @@ function InfoRow({ item }: { item: MenuItem }) {
     >
       {item.icon && <span className="shrink-0">{item.icon}</span>}
       <span className="truncate">{item.info?.label}</span>
-    </div>
-  );
-}
-
-function EditSubmenuPanel({
-  config,
-  onBack,
-  onSave,
-}: {
-  config: NonNullable<MenuItem['editSubmenu']>;
-  onBack: () => void;
-  onSave: () => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    // Delay focus to let the fade-up animation start (element is opacity:0 initially)
-    const timer = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <div className="animate-fade-up">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <button
-          type="button"
-          aria-label="Back to main menu"
-          onClick={onBack}
-          className="text-muted hover:text-fg p-1 rounded transition-colors"
-        >
-          <CaretLeftIcon size={14} weight="duotone" />
-        </button>
-        <span className="font-mono text-xs text-muted truncate">{config.title}</span>
-      </div>
-      <div className="px-2 py-2">
-        <input
-          ref={inputRef}
-          className="input text-xs py-1.5 px-2 w-full mb-2"
-          value={config.value}
-          onChange={(e) => config.onChange(e.target.value)}
-          onKeyDown={(e) => {
-            e.stopPropagation();
-            if (e.key === 'Enter') onSave();
-            if (e.key === 'Escape') onBack();
-          }}
-          disabled={config.saving}
-          placeholder={config.placeholder ?? 'Enter value...'}
-        />
-        <div className="flex gap-1 justify-end">
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-xs text-muted hover:text-fg px-2 py-1 rounded transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={config.saving}
-            className="text-xs text-accent hover:text-accent/80 px-2 py-1 rounded transition-colors disabled:opacity-50"
-          >
-            {config.saving ? '...' : 'Save'}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

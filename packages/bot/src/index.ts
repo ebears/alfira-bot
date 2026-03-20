@@ -1,3 +1,4 @@
+import { logger } from '@alfira-bot/shared';
 import {
   Client,
   Collection,
@@ -47,11 +48,11 @@ export async function deployCommands(
   const commandData = commands.map((c) => c.data.toJSON());
 
   try {
-    console.log(`🔄 Auto-registering ${commandData.length} slash command(s)...`);
+    logger.info(`Auto-registering ${commandData.length} slash command(s)...`);
     await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commandData });
-    console.log('✅ Slash commands registered successfully.');
+    logger.info('Slash commands registered successfully.');
   } catch (error) {
-    console.error('❌ Failed to register commands:', error);
+    logger.error(error, 'Failed to register commands');
     // Don't throw - the bot can still function, commands just won't work until deployed
   }
 }
@@ -83,14 +84,14 @@ export async function startBot(): Promise<void> {
   }
 
   client.once('clientReady', async (readyClient) => {
-    console.log(`✅ Bot logged in as ${readyClient.user.tag}`);
+    logger.info(`Bot logged in as ${readyClient.user.tag}`);
 
     const shouldAutoDeploy = AUTO_DEPLOY_COMMANDS !== 'false';
     if (shouldAutoDeploy) {
       await deployCommands(DISCORD_CLIENT_ID, GUILD_ID, DISCORD_BOT_TOKEN, commands);
     } else {
-      console.log(
-        'ℹ️ Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
+      logger.info(
+        'Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
       );
     }
   });
@@ -101,14 +102,14 @@ export async function startBot(): Promise<void> {
     const command = client.commands.get(interaction.commandName);
 
     if (!command) {
-      console.warn(`⚠️  No handler found for command: ${interaction.commandName}`);
+      logger.warn(`No handler found for command: ${interaction.commandName}`);
       return;
     }
 
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error(`❌  Error executing /${interaction.commandName}:`, error);
+      logger.error(error, `Error executing /${interaction.commandName}`);
 
       const errorMessage: InteractionReplyOptions = {
         content: 'Something went wrong.',

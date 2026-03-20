@@ -1,0 +1,42 @@
+import { CircleNotchIcon } from '@phosphor-icons/react';
+import type React from 'react';
+import { Button } from './ui/Button';
+
+export function BarButton({
+  children,
+  onClick,
+  busy,
+  disabled,
+  title,
+  hoverColor,
+  pulse = false,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  busy: boolean;
+  disabled: boolean;
+  title: string;
+  hoverColor: string;
+  pulse?: boolean;
+}) {
+  return (
+    <Button
+      variant="foreground"
+      size="icon"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`${
+        busy
+          ? 'text-muted'
+          : `${pulse ? 'text-accent animate-pulse-gentle' : 'text-muted'} ${hoverColor} cursor-pointer`
+      } disabled:pointer-events-none`}
+    >
+      {busy ? (
+        <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-3.5 md:h-3.5" />
+      ) : (
+        children
+      )}
+    </Button>
+  );
+}
