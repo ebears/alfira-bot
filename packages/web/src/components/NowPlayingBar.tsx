@@ -118,7 +118,9 @@ export function NowPlayingBar() {
         />
       </div>
 
-      <div className="h-26 md:h-24 flex flex-row-reverse md:flex-row items-center px-3 md:px-5 gap-2 md:gap-3">
+      <div
+        className={`h-26 md:h-24 flex flex-row items-center px-3 md:px-5 gap-2 md:gap-3 ${!currentSong ? 'justify-end md:justify-start' : ''}`}
+      >
         {/* Playback controls: Play/Pause, Skip, Leave */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
           {currentSong && (
@@ -177,11 +179,6 @@ export function NowPlayingBar() {
               className={`shrink-0 disabled:opacity-50 ${
                 isLoopActive ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
               }`}
-              style={
-                isLoopActive
-                  ? { boxShadow: '0 0 10px 1px var(--color-accent, currentColor)', opacity: 0.85 }
-                  : undefined
-              }
             >
               {loopBusy ? (
                 <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
@@ -225,6 +222,9 @@ export function NowPlayingBar() {
           </div>
         </div>
 
+        {/* Mobile spacer - pushes album art and queue button to the right */}
+        <div className="flex-1 md:hidden" />
+
         {/* Metadata info */}
         <div className="min-w-0 text-right hidden sm:block">
           {currentSong ? (
@@ -240,19 +240,6 @@ export function NowPlayingBar() {
             <span className="font-mono text-xs text-faint">nothing playing</span>
           )}
         </div>
-
-        {/* Queue button */}
-        <Button
-          variant="foreground"
-          size="icon"
-          onClick={() => setQueueOpen(true)}
-          title="Queue"
-          className={`shrink-0 ${
-            queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
-          }`}
-        >
-          <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
-        </Button>
 
         {/* Album art */}
         <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl clay-inset shrink-0 overflow-hidden relative">
@@ -277,6 +264,19 @@ export function NowPlayingBar() {
             </div>
           )}
         </div>
+
+        {/* Queue button */}
+        <Button
+          variant="foreground"
+          size="icon"
+          onClick={() => setQueueOpen(true)}
+          title="Queue"
+          className={`shrink-0 ${
+            queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+          }`}
+        >
+          <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
+        </Button>
       </div>
 
       {/* Queue slideout */}
