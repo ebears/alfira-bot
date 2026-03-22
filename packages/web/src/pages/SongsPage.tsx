@@ -167,9 +167,9 @@ export default function SongsPage() {
             variant="foreground"
             size="icon"
             onClick={() => {
-            setViewMode('grid');
-            localStorage.setItem('alfira-library-view', 'grid');
-          }}
+              setViewMode('grid');
+              localStorage.setItem('alfira-library-view', 'grid');
+            }}
             className={viewMode === 'grid' ? 'pressed text-accent' : ''}
             title="Grid view"
           >
@@ -179,9 +179,9 @@ export default function SongsPage() {
             variant="foreground"
             size="icon"
             onClick={() => {
-            setViewMode('list');
-            localStorage.setItem('alfira-library-view', 'list');
-          }}
+              setViewMode('list');
+              localStorage.setItem('alfira-library-view', 'list');
+            }}
             className={viewMode === 'list' ? 'pressed text-accent' : ''}
             title="List view"
           >

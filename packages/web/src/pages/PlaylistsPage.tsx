@@ -116,11 +116,11 @@ export default function PlaylistsPage() {
         <SkeletonList />
       ) : playlists.length === 0 ? (
         <EmptyState
-        title="No Playlists"
-        isAdmin={isAdminView}
-        onAdd={() => setShowCreate(true)}
-        addLabel="create the first playlist"
-      />
+          title="No Playlists"
+          isAdmin={isAdminView}
+          onAdd={() => setShowCreate(true)}
+          addLabel="create the first playlist"
+        />
       ) : (
         <div className="grid gap-2 md:gap-3">
           {playlists.map((pl, i) => (
@@ -294,4 +294,3 @@ function SkeletonList() {
     </div>
   );
 }
-

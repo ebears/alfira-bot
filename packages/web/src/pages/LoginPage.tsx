@@ -50,7 +50,12 @@ export default function LoginPage() {
           <a
             href="/auth/login"
             className="btn-primary flex items-center justify-center gap-3 w-full"
-            style={{ '--color-accent': '#5865F2', '--color-accent-muted': '#4752C4' } as React.CSSProperties}
+            style={
+              {
+                '--color-accent': '#5865F2',
+                '--color-accent-muted': '#4752C4',
+              } as React.CSSProperties
+            }
           >
             <DiscordLogoIcon size={18} weight="duotone" />
             Login with Discord
