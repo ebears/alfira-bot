@@ -10,7 +10,7 @@ import {
   skipTrack,
   togglePause,
   unshuffleQueue,
-} from '../api/api';
+} from '../../shared/src/api';
 import { useElapsedTimer } from '../hooks/useElapsedTimer';
 import { useSocket } from '../hooks/useSocket';
 
