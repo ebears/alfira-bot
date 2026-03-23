@@ -2,7 +2,7 @@
 # yt-dlp stage - download and verify yt-dlp (shared between deps and runtime)
 # ---------------------------------------------------------------------------
 FROM alpine AS ytdlp
-ARG YTDLP_VERSION=2026.03.13
+ARG YTDLP_VERSION=2026.03.17
 RUN apk add --no-cache curl && \
     curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
       -o /yt-dlp && \
