@@ -1,7 +1,7 @@
 import type { LoopMode, QueueState } from '@alfira-bot/shared';
 import {
   clearQueue,
-  getQueueState,
+  fetchQueueState,
   leaveVoice,
   setLoopMode,
   shuffleQueue,
@@ -63,7 +63,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const refetch = useCallback(async () => {
     try {
-      const data = await getQueueState();
+      const data = await fetchQueueState();
       setState(data);
     } catch {
       // Silently retry on next socket connect or manual refetch

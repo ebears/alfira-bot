@@ -1,5 +1,5 @@
 import type { User } from '@alfira-bot/shared';
-import { logout as apiLogout, getMe } from '@alfira-bot/shared/api';
+import { getMe, logout as logoutApi } from '../api/api';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refetch]);
 
   const logout = useCallback(async () => {
-    await apiLogout();
+    await logoutApi();
     setUser(null);
   }, []);
 

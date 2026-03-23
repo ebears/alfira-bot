@@ -195,12 +195,7 @@ export function togglePause(): Promise<{ isPaused: boolean }> {
 
 export function quickAddToQueue(youtubeUrl: string): Promise<{
   message: string;
-  song: {
-    title: string;
-    duration: number;
-    thumbnailUrl: string;
-    requestedBy: string;
-  };
+  song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
 }> {
   return post('/api/player/quick-add', { youtubeUrl });
 }
@@ -213,12 +208,7 @@ export function quickAddPlaylistToQueue(
   playlistTitle: string;
   totalVideos: number;
   queuedCount: number;
-  songs: Array<{
-    title: string;
-    duration: number;
-    thumbnailUrl: string;
-    requestedBy: string;
-  }>;
+  songs: Array<{ title: string; duration: number; thumbnailUrl: string; requestedBy: string }>;
 }> {
   return post('/api/player/quick-add-playlist', {
     youtubeUrl,
@@ -228,24 +218,31 @@ export function quickAddPlaylistToQueue(
 
 export function addToPriorityQueue(songId: string): Promise<{
   message: string;
-  song: {
-    title: string;
-    duration: number;
-    thumbnailUrl: string;
-    requestedBy: string;
-  };
+  song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
 }> {
   return post('/api/player/add-to-priority', { songId });
 }
 
 export function overridePlay(youtubeUrl: string): Promise<{
   message: string;
-  song: {
-    title: string;
-    duration: number;
-    thumbnailUrl: string;
-    requestedBy: string;
-  };
+  song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };
 }> {
   return post('/api/player/override', { youtubeUrl });
+}
+
+// ---------------------------------------------------------------------------
+// Import Playlist API Functions
+// ---------------------------------------------------------------------------
+
+export interface ImportPlaylistResult {
+  message: string;
+  playlistTitle: string;
+  totalVideos: number;
+  importedCount: number;
+  skippedCount: number;
+  songs: Song[];
+}
+
+export function importPlaylist(youtubeUrl: string, maxVideos?: number): Promise<ImportPlaylistResult> {
+  return post('/api/songs/import-playlist', { youtubeUrl, ...(maxVideos && { maxVideos }) });
 }
