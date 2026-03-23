@@ -1,10 +1,10 @@
 import { DotsThreeOutlineVerticalIcon } from '@phosphor-icons/react';
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from './ui/Button';
 import { EditSubmenuPanel } from './ContextMenu/EditSubmenuPanel';
 import { MenuItemButton } from './ContextMenu/MenuItemButton';
 import { SubmenuPanel } from './ContextMenu/SubmenuPanel';
+import { Button } from './ui/Button';
 
 // --- Types ---
 

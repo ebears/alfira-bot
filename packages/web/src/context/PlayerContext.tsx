@@ -1,16 +1,16 @@
 import type { LoopMode, QueueState } from '@alfira-bot/shared';
-import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import {
   clearQueue,
-  getQueueState,
+  fetchQueueState,
   leaveVoice,
   setLoopMode,
   shuffleQueue,
   skipTrack,
   togglePause,
   unshuffleQueue,
-} from '../api/api';
+} from '@alfira-bot/shared/api';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useElapsedTimer } from '../hooks/useElapsedTimer';
 import { useSocket } from '../hooks/useSocket';
 
@@ -63,7 +63,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const refetch = useCallback(async () => {
     try {
-      const data = await getQueueState();
+      const data = await fetchQueueState();
       setState(data);
     } catch {
       // Silently retry on next socket connect or manual refetch

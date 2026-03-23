@@ -1,3 +1,4 @@
+export * from './api';
 export { formatDuration } from './format';
 export { logger } from './logger';
 export { fisherYatesShuffle } from './shuffle';
