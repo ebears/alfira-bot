@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AdminViewProvider } from './context/AdminViewContext';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { PlayerProvider } from './context/PlayerContext';
 import { ThemeProvider } from './context/ThemeContext';
 import LoginPage from './pages/LoginPage';
@@ -15,6 +16,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <AdminViewProvider>
+				<NotificationProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
@@ -35,7 +37,8 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </AdminViewProvider>
+        </NotificationProvider>
+			</AdminViewProvider>
       </AuthProvider>
     </ThemeProvider>
   );
