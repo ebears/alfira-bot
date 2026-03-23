@@ -1,6 +1,6 @@
-import { useNotification } from './useNotification';
 import { addToPriorityQueue } from '../api/api';
 import { apiErrorMessage } from '../utils/api';
+import { useNotification } from './useNotification';
 
 export function useAddToQueue() {
   const { notification, notify } = useNotification();

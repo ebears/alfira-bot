@@ -1,6 +1,4 @@
 import type { LoopMode, QueueState } from '@alfira-bot/shared';
-import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import {
   clearQueue,
   getQueueState,
@@ -10,7 +8,9 @@ import {
   skipTrack,
   togglePause,
   unshuffleQueue,
-} from '../../shared/src/api';
+} from '@alfira-bot/shared/api';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useElapsedTimer } from '../hooks/useElapsedTimer';
 import { useSocket } from '../hooks/useSocket';
 

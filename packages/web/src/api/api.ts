@@ -6,7 +6,11 @@ import type {
   Song,
   User,
 } from '@alfira-bot/shared';
-import { configureApiClient, getMe as sharedGetMe, logout as sharedLogout } from '../../shared/src/api';
+import {
+  configureApiClient,
+  getMe as sharedGetMe,
+  logout as sharedLogout,
+} from '@alfira-bot/shared/api';
 import client from './client';
 
 // Configure the shared API service with the web client
@@ -19,13 +23,14 @@ export const logout = sharedLogout;
 // ---------------------------------------------------------------------------
 // Songs
 // ---------------------------------------------------------------------------
+
 import {
-  fetchSongs as sharedFetchSongs,
   createSong as sharedCreateSong,
   deleteSong as sharedDeleteSong,
-  updateSongNickname as sharedUpdateSongNickname,
+  fetchSongs as sharedFetchSongs,
   importPlaylist as sharedImportPlaylist,
-} from '../../shared/src/api';
+  updateSongNickname as sharedUpdateSongNickname,
+} from '@alfira-bot/shared/api';
 
 export const getSongs = sharedFetchSongs;
 export const addSong = sharedCreateSong;
@@ -36,16 +41,17 @@ export const importPlaylist = sharedImportPlaylist;
 // ---------------------------------------------------------------------------
 // Playlists
 // ---------------------------------------------------------------------------
+
 import {
-  fetchPlaylists as sharedFetchPlaylists,
-  createPlaylist as sharedCreatePlaylist,
-  fetchPlaylist as sharedFetchPlaylist,
-  renamePlaylist as sharedRenamePlaylist,
-  deletePlaylist as sharedDeletePlaylist,
   addSongToPlaylist as sharedAddSongToPlaylist,
+  createPlaylist as sharedCreatePlaylist,
+  deletePlaylist as sharedDeletePlaylist,
+  fetchPlaylist as sharedFetchPlaylist,
+  fetchPlaylists as sharedFetchPlaylists,
   removeSongFromPlaylist as sharedRemoveSongFromPlaylist,
+  renamePlaylist as sharedRenamePlaylist,
   togglePlaylistVisibility as sharedTogglePlaylistVisibility,
-} from '../../shared/src/api';
+} from '@alfira-bot/shared/api';
 
 export const getPlaylists = sharedFetchPlaylists;
 export const createPlaylist = sharedCreatePlaylist;
@@ -59,21 +65,22 @@ export const togglePlaylistVisibility = sharedTogglePlaylistVisibility;
 // ---------------------------------------------------------------------------
 // Player
 // ---------------------------------------------------------------------------
+
 import {
+  addToPriorityQueue as sharedAddToPriorityQueue,
+  clearQueue as sharedClearQueue,
   fetchQueueState as sharedFetchQueueState,
-  startPlayback as sharedStartPlayback,
-  skipTrack as sharedSkipTrack,
   leaveVoice as sharedLeaveVoice,
+  overridePlay as sharedOverridePlay,
+  quickAddPlaylistToQueue as sharedQuickAddPlaylistToQueue,
+  quickAddToQueue as sharedQuickAddToQueue,
   setLoopMode as sharedSetLoopMode,
   shuffleQueue as sharedShuffleQueue,
-  unshuffleQueue as sharedUnshuffleQueue,
-  clearQueue as sharedClearQueue,
+  skipTrack as sharedSkipTrack,
+  startPlayback as sharedStartPlayback,
   togglePause as sharedTogglePause,
-  quickAddToQueue as sharedQuickAddToQueue,
-  quickAddPlaylistToQueue as sharedQuickAddPlaylistToQueue,
-  addToPriorityQueue as sharedAddToPriorityQueue,
-  overridePlay as sharedOverridePlay,
-} from '../../shared/src/api';
+  unshuffleQueue as sharedUnshuffleQueue,
+} from '@alfira-bot/shared/api';
 
 export const getQueueState = sharedFetchQueueState;
 export const startPlayback = sharedStartPlayback;
