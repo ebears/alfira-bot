@@ -1,11 +1,4 @@
-import type {
-  LoopMode,
-  Playlist,
-  PlaylistDetail,
-  QueueState,
-  Song,
-  User,
-} from './types';
+import type { LoopMode, Playlist, PlaylistDetail, QueueState, Song, User } from './types';
 
 /**
  * Centralized API service layer for making HTTP requests.
@@ -15,8 +8,8 @@ import type {
 // Base API client - to be injected or configured externally
 let apiClient: {
   get: <T>(url: string) => Promise<{ data: T }>;
-  post: <T>(url: string, data?: any) => Promise<{ data: T }>;
-  patch: <T>(url: string, data: any) => Promise<{ data: T }>;
+  post: <T>(url: string, data?: unknown) => Promise<{ data: T }>;
+  patch: <T>(url: string, data: unknown) => Promise<{ data: T }>;
   delete: <T>(url: string) => Promise<{ data: T }>;
 } | null = null;
 
@@ -25,8 +18,8 @@ let apiClient: {
  */
 export function configureApiClient(client: {
   get: <T>(url: string) => Promise<{ data: T }>;
-  post: <T>(url: string, data?: any) => Promise<{ data: T }>;
-  patch: <T>(url: string, data: any) => Promise<{ data: T }>;
+  post: <T>(url: string, data?: unknown) => Promise<{ data: T }>;
+  patch: <T>(url: string, data: unknown) => Promise<{ data: T }>;
   delete: <T>(url: string) => Promise<{ data: T }>;
 }) {
   apiClient = client;
@@ -50,7 +43,7 @@ export async function get<T>(url: string): Promise<T> {
 /**
  * Generic POST request
  */
-export async function post<T>(url: string, data?: any): Promise<T> {
+export async function post<T>(url: string, data?: unknown): Promise<T> {
   if (!apiClient) {
     throw new Error('API client not configured. Call configureApiClient() first.');
   }
@@ -61,7 +54,7 @@ export async function post<T>(url: string, data?: any): Promise<T> {
 /**
  * Generic PATCH request
  */
-export async function patch<T>(url: string, data: any): Promise<T> {
+export async function patch<T>(url: string, data: unknown): Promise<T> {
   if (!apiClient) {
     throw new Error('API client not configured. Call configureApiClient() first.');
   }
@@ -84,11 +77,11 @@ export async function remove<T>(url: string): Promise<T> {
 // Auth API Functions
 // ---------------------------------------------------------------------------
 
-export async function fetchMe(): Promise<User> {
+export function fetchMe(): Promise<User> {
   return get<{ user: User }>('/auth/me').then((r) => r.user);
 }
 
-export async function fetchLogout(): Promise<void> {
+export function fetchLogout(): Promise<void> {
   return post('/auth/logout');
 }
 
@@ -96,19 +89,19 @@ export async function fetchLogout(): Promise<void> {
 // Songs API Functions
 // ---------------------------------------------------------------------------
 
-export async function fetchSongs(): Promise<Song[]> {
+export function fetchSongs(): Promise<Song[]> {
   return get('/api/songs');
 }
 
-export async function createSong(youtubeUrl: string, nickname?: string): Promise<Song> {
+export function createSong(youtubeUrl: string, nickname?: string): Promise<Song> {
   return post('/api/songs', { youtubeUrl, ...(nickname && { nickname }) });
 }
 
-export async function deleteSong(id: string): Promise<void> {
+export function deleteSong(id: string): Promise<void> {
   return remove(`/api/songs/${id}`);
 }
 
-export async function updateSongNickname(id: string, nickname: string | null): Promise<Song> {
+export function updateSongNickname(id: string, nickname: string | null): Promise<Song> {
   return patch(`/api/songs/${id}`, { nickname });
 }
 
@@ -116,37 +109,37 @@ export async function updateSongNickname(id: string, nickname: string | null): P
 // Playlists API Functions
 // ---------------------------------------------------------------------------
 
-export async function fetchPlaylists(adminView = false): Promise<Playlist[]> {
+export function fetchPlaylists(adminView = false): Promise<Playlist[]> {
   const params = adminView ? '?adminView=true' : '';
   return get(`/api/playlists${params}`);
 }
 
-export async function createPlaylist(name: string): Promise<Playlist> {
+export function createPlaylist(name: string): Promise<Playlist> {
   return post('/api/playlists', { name });
 }
 
-export async function fetchPlaylist(id: string, adminView = false): Promise<PlaylistDetail> {
+export function fetchPlaylist(id: string, adminView = false): Promise<PlaylistDetail> {
   const params = adminView ? '?adminView=true' : '';
   return get(`/api/playlists/${id}${params}`);
 }
 
-export async function renamePlaylist(id: string, name: string): Promise<Playlist> {
+export function renamePlaylist(id: string, name: string): Promise<Playlist> {
   return patch(`/api/playlists/${id}`, { name });
 }
 
-export async function deletePlaylist(id: string): Promise<void> {
+export function deletePlaylist(id: string): Promise<void> {
   return remove(`/api/playlists/${id}`);
 }
 
-export async function addSongToPlaylist(playlistId: string, songId: string): Promise<void> {
+export function addSongToPlaylist(playlistId: string, songId: string): Promise<void> {
   return post(`/api/playlists/${playlistId}/songs`, { songId });
 }
 
-export async function removeSongFromPlaylist(playlistId: string, songId: string): Promise<void> {
+export function removeSongFromPlaylist(playlistId: string, songId: string): Promise<void> {
   return remove(`/api/playlists/${playlistId}/songs/${songId}`);
 }
 
-export async function togglePlaylistVisibility(
+export function togglePlaylistVisibility(
   playlistId: string,
   isPrivate: boolean,
   adminView = false
@@ -159,11 +152,11 @@ export async function togglePlaylistVisibility(
 // Player API Functions
 // ---------------------------------------------------------------------------
 
-export async function fetchQueueState(): Promise<QueueState> {
+export function fetchQueueState(): Promise<QueueState> {
   return get('/api/player/queue');
 }
 
-export async function startPlayback(opts: {
+export function startPlayback(opts: {
   playlistId?: string;
   mode: 'sequential' | 'random';
   loop: LoopMode;
@@ -172,35 +165,35 @@ export async function startPlayback(opts: {
   return post('/api/player/play', opts);
 }
 
-export async function skipTrack(): Promise<void> {
+export function skipTrack(): Promise<void> {
   return post('/api/player/skip');
 }
 
-export async function leaveVoice(): Promise<void> {
+export function leaveVoice(): Promise<void> {
   return post('/api/player/leave');
 }
 
-export async function setLoopMode(mode: LoopMode): Promise<void> {
+export function setLoopMode(mode: LoopMode): Promise<void> {
   return post('/api/player/loop', { mode });
 }
 
-export async function shuffleQueue(): Promise<void> {
+export function shuffleQueue(): Promise<void> {
   return post('/api/player/shuffle');
 }
 
-export async function unshuffleQueue(): Promise<void> {
+export function unshuffleQueue(): Promise<void> {
   return post('/api/player/unshuffle');
 }
 
-export async function clearQueue(): Promise<void> {
+export function clearQueue(): Promise<void> {
   return post('/api/player/clear');
 }
 
-export async function togglePause(): Promise<{ isPaused: boolean }> {
+export function togglePause(): Promise<{ isPaused: boolean }> {
   return post('/api/player/pause-toggle');
 }
 
-export async function quickAddToQueue(youtubeUrl: string): Promise<{
+export function quickAddToQueue(youtubeUrl: string): Promise<{
   message: string;
   song: {
     title: string;
@@ -212,7 +205,7 @@ export async function quickAddToQueue(youtubeUrl: string): Promise<{
   return post('/api/player/quick-add', { youtubeUrl });
 }
 
-export async function quickAddPlaylistToQueue(
+export function quickAddPlaylistToQueue(
   youtubeUrl: string,
   maxVideos?: number
 ): Promise<{
@@ -233,7 +226,7 @@ export async function quickAddPlaylistToQueue(
   });
 }
 
-export async function addToPriorityQueue(songId: string): Promise<{
+export function addToPriorityQueue(songId: string): Promise<{
   message: string;
   song: {
     title: string;
@@ -245,7 +238,7 @@ export async function addToPriorityQueue(songId: string): Promise<{
   return post('/api/player/add-to-priority', { songId });
 }
 
-export async function overridePlay(youtubeUrl: string): Promise<{
+export function overridePlay(youtubeUrl: string): Promise<{
   message: string;
   song: {
     title: string;
