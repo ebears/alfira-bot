@@ -14,7 +14,7 @@ export function requirePlaying(res: Response) {
 export function requirePlayer(res: Response) {
   const player = getPlayer(GUILD_ID);
   if (!player) {
-    res.status(409).json({ error: 'Nothing is playing.' });
+    res.status(409).json({ error: 'The bot is not connected.' });
     return null;
   }
   return player;

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { buildNowPlayingEmbed } from '../utils/format';
+import { buildNowPlayingEmbed, pluralize } from '../utils/format';
 import { requireGuild } from './guards';
 
 export const nowplayingCommand: Command = {
@@ -25,10 +25,7 @@ export const nowplayingCommand: Command = {
     const queueLength = player?.getQueue().length ?? 0;
 
     const embed = buildNowPlayingEmbed(song, loopMode).setFooter({
-      text:
-        queueLength > 0
-          ? `${queueLength} song${queueLength === 1 ? '' : 's'} in queue`
-          : 'No songs in queue',
+      text: queueLength > 0 ? `${pluralize(queueLength, 'song')} in queue` : 'No songs in queue',
     });
 
     await interaction.reply({ embeds: [embed] });
