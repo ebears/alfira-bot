@@ -21,12 +21,19 @@ export default function LoginPage() {
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `repeating-linear-gradient(
-            0deg, transparent, transparent 40px,
-            #c8f135 40px, #c8f135 41px
-          ), repeating-linear-gradient(
-            90deg, transparent, transparent 40px,
-            #c8f135 40px, #c8f135 41px
-          )`,
+          0deg,
+          transparent,
+          transparent 40px,
+          #c8f135 40px,
+          #c8f135 41px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 40px,
+          #c8f135 40px,
+          #c8f135 41px
+        )`,
         }}
       />
 
@@ -38,24 +45,21 @@ export default function LoginPage() {
             <h1 className="font-display text-5xl md:text-6xl text-accent tracking-widest">
               alfira
             </h1>
-            <p className="font-mono text-xs text-muted mt-2 tracking-widest uppercase">music bot</p>
+            <p className="font-mono text-xs text-muted mt-2 tracking-widest uppercase">
+              music bot
+            </p>
           </div>
 
           {/* Description */}
           <p className="font-body text-sm text-muted text-center mb-6 md:mb-8 leading-relaxed">
-            Log in with your Discord account to access the music library and controls.
+            Log in with your Discord account to access the music library and
+            controls.
           </p>
 
           {/* Login button — redirects to Express OAuth handler */}
           <a
             href="/auth/login"
-            className="btn-primary flex items-center justify-center gap-3 w-full"
-            style={
-              {
-                '--color-accent': '#5865F2',
-                '--color-accent-muted': '#4752C4',
-              } as React.CSSProperties
-            }
+            className="btn-discord flex items-center justify-center gap-3 w-full"
           >
             <DiscordLogoIcon size={18} weight="duotone" />
             Login with Discord
