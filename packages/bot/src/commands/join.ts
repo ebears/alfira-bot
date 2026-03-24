@@ -1,3 +1,4 @@
+import { logger } from '@alfira-bot/shared';
 import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
 import { getOrCreateConnection, requireGuild, requireVoiceChannel } from './guards';
@@ -23,7 +24,7 @@ export const joinCommand: Command = {
         await interaction.editReply(`✅ Joined **${voiceChannel.name}**.`);
       }
     } catch (error) {
-      console.error('Failed to join voice channel:', error);
+      logger.error({ error, channelName: voiceChannel.name }, 'Failed to join voice channel');
       await interaction.editReply(
         '❌ Could not join the voice channel. Check that I have the **Connect** permission.'
       );

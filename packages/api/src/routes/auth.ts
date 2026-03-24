@@ -152,6 +152,100 @@ const authLimiter = rateLimit({
   message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
 });
 
+/**
+ * Exchange authorization code for Discord access token.
+ * Returns null and sends error response on failure.
+ */
+async function exchangeAuthorizationCode(code: string, res: Response): Promise<string | null> {
+  try {
+    const tokenRes = await axios.post(
+      'https://discord.com/api/oauth2/token',
+      new URLSearchParams({
+        client_id: DISCORD_CLIENT_ID,
+        client_secret: DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: DISCORD_REDIRECT_URI,
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    return tokenRes.data.access_token;
+  } catch {
+    res.status(502).json({ error: 'Failed to exchange authorization code with Discord.' });
+    return null;
+  }
+}
+
+/**
+ * Fetch Discord user identity.
+ * Returns null and sends error response on failure.
+ */
+async function fetchDiscordIdentity(
+  discordToken: string,
+  res: Response
+): Promise<{ id: string; username: string; avatar: string | null } | null> {
+  try {
+    const userRes = await axios.get('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${discordToken}` },
+    });
+    return userRes.data;
+  } catch {
+    res.status(502).json({ error: 'Failed to fetch Discord user info.' });
+    return null;
+  }
+}
+
+/**
+ * Verify guild membership and get member roles.
+ * Returns null and sends error response on failure.
+ */
+async function verifyGuildMembership(discordId: string, res: Response): Promise<string[] | null> {
+  const rolesResult = await fetchGuildMemberRoles(discordId);
+  if (rolesResult === 'not-in-guild') {
+    res.status(403).json({ error: 'You must be a member of the server to use this app.' });
+    return null;
+  }
+  if (rolesResult === null) {
+    res
+      .status(503)
+      .json({ error: 'Could not verify your server membership. Please try again in a moment.' });
+    return null;
+  }
+  return rolesResult;
+}
+
+/**
+ * Generate and store authentication tokens.
+ */
+async function generateAndStoreTokens(
+  discordUser: { id: string; username: string; avatar: string | null },
+  isAdmin: boolean
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const payload = {
+    discordId: discordUser.id,
+    username: discordUser.username,
+    avatar: discordUser.avatar
+      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+      : null,
+    isAdmin,
+  };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(discordUser.id);
+
+  // Store refresh token hash in database
+  const refreshTokenHash = hashToken(refreshToken);
+  const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
+  await prisma.refreshToken.create({
+    data: {
+      tokenHash: refreshTokenHash,
+      discordId: discordUser.id,
+      expiresAt: refreshTokenExpiry,
+    },
+  });
+
+  return { accessToken, refreshToken };
+}
+
 router.get('/login', authLimiter, (_req, res) => {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
@@ -170,87 +264,24 @@ router.get('/callback', authLimiter, async (req, res) => {
   }
 
   // 1. Exchange code for Discord access token.
-  let discordToken: string;
-  try {
-    const tokenRes = await axios.post(
-      'https://discord.com/api/oauth2/token',
-      new URLSearchParams({
-        client_id: DISCORD_CLIENT_ID,
-        client_secret: DISCORD_CLIENT_SECRET,
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: DISCORD_REDIRECT_URI,
-      }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-    discordToken = tokenRes.data.access_token;
-  } catch {
-    res.status(502).json({ error: 'Failed to exchange authorization code with Discord.' });
-    return;
-  }
+  const discordToken = await exchangeAuthorizationCode(code, res);
+  if (!discordToken) return;
 
   // 2. Fetch Discord identity.
-  let discordUser: { id: string; username: string; avatar: string | null };
-  try {
-    const userRes = await axios.get('https://discord.com/api/users/@me', {
-      headers: { Authorization: `Bearer ${discordToken}` },
-    });
-    discordUser = userRes.data;
-  } catch {
-    res.status(502).json({ error: 'Failed to fetch Discord user info.' });
-    return;
-  }
+  const discordUser = await fetchDiscordIdentity(discordToken, res);
+  if (!discordUser) return;
 
-  // 3. Fetch guild member roles via bot token.
-  //
-  // Three outcomes:
-  // - Success (2xx): proceed with the real role list.
-  // - 404: user is not in the guild — deny login.
-  // - Anything else (network error, rate limit, 5xx from Discord): fail
-  // closed. We do not know the user's roles, so we cannot safely issue
-  // a token. Logging in with an assumed role list would mean a Discord
-  // outage silently grants or revokes admin access depending on which
-  // direction we default. Refusing is the only safe option.
-  const rolesResult = await fetchGuildMemberRoles(discordUser.id);
-  if (rolesResult === 'not-in-guild') {
-    res.status(403).json({ error: 'You must be a member of the server to use this app.' });
-    return;
-  }
-  if (rolesResult === null) {
-    res
-      .status(503)
-      .json({ error: 'Could not verify your server membership. Please try again in a moment.' });
-    return;
-  }
-  const memberRoles = rolesResult;
+  // 3. Verify guild membership and get member roles.
+  const memberRoles = await verifyGuildMembership(discordUser.id, res);
+  if (!memberRoles) return;
 
-  // 4. Determine isAdmin.
+  // 4. Determine admin status.
   const isAdmin = isAdminUser(memberRoles);
 
-  // 5. Generate tokens.
-  const payload = {
-    discordId: discordUser.id,
-    username: discordUser.username,
-    avatar: discordUser.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
-      : null,
-    isAdmin,
-  };
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(discordUser.id);
+  // 5. Generate and store tokens.
+  const { accessToken, refreshToken } = await generateAndStoreTokens(discordUser, isAdmin);
 
-  // 6. Store refresh token hash in database.
-  const refreshTokenHash = hashToken(refreshToken);
-  const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
-  await prisma.refreshToken.create({
-    data: {
-      tokenHash: refreshTokenHash,
-      discordId: discordUser.id,
-      expiresAt: refreshTokenExpiry,
-    },
-  });
-
-  // 7. Set cookies and redirect.
+  // 6. Set cookies and redirect.
   setAuthCookies(res, accessToken, refreshToken);
   res.redirect(WEB_UI_ORIGIN);
 });

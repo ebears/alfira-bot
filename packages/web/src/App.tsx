@@ -16,29 +16,29 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <AdminViewProvider>
-				<NotificationProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  {/* PlayerProvider lives inside ProtectedRoute so it only polls while a user is authenticated. */}
-                  <PlayerProvider>
-                    <Layout />
-                  </PlayerProvider>
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/songs" replace />} />
-              <Route path="songs" element={<SongsPage />} />
-              <Route path="playlists" element={<PlaylistsPage />} />
-              <Route path="playlists/:id" element={<PlaylistDetailPage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </NotificationProvider>
-			</AdminViewProvider>
+          <NotificationProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    {/* PlayerProvider lives inside ProtectedRoute so it only polls while a user is authenticated. */}
+                    <PlayerProvider>
+                      <Layout />
+                    </PlayerProvider>
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/songs" replace />} />
+                <Route path="songs" element={<SongsPage />} />
+                <Route path="playlists" element={<PlaylistsPage />} />
+                <Route path="playlists/:id" element={<PlaylistDetailPage />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </NotificationProvider>
+        </AdminViewProvider>
       </AuthProvider>
     </ThemeProvider>
   );

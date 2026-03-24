@@ -123,7 +123,7 @@ export function validatePlaylistName(name: unknown, res: Response): string | nul
 }
 
 /** Validates and trims a nickname. Returns null if invalid, otherwise the trimmed value or null. */
-export function validateNickname(nickname: unknown, res: Response): string | null | null {
+export function validateNickname(nickname: unknown, res: Response): string | null {
   if (nickname !== undefined && nickname !== null && typeof nickname !== 'string') {
     res.status(400).json({ error: 'nickname must be a string.' });
     return null;

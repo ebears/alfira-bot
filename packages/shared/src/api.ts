@@ -243,6 +243,9 @@ export interface ImportPlaylistResult {
   songs: Song[];
 }
 
-export function importPlaylist(youtubeUrl: string, maxVideos?: number): Promise<ImportPlaylistResult> {
+export function importPlaylist(
+  youtubeUrl: string,
+  maxVideos?: number
+): Promise<ImportPlaylistResult> {
   return post('/api/songs/import-playlist', { youtubeUrl, ...(maxVideos && { maxVideos }) });
 }
