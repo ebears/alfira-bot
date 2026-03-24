@@ -1,4 +1,4 @@
-import type { LoopMode, Playlist } from '@alfira-bot/shared';
+import type { Playlist } from '@alfira-bot/shared';
 import { PlayCircleIcon } from '@phosphor-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import { getPlaylists, startPlayback } from '../../api/api';
@@ -6,18 +6,10 @@ import { apiErrorMessage } from '../../utils/api';
 import { Backdrop } from '../Backdrop';
 import { Button } from '../ui/Button';
 
-export default function LoadPlaylistModal({
-  onClose,
-  onLoaded,
-}: {
-  onClose: () => void;
-  onLoaded: () => void;
-}) {
+export default function LoadPlaylistModal({ onClose, onLoaded, }: { onClose: () => void; onLoaded: () => void; }) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const [selectedId, setSelectedId] = useState<string | ''>('');
-  const [mode, setMode] = useState<'sequential' | 'random'>('sequential');
-  const [loop, setLoop] = useState<LoopMode>('off');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,8 +34,8 @@ export default function LoadPlaylistModal({
     try {
       await startPlayback({
         playlistId: selectedId,
-        mode,
-        loop,
+        mode: 'sequential',
+        loop: 'off',
       });
       onLoaded();
     } catch (err: unknown) {
@@ -69,57 +61,18 @@ export default function LoadPlaylistModal({
             No playlists found. Create one in the Playlists section first.
           </p>
         ) : (
-          <div className="space-y-4 mb-6">
-            <div>
-              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">
-                Playlist
-              </p>
-              <select
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="input"
-              >
-                {playlists.map((pl) => (
-                  <option key={pl.id} value={pl.id}>
-                    {pl.name} {pl._count ? ` (${pl._count.songs} songs)` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Order</p>
-              <div className="flex gap-2">
-                {(['sequential', 'random'] as const).map((m) => (
-                  <Button
-                    variant="foreground"
-                    type="button"
-                    key={m}
-                    onClick={() => setMode(m)}
-                    className={`flex-1 ${mode === m ? 'border-accent/40 text-accent' : ''}`}
-                  >
-                    {m}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="font-mono text-xs text-muted mb-2 uppercase tracking-widest">Loop</p>
-              <div className="flex gap-2">
-                {(['off', 'song', 'queue'] as const).map((l) => (
-                  <Button
-                    variant="foreground"
-                    type="button"
-                    key={l}
-                    onClick={() => setLoop(l)}
-                    className={`flex-1 ${loop === l ? 'border-accent/40 text-accent' : ''}`}
-                  >
-                    {l}
-                  </Button>
-                ))}
-              </div>
-            </div>
+          <div className="mb-6">
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="input w-full"
+            >
+              {playlists.map((pl) => (
+                <option key={pl.id} value={pl.id}>
+                  {pl.name} {pl._count ? ` (${pl._count.songs} songs)` : ''}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 
@@ -139,8 +92,8 @@ export default function LoadPlaylistModal({
               'Starting...'
             ) : (
               <>
-                {' '}
-                <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" /> Play{' '}
+                <PlayCircleIcon size={12} weight="duotone" className="inline mr-1" />
+                Play
               </>
             )}
           </Button>
