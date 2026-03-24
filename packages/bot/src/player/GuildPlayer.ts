@@ -54,21 +54,10 @@ export class GuildPlayer {
     this.paused = false;
   }
 
-  constructor(
-    connection: VoiceConnection,
-    textChannel: TextChannel,
-    guildId: string,
-    onDestroyed: () => void
-  ) {
-    this.connection = connection;
-    this.textChannel = textChannel;
-    this.guildId = guildId;
-    this.onDestroyed = onDestroyed;
-
-    // 50 frames (~1s) before auto-pause — avoids choppiness from brief network jitter.
-    this.audioPlayer = createAudioPlayer({ behaviors: { maxMissedFrames: 50 } });
-    this.connection.subscribe(this.audioPlayer);
-
+  /**
+   * Setup audio player event listeners.
+   */
+  private setupAudioPlayerListeners(): void {
     this.audioPlayer.on(AudioPlayerStatus.Idle, () => this.onTrackEnd());
 
     this.audioPlayer.on('error', (error) => {
@@ -85,7 +74,12 @@ export class GuildPlayer {
         'AudioPlayer AutoPaused — voice connection may be temporarily unavailable.'
       );
     });
+  }
 
+  /**
+   * Setup voice connection event listeners.
+   */
+  private setupConnectionListeners(): void {
     // Clear UDP keepAlive to prevent periodic stutters.
     this.connection.on('stateChange', (oldState, newState) => {
       const oldNetworking = Reflect.get(oldState, 'networking');
@@ -145,6 +139,25 @@ export class GuildPlayer {
 
       this.onDestroyed();
     });
+  }
+
+  constructor(
+    connection: VoiceConnection,
+    textChannel: TextChannel,
+    guildId: string,
+    onDestroyed: () => void
+  ) {
+    this.connection = connection;
+    this.textChannel = textChannel;
+    this.guildId = guildId;
+    this.onDestroyed = onDestroyed;
+
+    // 50 frames (~1s) before auto-pause — avoids choppiness from brief network jitter.
+    this.audioPlayer = createAudioPlayer({ behaviors: { maxMissedFrames: 50 } });
+    this.connection.subscribe(this.audioPlayer);
+
+    this.setupAudioPlayerListeners();
+    this.setupConnectionListeners();
   }
 
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {

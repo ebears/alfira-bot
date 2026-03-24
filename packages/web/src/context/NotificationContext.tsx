@@ -1,11 +1,4 @@
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Notification Context
@@ -17,72 +10,57 @@ import {
 // ---------------------------------------------------------------------------
 
 export interface Notification {
-	message: string;
-	type: 'success' | 'error';
+  message: string;
+  type: 'success' | 'error';
 }
 
-export type NotifyFn = (
-	message: string,
-	type: 'success' | 'error',
-	ms?: number
-) => void;
+export type NotifyFn = (message: string, type: 'success' | 'error', ms?: number) => void;
 
 interface NotificationContextValue {
-	notification: Notification | null;
-	notify: NotifyFn;
+  notification: Notification | null;
+  notify: NotifyFn;
 }
 
-const NotificationContext = createContext<NotificationContextValue | null>(
-	null
-);
+const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-export function NotificationProvider({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
-	const [notification, setNotification] = useState<Notification | null>(null);
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const [notification, setNotification] = useState<Notification | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Cleanup timeout on unmount
-	useEffect(() => {
-		return () => {
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current);
-			}
-		};
-	}, []);
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
-	const notify = useCallback(
-		(message: string, type: 'success' | 'error', ms = 3000) => {
-			// Clear any existing timeout to prevent race conditions
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current);
-			}
+  const notify = useCallback((message: string, type: 'success' | 'error', ms = 3000) => {
+    // Clear any existing timeout to prevent race conditions
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-			setNotification({ message, type });
+    setNotification({ message, type });
 
-			timeoutRef.current = setTimeout(() => {
-				setNotification(null);
-				timeoutRef.current = null;
-			}, ms);
-		},
-		[]
-	);
+    timeoutRef.current = setTimeout(() => {
+      setNotification(null);
+      timeoutRef.current = null;
+    }, ms);
+  }, []);
 
-	return (
-		<NotificationContext.Provider value={{ notification, notify }}>
-			{children}
-		</NotificationContext.Provider>
-	);
+  return (
+    <NotificationContext.Provider value={{ notification, notify }}>
+      {children}
+    </NotificationContext.Provider>
+  );
 }
 
 export function useNotification(): NotificationContextValue {
-	const context = useContext(NotificationContext);
-	if (!context) {
-		throw new Error(
-			'useNotification must be used within a NotificationProvider'
-		);
-	}
-	return context;
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotification must be used within a NotificationProvider');
+  }
+  return context;
 }

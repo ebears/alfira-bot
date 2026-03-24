@@ -6,7 +6,13 @@ import { apiErrorMessage } from '../../utils/api';
 import { Backdrop } from '../Backdrop';
 import { Button } from '../ui/Button';
 
-export default function LoadPlaylistModal({ onClose, onLoaded, }: { onClose: () => void; onLoaded: () => void; }) {
+export default function LoadPlaylistModal({
+  onClose,
+  onLoaded,
+}: {
+  onClose: () => void;
+  onLoaded: () => void;
+}) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const [selectedId, setSelectedId] = useState<string | ''>('');

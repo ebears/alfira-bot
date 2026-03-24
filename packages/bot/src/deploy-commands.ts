@@ -14,14 +14,15 @@
  */
 
 import 'dotenv/config';
+import { logger } from '@alfira-bot/shared';
 import { commands } from './commands';
 import { deployCommands } from './index';
 
 const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID } = process.env;
 
 if (!DISCORD_BOT_TOKEN || !DISCORD_CLIENT_ID || !GUILD_ID) {
-  console.error(
-    '❌  Missing one or more required env vars: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID'
+  logger.error(
+    'Missing one or more required env vars: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID'
   );
   process.exit(1);
 } else {

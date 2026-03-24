@@ -3,7 +3,7 @@
 // notification state, fixing the issue where notifications triggered from
 // nested hooks wouldn't appear.
 export {
-	useNotification,
-	type Notification,
-	type NotifyFn,
+  type Notification,
+  type NotifyFn,
+  useNotification,
 } from '../context/NotificationContext';

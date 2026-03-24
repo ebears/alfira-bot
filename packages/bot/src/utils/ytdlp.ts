@@ -1,6 +1,7 @@
 import type { ChildProcess } from 'node:child_process';
 import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
+import { logger } from '@alfira-bot/shared';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
 interface SongMetadata {
@@ -112,11 +113,11 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
     const msg = chunk.toString().trim();
     if (!msg) return;
     if (BENIGN_ERROR_PATTERNS.some((pattern) => pattern.test(msg))) return;
-    console.warn('[FFmpeg]', msg);
+    logger.warn({ source: 'FFmpeg' }, msg);
   });
 
   ffmpeg.on('error', (err) => {
-    console.error('[FFmpeg] process error:', err.message);
+    logger.error({ error: err.message, source: 'FFmpeg' }, 'FFmpeg process error');
     capacitor.destroy();
   });
 

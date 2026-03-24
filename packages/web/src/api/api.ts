@@ -8,39 +8,36 @@ configureApiClient(client);
 // Re-export everything from shared API with web-compatible names
 // ---------------------------------------------------------------------------
 export {
+  addSongToPlaylist,
+  addToPriorityQueue,
+  clearQueue,
+  createPlaylist,
+  createSong as addSong,
+  deletePlaylist,
+  deleteSong,
+  fetchLogout as logout,
   // Auth
   fetchMe as getMe,
-  fetchLogout as logout,
-
-  // Songs
-  fetchSongs as getSongs,
-  createSong as addSong,
-  deleteSong,
-  updateSongNickname,
-  importPlaylist,
-
+  fetchPlaylist as getPlaylist,
   // Playlists
   fetchPlaylists as getPlaylists,
-  createPlaylist,
-  fetchPlaylist as getPlaylist,
-  renamePlaylist,
-  deletePlaylist,
-  addSongToPlaylist,
-  removeSongFromPlaylist,
-  togglePlaylistVisibility,
-
   // Player
   fetchQueueState,
-  startPlayback,
-  skipTrack,
+  // Songs
+  fetchSongs as getSongs,
+  importPlaylist,
   leaveVoice,
+  overridePlay,
+  quickAddPlaylistToQueue,
+  quickAddToQueue,
+  removeSongFromPlaylist,
+  renamePlaylist,
   setLoopMode,
   shuffleQueue,
-  unshuffleQueue,
-  clearQueue,
+  skipTrack,
+  startPlayback,
   togglePause,
-  quickAddToQueue,
-  quickAddPlaylistToQueue,
-  addToPriorityQueue,
-  overridePlay,
+  togglePlaylistVisibility,
+  unshuffleQueue,
+  updateSongNickname,
 } from '@alfira-bot/shared/api';

@@ -1,7 +1,7 @@
 import type { User } from '@alfira-bot/shared';
-import { getMe, logout as logoutApi } from '../api/api';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { getMe, logout as logoutApi } from '../api/api';
 
 interface AuthContextValue {
   user: User | null;

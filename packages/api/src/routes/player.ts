@@ -1,5 +1,5 @@
 import { getPlayer } from '@alfira-bot/bot';
-import { fisherYatesShuffle, type LoopMode, type QueuedSong, type Song } from '@alfira-bot/shared';
+import { fisherYatesShuffle, getRequestedBy, type LoopMode } from '@alfira-bot/shared';
 import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -7,6 +7,7 @@ import { GUILD_ID } from '../lib/config';
 import { requirePlayer, requirePlaying } from '../lib/player';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
+import { buildQueuedSongFromMetadata, dbSongToQueuedSong } from '../lib/songConversion';
 import {
   clampMaxVideos,
   fetchPlaylistMetadata,
@@ -20,14 +21,6 @@ import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
-const USERNAME_FALLBACK = 'Unknown';
-
-function getRequestedBy(req: { user?: { username?: string; discordId?: string } }) {
-  return {
-    username: req.user?.username ?? USERNAME_FALLBACK,
-    discordId: req.user?.discordId ?? USERNAME_FALLBACK,
-  };
-}
 
 // Rate limit player action routes to prevent abuse.
 const playerLimiter = rateLimit({
@@ -37,36 +30,6 @@ const playerLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please slow down.' },
 });
-
-function buildQueuedSongFromMetadata(
-  metadata: { title: string; youtubeId: string; duration: number; thumbnailUrl: string },
-  youtubeUrl: string,
-  requestedBy: string,
-  addedBy: string
-): QueuedSong {
-  return {
-    id: `temp-${Date.now()}`,
-    title: metadata.title,
-    youtubeUrl,
-    youtubeId: metadata.youtubeId,
-    duration: metadata.duration,
-    thumbnailUrl: metadata.thumbnailUrl,
-    addedBy,
-    createdAt: new Date().toISOString(),
-    requestedBy,
-  };
-}
-
-function dbSongToQueuedSong(
-  song: Omit<Song, 'createdAt'> & { createdAt: Date },
-  requestedBy: string
-): QueuedSong {
-  return {
-    ...song,
-    createdAt: song.createdAt.toISOString(),
-    requestedBy,
-  };
-}
 
 // GET /api/player/queue — returns current queue state. Member accessible.
 router.get('/queue', requireAuth, (_req, res) => {

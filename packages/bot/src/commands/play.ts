@@ -1,4 +1,5 @@
 import type { QueuedSong } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared';
 import prisma from '@alfira-bot/shared/prisma';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
@@ -37,7 +38,7 @@ export const playCommand: Command = {
     try {
       metadata = await getMetadata(url);
     } catch (error) {
-      console.error('Metadata fetch failed:', error);
+      logger.error({ error, url }, 'Metadata fetch failed');
       await interaction.editReply(
         '❌ Could not fetch song info. The video may be private, age-restricted, or unavailable.'
       );
