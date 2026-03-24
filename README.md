@@ -40,10 +40,11 @@
 
 ## Screenshots
 
-![Login Page](.github/screenshots/login.png)
-![Song Library](.github/screenshots/songs.png)
-![Playlist View](.github/screenshots/playlists.png)
-![Player View](.github/screenshots/player.png)
+![Login Page Preview](.github/screenshots/login.png)
+![Library Page Preview 1](.github/screenshots/library1.png)
+![Library Page Preview 2](.github/screenshots/library2.png)
+![Playlists Page Preview](.github/screenshots/playlists.png)
+![Queue Preview](.github/screenshots/queue.png)
 
 ## Tech Stack
 
