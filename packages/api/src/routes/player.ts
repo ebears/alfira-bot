@@ -226,10 +226,8 @@ router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) 
   if (!playlistMetadata) return;
 
   const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-  const queuedSongs = [];
-
-  for (const video of playlistMetadata.videos) {
-    const queuedSong = buildQueuedSongFromMetadata(
+  const queuedSongs = playlistMetadata.videos.map((video) =>
+    buildQueuedSongFromMetadata(
       {
         title: video.title,
         youtubeId: video.id,
@@ -239,11 +237,10 @@ router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) 
       youTubeUrl(video.id),
       requestedBy,
       addedBy
-    );
+    )
+  );
 
-    await player.addToQueue(queuedSong);
-    queuedSongs.push(queuedSong);
-  }
+  await player.addToQueue(queuedSongs);
 
   res.json({
     message: `Added ${queuedSongs.length} song(s) from "${playlistMetadata.title}" to the queue.`,
