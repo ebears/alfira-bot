@@ -30,8 +30,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@discordjs/voice':
-        specifier: ^0.19.1
-        version: 0.19.1
+        specifier: ^0.19.2
+        version: 0.19.2
       axios:
         specifier: ^1.13.6
         version: 1.13.6
@@ -100,8 +100,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@discordjs/voice':
-        specifier: ^0.19.1
-        version: 0.19.1
+        specifier: ^0.19.2
+        version: 0.19.2
       '@snazzah/davey':
         specifier: ^0.1.10
         version: 0.1.10
@@ -806,8 +806,8 @@ packages:
     resolution: {integrity: sha512-3LKP7F2+atl9vJFhaBjn4nOaSWahZ/yWjOvA4e5pnXkt2qyXRCHLxoBQy81GFtLGCq7K9lPm9R517M1U+/90Qg==}
     engines: {node: '>=18'}
 
-  '@discordjs/voice@0.19.1':
-    resolution: {integrity: sha512-XYbFVyUBB7zhRvrjREfiWDwio24nEp/vFaVe6u9aBIC5UYuT7HvoMt8LgNfZ5hOyaCW0flFr72pkhUGz+gWw4Q==}
+  '@discordjs/voice@0.19.2':
+    resolution: {integrity: sha512-3yJ255e4ag3wfZu/DSxeOZK1UtnqNxnspmLaQetGT0pDkThNZoHs+Zg6dgZZ19JEVomXygvfHn9lNpICZuYtEA==}
     engines: {node: '>=22.12.0'}
 
   '@discordjs/ws@1.2.3':
@@ -3311,8 +3311,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.19.0:
-    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
+  ws@8.20.0:
+    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4094,14 +4094,14 @@ snapshots:
     dependencies:
       discord-api-types: 0.38.42
 
-  '@discordjs/voice@0.19.1':
+  '@discordjs/voice@0.19.2':
     dependencies:
       '@snazzah/davey': 0.1.10
       '@types/ws': 8.18.1
       discord-api-types: 0.38.42
       prism-media: 1.3.5
       tslib: 2.8.1
-      ws: 8.19.0
+      ws: 8.20.0
     transitivePeerDependencies:
       - '@discordjs/opus'
       - bufferutil
@@ -4120,7 +4120,7 @@ snapshots:
       '@vladfrangu/async_event_emitter': 2.4.7
       discord-api-types: 0.38.42
       tslib: 2.8.1
-      ws: 8.19.0
+      ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -6682,7 +6682,7 @@ snapshots:
 
   ws@8.18.3: {}
 
-  ws@8.19.0: {}
+  ws@8.20.0: {}
 
   xmlhttprequest-ssl@2.1.2: {}
 
