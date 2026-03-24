@@ -10,6 +10,8 @@ import type { GuildPlayer } from '../player/GuildPlayer';
 import { createPlayer, getPlayer } from '../player/manager';
 import type { Command } from '../types';
 
+const VOICE_CONNECTION_TIMEOUT_MS = 5_000;
+
 export async function requireGuild(
   interaction: ChatInputCommandInteraction
 ): Promise<Guild | null> {
@@ -80,7 +82,7 @@ export async function getOrCreateConnection(
   }
 
   try {
-    await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+    await entersState(connection, VoiceConnectionStatus.Ready, VOICE_CONNECTION_TIMEOUT_MS);
   } catch {
     connection.destroy();
     await interaction.editReply('❌ Could not connect to the voice channel in time. Try again.');

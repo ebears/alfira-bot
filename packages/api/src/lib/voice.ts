@@ -4,6 +4,8 @@ import type { TextChannel } from 'discord.js';
 import type { Request, Response } from 'express';
 import { GUILD_ID, logger } from './config';
 
+const VOICE_CONNECTION_TIMEOUT_MS = 5_000;
+
 // ---------------------------------------------------------------------------
 // Voice channel helpers
 //
@@ -46,7 +48,7 @@ export async function resolveOrAutoJoinPlayer(
       adapterCreator: guild.voiceAdapterCreator,
     });
 
-    await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+    await entersState(connection, VoiceConnectionStatus.Ready, VOICE_CONNECTION_TIMEOUT_MS);
 
     const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
     const textChannel = textChannelId

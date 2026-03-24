@@ -8,6 +8,7 @@ import {
   clampMaxVideos,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
+  validateNickname,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
   youTubeUrl,
@@ -36,7 +37,7 @@ function buildSongData(
     youtubeUrl,
     youtubeId: metadata.youtubeId,
     duration: metadata.duration,
-    thumbnailUrl: metadata.thumbnailUrl as string,
+    thumbnailUrl: metadata.thumbnailUrl ?? '',
     addedBy,
   };
 }
@@ -81,12 +82,9 @@ router.get('/', requireAuth, async (_req, res) => {
 // 5. Emit songs:added so all connected clients update in real time.
 // ---------------------------------------------------------------------------
 router.post('/', requireAuth, requireAdmin, async (req, res) => {
-  const { nickname } = req.body as { nickname?: string };
-  const trimmedNickname = nickname?.trim();
-  if (trimmedNickname && trimmedNickname.length > 50) {
-    res.status(400).json({ error: 'Nickname must be 50 characters or fewer.' });
-    return;
-  }
+  const trimmedNickname = validateNickname(req.body.nickname, res);
+  if (trimmedNickname === false) return;
+
   const url = validateYouTubeUrl(req.body.youtubeUrl, res);
   if (!url) return;
 
@@ -109,7 +107,7 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   const song = await prisma.song.create({
     data: {
       ...buildSongData(metadata, url, req.user?.discordId ?? ''),
-      nickname: trimmedNickname || null,
+      nickname: trimmedNickname,
     },
   });
 
@@ -236,20 +234,15 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = req.params.id as string;
-  const { nickname } = req.body as { nickname?: string | null };
-
-  const trimmed = nickname?.trim() ?? null;
-  if (trimmed && trimmed.length > 50) {
-    res.status(400).json({ error: 'Nickname must be 50 characters or fewer.' });
-    return;
-  }
+  const trimmed = validateNickname(req.body.nickname, res);
+  if (trimmed === false) return;
 
   const existing = await findOr404(() => prisma.song.findUnique({ where: { id } }), res, 'Song');
   if (!existing) return;
 
   const song = await prisma.song.update({
     where: { id },
-    data: { nickname: trimmed || null },
+    data: { nickname: trimmed },
   });
 
   emitSongUpdated(song);

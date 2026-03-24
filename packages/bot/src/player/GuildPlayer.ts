@@ -19,6 +19,11 @@ import { PlaybackCursor } from './PlaybackCursor';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
+  private static readonly VOICE_RECONNECT_TIMEOUT_MS = 5_000;
+  private static readonly MAX_MISSED_FRAMES = 50;
+  private static readonly STREAM_RETRY_ATTEMPTS = 3;
+  private static readonly STREAM_RETRY_DELAY_MS = 1_000;
+  private static readonly AUDIO_PLAYER_READY_TIMEOUT_MS = 5_000;
 
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
   private priorityQueue: QueuedSong[] = [];
@@ -106,8 +111,16 @@ export class GuildPlayer {
 
       try {
         await Promise.race([
-          entersState(this.connection, VoiceConnectionStatus.Signalling, 5_000),
-          entersState(this.connection, VoiceConnectionStatus.Connecting, 5_000),
+          entersState(
+            this.connection,
+            VoiceConnectionStatus.Signalling,
+            GuildPlayer.VOICE_RECONNECT_TIMEOUT_MS
+          ),
+          entersState(
+            this.connection,
+            VoiceConnectionStatus.Connecting,
+            GuildPlayer.VOICE_RECONNECT_TIMEOUT_MS
+          ),
         ]);
         logger.info({ guildId: this.guildId }, 'Voice connection is reconnecting.');
       } catch {
@@ -152,8 +165,10 @@ export class GuildPlayer {
     this.guildId = guildId;
     this.onDestroyed = onDestroyed;
 
-    // 50 frames (~1s) before auto-pause — avoids choppiness from brief network jitter.
-    this.audioPlayer = createAudioPlayer({ behaviors: { maxMissedFrames: 50 } });
+    // MAX_MISSED_FRAMES frames (~1s) before auto-pause — avoids choppiness from brief network jitter.
+    this.audioPlayer = createAudioPlayer({
+      behaviors: { maxMissedFrames: GuildPlayer.MAX_MISSED_FRAMES },
+    });
     this.connection.subscribe(this.audioPlayer);
 
     this.setupAudioPlayerListeners();
@@ -343,14 +358,14 @@ export class GuildPlayer {
     try {
       let lastError: unknown;
       let result: { url: string; isWebmOpus: boolean } | undefined;
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS; attempt++) {
         try {
           result = await getStreamFormat(next.youtubeUrl);
           break;
         } catch (error) {
           lastError = error;
-          if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 1_000));
+          if (attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS - 1) {
+            await new Promise((resolve) => setTimeout(resolve, GuildPlayer.STREAM_RETRY_DELAY_MS));
           }
         }
       }
@@ -359,7 +374,7 @@ export class GuildPlayer {
     } catch (error) {
       logger.error(
         { guildId: this.guildId, track: next.title, error },
-        'Failed to get stream URL after 3 attempts'
+        `Failed to get stream URL after ${GuildPlayer.STREAM_RETRY_ATTEMPTS} attempts`
       );
       await this.handlePlaybackFailure('could not resolve the audio stream');
       return;
@@ -387,7 +402,11 @@ export class GuildPlayer {
     this.audioPlayer.play(resource);
 
     try {
-      await entersState(this.audioPlayer, AudioPlayerStatus.Playing, 5_000);
+      await entersState(
+        this.audioPlayer,
+        AudioPlayerStatus.Playing,
+        GuildPlayer.AUDIO_PLAYER_READY_TIMEOUT_MS
+      );
     } catch {
       logger.error(
         { guildId: this.guildId, track: next.title },

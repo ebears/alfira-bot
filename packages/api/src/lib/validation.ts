@@ -123,10 +123,16 @@ export function validatePlaylistName(name: unknown, res: Response): string | nul
 }
 
 /** Validates and trims a nickname. Returns null if invalid, otherwise the trimmed value or null. */
-export function validateNickname(nickname: unknown, res: Response): string | null {
+export function validateNickname(nickname: unknown, res: Response): string | null | false {
+  const MAX_NICKNAME_LENGTH = 50;
   if (nickname !== undefined && nickname !== null && typeof nickname !== 'string') {
     res.status(400).json({ error: 'nickname must be a string.' });
-    return null;
+    return false;
   }
-  return nickname ? (nickname as string).trim() || null : null;
+  const trimmed = nickname ? (nickname as string).trim() || null : null;
+  if (trimmed && trimmed.length > MAX_NICKNAME_LENGTH) {
+    res.status(400).json({ error: `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer.` });
+    return false;
+  }
+  return trimmed;
 }
