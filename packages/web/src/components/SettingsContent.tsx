@@ -52,7 +52,7 @@ export default function SettingsContent() {
         <div className="flex gap-2">
           <Button
             variant="foreground"
-            className={`flex-1 ${mode === 'auto' ? 'border-accent/40 text-accent' : ''}`}
+            className={`flex-1 flex items-center gap-2 ${mode === 'auto' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('auto')}
           >
             <DesktopIcon size={16} weight="duotone" />
@@ -60,7 +60,7 @@ export default function SettingsContent() {
           </Button>
           <Button
             variant="foreground"
-            className={`flex-1 ${mode === 'light' ? 'border-accent/40 text-accent' : ''}`}
+            className={`flex-1 flex items-center gap-2 ${mode === 'light' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('light')}
           >
             <SunIcon size={16} weight="duotone" />
@@ -68,7 +68,7 @@ export default function SettingsContent() {
           </Button>
           <Button
             variant="foreground"
-            className={`flex-1 ${mode === 'dark' ? 'border-accent/40 text-accent' : ''}`}
+            className={`flex-1 flex items-center gap-2 ${mode === 'dark' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('dark')}
           >
             <MoonIcon size={16} weight="duotone" />
