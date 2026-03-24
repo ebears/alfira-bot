@@ -163,7 +163,7 @@ function PlaylistRow({
   const count = playlist._count?.songs ?? 0;
   return (
     <div
-      className="card flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 md:py-4 cursor-pointer group hover:bg-elevated active:bg-elevated/80 hover:border-border/80 transition-colors duration-150 animate-fade-up opacity-0"
+      className="flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 md:py-4 cursor-pointer group bg-elevated rounded-xl clay-resting hover:clay-raised active:clay-flat transition-all duration-100 animate-fade-up opacity-0"
       style={style}
       onClick={onClick}
       onKeyDown={(e) => {
