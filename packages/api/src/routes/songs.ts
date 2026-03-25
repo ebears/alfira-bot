@@ -27,21 +27,6 @@ const importLimiter = rateLimit({
   message: { error: 'Too many imports. Please slow down.' },
 });
 
-function buildSongData(
-  metadata: { title: string; youtubeId: string; duration: number; thumbnailUrl: string | null },
-  youtubeUrl: string,
-  addedBy: string
-) {
-  return {
-    title: metadata.title,
-    youtubeUrl,
-    youtubeId: metadata.youtubeId,
-    duration: metadata.duration,
-    thumbnailUrl: metadata.thumbnailUrl ?? '',
-    addedBy,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // GET /api/songs
 //
@@ -106,7 +91,12 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
 
   const song = await prisma.song.create({
     data: {
-      ...buildSongData(metadata, url, req.user?.discordId ?? ''),
+      title: metadata.title,
+      youtubeUrl: url,
+      youtubeId: metadata.youtubeId,
+      duration: metadata.duration,
+      thumbnailUrl: metadata.thumbnailUrl ?? '',
+      addedBy: req.user?.discordId ?? '',
       nickname: trimmedNickname,
     },
   });
@@ -177,16 +167,14 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
   const createdSongs = await prisma.$transaction(
     newVideos.map((video) =>
       prisma.song.create({
-        data: buildSongData(
-          {
-            title: video.title,
-            youtubeId: video.id,
-            duration: video.duration,
-            thumbnailUrl: video.thumbnailUrl,
-          },
-          video.canonicalUrl,
-          req.user?.discordId ?? ''
-        ),
+        data: {
+          title: video.title,
+          youtubeUrl: video.canonicalUrl,
+          youtubeId: video.id,
+          duration: video.duration,
+          thumbnailUrl: video.thumbnailUrl ?? '',
+          addedBy: req.user?.discordId ?? '',
+        },
       })
     )
   );

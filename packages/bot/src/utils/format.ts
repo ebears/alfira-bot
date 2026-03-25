@@ -14,12 +14,6 @@ const LOOP_MODE_LABELS: Record<LoopMode, string> = {
 
 export const EMBED_COLOR = 0x5865f2;
 
-export const LOOP_MODE_DESCRIPTIONS: Record<LoopMode, string> = {
-  off: 'off',
-  song: 'the current song',
-  queue: 'the entire queue',
-};
-
 export function formatLoopMode(mode: LoopMode): string {
   return LOOP_MODE_LABELS[mode];
 }

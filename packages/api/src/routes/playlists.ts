@@ -51,14 +51,6 @@ async function requirePlaylistAccess(
   return playlist;
 }
 
-async function emitPlaylistBroadcast(playlistId: string): Promise<void> {
-  const updatedPlaylist = await prisma.playlist.findUnique({
-    where: { id: playlistId },
-    include: PLAYLIST_WITH_COUNT,
-  });
-  if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
-}
-
 // ---------------------------------------------------------------------------
 // GET /api/playlists
 //
@@ -256,7 +248,12 @@ router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
     include: { song: true },
   });
 
-  await emitPlaylistBroadcast(playlist.id);
+  const updatedPlaylist = await prisma.playlist.findUnique({
+    where: { id: playlist.id },
+    include: PLAYLIST_WITH_COUNT,
+  });
+  if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+
   res.status(201).json(playlistSong);
 });
 
@@ -316,7 +313,12 @@ router.delete('/:id/songs/:songId', requireAuth, playlistLimiter, async (req, re
     );
   });
 
-  await emitPlaylistBroadcast(pid);
+  const updatedPlaylist = await prisma.playlist.findUnique({
+    where: { id: pid },
+    include: PLAYLIST_WITH_COUNT,
+  });
+  if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+
   res.status(204).send();
 });
 
