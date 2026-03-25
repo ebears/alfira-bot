@@ -1,4 +1,4 @@
-import { formatDuration } from '@alfira-bot/shared';
+import { formatDuration, logger } from '@alfira-bot/shared';
 import {
   CircleNotchIcon,
   DoorOpenIcon,
@@ -50,7 +50,7 @@ export function NowPlayingBar() {
     try {
       await pause();
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     } finally {
       setPauseBusy(false);
     }
@@ -61,14 +61,14 @@ export function NowPlayingBar() {
     try {
       await skip();
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     } finally {
       setSkipBusy(false);
     }
   };
 
   const handleStop = () => {
-    leave().catch(console.error);
+    leave().catch((e) => logger.error(e));
   };
 
   const handleCycleLoop = async () => {

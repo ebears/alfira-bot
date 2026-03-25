@@ -45,15 +45,12 @@ export default function LoginPage() {
             <h1 className="font-display text-5xl md:text-6xl text-accent tracking-widest">
               alfira
             </h1>
-            <p className="font-mono text-xs text-muted mt-2 tracking-widest uppercase">
-              music bot
-            </p>
+            <p className="font-mono text-xs text-muted mt-2 tracking-widest uppercase">music bot</p>
           </div>
 
           {/* Description */}
           <p className="font-body text-sm text-muted text-center mb-6 md:mb-8 leading-relaxed">
-            Log in with your Discord account to access the music library and
-            controls.
+            Log in with your Discord account to access the music library and controls.
           </p>
 
           {/* Login button — redirects to Express OAuth handler */}
