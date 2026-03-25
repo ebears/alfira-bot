@@ -4,9 +4,14 @@ import {
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
 } from '@alfira-bot/bot';
+import {
+  MAX_NICKNAME_LENGTH,
+  MAX_PLAYLIST_NAME_LENGTH,
+  MAX_PLAYLIST_VIDEOS,
+  MAX_URL_LENGTH,
+  youTubeUrl,
+} from '@alfira-bot/shared';
 import type { Response } from 'express';
-
-const MAX_URL_LENGTH = 2000;
 
 function validateUrl(
   youtubeUrl: unknown,
@@ -98,25 +103,19 @@ export function fetchPlaylistMetadata(
   );
 }
 
-/** Clamps maxVideos to the [1, 100] range, or returns undefined if not set. */
+/** Clamps maxVideos to the [1, MAX_PLAYLIST_VIDEOS] range, or returns undefined if not set. */
 export function clampMaxVideos(value: number | undefined): number | undefined {
-  return value === undefined ? undefined : Math.min(Math.max(1, value), 100);
-}
-
-/** Returns a canonical YouTube watch URL for a given video ID. */
-export function youTubeUrl(videoId: string): string {
-  return `https://www.youtube.com/watch?v=${videoId}`;
+  return value === undefined ? undefined : Math.min(Math.max(1, value), MAX_PLAYLIST_VIDEOS);
 }
 
 /** Validates and trims a playlist name. */
 export function validatePlaylistName(name: unknown, res: Response): string | null {
-  const MAX_NAME_LENGTH = 200;
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     res.status(400).json({ error: 'name is required.' });
     return null;
   }
-  if (name.length > MAX_NAME_LENGTH) {
-    res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
+  if (name.length > MAX_PLAYLIST_NAME_LENGTH) {
+    res.status(400).json({ error: `name must be ${MAX_PLAYLIST_NAME_LENGTH} characters or less.` });
     return null;
   }
   return name.trim();
@@ -124,7 +123,6 @@ export function validatePlaylistName(name: unknown, res: Response): string | nul
 
 /** Validates and trims a nickname. Returns null if invalid, otherwise the trimmed value or null. */
 export function validateNickname(nickname: unknown, res: Response): string | null | false {
-  const MAX_NICKNAME_LENGTH = 50;
   if (nickname !== undefined && nickname !== null && typeof nickname !== 'string') {
     res.status(400).json({ error: 'nickname must be a string.' });
     return false;

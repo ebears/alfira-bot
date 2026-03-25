@@ -55,7 +55,7 @@ export function useSongActions({
       await addSongToPlaylist(playlistId, song.id);
       setAddedTo((prev) => new Set([...prev, playlistId]));
     } catch {
-      setAddedTo((prev) => new Set([...prev, playlistId]));
+      // Error occurred, don't mark as added
     }
   };
 

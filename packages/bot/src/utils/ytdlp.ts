@@ -1,7 +1,7 @@
 import type { ChildProcess } from 'node:child_process';
 import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
-import { logger } from '@alfira-bot/shared';
+import { logger, youtubeThumbnail, YT_DLP_TIMEOUT_MS } from '@alfira-bot/shared';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
 interface SongMetadata {
@@ -17,8 +17,6 @@ export interface PlaylistMetadata {
   videoCount: number;
   videos: { id: string; title: string; duration: number; thumbnailUrl: string }[];
 }
-
-const YT_DLP_TIMEOUT_MS = 30_000;
 
 // Filter benign FFmpeg stderr messages that occur at stream end.
 const BENIGN_ERROR_PATTERNS = [
@@ -133,10 +131,6 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
   };
 
   return { stream: readStream, kill };
-}
-
-function youtubeThumbnail(videoId: string): string {
-  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 }
 
 const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];

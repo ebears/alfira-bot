@@ -4,13 +4,12 @@ import {
   joinVoiceChannel,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
+import { VOICE_CONNECTION_TIMEOUT_MS } from '@alfira-bot/shared';
 import type { ChatInputCommandInteraction, Guild, GuildMember, TextChannel } from 'discord.js';
 import { ChannelType, type SlashCommandBuilder } from 'discord.js';
 import type { GuildPlayer } from '../player/GuildPlayer';
 import { createPlayer, getPlayer } from '../player/manager';
 import type { Command } from '../types';
-
-const VOICE_CONNECTION_TIMEOUT_MS = 5_000;
 
 export async function requireGuild(
   interaction: ChatInputCommandInteraction

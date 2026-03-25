@@ -1,3 +1,4 @@
+import { youTubeUrl } from '@alfira-bot/shared';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { getUserDisplayName } from '../lib/displayName';
@@ -11,7 +12,6 @@ import {
   validateNickname,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
-  youTubeUrl,
 } from '../lib/validation';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';

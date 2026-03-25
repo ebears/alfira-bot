@@ -1,5 +1,5 @@
 import { getPlayer } from '@alfira-bot/bot';
-import { fisherYatesShuffle, getRequestedBy, type LoopMode } from '@alfira-bot/shared';
+import { fisherYatesShuffle, getRequestedBy, type LoopMode, youTubeUrl } from '@alfira-bot/shared';
 import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -14,7 +14,6 @@ import {
   fetchYouTubeMetadata,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
-  youTubeUrl,
 } from '../lib/validation';
 import { resolveOrAutoJoinPlayer } from '../lib/voice';
 import { requireAdmin } from '../middleware/requireAdmin';
