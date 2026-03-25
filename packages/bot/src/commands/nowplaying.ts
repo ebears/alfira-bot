@@ -1,7 +1,8 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { formatDuration } from '@alfira-bot/shared';
+import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { buildNowPlayingEmbed, pluralize } from '../utils/format';
+import { EMBED_COLOR, formatLoopMode, pluralize } from '../utils/format';
 import { requireGuild } from './guards';
 
 export const nowplayingCommand: Command = {
@@ -24,9 +25,19 @@ export const nowplayingCommand: Command = {
     const loopMode = player?.getLoopMode() ?? 'off';
     const queueLength = player?.getQueue().length ?? 0;
 
-    const embed = buildNowPlayingEmbed(song, loopMode).setFooter({
-      text: queueLength > 0 ? `${pluralize(queueLength, 'song')} in queue` : 'No songs in queue',
-    });
+    const embed = new EmbedBuilder()
+      .setColor(EMBED_COLOR)
+      .setTitle('▶️  Now Playing')
+      .setDescription(`**[${song.title}](${song.youtubeUrl})**`)
+      .setThumbnail(song.thumbnailUrl)
+      .addFields(
+        { name: 'Duration', value: formatDuration(song.duration), inline: true },
+        { name: 'Requested by', value: song.requestedBy, inline: true },
+        { name: 'Loop', value: formatLoopMode(loopMode), inline: true }
+      )
+      .setFooter({
+        text: queueLength > 0 ? `${pluralize(queueLength, 'song')} in queue` : 'No songs in queue',
+      });
 
     await interaction.reply({ embeds: [embed] });
   },

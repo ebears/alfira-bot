@@ -6,11 +6,10 @@ import {
 } from '@discordjs/voice';
 import type { ChatInputCommandInteraction, Guild, GuildMember, TextChannel } from 'discord.js';
 import { ChannelType, type SlashCommandBuilder } from 'discord.js';
+import { VOICE_CONNECTION_TIMEOUT_MS } from '../lib/constants';
 import type { GuildPlayer } from '../player/GuildPlayer';
 import { createPlayer, getPlayer } from '../player/manager';
 import type { Command } from '../types';
-
-const VOICE_CONNECTION_TIMEOUT_MS = 5_000;
 
 export async function requireGuild(
   interaction: ChatInputCommandInteraction
@@ -52,7 +51,7 @@ export async function requirePlaying(
 ): Promise<GuildPlayer | null> {
   const player = getPlayer(guildId);
 
-  if (!player || !player.getCurrentSong()) {
+  if (!player?.getCurrentSong()) {
     await interaction.reply({ content: 'Nothing is currently playing.', flags: 'Ephemeral' });
     return null;
   }

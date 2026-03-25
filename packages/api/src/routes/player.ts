@@ -7,7 +7,6 @@ import { GUILD_ID } from '../lib/config';
 import { requirePlayer, requirePlaying } from '../lib/player';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import prisma from '../lib/prisma';
-import { buildQueuedSongFromMetadata, dbSongToQueuedSong } from '../lib/songConversion';
 import {
   clampMaxVideos,
   fetchPlaylistMetadata,
@@ -117,7 +116,11 @@ router.post('/play', requireAuth, async (req, res) => {
   player.setLoopMode(targetLoopMode);
 
   const { username: requestedBy } = getRequestedBy(req);
-  const queuedSongs = dbSongs.map((song) => dbSongToQueuedSong(song, requestedBy));
+  const queuedSongs = dbSongs.map((song) => ({
+    ...song,
+    createdAt: song.createdAt.toISOString(),
+    requestedBy,
+  }));
 
   if (startFromSongId) {
     await player.replaceQueueAndPlay(queuedSongs);
@@ -203,7 +206,17 @@ router.post('/quick-add', requireAuth, playerLimiter, async (req, res) => {
   if (!metadata) return;
 
   const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-  const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
+  const queuedSong = {
+    id: `temp-${Date.now()}`,
+    title: metadata.title,
+    youtubeUrl: url,
+    youtubeId: metadata.youtubeId,
+    duration: metadata.duration,
+    thumbnailUrl: metadata.thumbnailUrl,
+    addedBy,
+    createdAt: new Date().toISOString(),
+    requestedBy,
+  };
 
   await player.addToPriorityQueue(queuedSong);
 
@@ -226,19 +239,17 @@ router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) 
   if (!playlistMetadata) return;
 
   const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-  const queuedSongs = playlistMetadata.videos.map((video) =>
-    buildQueuedSongFromMetadata(
-      {
-        title: video.title,
-        youtubeId: video.id,
-        duration: video.duration,
-        thumbnailUrl: video.thumbnailUrl,
-      },
-      youTubeUrl(video.id),
-      requestedBy,
-      addedBy
-    )
-  );
+  const queuedSongs = playlistMetadata.videos.map((video) => ({
+    id: `temp-${Date.now()}-${video.id}`,
+    title: video.title,
+    youtubeUrl: youTubeUrl(video.id),
+    youtubeId: video.id,
+    duration: video.duration,
+    thumbnailUrl: video.thumbnailUrl,
+    addedBy,
+    createdAt: new Date().toISOString(),
+    requestedBy,
+  }));
 
   await player.addToQueue(queuedSongs);
 
@@ -291,7 +302,11 @@ router.post('/add-to-priority', requireAuth, async (req, res) => {
   if (!player) return;
 
   const { username: requestedBy } = getRequestedBy(req);
-  const queuedSong = dbSongToQueuedSong(song, requestedBy);
+  const queuedSong = {
+    ...song,
+    createdAt: song.createdAt.toISOString(),
+    requestedBy,
+  };
 
   await player.addToPriorityQueue(queuedSong);
 
@@ -313,7 +328,17 @@ router.post('/override', requireAuth, requireAdmin, playerLimiter, async (req, r
   if (!metadata) return;
 
   const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
-  const queuedSong = buildQueuedSongFromMetadata(metadata, url, requestedBy, addedBy);
+  const queuedSong = {
+    id: `temp-${Date.now()}`,
+    title: metadata.title,
+    youtubeUrl: url,
+    youtubeId: metadata.youtubeId,
+    duration: metadata.duration,
+    thumbnailUrl: metadata.thumbnailUrl,
+    addedBy,
+    createdAt: new Date().toISOString(),
+    requestedBy,
+  };
 
   await player.replaceQueueAndPlay([queuedSong]);
 

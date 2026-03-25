@@ -1,10 +1,8 @@
-import { createPlayer, getClient, getPlayer } from '@alfira-bot/bot';
+import { createPlayer, getClient, getPlayer, VOICE_CONNECTION_TIMEOUT_MS } from '@alfira-bot/bot';
 import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
 import type { TextChannel } from 'discord.js';
 import type { Request, Response } from 'express';
 import { GUILD_ID, logger } from './config';
-
-const VOICE_CONNECTION_TIMEOUT_MS = 5_000;
 
 // ---------------------------------------------------------------------------
 // Voice channel helpers

@@ -26,6 +26,9 @@ export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
 // Discord client singleton
 export { getClient } from './lib/client';
 
+// Constants
+export { VOICE_CONNECTION_TIMEOUT_MS } from './lib/constants';
+
 // Player manager (guild-level player lifecycle)
 export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
 
