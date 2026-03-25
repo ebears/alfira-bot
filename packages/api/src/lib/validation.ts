@@ -8,8 +8,11 @@ import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;
 
-/** Validates a YouTube URL for single video endpoints. */
-export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
+/**
+ * Validates and trims a URL input. Returns null if validation fails.
+ * Used by YouTube URL validators to avoid duplication.
+ */
+function validateUrlInput(youtubeUrl: unknown, res: Response): string | null {
   if (!youtubeUrl || typeof youtubeUrl !== 'string') {
     res.status(400).json({ error: 'youtubeUrl is required.' });
     return null;
@@ -21,6 +24,14 @@ export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string |
     res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
     return null;
   }
+
+  return url;
+}
+
+/** Validates a YouTube URL for single video endpoints. */
+export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
+  const url = validateUrlInput(youtubeUrl, res);
+  if (!url) return null;
 
   if (!isValidYouTubeUrl(url)) {
     res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
@@ -32,17 +43,8 @@ export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string |
 
 /** Validates a YouTube playlist URL. */
 export function validateYouTubePlaylistUrl(youtubeUrl: unknown, res: Response): string | null {
-  if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-    res.status(400).json({ error: 'youtubeUrl is required.' });
-    return null;
-  }
-
-  const url = youtubeUrl.trim();
-
-  if (url.length > MAX_URL_LENGTH) {
-    res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-    return null;
-  }
+  const url = validateUrlInput(youtubeUrl, res);
+  if (!url) return null;
 
   if (!isYouTubePlaylistUrl(url)) {
     res.status(400).json({
