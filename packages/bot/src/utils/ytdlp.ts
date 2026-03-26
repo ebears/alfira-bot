@@ -118,6 +118,8 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
 
   ffmpeg.on('error', (err) => {
     logger.error({ error: err.message, source: 'FFmpeg' }, 'FFmpeg process error');
+    killed = true;
+    ffmpeg.kill();
     capacitor.destroy();
   });
 
@@ -192,7 +194,7 @@ export async function getPlaylistMetadataWithVideos(
   const videos = videosStdout
     .trimEnd()
     .split('\n')
-    .map((line) => {
+    .map((line, index) => {
       try {
         const data = JSON.parse(line);
         return {
@@ -202,6 +204,7 @@ export async function getPlaylistMetadataWithVideos(
           thumbnailUrl: youtubeThumbnail(data.id),
         };
       } catch {
+        logger.warn(`Failed to parse video JSON at index ${index}, skipping`);
         return null;
       }
     })
@@ -218,16 +221,21 @@ export async function getPlaylistMetadataWithVideos(
 export async function getStreamFormat(
   youtubeUrl: string
 ): Promise<{ url: string; isWebmOpus: boolean }> {
-  const stdout = await execFileAsync('yt-dlp', [
-    '-f',
-    'bestaudio[ext=webm]/bestaudio',
-    '--no-playlist',
-    '--print',
-    '%(ext)s', // line 0: container extension
-    '--print',
-    '%(urls)s', // line 1: direct CDN URL (same as -g but via --print)
-    youtubeUrl,
-  ]);
+  let stdout: string;
+  try {
+    stdout = await execFileAsync('yt-dlp', [
+      '-f',
+      'bestaudio[ext=webm]/bestaudio',
+      '--no-playlist',
+      '--print',
+      '%(ext)s', // line 0: container extension
+      '--print',
+      '%(urls)s', // line 1: direct CDN URL (same as -g but via --print)
+      youtubeUrl,
+    ]);
+  } catch (error) {
+    throw new Error(`Failed to get stream format for ${youtubeUrl}: ${error}`);
+  }
 
   const lines = stdout.trim().split('\n');
   const ext = lines[0].trim();

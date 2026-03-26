@@ -386,7 +386,7 @@ router.post('/logout', async (req, res) => {
       const tokenHash = hashToken(refreshToken);
       await prisma.refreshToken.deleteMany({ where: { tokenHash } });
     } catch {
-      // Ignore errors - just clear cookies anyway.
+      logger.warn('Failed to revoke refresh token on logout');
     }
   }
   clearAuthCookies(res);
