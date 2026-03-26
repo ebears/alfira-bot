@@ -14,9 +14,11 @@ export const PLAYLIST_SONGS_INCLUDE = {
 /**
  * Database result type for a playlist with songs included.
  * This matches the raw Prisma output before transformation to shared types.
+ * Note: Prisma returns Date objects for createdAt, not strings.
  */
-export type PlaylistWithSongsDb = Playlist & {
-  songs: (PlaylistSong & { song: Song & { createdAt: Date } })[];
+export type PlaylistWithSongsDb = Omit<Playlist, 'createdAt' | 'songs'> & {
+  createdAt: Date;
+  songs: (Omit<PlaylistSong, 'song'> & { song: Omit<Song, 'createdAt'> & { createdAt: Date } })[];
 };
 
 /**
