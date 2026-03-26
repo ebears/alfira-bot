@@ -45,20 +45,6 @@ export async function requireVoiceChannel(
   return voiceChannel;
 }
 
-export async function requirePlaying(
-  interaction: ChatInputCommandInteraction,
-  guildId: string
-): Promise<GuildPlayer | null> {
-  const player = getPlayer(guildId);
-
-  if (!player?.getCurrentSong()) {
-    await interaction.reply({ content: 'Nothing is currently playing.', flags: 'Ephemeral' });
-    return null;
-  }
-
-  return player;
-}
-
 /**
  * Gets an existing voice connection or joins the user's channel, then returns
  * the GuildPlayer (creating one if needed). Replies with an error and returns
@@ -106,8 +92,11 @@ export function requirePlayingCommand(
       const guild = await requireGuild(interaction);
       if (!guild) return;
 
-      const player = await requirePlaying(interaction, guild.id);
-      if (!player) return;
+      const player = getPlayer(guild.id);
+      if (!player?.getCurrentSong()) {
+        await interaction.reply({ content: 'Nothing is currently playing.', flags: 'Ephemeral' });
+        return;
+      }
 
       await handler(interaction, player);
     },
