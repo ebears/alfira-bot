@@ -1,5 +1,5 @@
+import { logger, toQueuedSong } from '@alfira-bot/shared';
 import type { QueuedSong } from '@alfira-bot/shared';
-import { logger } from '@alfira-bot/shared';
 import prisma from '@alfira-bot/shared/prisma';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
@@ -55,18 +55,20 @@ export const playCommand: Command = {
     // Use DB record fields when available; fall back to metadata with empty id/addedBy.
     const member = interaction.member as GuildMember;
     const song: QueuedSong = dbSong
-      ? { ...dbSong, createdAt: dbSong.createdAt.toISOString(), requestedBy: member.displayName }
-      : {
-          id: '',
-          title: metadata.title,
-          youtubeUrl: url,
-          youtubeId: metadata.youtubeId,
-          duration: metadata.duration,
-          thumbnailUrl: metadata.thumbnailUrl,
-          addedBy: '',
-          createdAt: new Date().toISOString(),
-          requestedBy: member.displayName,
-        };
+      ? toQueuedSong({ ...dbSong, createdAt: dbSong.createdAt.toISOString() }, member.displayName)
+      : toQueuedSong(
+          {
+            id: '',
+            title: metadata.title,
+            youtubeUrl: url,
+            youtubeId: metadata.youtubeId,
+            duration: metadata.duration,
+            thumbnailUrl: metadata.thumbnailUrl,
+            addedBy: '',
+            createdAt: new Date().toISOString(),
+          },
+          member.displayName
+        );
 
     const queueLength = player.getQueue().length;
     const isPlaying = player.isPlaying();

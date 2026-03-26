@@ -38,5 +38,8 @@
       "esbuild",
       "prisma"
     ]
+  },
+  "dependencies": {
+    "cookie": "^1.1.1"
   }
 }

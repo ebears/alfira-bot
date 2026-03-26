@@ -1,4 +1,4 @@
-import type { QueuedSong } from '@alfira-bot/shared';
+import { PLAYLIST_SONGS_INCLUDE, toQueuedSong } from '@alfira-bot/shared';
 import prisma from '@alfira-bot/shared/prisma';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
@@ -35,12 +35,7 @@ export const playlistCommand: Command = {
 
       const playlist = await prisma.playlist.findFirst({
         where: { name: { equals: name, mode: 'insensitive' } },
-        include: {
-          songs: {
-            orderBy: { position: 'asc' },
-            include: { song: true },
-          },
-        },
+        include: PLAYLIST_SONGS_INCLUDE,
       });
 
       if (!playlist) {
@@ -59,11 +54,9 @@ export const playlistCommand: Command = {
       if (!player) return;
 
       const member = interaction.member as GuildMember;
-      const queuedSongs: QueuedSong[] = playlist.songs.map((ps) => ({
-        ...ps.song,
-        createdAt: ps.song.createdAt.toISOString(),
-        requestedBy: member.displayName,
-      }));
+      const queuedSongs = playlist.songs.map((ps) =>
+        toQueuedSong({ ...ps.song, createdAt: ps.song.createdAt.toISOString() }, member.displayName)
+      );
 
       await player.addToQueue(queuedSongs);
 
