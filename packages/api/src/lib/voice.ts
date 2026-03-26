@@ -50,10 +50,8 @@ export async function resolveOrAutoJoinPlayer(
 
     const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
     const textChannel = textChannelId
-      ? (guild.channels.cache.get(textChannelId) instanceof TextChannel
-          ? guild.channels.cache.get(textChannelId)
-          : undefined)
-      : guild.systemChannel;
+      ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
+      : (guild.systemChannel as TextChannel | null);
 
     if (!textChannel) {
       res.status(503).json({
