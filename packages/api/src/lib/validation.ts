@@ -126,7 +126,7 @@ export function validateNickname(nickname: unknown, res: Response): string | nul
     res.status(400).json({ error: 'nickname must be a string.' });
     return false;
   }
-  const trimmed = nickname ? (nickname as string).trim() || null : null;
+  const trimmed = nickname ? String(nickname).trim() || null : null;
   if (trimmed && trimmed.length > MAX_NICKNAME_LENGTH) {
     res.status(400).json({ error: `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer.` });
     return false;
