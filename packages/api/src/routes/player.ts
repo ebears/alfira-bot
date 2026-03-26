@@ -1,5 +1,5 @@
 import { getPlayer } from '@alfira-bot/bot';
-import { fisherYatesShuffle, getRequestedBy, type LoopMode } from '@alfira-bot/shared';
+import { fisherYatesShuffle, getRequestedBy, PLAYLIST_SONGS_INCLUDE, toQueuedSong, type LoopMode } from '@alfira-bot/shared';
 import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -70,12 +70,7 @@ router.post('/play', requireAuth, async (req, res) => {
   if (playlistId) {
     const playlist = await prisma.playlist.findUnique({
       where: { id: playlistId },
-      include: {
-        songs: {
-          orderBy: { position: 'asc' },
-          include: { song: true },
-        },
-      },
+      include: PLAYLIST_SONGS_INCLUDE,
     });
 
     if (!playlist) {
@@ -116,11 +111,9 @@ router.post('/play', requireAuth, async (req, res) => {
   player.setLoopMode(targetLoopMode);
 
   const { username: requestedBy } = getRequestedBy(req);
-  const queuedSongs = dbSongs.map((song) => ({
-    ...song,
-    createdAt: song.createdAt.toISOString(),
-    requestedBy,
-  }));
+  const queuedSongs = dbSongs.map((song) =>
+    toQueuedSong({ ...song, createdAt: song.createdAt.toISOString() }, requestedBy)
+  );
 
   if (startFromSongId) {
     await player.replaceQueueAndPlay(queuedSongs);
@@ -194,8 +187,8 @@ router.post('/unshuffle', requireAuth, requireAdmin, (_req, res) => {
   res.json({ message: 'Queue order restored.' });
 });
 
-// POST /api/player/quick-add — add YouTube URL to priority queue. Member accessible.
-router.post('/quick-add', requireAuth, playerLimiter, async (req, res) => {
+// POST /api/player/quick-add — add YouTube URL to priority queue. Admin only.
+router.post('/quick-add', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
   const url = validateYouTubeUrl(req.body.youtubeUrl, res);
   if (!url) return;
 
@@ -226,8 +219,8 @@ router.post('/quick-add', requireAuth, playerLimiter, async (req, res) => {
   });
 });
 
-// POST /api/player/quick-add-playlist — add playlist to queue. Member accessible.
-router.post('/quick-add-playlist', requireAuth, playerLimiter, async (req, res) => {
+// POST /api/player/quick-add-playlist — add playlist to queue. Admin only.
+router.post('/quick-add-playlist', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
   const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
   const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
   if (!url) return;
@@ -280,8 +273,8 @@ router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
   res.json({ message: 'Queue cleared.' });
 });
 
-// POST /api/player/add-to-priority — add library song to Up Next. Member accessible.
-router.post('/add-to-priority', requireAuth, async (req, res) => {
+// POST /api/player/add-to-priority — add library song to Up Next. Admin only.
+router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
   const { songId } = req.body as { songId?: string };
 
   if (!songId || typeof songId !== 'string') {
@@ -302,11 +295,7 @@ router.post('/add-to-priority', requireAuth, async (req, res) => {
   if (!player) return;
 
   const { username: requestedBy } = getRequestedBy(req);
-  const queuedSong = {
-    ...song,
-    createdAt: song.createdAt.toISOString(),
-    requestedBy,
-  };
+  const queuedSong = toQueuedSong({ ...song, createdAt: song.createdAt.toISOString() }, requestedBy);
 
   await player.addToPriorityQueue(queuedSong);
 
