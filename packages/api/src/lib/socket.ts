@@ -1,6 +1,6 @@
 import type { Server as HTTPServer } from 'node:http';
 import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
-import cookie from 'cookie';
+import { parse } from 'cookie';
 import { Server as SocketIOServer } from 'socket.io';
 import { verifySessionToken } from '../middleware/requireAuth';
 import { logger, WEB_UI_ORIGIN } from './config';
@@ -35,7 +35,7 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
   // The session cookie is HttpOnly and set by the OAuth flow in auth.ts.
   // ---------------------------------------------------------------------------
   _io.use((socket, next) => {
-    const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+    const cookies = parse(socket.handshake.headers.cookie || '');
     const token = cookies.session;
 
     if (!token) {
