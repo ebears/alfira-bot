@@ -106,7 +106,7 @@ export default function PlaylistsPage() {
             {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <Button variant="primary" onClick={() => setShowCreate(true)} className="btn-press">
+        <Button variant="primary" onClick={() => setShowCreate(true)}>
           + New Playlist
         </Button>
       </div>

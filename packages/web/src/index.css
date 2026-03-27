@@ -1,13 +1,5 @@
 @import "tailwindcss";
 
-/* Consistent press/sink animation for interactive buttons */
-.btn-press {
-    transition: transform 150ms ease, box-shadow 150ms ease;
-}
-.btn-press:active {
-    scale: 0.97;
-}
-
 /* Custom utilities for Now Playing bar heights */
 @layer utilities {
     .h-26 {
@@ -914,6 +906,7 @@
     }
     .btn-primary:active {
         transform: translateY(4px);
+        scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
 
@@ -936,6 +929,7 @@
     }
     .btn-secondary:active {
         transform: translateY(3px);
+        scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
 
@@ -958,6 +952,7 @@
     }
     .btn-foreground:active {
         transform: translateY(3px);
+        scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
 
@@ -986,6 +981,7 @@
     }
     .btn-danger:active {
         transform: translateY(4px);
+        scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
 
@@ -1084,6 +1080,7 @@
     }
     .btn-icon:active {
         transform: translateY(2px);
+        scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-icon:disabled {
@@ -1118,6 +1115,7 @@
     }
     .btn-icon-primary:active {
         transform: translateY(2px);
+        scale: 0.97;
         box-shadow:
             0 0 0 0
                 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
@@ -1143,6 +1141,7 @@
     }
     .btn-icon-secondary:active {
         transform: translateY(2px);
+        scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
 
@@ -1170,6 +1169,7 @@
     }
     .btn-icon-foreground:active {
         transform: translateY(2px);
+        scale: 0.97;
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
@@ -1210,6 +1210,7 @@
     }
     .btn-icon-danger:active {
         transform: translateY(2px);
+        scale: 0.97;
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
