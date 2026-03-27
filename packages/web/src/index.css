@@ -881,7 +881,7 @@
 
     .btn-primary {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 cursor-pointer disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: var(--color-base);
@@ -911,7 +911,7 @@
 
     .btn-secondary {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 cursor-pointer disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: var(--color-secondary);
@@ -933,7 +933,7 @@
 
     .btn-foreground {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 cursor-pointer disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: var(--color-fg);
@@ -955,7 +955,7 @@
 
     .btn-danger {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-200 cursor-pointer disabled:opacity-40
+           transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: #fff;
@@ -982,7 +982,7 @@
     }
 
     .btn-discord {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: #fff;
         background: linear-gradient(
