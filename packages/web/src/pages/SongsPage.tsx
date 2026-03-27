@@ -141,7 +141,7 @@ export default function SongsPage() {
           </p>
         </div>
         {isAdminView && (
-          <Button variant="primary" onClick={() => setShowAddModal(true)}>
+          <Button variant="primary" onClick={() => setShowAddModal(true)} className="btn-press">
             + Add Song
           </Button>
         )}

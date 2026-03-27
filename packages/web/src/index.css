@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Consistent press/sink animation for interactive buttons */
+.btn-press {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.btn-press:active {
+    scale: 0.97;
+}
+
 /* Custom utilities for Now Playing bar heights */
 @layer utilities {
     .h-26 {
