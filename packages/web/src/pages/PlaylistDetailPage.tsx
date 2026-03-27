@@ -291,7 +291,7 @@ export default function PlaylistDetailPage() {
         <div className="flex gap-2 shrink-0 items-center">
           <Button
             variant="primary"
-            className="text-xs flex items-center gap-1.5"
+            className={`text-xs flex items-center gap-1.5 ${showPlay ? 'pressed' : ''}`}
             onClick={() => setShowPlay(true)}
             disabled={playlist.songs.length === 0}
           >
@@ -308,6 +308,7 @@ export default function PlaylistDetailPage() {
               e.stopPropagation();
               setMenuOpen(true);
             }}
+            className={menuOpen ? 'pressed' : ''}
           >
             <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
           </Button>

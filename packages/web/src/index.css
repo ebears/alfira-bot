@@ -909,6 +909,18 @@
         scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
+    .btn-primary.pressed {
+        transform: translateY(4px);
+        scale: 0.97;
+        background: linear-gradient(
+            180deg,
+            var(--color-accent) 0%,
+            color-mix(in srgb, var(--color-accent-muted) 90%, black) 100%
+        );
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
+    }
 
     .btn-secondary {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
@@ -932,6 +944,18 @@
         scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
     }
+    .btn-secondary.pressed {
+        transform: translateY(3px);
+        scale: 0.97;
+        background: linear-gradient(
+            180deg,
+            var(--color-elevated) 0%,
+            color-mix(in srgb, var(--color-elevated) 85%, black) 100%
+        );
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+    }
 
     .btn-foreground {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
@@ -954,6 +978,18 @@
         transform: translateY(3px);
         scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
+    }
+    .btn-foreground.pressed {
+        transform: translateY(3px);
+        scale: 0.97;
+        background: linear-gradient(
+            180deg,
+            var(--color-elevated) 0%,
+            color-mix(in srgb, var(--color-elevated) 85%, black) 100%
+        );
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
     .btn-danger {
@@ -983,6 +1019,18 @@
         transform: translateY(4px);
         scale: 0.97;
         box-shadow: var(--clay-shadow-flat);
+    }
+    .btn-danger.pressed {
+        transform: translateY(4px);
+        scale: 0.97;
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--color-danger) 90%, black) 0%,
+            color-mix(in srgb, var(--color-danger-muted) 85%, black) 100%
+        );
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
     }
 
     .btn-discord {

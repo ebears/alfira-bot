@@ -117,7 +117,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
             variant="primary"
             type="button"
             onClick={() => setShowLoadPlaylist(true)}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${showLoadPlaylist ? 'pressed' : ''}`}
           >
             <ListIcon size={16} weight="duotone" />
             <span>Load Playlist</span>
