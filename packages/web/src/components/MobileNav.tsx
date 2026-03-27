@@ -163,7 +163,7 @@ export default function MobileNav() {
           {/* Settings button */}
           <Button
             variant="secondary"
-            className="w-full flex items-center gap-3"
+            className={`w-full flex items-center gap-3 ${isSettingsOpen ? 'pressed' : ''}`}
             onClick={() => setIsSettingsOpen(true)}
           >
             <GearIcon size={20} weight="duotone" />
