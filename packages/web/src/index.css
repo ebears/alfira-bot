@@ -828,6 +828,15 @@
         height: 100%;
     }
 
+    /* Shared button state tokens */
+    :root {
+        --btn-transform-hover: translateY(-1px);
+        --btn-transform-active: translateY(4px);
+        --btn-transform-active-sm: translateY(2px);
+        --btn-transform-active-md: translateY(3px);
+        --btn-scale-active: 0.97;
+    }
+
     body {
         background-color: var(--color-base);
         color: var(--color-fg);
@@ -880,6 +889,21 @@
         border-radius: 4px;
     }
 
+    /* Shared button state utilities */
+    .btn-state-hover {
+        transform: var(--btn-transform-hover);
+    }
+    .btn-state-active {
+        transform: var(--btn-transform-active);
+        scale: var(--btn-scale-active);
+        box-shadow: var(--clay-shadow-flat);
+    }
+    .btn-state-active-sm {
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
+        box-shadow: var(--clay-shadow-flat);
+    }
+
     .btn-primary {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-150 cursor-pointer disabled:opacity-40
@@ -898,7 +922,7 @@
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
     .btn-primary:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow:
             0 4px 0 0
                 color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
@@ -906,13 +930,13 @@
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
     .btn-primary:active {
-        transform: translateY(4px);
-        scale: 0.97;
+        transform: var(--btn-transform-active);
+        scale: var(--btn-scale-active);
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-primary.pressed {
-        transform: translateY(4px);
-        scale: 0.97;
+        transform: var(--btn-transform-active);
+        scale: var(--btn-scale-active);
         background: linear-gradient(
             180deg,
             var(--color-accent) 0%,
@@ -937,17 +961,17 @@
         box-shadow: var(--clay-shadow-resting);
     }
     .btn-secondary:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow: var(--clay-shadow-raised);
     }
     .btn-secondary:active {
-        transform: translateY(3px);
-        scale: 0.97;
+        transform: var(--btn-transform-active-md);
+        scale: var(--btn-scale-active);
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-secondary.pressed {
-        transform: translateY(3px);
-        scale: 0.97;
+        transform: var(--btn-transform-active-md);
+        scale: var(--btn-scale-active);
         background: linear-gradient(
             180deg,
             var(--color-elevated) 0%,
@@ -972,17 +996,17 @@
         box-shadow: var(--clay-shadow-resting);
     }
     .btn-foreground:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow: var(--clay-shadow-raised);
     }
     .btn-foreground:active {
-        transform: translateY(3px);
-        scale: 0.97;
+        transform: var(--btn-transform-active-md);
+        scale: var(--btn-scale-active);
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-foreground.pressed {
-        transform: translateY(3px);
-        scale: 0.97;
+        transform: var(--btn-transform-active-md);
+        scale: var(--btn-scale-active);
         background: linear-gradient(
             180deg,
             var(--color-elevated) 0%,
@@ -1010,20 +1034,20 @@
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
     .btn-danger:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow:
             0 4px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
             0 6px 12px -2px rgba(0, 0, 0, 0.35),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
     .btn-danger:active {
-        transform: translateY(4px);
-        scale: 0.97;
+        transform: var(--btn-transform-active);
+        scale: var(--btn-scale-active);
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-danger.pressed {
-        transform: translateY(4px);
-        scale: 0.97;
+        transform: var(--btn-transform-active);
+        scale: var(--btn-scale-active);
         background: linear-gradient(
             180deg,
             color-mix(in srgb, var(--color-danger) 90%, black) 0%,
@@ -1050,7 +1074,7 @@
     }
 
     .btn-discord:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow:
             0 4px 0 0 color-mix(in srgb, #4752c4 100%, black 35%),
             0 6px 12px -2px rgba(0, 0, 0, 0.35),
@@ -1058,7 +1082,7 @@
     }
 
     .btn-discord:active {
-        transform: translateY(4px);
+        transform: var(--btn-transform-active);
         box-shadow: var(--clay-shadow-flat);
     }
     .input {
@@ -1124,12 +1148,12 @@
         box-shadow: var(--clay-shadow-resting);
     }
     .btn-icon:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow: var(--clay-shadow-raised);
     }
     .btn-icon:active {
-        transform: translateY(2px);
-        scale: 0.97;
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-icon:disabled {
@@ -1138,60 +1162,47 @@
         transform: none;
     }
 
-    .btn-icon-primary {
+    /* Accent icon buttons share this shadow structure */
+    .btn-icon-accent {
         @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
         border-radius: var(--clay-radius-md);
         background: linear-gradient(
             180deg,
-            color-mix(in srgb, var(--color-accent) 80%, white) 0%,
-            var(--color-accent) 100%
+            color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
+            var(--icon-btn-accent) 100%
         );
         box-shadow:
-            0 1px 0 0
-                color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+            0 1px 0 0 var(--icon-btn-shadow),
             0 2px 4px -1px rgba(0, 0, 0, 0.2),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .btn-icon-primary:hover {
-        transform: translateY(-1px);
+    .btn-icon-accent:hover {
+        transform: var(--btn-transform-hover);
         box-shadow:
-            0 2px 0 0
-                color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+            0 2px 0 0 var(--icon-btn-shadow),
             0 3px 6px -1px rgba(0, 0, 0, 0.25),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .btn-icon-primary:active {
-        transform: translateY(2px);
-        scale: 0.97;
+    .btn-icon-accent:active {
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
         box-shadow:
-            0 0 0 0
-                color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+            0 0 0 0 var(--icon-btn-shadow),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
+    .btn-icon-primary {
+        @apply btn-icon-accent;
+        --icon-btn-accent: var(--color-accent);
+        --icon-btn-shadow: color-mix(in srgb, var(--color-accent-muted) 100%, black 35%);
+    }
+
     .btn-icon-secondary {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            var(--clay-highlight) 0%,
-            var(--color-elevated) 100%
-        );
-        color: var(--color-secondary);
-        box-shadow: var(--clay-shadow-resting);
-    }
-    .btn-icon-secondary:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--clay-shadow-raised);
-    }
-    .btn-icon-secondary:active {
-        transform: translateY(2px);
-        scale: 0.97;
-        box-shadow: var(--clay-shadow-flat);
+        @apply btn-icon-accent;
+        --icon-btn-accent: var(--color-secondary);
+        --icon-btn-shadow: color-mix(in srgb, var(--color-surface) 60%, black);
     }
 
     .btn-icon-foreground {
@@ -1210,21 +1221,21 @@
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
     .btn-icon-foreground:hover {
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow:
             0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 3px 6px -1px rgba(0, 0, 0, 0.25),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
     .btn-icon-foreground:active {
-        transform: translateY(2px);
-        scale: 0.97;
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
     .btn-icon-foreground.pressed {
-        transform: translateY(2px);
+        transform: var(--btn-transform-active-sm);
         background: linear-gradient(
             180deg,
             var(--color-elevated) 0%,
@@ -1236,33 +1247,9 @@
     }
 
     .btn-icon-danger {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--color-danger) 80%, white) 0%,
-            var(--color-danger) 100%
-        );
-        box-shadow:
-            0 1px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    .btn-icon-danger:hover {
-        transform: translateY(-1px);
-        box-shadow:
-            0 2px 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-            0 3px 6px -1px rgba(0, 0, 0, 0.25),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    .btn-icon-danger:active {
-        transform: translateY(2px);
-        scale: 0.97;
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-danger) 50%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        @apply btn-icon-accent;
+        --icon-btn-accent: var(--color-danger);
+        --icon-btn-shadow: color-mix(in srgb, var(--color-danger) 50%, black);
     }
 
     .btn-nav-active {
@@ -1276,11 +1263,11 @@
         box-shadow: var(--clay-shadow-raised);
     }
     .btn-nav-active:active {
-        transform: translateY(2px);
+        transform: var(--btn-transform-active-sm);
         box-shadow: var(--clay-shadow-flat);
     }
     .btn-nav-active.pressed {
-        transform: translateY(3px);
+        transform: var(--btn-transform-active-md);
         background: linear-gradient(
             180deg,
             var(--color-elevated) 0%,
@@ -1300,11 +1287,11 @@
     }
     .btn-nav-inactive:hover {
         color: var(--color-fg);
-        transform: translateY(-1px);
+        transform: var(--btn-transform-hover);
         box-shadow: var(--clay-shadow-lifted);
     }
     .btn-nav-inactive:active {
-        transform: translateY(2px);
+        transform: var(--btn-transform-active-sm);
         box-shadow: var(--clay-shadow-flat);
     }
 }
