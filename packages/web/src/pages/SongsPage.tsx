@@ -141,7 +141,11 @@ export default function SongsPage() {
           </p>
         </div>
         {isAdminView && (
-          <Button variant="primary" onClick={() => setShowAddModal(true)} className={showAddModal ? 'pressed' : ''}>
+          <Button
+            variant="primary"
+            onClick={() => setShowAddModal(true)}
+            className={showAddModal ? 'pressed' : ''}
+          >
             + Add Song
           </Button>
         )}
@@ -192,7 +196,11 @@ export default function SongsPage() {
 
       {/* Song list */}
       {loading ? (
-        <SkeletonGrid />
+        viewMode === 'grid' ? (
+          <SkeletonGrid />
+        ) : (
+          <SkeletonList />
+        )
       ) : filtered.length === 0 ? (
         search ? (
           <div className="text-center py-24">
@@ -463,14 +471,41 @@ function LibrarySongRow({
 // ---------------------------------------------------------------------------
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="card">
-          <div className="skeleton aspect-video" />
-          <div className="p-3 space-y-2">
-            <div className="skeleton h-3 w-3/4" />
-            <div className="skeleton h-3 w-1/2" />
+        <div key={i} className="flex flex-col bg-elevated rounded-xl clay-resting">
+          {/* Thumbnail */}
+          <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
+            <div className="skeleton w-full h-full" />
+            {/* Duration badge placeholder */}
+            <div className="absolute bottom-2 right-2 z-20">
+              <div className="skeleton h-3 w-8" />
+            </div>
           </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton loading list
+// ---------------------------------------------------------------------------
+function SkeletonList() {
+  return (
+    <div className="flex flex-col gap-1">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg bg-elevated clay-resting"
+        >
+          <div className="skeleton w-20 h-12 md:w-16 md:h-10 rounded border border-border shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="skeleton h-3 w-3/4" />
+            <div className="skeleton h-2 w-1/2 mt-1" />
+          </div>
+          <div className="skeleton h-3 w-10 shrink-0" />
+          <div className="skeleton h-6 w-6 shrink-0" />
         </div>
       ))}
     </div>
