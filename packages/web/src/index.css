@@ -1309,35 +1309,33 @@
     }
 }
 
-@layer utilities {
-    .clay-resting {
-        box-shadow: var(--clay-shadow-resting);
-    }
-    .clay-raised {
-        box-shadow: var(--clay-shadow-raised);
-    }
-    .clay-floating {
-        box-shadow: var(--clay-shadow-floating);
-    }
-    .clay-flat {
-        box-shadow: var(--clay-shadow-flat);
-    }
-    .clay-inset {
-        background: linear-gradient(
-            180deg,
-            var(--color-elevated) 0%,
-            color-mix(in srgb, var(--color-elevated) 90%, black) 100%
-        );
-        box-shadow:
-            var(--clay-shadow-flat),
-            inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-    }
-    .clay-sidebar-edge {
-        box-shadow: var(--clay-shadow-sidebar);
-    }
-    .clay-player-edge {
-        box-shadow: var(--clay-shadow-player);
-    }
+@utility clay-resting {
+    box-shadow: var(--clay-shadow-resting);
+}
+@utility clay-raised {
+    box-shadow: var(--clay-shadow-raised);
+}
+@utility clay-floating {
+    box-shadow: var(--clay-shadow-floating);
+}
+@utility clay-flat {
+    box-shadow: var(--clay-shadow-flat);
+}
+@utility clay-inset {
+    background: linear-gradient(
+        180deg,
+        var(--color-elevated) 0%,
+        color-mix(in srgb, var(--color-elevated) 90%, black) 100%
+    );
+    box-shadow:
+        var(--clay-shadow-flat),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+@utility clay-sidebar-edge {
+    box-shadow: var(--clay-shadow-sidebar);
+}
+@utility clay-player-edge {
+    box-shadow: var(--clay-shadow-player);
 }
 
 /* ============================================
