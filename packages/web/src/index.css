@@ -1,10 +1,8 @@
 @import "tailwindcss";
 
 /* Custom utilities for Now Playing bar heights */
-@layer utilities {
-    .h-26 {
-        height: 5.5rem;
-    }
+@utility h-26 {
+    height: 5.5rem;
 }
 
 @keyframes fadeUp {
@@ -751,6 +749,7 @@
 }
 
 @theme {
+    /* Theme color tokens — values come from data-color-theme selectors above */
     --color-base: var(--color-base);
     --color-surface: var(--color-surface);
     --color-elevated: var(--color-elevated);
@@ -767,9 +766,11 @@
     --color-secondary-muted: var(--color-secondary-muted);
     --color-foreground: var(--color-foreground);
     --color-foreground-muted: var(--color-foreground-muted);
+    /* Fonts */
     --font-display: "Cherry Bomb One", regular;
     --font-body: "Chiron GoRound TC", regular;
     --font-mono: "JetBrains Mono", monospace;
+    /* Animations */
     --animate-fade-up: fadeUp 0.3s ease forwards;
     --animate-shimmer: shimmer 1.4s infinite linear;
     --animate-slide-in-right: slideInRight 0.3s ease forwards;
@@ -1398,8 +1399,6 @@
         0 6px 12px -2px rgba(0, 0, 0, 0.35);
 }
 
-/* Remove glossy gradients — secondary/foreground/nav buttons */
-
 /* Discord button - solid color in dark mode */
 [data-mode="dark"] .btn-discord {
     background: #5865f2;
@@ -1413,16 +1412,9 @@
         0 4px 0 0 color-mix(in srgb, #4752c4 100%, black 35%),
         0 6px 12px -2px rgba(0, 0, 0, 0.35);
 }
-[data-mode="dark"] .btn-secondary,
-[data-mode="dark"] .btn-foreground {
-    background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-elevated) 85%, white) 0%,
-        var(--color-elevated) 100%
-    );
-}
 
-/* Remove glossy gradients — icon buttons */
+[data-mode="dark"] .btn-secondary,
+[data-mode="dark"] .btn-foreground,
 [data-mode="dark"] .btn-icon,
 [data-mode="dark"] .btn-icon-secondary,
 [data-mode="dark"] .btn-icon-foreground {
@@ -1459,6 +1451,7 @@
 [data-mode="dark"] .modal-clay {
     background: var(--color-surface);
 }
+
 [data-mode="dark"] .input,
 [data-mode="dark"] .clay-inset {
     background: var(--color-elevated);
