@@ -1337,18 +1337,6 @@
     .clay-player-edge {
         box-shadow: var(--clay-shadow-player);
     }
-    .clay-1 {
-        box-shadow: var(--clay-shadow-resting);
-    }
-    .clay-2 {
-        box-shadow: var(--clay-shadow-raised);
-    }
-    .clay-3 {
-        box-shadow: var(--clay-shadow-floating);
-    }
-    .clay-4 {
-        box-shadow: var(--clay-shadow-prominent);
-    }
 }
 
 /* ============================================
