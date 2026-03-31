@@ -1,34 +1,26 @@
 import type { PaginationMeta, Playlist, Song } from '@alfira-bot/shared';
-import { formatDuration } from '@alfira-bot/shared';
-import {
-  CircleNotchIcon,
-  ListIcon,
-  MagnifyingGlassIcon,
-  PlayIcon,
-  SquaresFourIcon,
-} from '@phosphor-icons/react';
-import type React from 'react';
-import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import { ListIcon, MagnifyingGlassIcon, SquaresFourIcon } from '@phosphor-icons/react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
-import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
-import EmptyState from '../components/EmptyState';
+import LibrarySongRow from '../components/LibrarySongRow';
 import NotificationToast from '../components/NotificationToast';
 import { Pagination } from '../components/Pagination';
+import SongCard from '../components/SongCard';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
-import { useSongActions } from '../hooks/useSongActions';
 import { apiErrorMessage } from '../utils/api';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
   const socket = useSocket();
-  const { state: queueState } = usePlayer();
+  const { state: queueState } = usePlayerState();
   const [items, setItems] = useState<Song[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,29 +38,29 @@ export default function SongsPage() {
     return saved === 'list' ? 'list' : 'grid';
   });
 
+  // Lazy playlists fetch — fetched separately so it doesn't block the main load
+  useEffect(() => {
+    void getPlaylistsPage(isAdminView, 1, 100)
+      .then((p) => setPlaylists(p.items))
+      .catch(() => {});
+  }, [isAdminView]);
+
   // Refs to track state for socket handlers without causing effect re-runs
   const paginationRef = useRef(pagination);
   const itemsLengthRef = useRef(items.length);
   paginationRef.current = pagination;
   itemsLengthRef.current = items.length;
 
-  const load = useCallback(
-    async (page: number, searchQuery?: string) => {
-      setLoading(true);
-      try {
-        const [result, p] = await Promise.all([
-          getSongsPage(page, 30, searchQuery),
-          getPlaylistsPage(isAdminView, 1, 100),
-        ]);
-        setItems(result.items);
-        setPagination(result.pagination);
-        setPlaylists(p.items);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [isAdminView]
-  );
+  const load = useCallback(async (page: number, searchQuery?: string) => {
+    setLoading(true);
+    try {
+      const result = await getSongsPage(page, 30, searchQuery);
+      setItems(result.items);
+      setPagination(result.pagination);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     load(currentPage, search);
@@ -140,36 +132,128 @@ export default function SongsPage() {
   };
 
   const q = search.toLowerCase();
-  const filtered = search
-    ? items.filter(
-        (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
-      )
-    : items;
+  const filtered = useMemo(
+    () =>
+      search
+        ? items.filter(
+            (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
+          )
+        : items,
+    [search, items, q]
+  );
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
   // the clicked song, then continues sequentially through the rest.
   // ---------------------------------------------------------------------------
 
-  const handlePlayFromSong = async (songId: string) => {
-    setPlayingId(songId);
-    try {
-      await startPlayback({
-        mode: 'sequential',
-        loop: queueState.loopMode,
-        startFromSongId: songId,
-      });
-      notify('Started playback', 'success');
-    } catch (err: unknown) {
-      notify(
-        apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'),
-        'error',
-        5000
-      );
-    } finally {
-      setPlayingId(null);
-    }
-  };
+  const handlePlayFromSong = useCallback(
+    async (songId: string) => {
+      setPlayingId(songId);
+      try {
+        await startPlayback({
+          mode: 'sequential',
+          loop: queueState.loopMode,
+          startFromSongId: songId,
+        });
+        notify('Started playback', 'success');
+      } catch (err: unknown) {
+        notify(
+          apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'),
+          'error',
+          5000
+        );
+      } finally {
+        setPlayingId(null);
+      }
+    },
+    [queueState.loopMode, notify]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Virtualization for list view
+  // ---------------------------------------------------------------------------
+  const listParentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => listParentRef.current,
+    estimateSize: () => 72,
+    overscan: 3,
+  });
+
+  const isGrid = viewMode === 'grid';
+
+  const songContent = loading ? (
+    isGrid ? (
+      <SkeletonGrid />
+    ) : (
+      <SkeletonList />
+    )
+  ) : filtered.length === 0 ? (
+    <div className="text-center py-24">
+      <p className="font-display text-4xl text-faint tracking-wider mb-2">No Results</p>
+      <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
+    </div>
+  ) : isGrid ? (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
+      {filtered.map((song, i) => (
+        <SongCard
+          key={song.id}
+          song={song}
+          isAdmin={isAdminView}
+          playlists={playlists}
+          style={{
+            animationDelay: `${Math.min(i * 30, 300)}ms`,
+          }}
+          onDelete={setDeleteId}
+          onPlay={handlePlayFromSong}
+          isPlaying={playingId === song.id}
+          onAddToQueue={handleAddToQueue}
+        />
+      ))}
+    </div>
+  ) : (
+    <div
+      ref={listParentRef}
+      className="relative h-[calc(100vh-16rem)] overflow-auto"
+      style={{ contain: 'strict' }}
+    >
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const song = filtered[virtualRow.index];
+          return (
+            <div
+              key={song.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <LibrarySongRow
+                song={song}
+                isAdmin={isAdminView}
+                playlists={playlists}
+                onDelete={setDeleteId}
+                onPlay={handlePlayFromSong}
+                isPlaying={playingId === song.id}
+                onAddToQueue={handleAddToQueue}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-4 md:p-8">
@@ -222,7 +306,7 @@ export default function SongsPage() {
                 localStorage.setItem('alfira-library-view', 'grid');
               });
             }}
-            className={viewMode === 'grid' ? 'pressed text-accent' : ''}
+            className={isGrid ? 'pressed text-accent' : ''}
             title="Grid view"
           >
             <SquaresFourIcon size={18} weight="duotone" />
@@ -236,7 +320,7 @@ export default function SongsPage() {
                 localStorage.setItem('alfira-library-view', 'list');
               });
             }}
-            className={viewMode === 'list' ? 'pressed text-accent' : ''}
+            className={isGrid ? '' : 'pressed text-accent'}
             title="List view"
           >
             <ListIcon size={18} weight="duotone" />
@@ -244,61 +328,8 @@ export default function SongsPage() {
         </div>
       </div>
 
-      {/* Song list */}
-      {loading ? (
-        viewMode === 'grid' ? (
-          <SkeletonGrid />
-        ) : (
-          <SkeletonList />
-        )
-      ) : filtered.length === 0 ? (
-        search ? (
-          <div className="text-center py-24">
-            <p className="font-display text-4xl text-faint tracking-wider mb-2">No Results</p>
-            <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
-          </div>
-        ) : (
-          <EmptyState
-            title="Empty Library"
-            isAdmin={isAdminView}
-            onAdd={() => setShowAddModal(true)}
-            addLabel="add the first song"
-          />
-        )
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
-          {filtered.map((song, i) => (
-            <SongCard
-              key={song.id}
-              song={song}
-              isAdmin={isAdminView}
-              playlists={playlists}
-              style={{
-                animationDelay: `${Math.min(i * 30, 300)}ms`,
-              }}
-              onDelete={() => setDeleteId(song.id)}
-              onPlay={() => handlePlayFromSong(song.id)}
-              isPlaying={playingId === song.id}
-              onAddToQueue={() => handleAddToQueue(song.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1">
-          {filtered.map((song) => (
-            <LibrarySongRow
-              key={song.id}
-              song={song}
-              isAdmin={isAdminView}
-              playlists={playlists}
-              onDelete={() => setDeleteId(song.id)}
-              onPlay={() => handlePlayFromSong(song.id)}
-              isPlaying={playingId === song.id}
-              onAddToQueue={() => handleAddToQueue(song.id)}
-            />
-          ))}
-        </div>
-      )}
+      {/* Content */}
+      {songContent}
 
       {pagination && (
         <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
@@ -348,177 +379,6 @@ export default function SongsPage() {
 
       {/* Notification Toast */}
       {notification && <NotificationToast notification={notification} />}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Song card
-// ---------------------------------------------------------------------------
-function SongCard({
-  song,
-  isAdmin,
-  playlists,
-  style,
-  onDelete,
-  onPlay,
-  isPlaying,
-  onAddToQueue,
-}: {
-  song: Song;
-  isAdmin: boolean;
-  playlists: Playlist[];
-  style?: React.CSSProperties;
-  onDelete: () => void;
-  onPlay: () => void;
-  isPlaying: boolean;
-  onAddToQueue: () => void;
-}) {
-  const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
-    song,
-    isAdmin,
-    playlists,
-    onAddToQueue,
-    onDelete,
-  });
-
-  return (
-    <div
-      className="group animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised transition-all duration-100"
-      style={style}
-    >
-      {/* Thumbnail with play overlay */}
-      <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
-        <img
-          src={song.thumbnailUrl}
-          alt={song.nickname || song.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-
-        {/* Duration badge — bottom right */}
-        <span className="absolute bottom-2 right-2 z-20 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
-          {formatDuration(song.duration)}
-        </span>
-
-        {menuOpen && (
-          <ContextMenu
-            items={menuItems}
-            isOpen={menuOpen}
-            onClose={() => setMenuOpen(false)}
-            triggerRef={triggerRef}
-          />
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2 min-w-0">
-            {song.nickname || song.title}
-          </p>
-          <div className="flex items-center gap-1 shrink-0 ml-auto">
-            <Button
-              variant="primary"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPlay();
-              }}
-              disabled={isPlaying}
-              className="shrink-0 disabled:cursor-default"
-              title="Play from this song"
-            >
-              {isPlaying ? (
-                <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
-              ) : (
-                <PlayIcon size={18} weight="duotone" />
-              )}
-            </Button>
-            <ContextMenuTrigger
-              ref={triggerRef}
-              onOpen={() => setMenuOpen(true)}
-              isOpen={menuOpen}
-            />
-          </div>
-        </div>
-        {song.nickname && (
-          <p className="text-[11px] text-faint truncate opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            {song.title}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Song row (list view)
-// ---------------------------------------------------------------------------
-function LibrarySongRow({
-  song,
-  isAdmin,
-  playlists,
-  onDelete,
-  onPlay,
-  isPlaying,
-  onAddToQueue,
-}: {
-  song: Song;
-  isAdmin: boolean;
-  playlists: Playlist[];
-  onDelete: () => void;
-  onPlay: () => void;
-  isPlaying: boolean;
-  onAddToQueue: () => void;
-}) {
-  const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
-    song,
-    isAdmin,
-    playlists,
-    onAddToQueue,
-    onDelete,
-  });
-
-  return (
-    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-all duration-100">
-      <img
-        src={song.thumbnailUrl}
-        alt={song.nickname || song.title}
-        className="w-20 h-12 md:w-16 md:h-10 object-cover rounded border border-border shrink-0"
-        loading="lazy"
-      />
-      <div className="flex-1 min-w-0">
-        <p className="font-body text-sm font-medium text-fg truncate">
-          {song.nickname || song.title}
-        </p>
-        {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
-      </div>
-      <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
-      <Button
-        variant="primary"
-        size="icon"
-        onClick={onPlay}
-        disabled={isPlaying}
-        className="p-2.5 md:p-1 disabled:opacity-50 disabled:cursor-default"
-        title="Play from this song"
-      >
-        {isPlaying ? (
-          <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
-        ) : (
-          <PlayIcon size={18} weight="duotone" />
-        )}
-      </Button>
-      <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
-      {menuOpen && (
-        <ContextMenu
-          items={menuItems}
-          isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          triggerRef={triggerRef}
-        />
-      )}
     </div>
   );
 }

@@ -1,9 +1,7 @@
-import type { PaginationMeta, Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
-import { formatDuration } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist, PlaylistDetail } from '@alfira-bot/shared';
 import {
   BombIcon,
   CaretLeftIcon,
-  CircleNotchIcon,
   GhostIcon,
   LockIcon,
   LockOpenIcon,
@@ -11,6 +9,7 @@ import {
   PlayIcon,
   PlusCircleIcon,
 } from '@phosphor-icons/react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -29,14 +28,14 @@ import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
 import { Pagination } from '../components/Pagination';
 import PlayModal from '../components/PlayModal';
+import SongRow from '../components/SongRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
-import { usePlayer } from '../context/PlayerContext';
+import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
-import { useSongActions } from '../hooks/useSongActions';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistDetailPage() {
@@ -66,7 +65,7 @@ export default function PlaylistDetailPage() {
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { state: queueState } = usePlayer();
+  const { state: queueState } = usePlayerState();
 
   // Refs to avoid stale closures in handleRemoveSong
   const paginationRef = useRef(pagination);
@@ -178,31 +177,34 @@ export default function PlaylistDetailPage() {
     }
   };
 
-  const handlePlayFromSong = async (
-    songId: string,
-    mode: 'sequential' | 'random' = 'sequential',
-    { throwErrors = false }: { throwErrors?: boolean } = {}
-  ) => {
-    if (!playlist) return;
-    setPlayingSongId(songId);
-    try {
-      await startPlayback({
-        playlistId: playlist.id,
-        mode,
-        loop: queueState.loopMode,
-        startFromSongId: songId,
-      });
-    } catch (err: unknown) {
-      if (throwErrors) {
-        throw err;
+  const handlePlayFromSong = useCallback(
+    async (
+      songId: string,
+      mode: 'sequential' | 'random' = 'sequential',
+      { throwErrors = false }: { throwErrors?: boolean } = {}
+    ) => {
+      if (!playlist) return;
+      setPlayingSongId(songId);
+      try {
+        await startPlayback({
+          playlistId: playlist.id,
+          mode,
+          loop: queueState.loopMode,
+          startFromSongId: songId,
+        });
+      } catch (err: unknown) {
+        if (throwErrors) {
+          throw err;
+        }
+        notify(apiErrorMessage(err, 'Could not start playback.'), 'error', 5000);
+      } finally {
+        setPlayingSongId(null);
       }
-      notify(apiErrorMessage(err, 'Could not start playback.'), 'error', 5000);
-    } finally {
-      setPlayingSongId(null);
-    }
-  };
+    },
+    [playlist, queueState.loopMode, notify]
+  );
 
-  const handleAddPlaylistToQueue = async () => {
+  const handleAddPlaylistToQueue = useCallback(async () => {
     if (!playlist) return;
     try {
       await startPlayback({
@@ -214,7 +216,7 @@ export default function PlaylistDetailPage() {
     } catch (err: unknown) {
       notify(apiErrorMessage(err, 'Could not add to queue.'), 'error', 5000);
     }
-  };
+  }, [playlist, queueState.loopMode, notify]);
 
   const menuItems: MenuItem[] = [
     {
@@ -222,7 +224,7 @@ export default function PlaylistDetailPage() {
       label: 'Add to Queue',
       icon: <PlusCircleIcon size={14} weight="duotone" />,
       disabled: playlist?.songs.length === 0,
-      onClick: () => handleAddPlaylistToQueue(),
+      onClick: handleAddPlaylistToQueue,
     },
     ...(isOwner || isAdminView
       ? [
@@ -234,7 +236,7 @@ export default function PlaylistDetailPage() {
             ) : (
               <LockIcon size={14} weight="duotone" />
             ),
-            onClick: () => handleToggleVisibility(),
+            onClick: handleToggleVisibility,
           } as MenuItem,
           {
             id: 'add-songs',
@@ -252,6 +254,16 @@ export default function PlaylistDetailPage() {
         ]
       : []),
   ];
+
+  // Virtualization refs
+  const listParentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: playlist?.songs.length ?? 0,
+    getScrollElement: () => listParentRef.current,
+    estimateSize: () => 72,
+    overscan: 3,
+  });
 
   if (loading) return <DetailSkeleton />;
   if (!playlist) return null;
@@ -352,18 +364,45 @@ export default function PlaylistDetailPage() {
           addLabel="add some songs"
         />
       ) : (
-        <div className="space-y-1">
-          {playlist.songs.map((ps) => (
-            <SongRow
-              key={ps.id}
-              song={ps.song}
-              isAdmin={canEdit}
-              onRemove={() => setRemoveId(ps.songId)}
-              onPlay={() => handlePlayFromSong(ps.songId)}
-              isPlaying={playingSongId === ps.songId}
-              onAddToQueue={() => handleAddToQueue(ps.songId)}
-            />
-          ))}
+        <div
+          ref={listParentRef}
+          className="relative h-[calc(100vh-16rem)] overflow-auto"
+          style={{ contain: 'strict' }}
+        >
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const ps = playlist.songs[virtualRow.index];
+              if (!ps) return null;
+              return (
+                <div
+                  key={ps.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <SongRow
+                    song={ps.song}
+                    isAdmin={canEdit}
+                    onRemove={() => setRemoveId(ps.songId)}
+                    removeLabel="Remove from playlist"
+                    onPlay={() => handlePlayFromSong(ps.songId)}
+                    isPlaying={playingSongId === ps.songId}
+                    onAddToQueue={() => handleAddToQueue(ps.songId)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -420,75 +459,6 @@ export default function PlaylistDetailPage() {
             handleDeletePlaylist();
           }}
           onCancel={() => setDeleteConfirm(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Song row
-// ---------------------------------------------------------------------------
-function SongRow({
-  song,
-  isAdmin,
-  onRemove,
-  onPlay,
-  isPlaying,
-  onAddToQueue,
-}: {
-  song: Song;
-  isAdmin: boolean;
-  onRemove: () => void;
-  onPlay: () => void;
-  isPlaying?: boolean;
-  onAddToQueue: () => void;
-}) {
-  const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
-    song,
-    isAdmin,
-    playlists: [],
-    onAddToQueue,
-    onRemove,
-    removeLabel: 'Remove from playlist',
-  });
-
-  return (
-    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-all duration-100">
-      <img
-        src={song.thumbnailUrl}
-        alt={song.nickname || song.title}
-        className="w-20 h-12 md:w-16 md:h-10 object-cover rounded border border-border shrink-0"
-        loading="lazy"
-      />
-      <div className="flex-1 min-w-0">
-        <p className="font-body text-sm font-medium text-fg truncate">
-          {song.nickname || song.title}
-        </p>
-        {song.nickname && <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>}
-      </div>
-      <span className="font-mono text-xs text-muted shrink-0">{formatDuration(song.duration)}</span>
-      <Button
-        variant="primary"
-        size="icon"
-        onClick={onPlay}
-        disabled={isPlaying}
-        className="p-2.5 md:p-1 disabled:opacity-50 disabled:cursor-default"
-        title="Play from this song"
-      >
-        {isPlaying ? (
-          <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
-        ) : (
-          <PlayIcon size={18} weight="duotone" />
-        )}
-      </Button>
-      <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
-      {menuOpen && (
-        <ContextMenu
-          items={menuItems}
-          isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          triggerRef={triggerRef}
         />
       )}
     </div>
