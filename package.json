@@ -34,10 +34,15 @@
       }
     },
     "onlyBuiltDependencies": [
+      "@prisma/adapter-pg",
       "@prisma/engines",
+      "@tailwindcss/vite",
       "esbuild",
-      "prisma"
-    ]
+      "prisma",
+      "vite"
+    ],
+    "blockExoticSubdeps": true,
+    "minimumReleaseAge": 1440
   },
   "dependencies": {
     "cookie": "^1.1.1"
