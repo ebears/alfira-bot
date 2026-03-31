@@ -1,7 +1,7 @@
 import type { PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { useEffect, useState } from 'react';
-import { addSongToPlaylist, getSongs } from '../api/api';
+import { addSongToPlaylist, getSongsPage } from '../api/api';
 import { Backdrop } from './Backdrop';
 import { Button } from './ui/Button';
 
@@ -21,8 +21,8 @@ export default function AddSongsModal({
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    getSongs().then((s) => {
-      setAllSongs(s);
+    getSongsPage(1, 500).then((result) => {
+      setAllSongs(result.items);
       setLoading(false);
     });
   }, []);

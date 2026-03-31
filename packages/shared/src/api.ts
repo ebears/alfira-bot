@@ -1,4 +1,12 @@
-import type { LoopMode, Playlist, PlaylistDetail, QueueState, Song, User } from './types';
+import type {
+  LoopMode,
+  PaginatedResult,
+  Playlist,
+  PlaylistDetail,
+  QueueState,
+  Song,
+  User,
+} from './types';
 
 /**
  * Centralized API service layer for making HTTP requests.
@@ -89,8 +97,8 @@ export function fetchLogout(): Promise<void> {
 // Songs API Functions
 // ---------------------------------------------------------------------------
 
-export function fetchSongs(): Promise<Song[]> {
-  return get('/api/songs');
+export function fetchSongsPage(page: number, limit = 30): Promise<PaginatedResult<Song>> {
+  return get(`/api/songs?page=${page}&limit=${limit}`);
 }
 
 export function createSong(youtubeUrl: string, nickname?: string): Promise<Song> {
@@ -121,6 +129,27 @@ export function createPlaylist(name: string): Promise<Playlist> {
 export function fetchPlaylist(id: string, adminView = false): Promise<PlaylistDetail> {
   const params = adminView ? '?adminView=true' : '';
   return get(`/api/playlists/${id}${params}`);
+}
+
+export function fetchPlaylistsPage(
+  adminView = false,
+  page: number,
+  limit = 30
+): Promise<PaginatedResult<Playlist>> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (adminView) params.set('adminView', 'true');
+  return get(`/api/playlists?${params}`);
+}
+
+export function fetchPlaylistPage(
+  id: string,
+  adminView = false,
+  page: number,
+  limit = 30
+): Promise<PaginatedResult<PlaylistDetail>> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (adminView) params.set('adminView', 'true');
+  return get(`/api/playlists/${id}?${params}`);
 }
 
 export function renamePlaylist(id: string, name: string): Promise<Playlist> {

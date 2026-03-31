@@ -1,12 +1,13 @@
-import type { Playlist } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist } from '@alfira-bot/shared';
 import { CaretRightIcon, GhostIcon, PlaylistIcon, PlusCircleIcon } from '@phosphor-icons/react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPlaylists, startPlayback } from '../api/api';
+import { getPlaylistsPage, startPlayback } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
+import { Pagination } from '../components/Pagination';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -19,24 +20,31 @@ export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
   const navigate = useNavigate();
   const socket = useSocket();
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [items, setItems] = useState<Playlist[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const { notification, notify } = useNotification();
   const { state: queueState } = usePlayer();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setPlaylists(await getPlaylists(isAdminView));
-    } finally {
-      setLoading(false);
-    }
-  }, [isAdminView]);
+  const load = useCallback(
+    async (page: number) => {
+      setLoading(true);
+      try {
+        const result = await getPlaylistsPage(isAdminView, page, 30);
+        setItems(result.items);
+        setPagination(result.pagination);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isAdminView]
+  );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    load(currentPage);
+  }, [load, currentPage]);
 
   // ---------------------------------------------------------------------------
   // Real-time socket wiring
@@ -56,13 +64,24 @@ export default function PlaylistsPage() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
-      setPlaylists((prev) => {
-        const exists = prev.some((p) => p.id === updated.id);
-        if (exists) {
+      const isNew = !items.some((p) => p.id === updated.id);
+
+      setItems((prev) => {
+        if (prev.some((p) => p.id === updated.id)) {
+          // Existing — replace (handles renames, song count changes)
           return prev.map((p) => (p.id === updated.id ? updated : p));
         }
-        return [...prev, updated];
+        // New — prepend if page 1 has room
+        if (currentPage === 1 && prev.length < 30) {
+          return [updated, ...prev];
+        }
+        return prev;
       });
+
+      // Only increment total for genuinely new playlists
+      if (isNew) {
+        setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
+      }
     };
 
     socket.on('playlists:updated', handlePlaylistUpdated);
@@ -70,7 +89,7 @@ export default function PlaylistsPage() {
     return () => {
       socket.off('playlists:updated', handlePlaylistUpdated);
     };
-  }, [socket]);
+  }, [socket, currentPage, items]);
 
   const handleAddToQueue = async (playlistId: string) => {
     try {
@@ -92,7 +111,9 @@ export default function PlaylistsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Playlists</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
+            {loading
+              ? '—'
+              : `${pagination?.total ?? items.length} playlist${(pagination?.total ?? items.length) !== 1 ? 's' : ''}`}
           </p>
         </div>
         <Button
@@ -107,7 +128,7 @@ export default function PlaylistsPage() {
       {/* List */}
       {loading ? (
         <SkeletonList />
-      ) : playlists.length === 0 ? (
+      ) : items.length === 0 ? (
         <EmptyState
           title="No Playlists"
           isAdmin={isAdminView}
@@ -116,7 +137,7 @@ export default function PlaylistsPage() {
         />
       ) : (
         <div className="grid gap-2 md:gap-3">
-          {playlists.map((pl, i) => (
+          {items.map((pl, i) => (
             <PlaylistRow
               key={pl.id}
               playlist={pl}
@@ -129,6 +150,10 @@ export default function PlaylistsPage() {
             />
           ))}
         </div>
+      )}
+
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
       )}
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} />}

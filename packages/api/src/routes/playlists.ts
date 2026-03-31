@@ -54,14 +54,24 @@ async function requirePlaylistAccess(
 // ---------------------------------------------------------------------------
 // GET /api/playlists
 //
-// Returns all playlists with a count of songs in each. Member accessible.
+// Returns paginated playlists with a count of songs in each. Member accessible.
+// Query params: page (default 1), limit (default 30), adminView (default false).
 // ---------------------------------------------------------------------------
 router.get('/', requireAuth, async (req, res) => {
   const adminView = req.query.adminView === 'true';
-  const playlists = await prisma.playlist.findMany({
-    orderBy: { createdAt: 'asc' },
-    include: PLAYLIST_WITH_COUNT,
-  });
+  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
+  const skip = (page - 1) * limit;
+
+  const [playlists, total] = await Promise.all([
+    prisma.playlist.findMany({
+      orderBy: { createdAt: 'asc' },
+      skip,
+      take: limit,
+      include: PLAYLIST_WITH_COUNT,
+    }),
+    prisma.playlist.count(),
+  ]);
 
   // Filter private playlists: only visible to creator and admins (in Admin View)
   const filteredPlaylists = playlists.filter((pl) =>
@@ -76,7 +86,15 @@ router.get('/', requireAuth, async (req, res) => {
     }))
   );
 
-  res.json(playlistsWithCreator);
+  res.json({
+    items: playlistsWithCreator,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -103,23 +121,47 @@ router.post('/', requireAuth, playlistLimiter, async (req, res) => {
 // ---------------------------------------------------------------------------
 // GET /api/playlists/:id
 //
-// Returns a single playlist with its songs in position order. Member accessible.
+// Returns a single playlist with paginated songs. Member accessible.
+// Query params: page (default 1), limit (default 30), adminView (default false).
 // ---------------------------------------------------------------------------
 router.get('/:id', requireAuth, async (req, res) => {
   const adminView = req.query.adminView === 'true';
-  const playlist = await findPlaylistOr404(req.params.id as string, res, {
-    songs: {
-      orderBy: { position: 'asc' },
-      include: { song: true },
-    },
+  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
+  const skip = (page - 1) * limit;
+
+  const id = req.params.id as string;
+
+  // Fetch playlist metadata and total song count
+  const playlist = await findPlaylistOr404(id, res, {
+    _count: { select: { songs: true } },
   });
   if (!playlist) return;
 
   if (!canAccessPlaylist(playlist, req.user, res, adminView)) return;
 
+  // Fetch paginated songs
+  const [playlistSongs, total] = await Promise.all([
+    prisma.playlistSong.findMany({
+      where: { playlistId: id },
+      orderBy: { position: 'asc' },
+      skip,
+      take: limit,
+      include: { song: true },
+    }),
+    prisma.playlistSong.count({ where: { playlistId: id } }),
+  ]);
+
   res.json({
     ...playlist,
+    songs: playlistSongs,
     createdByDisplayName: await getUserDisplayName(playlist.createdBy),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
   });
 });
 

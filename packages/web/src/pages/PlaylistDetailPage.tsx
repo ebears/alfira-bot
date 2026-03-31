@@ -1,4 +1,4 @@
-import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist, PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
   BombIcon,
@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   deletePlaylist,
-  getPlaylist,
+  getPlaylistPage,
   removeSongFromPlaylist,
   renamePlaylist,
   startPlayback,
@@ -27,6 +27,7 @@ import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
+import { Pagination } from '../components/Pagination';
 import PlayModal from '../components/PlayModal';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
@@ -46,6 +47,8 @@ export default function PlaylistDetailPage() {
   const socket = useSocket();
 
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
@@ -65,23 +68,33 @@ export default function PlaylistDetailPage() {
 
   const { state: queueState } = usePlayer();
 
-  const load = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const pl = await getPlaylist(id, isAdminView);
-      setPlaylist(pl);
-      setNameValue(pl.name);
-    } catch {
-      navigate('/playlists', { replace: true });
-    } finally {
-      setLoading(false);
-    }
-  }, [id, navigate, isAdminView]);
+  // Refs to avoid stale closures in handleRemoveSong
+  const paginationRef = useRef(pagination);
+  const songsLengthRef = useRef(0);
+  paginationRef.current = pagination;
+  songsLengthRef.current = playlist?.songs.length ?? 0;
+
+  const load = useCallback(
+    async (page: number) => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const pl = await getPlaylistPage(id, isAdminView, page, 30);
+        setPlaylist(pl);
+        setPagination(pl.pagination);
+        setNameValue(pl.name);
+      } catch {
+        navigate('/playlists', { replace: true });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id, navigate, isAdminView]
+  );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    load(currentPage);
+  }, [load, currentPage]);
 
   useEffect(() => {
     if (editingName) nameInputRef.current?.focus();
@@ -92,7 +105,7 @@ export default function PlaylistDetailPage() {
     const handlePlaylistUpdated = (updated: Playlist) => {
       if (updated.id !== id) return;
       // Refetch to get the full PlaylistDetail including the updated songs array.
-      load();
+      load(currentPage);
     };
 
     socket.on('playlists:updated', handlePlaylistUpdated);
@@ -100,7 +113,7 @@ export default function PlaylistDetailPage() {
     return () => {
       socket.off('playlists:updated', handlePlaylistUpdated);
     };
-  }, [socket, id, load]);
+  }, [socket, id, load, currentPage]);
 
   const handleRename = async () => {
     if (!playlist || !nameValue.trim() || nameValue.trim() === playlist.name) {
@@ -117,9 +130,10 @@ export default function PlaylistDetailPage() {
 
   const handleRemoveSong = async (songId: string) => {
     if (!playlist) return;
+
+    const prevLength = playlist.songs.length;
     await removeSongFromPlaylist(playlist.id, songId);
-    // Optimistic update — the socket event will also arrive and trigger a
-    // refetch, which will reconcile any inconsistency.
+
     setPlaylist((p) =>
       p
         ? {
@@ -128,6 +142,22 @@ export default function PlaylistDetailPage() {
           }
         : p
     );
+    setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
+
+    // Refill page 1 if we dropped below 30
+    if (prevLength === 30 && paginationRef.current && paginationRef.current.total > 30 && id) {
+      getPlaylistPage(id, isAdminView, currentPage + 1, 30).then((result) => {
+        setPlaylist((p) =>
+          p
+            ? {
+                ...p,
+                songs: [...p.songs, ...result.songs].slice(0, 30),
+              }
+            : p
+        );
+      });
+    }
+
     setRemoveId(null);
   };
 
@@ -279,7 +309,8 @@ export default function PlaylistDetailPage() {
             </div>
           )}
           <p className="font-mono text-xs text-muted mt-1">
-            {playlist.songs.length} {playlist.songs.length === 1 ? 'track' : 'tracks'}
+            {pagination?.total ?? playlist.songs.length}{' '}
+            {playlist.songs.length === 1 ? 'track' : 'tracks'}
             {' • '}
             {isOwner
               ? 'Created by you'
@@ -292,7 +323,7 @@ export default function PlaylistDetailPage() {
             variant="primary"
             className={`text-xs flex items-center gap-1.5 ${showPlay ? 'pressed' : ''}`}
             onClick={() => setShowPlay(true)}
-            disabled={playlist.songs.length === 0}
+            disabled={(pagination?.total ?? playlist.songs.length) === 0}
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </Button>
@@ -334,6 +365,10 @@ export default function PlaylistDetailPage() {
             />
           ))}
         </div>
+      )}
+
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
       )}
 
       {/* Modals */}

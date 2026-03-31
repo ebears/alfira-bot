@@ -19,12 +19,14 @@ export {
   // Auth
   fetchMe as getMe,
   fetchPlaylist as getPlaylist,
+  fetchPlaylistPage as getPlaylistPage,
   // Playlists
   fetchPlaylists as getPlaylists,
+  fetchPlaylistsPage as getPlaylistsPage,
   // Player
   fetchQueueState,
   // Songs
-  fetchSongs as getSongs,
+  fetchSongsPage as getSongsPage,
   importPlaylist,
   leaveVoice,
   overridePlay,

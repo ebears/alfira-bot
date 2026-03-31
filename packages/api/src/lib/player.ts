@@ -5,7 +5,7 @@ import { GUILD_ID } from './config';
 
 export function requirePlaying(res: Response): GuildPlayer | null {
   const player = getPlayer(GUILD_ID);
-  if (!player || !player.getCurrentSong()) {
+  if (!player?.getCurrentSong()) {
     res.status(409).json({ error: 'Nothing is currently playing.' });
     return null;
   }

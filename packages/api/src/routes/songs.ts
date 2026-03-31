@@ -30,12 +30,22 @@ const importLimiter = rateLimit({
 // ---------------------------------------------------------------------------
 // GET /api/songs
 //
-// Returns all songs, newest first. Accessible to any authenticated user.
+// Returns paginated songs, newest first. Accessible to any authenticated user.
+// Query params: page (default 1), limit (default 30).
 // ---------------------------------------------------------------------------
-router.get('/', requireAuth, async (_req, res) => {
-  const songs = await prisma.song.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+router.get('/', requireAuth, async (req, res) => {
+  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
+  const skip = (page - 1) * limit;
+
+  const [songs, total] = await Promise.all([
+    prisma.song.findMany({
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.song.count(),
+  ]);
 
   // Resolve Discord display names for unique addedBy IDs
   const uniqueIds = [...new Set(songs.map((s) => s.addedBy))];
@@ -51,7 +61,15 @@ router.get('/', requireAuth, async (_req, res) => {
     addedByDisplayName: nameMap.get(s.addedBy) ?? s.addedBy,
   }));
 
-  res.json(songsWithNames);
+  res.json({
+    items: songsWithNames,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 });
 
 // ---------------------------------------------------------------------------
