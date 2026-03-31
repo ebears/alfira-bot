@@ -47,7 +47,14 @@ interface PlayerContextValue {
   refetch: () => Promise<void>;
 }
 
-const PlayerContext = createContext<PlayerContextValue | null>(null);
+// ---------------------------------------------------------------------------
+// Split contexts to isolate the 1-second re-render cascade.
+// PlayerStateContext changes only when the player state or actions change
+// (skip, pause, etc.). PlayerElapsedContext changes every second during
+// playback but is consumed only by NowPlayingBar and QueuePanel.
+// ---------------------------------------------------------------------------
+const PlayerStateContext = createContext<Omit<PlayerContextValue, 'elapsed'> | null>(null);
+const PlayerElapsedContext = createContext<number>(0);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
@@ -59,7 +66,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   // ---------------------------------------------------------------------------
   // REST fetch — used for initial load and after actions where we want the
-  // freshest server state immediately (e.g. after startPlayback).
+  // freshest server state immediately (e.g. after starting playback).
   // ---------------------------------------------------------------------------
   const refetch = useCallback(async () => {
     try {
@@ -146,10 +153,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await unshuffleQueue();
   }, []);
 
-  const value: PlayerContextValue = {
+  const stateValue: Omit<PlayerContextValue, 'elapsed'> = {
     state,
     loading,
-    elapsed,
     skip,
     leave,
     pause,
@@ -160,13 +166,35 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     refetch,
   };
 
-  return <PlayerContext value={value}>{children}</PlayerContext>;
+  return (
+    <PlayerStateContext value={stateValue}>
+      <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
+    </PlayerStateContext>
+  );
 }
 
-export function usePlayer(): PlayerContextValue {
-  const context = useContext(PlayerContext);
+/**
+ * Returns only the player state and actions — does NOT re-render when elapsed
+ * ticks every second. Use this in pages (SongsPage, PlaylistsPage, etc.) that
+ * need queue state (e.g. loopMode) but don't care about elapsed.
+ */
+export function usePlayerState(): Omit<PlayerContextValue, 'elapsed'> {
+  const context = useContext(PlayerStateContext);
   if (!context) {
-    throw new Error('usePlayer must be used within a PlayerProvider');
+    throw new Error('usePlayerState must be used within a PlayerProvider');
   }
   return context;
+}
+
+/**
+ * Full player context including elapsed. This re-renders every second during
+ * playback. Use only in NowPlayingBar and QueuePanel.
+ */
+export function usePlayer(): PlayerContextValue {
+  const stateContext = useContext(PlayerStateContext);
+  const elapsed = useContext(PlayerElapsedContext);
+  if (!stateContext) {
+    throw new Error('usePlayer must be used within a PlayerProvider');
+  }
+  return { ...stateContext, elapsed };
 }
