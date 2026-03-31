@@ -770,6 +770,8 @@
     --font-display: "Cherry Bomb One", regular;
     --font-body: "Chiron GoRound TC", regular;
     --font-mono: "JetBrains Mono", monospace;
+    --color-discord: #5865f2;
+    --color-discord-dark: #4752c4;
     /* Animations */
     --animate-fade-up: fadeUp 0.3s ease forwards;
     --animate-shimmer: shimmer 1.4s infinite linear;
@@ -795,16 +797,9 @@
         0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
         0 8px 20px -3px rgba(0, 0, 0, 0.3),
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
-    --clay-shadow-raised-top:
-        0 -8px 20px -3px rgba(0, 0, 0, 0.3),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
     --clay-shadow-floating:
         0 10px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
         0 13px 30px -6px rgba(0, 0, 0, 0.4),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
-    --clay-shadow-prominent:
-        0 14px 0 0 color-mix(in srgb, var(--color-surface) 50%, black),
-        0 18px 40px -6px rgba(0, 0, 0, 0.5),
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
     --clay-shadow-flat:
         inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
@@ -840,7 +835,7 @@
     body {
         background-color: var(--color-base);
         color: var(--color-fg);
-        font-family: "Chiron GoRound TC", regular;
+        font-family: var(--font-body);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
@@ -887,21 +882,6 @@
         background-size: 400px 100%;
         animation: shimmer 1.4s infinite linear;
         border-radius: 4px;
-    }
-
-    /* Shared button state utilities */
-    .btn-state-hover {
-        transform: var(--btn-transform-hover);
-    }
-    .btn-state-active {
-        transform: var(--btn-transform-active);
-        scale: var(--btn-scale-active);
-        box-shadow: var(--clay-shadow-flat);
-    }
-    .btn-state-active-sm {
-        transform: var(--btn-transform-active-sm);
-        scale: var(--btn-scale-active);
-        box-shadow: var(--clay-shadow-flat);
     }
 
     .btn-primary {
@@ -1064,11 +1044,11 @@
         color: #fff;
         background: linear-gradient(
             180deg,
-            color-mix(in srgb, #5865f2 85%, white) 0%,
-            #5865f2 100%
+            color-mix(in srgb, var(--color-discord) 85%, white) 0%,
+            var(--color-discord) 100%
         );
         box-shadow:
-            0 3px 0 0 color-mix(in srgb, #4752c4 100%, black 35%),
+            0 3px 0 0 color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
             0 4px 8px -2px rgba(0, 0, 0, 0.3),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1076,7 +1056,7 @@
     .btn-discord:hover {
         transform: var(--btn-transform-hover);
         box-shadow:
-            0 4px 0 0 color-mix(in srgb, #4752c4 100%, black 35%),
+            0 4px 0 0 color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
             0 6px 12px -2px rgba(0, 0, 0, 0.35),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1168,6 +1148,8 @@
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
         border-radius: var(--clay-radius-md);
+        --icon-btn-accent: var(--color-accent);
+        --icon-btn-shadow: color-mix(in srgb, var(--color-surface) 60%, black);
         background: linear-gradient(
             180deg,
             color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
