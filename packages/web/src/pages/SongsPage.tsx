@@ -53,11 +53,11 @@ export default function SongsPage() {
   itemsLengthRef.current = items.length;
 
   const load = useCallback(
-    async (page: number) => {
+    async (page: number, searchQuery?: string) => {
       setLoading(true);
       try {
         const [result, p] = await Promise.all([
-          getSongsPage(page, 30),
+          getSongsPage(page, 30, searchQuery),
           getPlaylistsPage(isAdminView, 1, 100),
         ]);
         setItems(result.items);
@@ -71,8 +71,8 @@ export default function SongsPage() {
   );
 
   useEffect(() => {
-    load(currentPage);
-  }, [load, currentPage]);
+    load(currentPage, search);
+  }, [load, currentPage, search]);
 
   useEffect(() => {
     const handleSongAdded = (song: Song) => {
@@ -140,9 +140,9 @@ export default function SongsPage() {
   };
 
   const q = search.toLowerCase();
-  const filtered = items.filter(
+  const filtered = search ? items.filter(
     (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
-  );
+  ) : items;
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
@@ -203,7 +203,10 @@ export default function SongsPage() {
             className="input pl-10"
             placeholder="Search by title or nickname..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
         {/* View toggle */}

@@ -97,8 +97,10 @@ export function fetchLogout(): Promise<void> {
 // Songs API Functions
 // ---------------------------------------------------------------------------
 
-export function fetchSongsPage(page: number, limit = 30): Promise<PaginatedResult<Song>> {
-  return get(`/api/songs?page=${page}&limit=${limit}`);
+export function fetchSongsPage(page: number, limit = 30, search?: string): Promise<PaginatedResult<Song>> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search) params.set('search', search);
+  return get(`/api/songs?${params}`);
 }
 
 export function createSong(youtubeUrl: string, nickname?: string): Promise<Song> {

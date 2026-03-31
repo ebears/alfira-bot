@@ -37,14 +37,25 @@ router.get('/', requireAuth, async (req, res) => {
   const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
   const skip = (page - 1) * limit;
+  const search = String(req.query.search ?? '').trim();
+
+  const where = search
+    ? {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' as const } },
+          { nickname: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+    : {};
 
   const [songs, total] = await Promise.all([
     prisma.song.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       skip,
       take: limit,
     }),
-    prisma.song.count(),
+    prisma.song.count({ where }),
   ]);
 
   // Resolve Discord display names for unique addedBy IDs
