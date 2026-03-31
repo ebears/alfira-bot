@@ -774,7 +774,6 @@
     --color-discord-dark: #4752c4;
     /* Animations */
     --animate-fade-up: fadeUp 0.3s ease forwards;
-    --animate-shimmer: shimmer 1.4s infinite linear;
     --animate-slide-in-right: slideInRight 0.3s ease forwards;
     --animate-slide-up: slideUp 0.3s ease forwards;
     --animate-pulse-gentle: pulseGentle 2.4s ease-in-out infinite;
@@ -882,21 +881,6 @@
         background-size: 400px 100%;
         animation: shimmer 1.4s infinite linear;
         border-radius: 4px;
-    }
-
-    /* Shared button state utilities */
-    .btn-state-hover {
-        transform: var(--btn-transform-hover);
-    }
-    .btn-state-active {
-        transform: var(--btn-transform-active);
-        scale: var(--btn-scale-active);
-        box-shadow: var(--clay-shadow-flat);
-    }
-    .btn-state-active-sm {
-        transform: var(--btn-transform-active-sm);
-        scale: var(--btn-scale-active);
-        box-shadow: var(--clay-shadow-flat);
     }
 
     .btn-primary {
