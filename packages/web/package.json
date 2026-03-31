@@ -11,7 +11,6 @@
   "dependencies": {
     "@alfira-bot/shared": "workspace:*",
     "@phosphor-icons/react": "^2.1.10",
-    "@tanstack/react-virtual": "^3.13.23",
     "axios": "^1.13.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
