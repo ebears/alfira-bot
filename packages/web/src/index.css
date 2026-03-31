@@ -1063,7 +1063,8 @@
             var(--color-discord) 100%
         );
         box-shadow:
-            0 3px 0 0 color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
+            0 3px 0 0
+                color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
             0 4px 8px -2px rgba(0, 0, 0, 0.3),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1071,7 +1072,8 @@
     .btn-discord:hover {
         transform: var(--btn-transform-hover);
         box-shadow:
-            0 4px 0 0 color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
+            0 4px 0 0
+                color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
             0 6px 12px -2px rgba(0, 0, 0, 0.35),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1130,66 +1132,6 @@
         );
     }
 
-    .btn-icon {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            var(--clay-highlight) 0%,
-            var(--color-elevated) 100%
-        );
-        box-shadow: var(--clay-shadow-resting);
-    }
-    .btn-icon:hover {
-        transform: var(--btn-transform-hover);
-        box-shadow: var(--clay-shadow-raised);
-    }
-    .btn-icon:active {
-        transform: var(--btn-transform-active-sm);
-        scale: var(--btn-scale-active);
-        box-shadow: var(--clay-shadow-flat);
-    }
-    .btn-icon:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* Accent icon buttons share this shadow structure */
-    .btn-icon-accent {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        --icon-btn-accent: var(--color-accent);
-        --icon-btn-shadow: color-mix(in srgb, var(--color-surface) 60%, black);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
-            var(--icon-btn-accent) 100%
-        );
-        box-shadow:
-            0 1px 0 0 var(--icon-btn-shadow),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    .btn-icon-accent:hover {
-        transform: var(--btn-transform-hover);
-        box-shadow:
-            0 2px 0 0 var(--icon-btn-shadow),
-            0 3px 6px -1px rgba(0, 0, 0, 0.25),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    .btn-icon-accent:active {
-        transform: var(--btn-transform-active-sm);
-        scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
-    }
-
     .btn-icon-primary {
         @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
@@ -1205,7 +1147,11 @@
             0 2px 4px -1px rgba(0, 0, 0, 0.2),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
         --icon-btn-accent: var(--color-accent);
-        --icon-btn-shadow: color-mix(in srgb, var(--color-accent-muted) 100%, black 35%);
+        --icon-btn-shadow: color-mix(
+            in srgb,
+            var(--color-accent-muted) 100%,
+            black 35%
+        );
     }
 
     .btn-icon-secondary {
