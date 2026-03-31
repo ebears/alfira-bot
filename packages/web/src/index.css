@@ -750,22 +750,6 @@
 
 @theme {
     /* Theme color tokens — values come from data-color-theme selectors above */
-    --color-base: var(--color-base);
-    --color-surface: var(--color-surface);
-    --color-elevated: var(--color-elevated);
-    --color-border: var(--color-border);
-    --color-accent: var(--color-accent);
-    --color-accent-muted: var(--color-accent-muted);
-    --color-member: var(--color-member);
-    --color-member-muted: var(--color-member-muted);
-    --color-fg: var(--color-fg);
-    --color-muted: var(--color-muted);
-    --color-faint: var(--color-faint);
-    --color-danger: var(--color-danger);
-    --color-secondary: var(--color-secondary);
-    --color-secondary-muted: var(--color-secondary-muted);
-    --color-foreground: var(--color-foreground);
-    --color-foreground-muted: var(--color-foreground-muted);
     /* Fonts */
     --font-display: "Cherry Bomb One", regular;
     --font-body: "Chiron GoRound TC", regular;
@@ -883,10 +867,14 @@
         border-radius: 4px;
     }
 
-    .btn-primary {
+    .btn-base {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
+    }
+
+    .btn-primary {
+        @apply btn-base;
         border-radius: var(--clay-radius-lg);
         color: var(--color-fg);
         background: linear-gradient(
@@ -927,9 +915,7 @@
     }
 
     .btn-secondary {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed min-h-11 md:min-h-0;
+        @apply btn-base;
         border-radius: var(--clay-radius-lg);
         color: var(--color-secondary);
         background: linear-gradient(
@@ -967,9 +953,7 @@
     }
 
     .btn-foreground {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed min-h-11 md:min-h-0;
+        @apply btn-base;
         border-radius: var(--clay-radius-lg);
         color: var(--color-fg);
         background: var(--color-elevated);
@@ -994,9 +978,7 @@
     }
 
     .btn-danger {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed min-h-11 md:min-h-0;
+        @apply btn-base;
         border-radius: var(--clay-radius-lg);
         color: #fff;
         background: linear-gradient(
@@ -1118,80 +1100,14 @@
         );
     }
 
-    .btn-icon-primary {
+    .btn-icon-base {
         @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--icon-btn-accent) 75%, white) 0%,
-            var(--icon-btn-accent) 100%
-        );
-        box-shadow:
-            0 1px 0 0 var(--icon-btn-shadow),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-        --icon-btn-accent: var(--color-accent);
-        --icon-btn-shadow: color-mix(
-            in srgb,
-            var(--color-accent-muted) 100%,
-            black 35%
-        );
-    }
-    .btn-icon-primary:hover {
-        transform: var(--btn-transform-hover);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--icon-btn-accent) 65%, white) 0%,
-            var(--icon-btn-accent) 100%
-        );
-        box-shadow:
-            0 2px 0 0 var(--icon-btn-shadow),
-            0 3px 6px -1px rgba(0, 0, 0, 0.25),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    .btn-icon-primary:active {
-        transform: var(--btn-transform-active-sm);
-        scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
-    }
-    .btn-icon-primary.pressed {
-        transform: var(--btn-transform-active-sm);
-        background: linear-gradient(
-            180deg,
-            var(--icon-btn-accent) 0%,
-            color-mix(in srgb, var(--icon-btn-accent) 85%, black) 100%
-        );
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-icon-secondary {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--icon-btn-accent) 65%, white) 0%,
-            var(--icon-btn-accent) 100%
-        );
-        box-shadow:
-            0 1px 0 0 var(--icon-btn-shadow),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-        --icon-btn-accent: var(--color-secondary);
-        --icon-btn-shadow: color-mix(in srgb, var(--color-surface) 60%, black);
     }
 
     .btn-icon-foreground {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
+        @apply btn-icon-base;
         border-radius: var(--clay-radius-md);
         background: linear-gradient(
             180deg,
@@ -1232,24 +1148,6 @@
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-icon-danger {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
-            var(--icon-btn-accent) 100%
-        );
-        box-shadow:
-            0 1px 0 0 var(--icon-btn-shadow),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-        --icon-btn-accent: var(--color-danger);
-        --icon-btn-shadow: color-mix(in srgb, var(--color-danger) 50%, black);
     }
 
     .btn-nav-active {

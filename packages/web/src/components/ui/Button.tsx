@@ -16,17 +16,15 @@ const defaultClasses: Record<ButtonVariant, string> = {
   danger: 'btn-danger',
 };
 
-const iconClasses: Record<ButtonVariant, string> = {
-  primary: 'btn-icon-primary',
-  secondary: 'btn-icon-secondary',
+const iconClasses: Record<string, string> = {
   foreground: 'btn-icon-foreground',
-  danger: 'btn-icon-danger',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = 'primary', size = 'default', className, ...props }: ButtonProps,
   ref
 ) {
-  const base = size === 'icon' ? iconClasses[variant] : defaultClasses[variant];
+  const base =
+    size === 'icon' ? (iconClasses[variant] ?? 'btn-icon-foreground') : defaultClasses[variant];
   return <button ref={ref} className={className ? `${base} ${className}` : base} {...props} />;
 });
