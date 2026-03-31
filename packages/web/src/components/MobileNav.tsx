@@ -161,14 +161,16 @@ export default function MobileNav() {
         {/* Settings button and User info at bottom */}
         <div className="mt-auto border-t border-border">
           {/* Settings button */}
-          <Button
-            variant="secondary"
-            className={`w-full flex items-center gap-3 ${isSettingsOpen ? 'pressed' : ''}`}
+          <button
+            type="button"
             onClick={() => setIsSettingsOpen(true)}
+            className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-150 ${
+              isSettingsOpen ? 'btn-nav-active pressed' : 'btn-nav-inactive text-fg/90'
+            }`}
           >
             <GearIcon size={20} weight="duotone" />
             Settings
-          </Button>
+          </button>
 
           {/* User info */}
           <div className="p-4 border-t border-border safe-area-bottom">

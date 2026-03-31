@@ -126,7 +126,9 @@ export function updateSongNickname(id: string, nickname: string | null): Promise
 
 export function fetchPlaylists(adminView = false): Promise<Playlist[]> {
   const params = adminView ? '?adminView=true' : '';
-  return get(`/api/playlists${params}`);
+  return get<PaginatedResult<Playlist>>(`/api/playlists${params}`).then(
+    (r) => r.items as Playlist[]
+  );
 }
 
 export function createPlaylist(name: string): Promise<Playlist> {

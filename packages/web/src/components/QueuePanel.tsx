@@ -34,7 +34,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
-  const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
+  const progress = currentSong && currentSong.duration > 0 ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
   const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
 
   const handleClear = useCallback(async () => {
@@ -119,7 +119,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           </Button>
           <Button
             ref={triggerRef}
-            variant="secondary"
+            variant="foreground"
             size="icon"
             type="button"
             aria-haspopup="true"
@@ -145,7 +145,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
             </div>
             <div className="space-y-1 border-l-2 border-accent/40 pl-3">
               {priorityQueue.map((song, i) => (
-                <QueueSongItem key={song.id} song={song} index={i} accent />
+                <QueueSongItem key={`${i}-${song.id}`} song={song} index={i} accent />
               ))}
             </div>
           </section>
@@ -179,7 +179,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           ) : (
             <div className="space-y-1">
               {queue.map((song, i) => (
-                <QueueSongItem key={song.id} song={song} index={i} />
+                <QueueSongItem key={`${i}-${song.id}`} song={song} index={i} />
               ))}
             </div>
           )}
