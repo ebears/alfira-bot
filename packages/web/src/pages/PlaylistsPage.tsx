@@ -10,7 +10,7 @@ import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
-import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
+import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
@@ -210,15 +210,8 @@ function PlaylistRow({
 // Create playlist modal
 // ---------------------------------------------------------------------------
 function CreatePlaylistModal({ onClose }: { onClose: () => void }) {
-  const [state, formAction, isPending] = useCreatePlaylist();
+  const [state, formAction] = useCreatePlaylist();
   const [name, setName] = useState('');
-
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-    const formData = new FormData();
-    formData.set('name', name.trim());
-    formAction(formData);
-  };
 
   // Close modal on success (error === null means success)
   useEffect(() => {
@@ -229,12 +222,16 @@ function CreatePlaylistModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Backdrop onClose={onClose}>
-      <div className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up">
+      <form
+        action={formAction}
+        className="bg-surface border border-border rounded-xl p-5 md:p-6 w-full max-w-sm mx-4 modal-clay animate-fade-up"
+      >
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">
           New Playlist
         </h2>
         <p className="font-mono text-xs text-muted mb-4 md:mb-6">choose a name</p>
         <input
+          name="name"
           className="input mb-3"
           placeholder="My Playlist"
           value={name}
@@ -242,21 +239,18 @@ function CreatePlaylistModal({ onClose }: { onClose: () => void }) {
             setName(e.target.value);
           }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSubmit();
             if (e.key === 'Escape') onClose();
           }}
-          disabled={isPending}
+          required
         />
         {state?.error && <p className="font-mono text-xs text-danger mb-3">{state.error}</p>}
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onClose} disabled={isPending}>
+          <Button variant="foreground" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={isPending || !name.trim()}>
-            Create
-          </Button>
+          <CreatePlaylistSubmitButton disabled={!name.trim()}>Create</CreatePlaylistSubmitButton>
         </div>
-      </div>
+      </form>
     </Backdrop>
   );
 }

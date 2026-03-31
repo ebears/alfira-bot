@@ -13,6 +13,12 @@ export function useElapsedTimer(state: QueueState): number {
   // Track the song ID we last started timing so we can reset when it changes.
   const timedSongId = useRef<string | null>(null);
   const elapsedRef = useRef(0);
+  // Store duration in a ref to avoid stale closure in the interval.
+  const durationRef = useRef(state.currentSong?.duration ?? 0);
+
+  useEffect(() => {
+    durationRef.current = state.currentSong?.duration ?? 0;
+  }, [state.currentSong?.duration]);
 
   useEffect(() => {
     const songId = state.currentSong?.id ?? null;
@@ -31,7 +37,7 @@ export function useElapsedTimer(state: QueueState): number {
     // we calculate how far along the track actually is.
     if (state.trackStartedAt && state.isPlaying && !state.isPaused) {
       const serverElapsed = Math.floor((Date.now() - state.trackStartedAt) / 1000);
-      const clamped = Math.min(serverElapsed, state.currentSong?.duration ?? 0);
+      const clamped = Math.min(serverElapsed, durationRef.current);
       elapsedRef.current = clamped;
       setElapsed(clamped);
     }
@@ -39,7 +45,7 @@ export function useElapsedTimer(state: QueueState): number {
     if (!state.isPlaying || state.isPaused) return;
 
     const id = setInterval(() => {
-      elapsedRef.current = Math.min(elapsedRef.current + 1, state.currentSong?.duration ?? 0);
+      elapsedRef.current = Math.min(elapsedRef.current + 1, durationRef.current);
       setElapsed(elapsedRef.current);
     }, 1000);
 

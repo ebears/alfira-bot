@@ -23,7 +23,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { Button } from './ui/Button';
 
 export default function QueuePanel({ onClose }: { onClose: () => void }) {
-  const { state, loading, elapsed, refetch, clear } = usePlayer();
+  const { state, loading, elapsed, clear } = usePlayer();
   const { isAdminView } = useAdminView();
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -36,11 +36,6 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const { currentSong, queue, priorityQueue, isPlaying } = state;
   const progress = currentSong ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
   const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
-
-  const delayThenRefetch = async () => {
-    await new Promise((r) => setTimeout(r, 600));
-    await refetch();
-  };
 
   const handleClear = useCallback(async () => {
     setClearBusy(true);
@@ -206,9 +201,8 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
         createPortal(
           <LoadPlaylistModal
             onClose={() => setShowLoadPlaylist(false)}
-            onLoaded={async () => {
+            onLoaded={() => {
               setShowLoadPlaylist(false);
-              await delayThenRefetch();
             }}
           />,
           document.body
@@ -217,9 +211,8 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
         createPortal(
           <QuickAddModal
             onClose={() => setShowQuickAdd(false)}
-            onAdded={async () => {
+            onAdded={() => {
               setShowQuickAdd(false);
-              await delayThenRefetch();
             }}
           />,
           document.body
@@ -228,9 +221,8 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
         createPortal(
           <OverrideModal
             onClose={() => setShowOverride(false)}
-            onOverride={async () => {
+            onOverride={() => {
               setShowOverride(false);
-              await delayThenRefetch();
             }}
           />,
           document.body
