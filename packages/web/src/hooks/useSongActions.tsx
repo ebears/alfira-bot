@@ -10,6 +10,7 @@ import {
 import { useCallback, useOptimistic, useRef, useState } from 'react';
 import { addSongToPlaylist, updateSongNickname } from '../api/api';
 import type { MenuItem } from '../components/ContextMenu';
+import { useNotification } from './useNotification';
 
 interface UseSongActionsOptions {
   song: Song;
@@ -37,6 +38,8 @@ export function useSongActions({
   const [editValue, setEditValue] = useState('');
   const [savingNickname, setSavingNickname] = useState(false);
 
+  const { notify } = useNotification();
+
   const [optimisticAdded, addOptimistic] = useOptimistic(
     addedTo,
     (state: Set<string>, playlistId: string) => new Set([...state, playlistId])
@@ -61,7 +64,7 @@ export function useSongActions({
       await addSongToPlaylist(playlistId, song.id);
       setAddedTo((prev) => new Set([...prev, playlistId]));
     } catch {
-      // Optimistic state already shown - no rollback needed
+      notify('Failed to add song to playlist', 'error');
     }
   };
 

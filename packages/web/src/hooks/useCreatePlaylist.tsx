@@ -1,5 +1,7 @@
 import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { createPlaylist } from '../api/api';
+import { Button } from '../components/ui/Button';
 
 async function createPlaylistAction(
   _prevState: unknown,
@@ -19,4 +21,19 @@ async function createPlaylistAction(
 
 export function useCreatePlaylist() {
   return useActionState(createPlaylistAction, null);
+}
+
+export function CreatePlaylistSubmitButton({
+  children,
+  disabled,
+}: {
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <Button variant="primary" type="submit" disabled={disabled || pending}>
+      {children}
+    </Button>
+  );
 }
