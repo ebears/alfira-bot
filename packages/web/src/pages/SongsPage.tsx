@@ -1,6 +1,5 @@
 import type { PaginationMeta, Playlist, Song } from '@alfira-bot/shared';
 import { ListIcon, MagnifyingGlassIcon, SquaresFourIcon } from '@phosphor-icons/react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
@@ -171,18 +170,6 @@ export default function SongsPage() {
     [queueState.loopMode, notify]
   );
 
-  // ---------------------------------------------------------------------------
-  // Virtualization for list view
-  // ---------------------------------------------------------------------------
-  const listParentRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => listParentRef.current,
-    estimateSize: () => 72,
-    overscan: 3,
-  });
-
   const isGrid = viewMode === 'grid';
 
   const songContent = loading ? (
@@ -213,44 +200,19 @@ export default function SongsPage() {
       ))}
     </div>
   ) : (
-    <div
-      ref={listParentRef}
-      className="relative h-[calc(100vh-16rem)] overflow-auto"
-      style={{ contain: 'strict' }}
-    >
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const song = filtered[virtualRow.index];
-          return (
-            <div
-              key={song.id}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              <LibrarySongRow
-                song={song}
-                isAdmin={isAdminView}
-                playlists={playlists}
-                onDelete={handleSetDeleteId}
-                onPlay={handlePlayFromSong}
-                isPlaying={playingId === song.id}
-                onAddToQueue={handleAddToQueue}
-              />
-            </div>
-          );
-        })}
-      </div>
+    <div className="flex flex-col gap-1">
+      {filtered.map((song) => (
+        <LibrarySongRow
+          key={song.id}
+          song={song}
+          isAdmin={isAdminView}
+          playlists={playlists}
+          onDelete={handleSetDeleteId}
+          onPlay={handlePlayFromSong}
+          isPlaying={playingId === song.id}
+          onAddToQueue={handleAddToQueue}
+        />
+      ))}
     </div>
   );
 
