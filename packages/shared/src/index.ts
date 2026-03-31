@@ -11,6 +11,8 @@ export { getRequestedBy, type RequestedBy, type RequestUser } from './requestUse
 export { fisherYatesShuffle } from './shuffle';
 export type {
   LoopMode,
+  PaginatedResult,
+  PaginationMeta,
   Playlist,
   PlaylistDetail,
   QueuedSong,

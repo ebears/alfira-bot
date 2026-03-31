@@ -1,4 +1,4 @@
-import type { Playlist, Song } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
   CircleNotchIcon,
@@ -8,13 +8,14 @@ import {
   SquaresFourIcon,
 } from '@phosphor-icons/react';
 import type React from 'react';
-import { startTransition, useCallback, useEffect, useState } from 'react';
-import { deleteSong, getPlaylists, getSongs, startPlayback } from '../api/api';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
+import { Pagination } from '../components/Pagination';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -28,7 +29,9 @@ export default function SongsPage() {
   const { isAdminView } = useAdminView();
   const socket = useSocket();
   const { state: queueState } = usePlayer();
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [items, setItems] = useState<Song[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -43,35 +46,71 @@ export default function SongsPage() {
     return saved === 'list' ? 'list' : 'grid';
   });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [s, p] = await Promise.all([getSongs(), getPlaylists()]);
-      setSongs(s);
-      setPlaylists(p);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Refs to track state for socket handlers without causing effect re-runs
+  const paginationRef = useRef(pagination);
+  const itemsLengthRef = useRef(items.length);
+  paginationRef.current = pagination;
+  itemsLengthRef.current = items.length;
+
+  const load = useCallback(
+    async (page: number, searchQuery?: string) => {
+      setLoading(true);
+      try {
+        const [result, p] = await Promise.all([
+          getSongsPage(page, 30, searchQuery),
+          getPlaylistsPage(isAdminView, 1, 100),
+        ]);
+        setItems(result.items);
+        setPagination(result.pagination);
+        setPlaylists(p.items);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isAdminView]
+  );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    load(currentPage, search);
+  }, [load, currentPage, search]);
 
   useEffect(() => {
     const handleSongAdded = (song: Song) => {
-      setSongs((prev) => {
+      // Only prepend on page 1; increment total count
+      if (currentPage !== 1) {
+        setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
+        return;
+      }
+      setItems((prev) => {
         if (prev.some((s) => s.id === song.id)) return prev;
-        return [song, ...prev];
+        const next = [song, ...prev];
+        if (next.length > 30) next.pop();
+        return next;
       });
+      setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
     };
 
     const handleSongDeleted = (id: string) => {
-      setSongs((prev) => prev.filter((s) => s.id !== id));
+      setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
+
+      if (currentPage !== 1) {
+        setItems((prev) => prev.filter((s) => s.id !== id));
+        return;
+      }
+
+      // Capture length before filtering to determine if we need to refill
+      const prevLength = itemsLengthRef.current;
+      setItems((prev) => prev.filter((s) => s.id !== id));
+
+      if (prevLength === 30 && paginationRef.current && paginationRef.current.total > 30) {
+        getSongsPage(currentPage + 1, 30).then((result) => {
+          setItems((prev) => [...prev, ...result.items].slice(0, 30));
+        });
+      }
     };
 
     const handleSongUpdated = (updatedSong: Song) => {
-      setSongs((prev) =>
+      setItems((prev) =>
         prev.map((s) =>
           s.id === updatedSong.id
             ? {
@@ -92,7 +131,7 @@ export default function SongsPage() {
       socket.off('songs:deleted', handleSongDeleted);
       socket.off('songs:updated', handleSongUpdated);
     };
-  }, [socket]);
+  }, [socket, currentPage]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);
@@ -101,9 +140,11 @@ export default function SongsPage() {
   };
 
   const q = search.toLowerCase();
-  const filtered = songs.filter(
-    (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
-  );
+  const filtered = search
+    ? items.filter(
+        (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
+      )
+    : items;
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
@@ -137,7 +178,9 @@ export default function SongsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Library</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {loading ? '—' : `${songs.length} track${songs.length !== 1 ? 's' : ''}`}
+            {loading
+              ? '—'
+              : `${pagination?.total ?? items.length} track${(pagination?.total ?? items.length) !== 1 ? 's' : ''}`}
           </p>
         </div>
         {isAdminView && (
@@ -162,7 +205,10 @@ export default function SongsPage() {
             className="input pl-10"
             placeholder="Search by title or nickname..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
         {/* View toggle */}
@@ -254,15 +300,22 @@ export default function SongsPage() {
         </div>
       )}
 
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
+      )}
+
       {/* Modals */}
       {showAddModal && (
         <AddSongModal
           onClose={() => setShowAddModal(false)}
           onAdded={(song) => {
-            setSongs((prev) => {
-              if (prev.some((s) => s.id === song.id)) return prev;
-              return [song, ...prev];
-            });
+            if (currentPage === 1) {
+              setItems((prev) => {
+                if (prev.some((s) => s.id === song.id)) return prev;
+                return [song, ...prev];
+              });
+            }
+            setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
             setShowAddModal(false);
           }}
         />
@@ -270,7 +323,7 @@ export default function SongsPage() {
 
       {deleteId &&
         (() => {
-          const songToDelete = songs.find((s) => s.id === deleteId);
+          const songToDelete = items.find((s) => s.id === deleteId);
           return songToDelete ? (
             <ConfirmModal
               title="Delete Song"
