@@ -1,5 +1,11 @@
 import { getPlayer } from '@alfira-bot/bot';
-import { fisherYatesShuffle, getRequestedBy, PLAYLIST_SONGS_INCLUDE, toQueuedSong, type LoopMode } from '@alfira-bot/shared';
+import {
+  fisherYatesShuffle,
+  getRequestedBy,
+  type LoopMode,
+  PLAYLIST_SONGS_INCLUDE,
+  toQueuedSong,
+} from '@alfira-bot/shared';
 import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -295,7 +301,10 @@ router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async 
   if (!player) return;
 
   const { username: requestedBy } = getRequestedBy(req);
-  const queuedSong = toQueuedSong({ ...song, createdAt: song.createdAt.toISOString() }, requestedBy);
+  const queuedSong = toQueuedSong(
+    { ...song, createdAt: song.createdAt.toISOString() },
+    requestedBy
+  );
 
   await player.addToPriorityQueue(queuedSong);
 

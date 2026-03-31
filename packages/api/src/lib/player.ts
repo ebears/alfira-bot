@@ -1,5 +1,5 @@
-import { getPlayer } from '@alfira-bot/bot';
 import type { GuildPlayer } from '@alfira-bot/bot';
+import { getPlayer } from '@alfira-bot/bot';
 import type { Response } from 'express';
 import { GUILD_ID } from './config';
 
