@@ -1,7 +1,7 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { CircleNotchIcon, PlayIcon } from '@phosphor-icons/react';
-import type React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useSongActions } from '../hooks/useSongActions';
 import { ContextMenu, ContextMenuTrigger } from './ContextMenu';
 import { Button } from './ui/Button';
@@ -10,38 +10,46 @@ interface SongCardProps {
   song: Song;
   isAdmin: boolean;
   playlists: Playlist[];
-  style?: React.CSSProperties;
+  delay?: number;
   onDelete: (id: string) => void;
   onPlay: (id: string) => void;
   isPlaying: boolean;
   onAddToQueue: (id: string) => void;
 }
 
-export const SongCard = ({
+const SongCardInner = ({
   song,
   isAdmin,
   playlists,
-  style,
+  delay,
   onDelete,
   onPlay,
   isPlaying,
   onAddToQueue,
 }: SongCardProps) => {
-  const handleDelete = () => onDelete(song.id);
-  const handlePlay = () => onPlay(song.id);
-  const handleAddToQueue = () => onAddToQueue(song.id);
+  const style = useMemo(
+    () => ({ animationDelay: `${Math.min((delay ?? 0) * 30, 300)}ms` }),
+    [delay]
+  );
+  const handleDelete = useCallback(() => onDelete(song.id), [onDelete, song.id]);
+  const handlePlay = useCallback(() => onPlay(song.id), [onPlay, song.id]);
+  const handleAddToQueue = useCallback(() => onAddToQueue(song.id), [onAddToQueue, song.id]);
+
+  const actionHandlers = useMemo(
+    () => ({ onAddToQueue: handleAddToQueue, onDelete: handleDelete }),
+    [handleAddToQueue, handleDelete]
+  );
 
   const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
     song,
     isAdmin,
     playlists,
-    onAddToQueue: handleAddToQueue,
-    onDelete: handleDelete,
+    ...actionHandlers,
   });
 
   return (
     <div
-      className="group animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised transition-all duration-100"
+      className="group animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised transition-shadow duration-100"
       style={style}
     >
       {/* Thumbnail with play overlay */}
@@ -110,6 +118,8 @@ export const SongCard = ({
   );
 };
 
-SongCard.displayName = 'SongCard';
+SongCardInner.displayName = 'SongCard';
+
+export const SongCard = React.memo(SongCardInner);
 
 export default SongCard;
