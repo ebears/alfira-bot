@@ -884,6 +884,21 @@
         border-radius: 4px;
     }
 
+    /* Shared button state utilities */
+    .btn-state-hover {
+        transform: var(--btn-transform-hover);
+    }
+    .btn-state-active {
+        transform: var(--btn-transform-active);
+        scale: var(--btn-scale-active);
+        box-shadow: var(--clay-shadow-flat);
+    }
+    .btn-state-active-sm {
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
+        box-shadow: var(--clay-shadow-flat);
+    }
+
     .btn-primary {
         @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
            transition-all duration-150 cursor-pointer disabled:opacity-40
