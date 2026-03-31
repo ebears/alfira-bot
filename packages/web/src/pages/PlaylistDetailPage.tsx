@@ -4,7 +4,6 @@ import {
   BombIcon,
   CaretLeftIcon,
   CircleNotchIcon,
-  DotsThreeOutlineVerticalIcon,
   GhostIcon,
   LockIcon,
   LockOpenIcon,
@@ -297,21 +296,11 @@ export default function PlaylistDetailPage() {
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </Button>
-          <Button
+          <ContextMenuTrigger
             ref={menuTriggerRef}
-            variant="secondary"
-            size="icon"
-            aria-haspopup="true"
-            aria-expanded={menuOpen}
-            title="More actions"
-            onClick={(e) => {
-              e.stopPropagation();
-              setMenuOpen(true);
-            }}
-            className={menuOpen ? 'pressed' : ''}
-          >
-            <DotsThreeOutlineVerticalIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
-          </Button>
+            onOpen={() => setMenuOpen(true)}
+            isOpen={menuOpen}
+          />
           {menuOpen && (
             <ContextMenu
               items={menuItems}
@@ -430,7 +419,7 @@ function SongRow({
   });
 
   return (
-    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised active:clay-flat transition-all duration-100">
+    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-all duration-100">
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}
