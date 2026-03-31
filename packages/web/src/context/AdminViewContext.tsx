@@ -40,11 +40,7 @@ export function AdminViewProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  return (
-    <AdminViewContext.Provider value={{ isAdminView, toggleAdminView }}>
-      {children}
-    </AdminViewContext.Provider>
-  );
+  return <AdminViewContext value={{ isAdminView, toggleAdminView }}>{children}</AdminViewContext>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

@@ -25,6 +25,14 @@ export default function AddSongModal({
     inputRef.current?.focus();
   }, []);
 
+  // Auto-close after successful playlist import
+  useEffect(() => {
+    if (successMsg) {
+      const id = setTimeout(() => onClose(), 1500);
+      return () => clearTimeout(id);
+    }
+  }, [successMsg, onClose]);
+
   const handleSubmit = async () => {
     if (!url.trim()) return;
     setLoading(true);
@@ -38,9 +46,6 @@ export default function AddSongModal({
         setSuccessMsg(result.message);
         // Close modal after a short delay to show success message
         // The socket events will update the song list automatically
-        setTimeout(() => {
-          onClose();
-        }, 1500);
       } else {
         // Add single song
         const song = await addSong(url.trim(), nickname.trim() || undefined);

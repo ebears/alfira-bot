@@ -176,7 +176,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [colorTheme, mode, resolvedMode]);
 
   return (
-    <ThemeContext.Provider
+    <ThemeContext
       value={{
         colorTheme,
         mode,
@@ -187,7 +187,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-    </ThemeContext.Provider>
+    </ThemeContext>
   );
 }
 

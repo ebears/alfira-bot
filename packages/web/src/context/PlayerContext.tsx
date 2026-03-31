@@ -160,7 +160,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     refetch,
   };
 
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+  return <PlayerContext value={value}>{children}</PlayerContext>;
 }
 
 export function usePlayer(): PlayerContextValue {
