@@ -67,3 +67,10 @@ export function useConnectionStatus(): ConnectionStatus {
   useSocket();
   return useSyncExternalStore(subscribeStatus, getStatus, getStatus);
 }
+
+export function disposeSocket(): void {
+  if (_socket) {
+    _socket.disconnect();
+    _socket = null;
+  }
+}

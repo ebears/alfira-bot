@@ -7,7 +7,7 @@ import {
   UserIcon,
   VinylRecordIcon,
 } from '@phosphor-icons/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useOptimistic, useRef, useState } from 'react';
 import { addSongToPlaylist, updateSongNickname } from '../api/api';
 import type { MenuItem } from '../components/ContextMenu';
 
@@ -37,6 +37,11 @@ export function useSongActions({
   const [editValue, setEditValue] = useState('');
   const [savingNickname, setSavingNickname] = useState(false);
 
+  const [optimisticAdded, addOptimistic] = useOptimistic(
+    addedTo,
+    (state: Set<string>, playlistId: string) => new Set([...state, playlistId])
+  );
+
   const cancelEdit = useCallback(() => {
     setEditValue('');
   }, []);
@@ -51,11 +56,12 @@ export function useSongActions({
   }, [song.id, editValue]);
 
   const handleAddToPlaylist = async (playlistId: string) => {
+    addOptimistic(playlistId);
     try {
       await addSongToPlaylist(playlistId, song.id);
       setAddedTo((prev) => new Set([...prev, playlistId]));
     } catch {
-      setAddedTo((prev) => new Set([...prev, playlistId]));
+      // Optimistic state already shown - no rollback needed
     }
   };
 
@@ -109,7 +115,7 @@ export function useSongActions({
               items: playlists.map((pl) => ({
                 id: pl.id,
                 label: pl.name,
-                disabled: addedTo.has(pl.id),
+                disabled: optimisticAdded.has(pl.id),
               })),
               onSelect: handleAddToPlaylist,
               emptyMessage: 'no playlists yet',
