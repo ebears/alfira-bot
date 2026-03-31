@@ -32,6 +32,7 @@ export default function SongsPage() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const { handleAddToQueue, notification } = useAddToQueue();
   const { notify } = useNotification();
+  const handleSetDeleteId = useCallback((id: string | null) => setDeleteId(id), []);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('alfira-library-view');
@@ -203,10 +204,8 @@ export default function SongsPage() {
           song={song}
           isAdmin={isAdminView}
           playlists={playlists}
-          style={{
-            animationDelay: `${Math.min(i * 30, 300)}ms`,
-          }}
-          onDelete={setDeleteId}
+          delay={i}
+          onDelete={handleSetDeleteId}
           onPlay={handlePlayFromSong}
           isPlaying={playingId === song.id}
           onAddToQueue={handleAddToQueue}
@@ -243,7 +242,7 @@ export default function SongsPage() {
                 song={song}
                 isAdmin={isAdminView}
                 playlists={playlists}
-                onDelete={setDeleteId}
+                onDelete={handleSetDeleteId}
                 onPlay={handlePlayFromSong}
                 isPlaying={playingId === song.id}
                 onAddToQueue={handleAddToQueue}
