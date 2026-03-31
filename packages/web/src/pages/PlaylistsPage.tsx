@@ -3,13 +3,14 @@ import { CaretRightIcon, GhostIcon, PlaylistIcon, PlusCircleIcon } from '@phosph
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createPlaylist, getPlaylists, startPlayback } from '../api/api';
+import { getPlaylists, startPlayback } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
@@ -71,18 +72,6 @@ export default function PlaylistsPage() {
     };
   }, [socket]);
 
-  const handleCreate = async (name: string) => {
-    const pl = await createPlaylist(name);
-    // The socket event will also fire and upsert, but we do an optimistic
-    // update here too so the creating user sees it instantly without waiting
-    // for the round-trip.
-    setPlaylists((prev) => {
-      if (prev.some((p) => p.id === pl.id)) return prev;
-      return [...prev, pl];
-    });
-    setShowCreate(false);
-  };
-
   const handleAddToQueue = async (playlistId: string) => {
     try {
       await startPlayback({ playlistId, mode: 'sequential', loop: queueState.loopMode });
@@ -106,7 +95,11 @@ export default function PlaylistsPage() {
             {loading ? '—' : `${playlists.length} playlist${playlists.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <Button variant="primary" onClick={() => setShowCreate(true)} className={showCreate ? 'pressed' : ''}>
+        <Button
+          variant="primary"
+          onClick={() => setShowCreate(true)}
+          className={showCreate ? 'pressed' : ''}
+        >
           + New Playlist
         </Button>
       </div>
@@ -138,9 +131,7 @@ export default function PlaylistsPage() {
         </div>
       )}
 
-      {showCreate && (
-        <CreatePlaylistModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />
-      )}
+      {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} />}
       {notification && <NotificationToast notification={notification} />}
     </div>
   );
@@ -218,28 +209,23 @@ function PlaylistRow({
 // ---------------------------------------------------------------------------
 // Create playlist modal
 // ---------------------------------------------------------------------------
-function CreatePlaylistModal({
-  onClose,
-  onCreate,
-}: {
-  onClose: () => void;
-  onCreate: (name: string) => Promise<void>;
-}) {
+function CreatePlaylistModal({ onClose }: { onClose: () => void }) {
+  const [state, formAction, isPending] = useCreatePlaylist();
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!name.trim()) return;
-    setLoading(true);
-    setError('');
-    try {
-      await onCreate(name.trim());
-    } catch {
-      setError('Could not create playlist. Try again.');
-      setLoading(false);
-    }
+    const formData = new FormData();
+    formData.set('name', name.trim());
+    formAction(formData);
   };
+
+  // Close modal on success (error === null means success)
+  useEffect(() => {
+    if (state?.error === null) {
+      onClose();
+    }
+  }, [state, onClose]);
 
   return (
     <Backdrop onClose={onClose}>
@@ -254,20 +240,19 @@ function CreatePlaylistModal({
           value={name}
           onChange={(e) => {
             setName(e.target.value);
-            setError('');
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleSubmit();
             if (e.key === 'Escape') onClose();
           }}
-          disabled={loading}
+          disabled={isPending}
         />
-        {error && <p className="font-mono text-xs text-danger mb-3">{error}</p>}
+        {state?.error && <p className="font-mono text-xs text-danger mb-3">{state.error}</p>}
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onClose} disabled={loading}>
+          <Button variant="foreground" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={loading || !name.trim()}>
+          <Button variant="primary" onClick={handleSubmit} disabled={isPending || !name.trim()}>
             Create
           </Button>
         </div>

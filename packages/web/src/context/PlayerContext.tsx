@@ -12,7 +12,7 @@ import {
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useElapsedTimer } from '../hooks/useElapsedTimer';
-import { useSocket } from '../hooks/useSocket';
+import { disposeSocket, useSocket } from '../hooks/useSocket';
 
 // ---------------------------------------------------------------------------
 // Default empty state — used before the first fetch completes.
@@ -105,50 +105,46 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [socket, refetch]);
 
   // ---------------------------------------------------------------------------
+  // Cleanup — disconnect the socket when the provider unmounts.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    return () => {
+      disposeSocket();
+    };
+  }, []);
+
+  // ---------------------------------------------------------------------------
   // Action helpers
   //
-  // Each action calls the API and then does a short-delay refetch as a
-  // safety net. The socket player:update event will usually arrive first
-  // (within ~10-50ms), but the refetch ensures we don't get stuck in an
-  // inconsistent state if the socket event is missed.
+  // Each action calls the API. Socket player:update events keep state in sync.
   // ---------------------------------------------------------------------------
   const skip = useCallback(async () => {
     await skipTrack();
-    setTimeout(refetch, 100);
-  }, [refetch]);
+  }, []);
 
   const leave = useCallback(async () => {
     await leaveVoice();
-    setTimeout(refetch, 100);
-  }, [refetch]);
+  }, []);
 
   const pause = useCallback(async () => {
     await togglePause();
-    setTimeout(refetch, 100);
-  }, [refetch]);
+  }, []);
 
   const clear = useCallback(async () => {
     await clearQueue();
-    setTimeout(refetch, 100);
-  }, [refetch]);
+  }, []);
 
-  const setLoop = useCallback(
-    async (mode: LoopMode) => {
-      await setLoopMode(mode);
-      setTimeout(refetch, 100);
-    },
-    [refetch]
-  );
+  const setLoop = useCallback(async (mode: LoopMode) => {
+    await setLoopMode(mode);
+  }, []);
 
   const shuffle = useCallback(async () => {
     await shuffleQueue();
-    setTimeout(refetch, 100);
-  }, [refetch]);
+  }, []);
 
   const unshuffle = useCallback(async () => {
     await unshuffleQueue();
-    setTimeout(refetch, 100);
-  }, [refetch]);
+  }, []);
 
   const value: PlayerContextValue = {
     state,

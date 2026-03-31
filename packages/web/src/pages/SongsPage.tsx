@@ -8,7 +8,7 @@ import {
   SquaresFourIcon,
 } from '@phosphor-icons/react';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import { deleteSong, getPlaylists, getSongs, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -141,7 +141,11 @@ export default function SongsPage() {
           </p>
         </div>
         {isAdminView && (
-          <Button variant="primary" onClick={() => setShowAddModal(true)} className={showAddModal ? 'pressed' : ''}>
+          <Button
+            variant="primary"
+            onClick={() => setShowAddModal(true)}
+            className={showAddModal ? 'pressed' : ''}
+          >
             + Add Song
           </Button>
         )}
@@ -167,8 +171,10 @@ export default function SongsPage() {
             variant="foreground"
             size="icon"
             onClick={() => {
-              setViewMode('grid');
-              localStorage.setItem('alfira-library-view', 'grid');
+              startTransition(() => {
+                setViewMode('grid');
+                localStorage.setItem('alfira-library-view', 'grid');
+              });
             }}
             className={viewMode === 'grid' ? 'pressed text-accent' : ''}
             title="Grid view"
@@ -179,8 +185,10 @@ export default function SongsPage() {
             variant="foreground"
             size="icon"
             onClick={() => {
-              setViewMode('list');
-              localStorage.setItem('alfira-library-view', 'list');
+              startTransition(() => {
+                setViewMode('list');
+                localStorage.setItem('alfira-library-view', 'list');
+              });
             }}
             className={viewMode === 'list' ? 'pressed text-accent' : ''}
             title="List view"
