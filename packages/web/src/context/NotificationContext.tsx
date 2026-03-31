@@ -50,11 +50,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }, ms);
   }, []);
 
-  return (
-    <NotificationContext.Provider value={{ notification, notify }}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext value={{ notification, notify }}>{children}</NotificationContext>;
 }
 
 export function useNotification(): NotificationContextValue {

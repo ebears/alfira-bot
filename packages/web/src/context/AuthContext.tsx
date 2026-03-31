@@ -36,11 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, loading, logout, refetch }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext value={{ user, loading, logout, refetch }}>{children}</AuthContext>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
