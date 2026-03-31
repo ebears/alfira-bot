@@ -331,7 +331,7 @@ function SongCard({
 
   return (
     <div
-      className="group animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised active:clay-flat transition-all duration-100"
+      className="group animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised transition-all duration-100"
       style={style}
     >
       {/* Thumbnail with play overlay */}
@@ -429,7 +429,7 @@ function LibrarySongRow({
   });
 
   return (
-    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised active:clay-flat transition-all duration-100">
+    <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-all duration-100">
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}
