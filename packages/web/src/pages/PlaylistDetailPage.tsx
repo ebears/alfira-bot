@@ -377,7 +377,7 @@ export default function PlaylistDetailPage() {
           playlist={playlist}
           onClose={() => setShowAddSongs(false)}
           onAdded={() => {
-            load();
+            load(currentPage);
             setShowAddSongs(false);
           }}
         />

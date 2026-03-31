@@ -140,9 +140,11 @@ export default function SongsPage() {
   };
 
   const q = search.toLowerCase();
-  const filtered = search ? items.filter(
-    (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
-  ) : items;
+  const filtered = search
+    ? items.filter(
+        (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
+      )
+    : items;
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
