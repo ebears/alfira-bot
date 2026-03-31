@@ -1194,13 +1194,37 @@
     }
 
     .btn-icon-primary {
-        @apply btn-icon-accent;
+        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
+           transition-all duration-150 cursor-pointer disabled:opacity-40
+           disabled:cursor-not-allowed;
+        border-radius: var(--clay-radius-md);
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
+            var(--icon-btn-accent) 100%
+        );
+        box-shadow:
+            0 1px 0 0 var(--icon-btn-shadow),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
         --icon-btn-accent: var(--color-accent);
         --icon-btn-shadow: color-mix(in srgb, var(--color-accent-muted) 100%, black 35%);
     }
 
     .btn-icon-secondary {
-        @apply btn-icon-accent;
+        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
+           transition-all duration-150 cursor-pointer disabled:opacity-40
+           disabled:cursor-not-allowed;
+        border-radius: var(--clay-radius-md);
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
+            var(--icon-btn-accent) 100%
+        );
+        box-shadow:
+            0 1px 0 0 var(--icon-btn-shadow),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
         --icon-btn-accent: var(--color-secondary);
         --icon-btn-shadow: color-mix(in srgb, var(--color-surface) 60%, black);
     }
@@ -1247,7 +1271,19 @@
     }
 
     .btn-icon-danger {
-        @apply btn-icon-accent;
+        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
+           transition-all duration-150 cursor-pointer disabled:opacity-40
+           disabled:cursor-not-allowed;
+        border-radius: var(--clay-radius-md);
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--icon-btn-accent) 80%, white) 0%,
+            var(--icon-btn-accent) 100%
+        );
+        box-shadow:
+            0 1px 0 0 var(--icon-btn-shadow),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
         --icon-btn-accent: var(--color-danger);
         --icon-btn-shadow: color-mix(in srgb, var(--color-danger) 50%, black);
     }
