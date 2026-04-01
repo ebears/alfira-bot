@@ -10,11 +10,12 @@ interface SongRowProps {
   song: Song;
   isAdmin: boolean;
   // When provided, the context menu shows "Remove" (playlist detail context)
-  onRemove?: () => void;
-  removeLabel?: string;
+  onRemove: () => void;
+  removeLabel: string;
   onPlay: () => void;
   isPlaying?: boolean;
   onAddToQueue: () => void;
+  'data-song-id'?: string;
 }
 
 export const SongRow = memo(
@@ -29,7 +30,10 @@ export const SongRow = memo(
     });
 
     return (
-      <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-all duration-100">
+      <div
+        className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-all duration-100"
+        data-song-id={song.id}
+      >
         <img
           src={song.thumbnailUrl}
           alt={song.nickname || song.title}

@@ -292,9 +292,7 @@ export default function SongsPage() {
       {/* Content */}
       {songContent}
 
-      {pagination && (
-        <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
-      )}
+      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
 
       {/* Modals */}
       {showAddModal && (
@@ -313,30 +311,13 @@ export default function SongsPage() {
         />
       )}
 
-      {deleteId &&
-        (() => {
-          const songToDelete = items.find((s) => s.id === deleteId);
-          return songToDelete ? (
-            <ConfirmModal
-              title="Delete Song"
-              message={
-                <>
-                  Remove{' '}
-                  <span className="text-fg font-semibold">
-                    "{songToDelete.nickname || songToDelete.title}"
-                  </span>{' '}
-                  from the library?{' '}
-                  <span className="font-mono text-xs text-danger/70">
-                    this will remove it from all playlists too.
-                  </span>
-                </>
-              }
-              confirmLabel="Delete"
-              onConfirm={() => handleDelete(deleteId)}
-              onCancel={() => setDeleteId(null)}
-            />
-          ) : null;
-        })()}
+      {deleteId && (
+        <DeleteConfirmDialog
+          song={items.find((s) => s.id === deleteId)}
+          onConfirm={() => handleDelete(deleteId)}
+          onCancel={() => setDeleteId(null)}
+        />
+      )}
 
       {/* Notification Toast */}
       {notification && <NotificationToast notification={notification} />}
@@ -387,5 +368,34 @@ function SkeletonList() {
         </div>
       ))}
     </div>
+  );
+}
+
+function DeleteConfirmDialog({
+  song,
+  onConfirm,
+  onCancel,
+}: {
+  song: Song | undefined;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!song) return null;
+  return (
+    <ConfirmModal
+      title="Delete Song"
+      message={
+        <>
+          Remove <span className="text-fg font-semibold">"{song.nickname || song.title}"</span> from
+          the library?{' '}
+          <span className="font-mono text-xs text-danger/70">
+            this will remove it from all playlists too.
+          </span>
+        </>
+      }
+      confirmLabel="Delete"
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 }

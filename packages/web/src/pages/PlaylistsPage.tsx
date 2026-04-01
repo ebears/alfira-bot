@@ -97,6 +97,26 @@ export default function PlaylistsPage() {
     [queueState.loopMode, notify]
   );
 
+  const handleRowClick = useCallback(
+    (e: React.MouseEvent) => {
+      const row = e.currentTarget.closest('[data-playlist-id]');
+      const playlistId = row?.getAttribute('data-playlist-id');
+      if (playlistId) navigate(`/playlists/${playlistId}`);
+    },
+    [navigate]
+  );
+
+  const handleRowAddToQueue = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLElement;
+      const row = target.closest('[data-playlist-id]');
+      const playlistId = row?.getAttribute('data-playlist-id');
+      if (playlistId) handleAddToQueue(playlistId);
+    },
+    [handleAddToQueue]
+  );
+
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
@@ -134,20 +154,16 @@ export default function PlaylistsPage() {
             <PlaylistRow
               key={pl.id}
               playlist={pl}
-              style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
-              onClick={() => navigate(`/playlists/${pl.id}`)}
-              onAddToQueue={(e) => {
-                e.stopPropagation();
-                handleAddToQueue(pl.id);
-              }}
+              animationDelay={`${Math.min(i * 40, 400)}ms`}
+              data-playlist-id={pl.id}
+              onClick={handleRowClick}
+              onAddToQueue={handleRowAddToQueue}
             />
           ))}
         </div>
       )}
 
-      {pagination && (
-        <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
-      )}
+      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} />}
       {notification && <NotificationToast notification={notification} />}

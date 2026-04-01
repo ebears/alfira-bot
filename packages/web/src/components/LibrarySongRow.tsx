@@ -1,7 +1,7 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { CircleNotchIcon, PlayIcon } from '@phosphor-icons/react';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { useSongActions } from '../hooks/useSongActions';
 import { ContextMenu, ContextMenuTrigger } from './ContextMenu';
 import { Button } from './ui/Button';
@@ -26,9 +26,9 @@ export const LibrarySongRow = memo(
     isPlaying,
     onAddToQueue,
   }: LibrarySongRowProps) => {
-    const handleDelete = () => onDelete(song.id);
-    const handlePlay = () => onPlay(song.id);
-    const handleAddToQueue = () => onAddToQueue(song.id);
+    const handleDelete = useCallback(() => onDelete(song.id), [onDelete, song.id]);
+    const handlePlay = useCallback(() => onPlay(song.id), [onPlay, song.id]);
+    const handleAddToQueue = useCallback(() => onAddToQueue(song.id), [onAddToQueue, song.id]);
 
     const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
       song,

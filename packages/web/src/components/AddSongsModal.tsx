@@ -1,6 +1,6 @@
 import type { PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { addSongToPlaylist, getSongsPage } from '../api/api';
 import { Backdrop } from './Backdrop';
 import { Button } from './ui/Button';
@@ -19,6 +19,8 @@ export default function AddSongsModal({
   const [adding, setAdding] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState<Set<string>>(new Set(playlist.songs.map((ps) => ps.songId)));
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     getSongsPage(1, 500).then((result) => {
@@ -27,9 +29,23 @@ export default function AddSongsModal({
     });
   }, []);
 
-  const searchLower = useMemo(() => search.toLowerCase(), [search]);
+  // Debounce search input
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setDebouncedSearch(search), 200);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [search]);
+
+  const searchLower = debouncedSearch.toLowerCase();
   const filtered = useMemo(
-    () => allSongs.filter((s) => s.title.toLowerCase().includes(searchLower)),
+    () =>
+      allSongs.filter(
+        (s) =>
+          s.title.toLowerCase().includes(searchLower) ||
+          s.nickname?.toLowerCase().includes(searchLower)
+      ),
     [allSongs, searchLower]
   );
 
