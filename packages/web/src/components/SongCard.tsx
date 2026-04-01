@@ -49,7 +49,7 @@ const SongCardInner = ({
 
   return (
     <div
-      className="group animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised transition-shadow duration-100"
+      className="animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting"
       style={style}
     >
       {/* Thumbnail with play overlay */}
@@ -109,11 +109,7 @@ const SongCardInner = ({
             />
           </div>
         </div>
-        {song.nickname && (
-          <p className="text-[11px] text-faint truncate opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            {song.title}
-          </p>
-        )}
+        {song.nickname && <p className="text-[11px] text-faint truncate">{song.title}</p>}
       </div>
     </div>
   );

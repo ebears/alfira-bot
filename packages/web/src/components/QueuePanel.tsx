@@ -304,7 +304,7 @@ const QueueSongItem = memo(function QueueSongItem({
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-elevated clay-resting hover:clay-raised active:clay-flat transition-all duration-100">
+    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-elevated clay-resting">
       <span
         className={`font-mono text-[10px] w-4 text-right shrink-0 ${accent ? 'text-accent' : 'text-faint'}`}
       >
@@ -373,7 +373,7 @@ const NowPlayingCard = memo(function NowPlayingCard({
             href={song.youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-body font-bold text-sm text-fg hover:text-accent transition-colors duration-150 line-clamp-2"
+            className="font-body font-bold text-sm text-fg hover:text-accent line-clamp-2"
           >
             {song.nickname || song.title}
           </a>

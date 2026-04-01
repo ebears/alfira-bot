@@ -1099,15 +1099,6 @@
         border-bottom: 3px solid
             color-mix(in srgb, var(--color-surface) 70%, black);
     }
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--clay-shadow-raised);
-    }
-    .card:active {
-        transform: translateY(2px);
-        box-shadow: var(--clay-shadow-flat);
-    }
-
     .modal-clay {
         border-radius: var(--clay-radius-lg);
         box-shadow: var(--clay-shadow-floating);
