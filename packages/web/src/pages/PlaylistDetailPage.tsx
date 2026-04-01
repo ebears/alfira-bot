@@ -9,7 +9,6 @@ import {
   PlayIcon,
   PlusCircleIcon,
 } from '@phosphor-icons/react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -255,16 +254,6 @@ export default function PlaylistDetailPage() {
       : []),
   ];
 
-  // Virtualization refs
-  const listParentRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useVirtualizer({
-    count: playlist?.songs.length ?? 0,
-    getScrollElement: () => listParentRef.current,
-    estimateSize: () => 72,
-    overscan: 3,
-  });
-
   if (loading) return <DetailSkeleton />;
   if (!playlist) return null;
 
@@ -364,45 +353,19 @@ export default function PlaylistDetailPage() {
           addLabel="add some songs"
         />
       ) : (
-        <div
-          ref={listParentRef}
-          className="relative h-[calc(100vh-16rem)] overflow-auto"
-          style={{ contain: 'strict' }}
-        >
-          <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: '100%',
-              position: 'relative',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const ps = playlist.songs[virtualRow.index];
-              if (!ps) return null;
-              return (
-                <div
-                  key={ps.id}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  <SongRow
-                    song={ps.song}
-                    isAdmin={canEdit}
-                    onRemove={() => setRemoveId(ps.songId)}
-                    removeLabel="Remove from playlist"
-                    onPlay={() => handlePlayFromSong(ps.songId)}
-                    isPlaying={playingSongId === ps.songId}
-                    onAddToQueue={() => handleAddToQueue(ps.songId)}
-                  />
-                </div>
-              );
-            })}
-          </div>
+        <div className="flex flex-col gap-1">
+          {playlist.songs.map((ps) => (
+            <SongRow
+              key={ps.id}
+              song={ps.song}
+              isAdmin={canEdit}
+              onRemove={() => setRemoveId(ps.songId)}
+              removeLabel="Remove from playlist"
+              onPlay={() => handlePlayFromSong(ps.songId)}
+              isPlaying={playingSongId === ps.songId}
+              onAddToQueue={() => handleAddToQueue(ps.songId)}
+            />
+          ))}
         </div>
       )}
 
