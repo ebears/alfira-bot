@@ -9,7 +9,7 @@ import {
   PlayIcon,
   PlusCircleIcon,
 } from '@phosphor-icons/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   deletePlaylist,
@@ -355,23 +355,20 @@ export default function PlaylistDetailPage() {
       ) : (
         <div className="flex flex-col gap-1">
           {playlist.songs.map((ps) => (
-            <SongRow
+            <PlaylistSongRow
               key={ps.id}
-              song={ps.song}
-              isAdmin={canEdit}
-              onRemove={() => setRemoveId(ps.songId)}
-              removeLabel="Remove from playlist"
-              onPlay={() => handlePlayFromSong(ps.songId)}
-              isPlaying={playingSongId === ps.songId}
-              onAddToQueue={() => handleAddToQueue(ps.songId)}
+              ps={ps}
+              canEdit={canEdit}
+              playingSongId={playingSongId}
+              onPlayFromSong={handlePlayFromSong}
+              onAddToQueue={handleAddToQueue}
+              onRemoveSong={setRemoveId}
             />
           ))}
         </div>
       )}
 
-      {pagination && (
-        <Pagination pagination={pagination} onPageChange={(page) => setCurrentPage(page)} />
-      )}
+      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
 
       {/* Modals */}
       {showAddSongs && (
@@ -427,6 +424,35 @@ export default function PlaylistDetailPage() {
     </div>
   );
 }
+
+/** Extracted sub-component to stabilize per-row callbacks for `SongRow.memo()`. */
+const PlaylistSongRow = memo(function PlaylistSongRow({
+  ps,
+  canEdit,
+  playingSongId,
+  onPlayFromSong,
+  onAddToQueue,
+  onRemoveSong,
+}: {
+  ps: PlaylistDetail['songs'][number];
+  canEdit: boolean;
+  playingSongId: string | null;
+  onPlayFromSong: (songId: string) => void;
+  onAddToQueue: (songId: string) => void;
+  onRemoveSong: (songId: string) => void;
+}) {
+  return (
+    <SongRow
+      song={ps.song}
+      isAdmin={canEdit}
+      onRemove={() => onRemoveSong(ps.songId)}
+      removeLabel="Remove from playlist"
+      onPlay={() => onPlayFromSong(ps.songId)}
+      isPlaying={playingSongId === ps.songId}
+      onAddToQueue={() => onAddToQueue(ps.songId)}
+    />
+  );
+});
 
 // ---------------------------------------------------------------------------
 // Skeleton / empty state

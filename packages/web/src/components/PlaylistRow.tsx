@@ -1,27 +1,34 @@
 import type { Playlist } from '@alfira-bot/shared';
 import { CaretRightIcon, GhostIcon, PlaylistIcon, PlusCircleIcon } from '@phosphor-icons/react';
-import type React from 'react';
 import { memo } from 'react';
 
 interface PlaylistRowProps {
   playlist: Playlist;
-  style?: React.CSSProperties;
-  onClick: () => void;
+  animationDelay: string;
+  onClick: (e: React.MouseEvent) => void;
   onAddToQueue: (e: React.MouseEvent) => void;
+  'data-playlist-id'?: string;
 }
 
 export const PlaylistRow = memo(
-  ({ playlist, style, onClick, onAddToQueue }: PlaylistRowProps) => {
+  ({
+    playlist,
+    animationDelay,
+    onClick,
+    onAddToQueue,
+    'data-playlist-id': dataPlaylistId,
+  }: PlaylistRowProps) => {
     const count = playlist._count?.songs ?? 0;
     return (
       <div
         className="flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 md:py-4 cursor-pointer group animate-fade-up opacity-0 bg-elevated rounded-xl clay-resting hover:clay-raised active:clay-flat transition-all duration-100"
-        style={style}
+        style={{ animationDelay }}
+        data-playlist-id={dataPlaylistId}
         onClick={onClick}
-        onKeyDown={(e) => {
+        onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onClick();
+            onClick(e as unknown as React.MouseEvent);
           }
         }}
         role="button"
@@ -64,8 +71,7 @@ export const PlaylistRow = memo(
         />
       </div>
     );
-  },
-  (prev, next) => prev.playlist.id === next.playlist.id && prev.style === next.style
+  }
 );
 
 PlaylistRow.displayName = 'PlaylistRow';

@@ -118,7 +118,13 @@ export function ContextMenu({
   useEffect(() => {
     if (!isOpen || !triggerRef.current) return;
 
+    const lastUpdateRef = { current: 0 };
+
     const updatePosition = () => {
+      const now = Date.now();
+      if (now - lastUpdateRef.current < 16) return; // ~60fps throttle
+      lastUpdateRef.current = now;
+
       const trigger = triggerRef.current;
       if (!trigger) return;
 

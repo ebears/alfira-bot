@@ -1,5 +1,6 @@
 import type { PaginationMeta } from '@alfira-bot/shared';
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { memo } from 'react';
 import { Button } from './ui/Button';
 
 interface PaginationProps {
@@ -7,7 +8,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export function Pagination({ pagination, onPageChange }: PaginationProps) {
+export const Pagination = memo(function Pagination({ pagination, onPageChange }: PaginationProps) {
   const { page, totalPages } = pagination;
 
   if (totalPages <= 1) return null;
@@ -76,4 +77,4 @@ export function Pagination({ pagination, onPageChange }: PaginationProps) {
       </Button>
     </div>
   );
-}
+});
