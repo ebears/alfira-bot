@@ -169,16 +169,16 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
 
 interface ProgressBarProps {
   currentSong: QueuedSong | null;
-  elapsed: number;
+  registerProgress: (ref: HTMLDivElement | null) => void;
   variant: 'mobile' | 'desktop';
 }
 
-const ProgressBar = memo(function ProgressBar({ currentSong, elapsed, variant }: ProgressBarProps) {
-  const progress =
-    currentSong && currentSong.duration > 0
-      ? Math.min((elapsed / currentSong.duration) * 100, 100)
-      : 0;
-
+const ProgressBar = memo(function ProgressBar({
+  currentSong,
+  registerProgress,
+  variant,
+}: ProgressBarProps) {
+  // rAF-driven progress bar — width set directly by DOM, no React state
   if (variant === 'mobile') {
     return (
       <div
@@ -186,8 +186,9 @@ const ProgressBar = memo(function ProgressBar({ currentSong, elapsed, variant }:
         style={{ boxShadow: 'var(--clay-shadow-flat)' }}
       >
         <div
-          className="absolute inset-y-0 left-0 bg-accent transition-all duration-1000 ease-linear"
-          style={{ width: `${progress}%` }}
+          ref={currentSong != null ? registerProgress : null}
+          className="absolute inset-y-0 left-0 bg-accent"
+          style={{ width: '0%' }}
         />
       </div>
     );
@@ -197,8 +198,9 @@ const ProgressBar = memo(function ProgressBar({ currentSong, elapsed, variant }:
     <div className="hidden md:flex flex-1 items-center px-4">
       <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
         <div
-          className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
-          style={{ width: `${progress}%` }}
+          ref={currentSong != null ? registerProgress : null}
+          className="absolute inset-y-0 left-0 bg-accent rounded-full"
+          style={{ width: '0%' }}
         />
       </div>
     </div>
@@ -271,7 +273,8 @@ const AlbumArt = memo(function AlbumArt({ currentSong, isPlaying, isPaused }: Al
  * --------------------------------------------------------------------------- */
 
 export function NowPlayingBar() {
-  const { state, elapsed, skip, leave, pause, setLoop, shuffle, unshuffle } = usePlayer();
+  const { state, elapsed, registerProgress, skip, leave, pause, setLoop, shuffle, unshuffle } =
+    usePlayer();
   const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode, isShuffled } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
@@ -347,7 +350,7 @@ export function NowPlayingBar() {
   return (
     <div className="shrink-0 bg-elevated fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom clay-player-edge">
       {/* Mobile: progress bar on top */}
-      <ProgressBar currentSong={currentSong} elapsed={elapsed} variant="mobile" />
+      <ProgressBar currentSong={currentSong} registerProgress={registerProgress} variant="mobile" />
 
       <div
         className={`h-26 md:h-24 flex flex-row items-center px-3 md:px-5 gap-2 md:gap-3 ${!currentSong ? 'justify-end md:justify-start' : ''}`}
@@ -381,7 +384,11 @@ export function NowPlayingBar() {
         />
 
         {/* Desktop: centered progress bar */}
-        <ProgressBar currentSong={currentSong} elapsed={elapsed} variant="desktop" />
+        <ProgressBar
+          currentSong={currentSong}
+          registerProgress={registerProgress}
+          variant="desktop"
+        />
 
         {/* Mobile spacer - pushes album art and queue button to the right */}
         <div className="flex-1 md:hidden" />

@@ -11,7 +11,7 @@ import {
 } from '@alfira-bot/shared/api';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useElapsedTimer } from '../hooks/useElapsedTimer';
+import { useProgressBar } from '../hooks/useProgressBar';
 import { disposeSocket, useSocket } from '../hooks/useSocket';
 
 // ---------------------------------------------------------------------------
@@ -34,6 +34,8 @@ interface PlayerContextValue {
   loading: boolean;
   // Elapsed seconds for the current song (client-side simulation).
   elapsed: number;
+  // Register a progress bar DOM element for direct rAF-driven updates.
+  registerProgress: (ref: HTMLDivElement | null) => void;
   // Actions — each calls the API; state updates arrive via Socket.io.
   skip: () => Promise<void>;
   /** Stop playback, clear the queue, and disconnect the bot from voice. */
@@ -53,16 +55,20 @@ interface PlayerContextValue {
 // (skip, pause, etc.). PlayerElapsedContext changes every second during
 // playback but is consumed only by NowPlayingBar and QueuePanel.
 // ---------------------------------------------------------------------------
-const PlayerStateContext = createContext<Omit<PlayerContextValue, 'elapsed'> | null>(null);
+const PlayerStateContext = createContext<Omit<
+  PlayerContextValue,
+  'elapsed' | 'registerProgress'
+> | null>(null);
 const PlayerElapsedContext = createContext<number>(0);
+const PlayerProgressContext = createContext<(ref: HTMLDivElement | null) => void>(() => {});
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
   const socket = useSocket();
 
-  // Use the extracted elapsed timer hook
-  const elapsed = useElapsedTimer(state);
+  // Use the progress bar hook (rAF + 1-sec interval)
+  const { elapsed, registerProgress } = useProgressBar(state);
 
   // ---------------------------------------------------------------------------
   // REST fetch — used for initial load and after actions where we want the
@@ -153,14 +159,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await unshuffleQueue();
   }, []);
 
-  const stateValue: Omit<PlayerContextValue, 'elapsed'> = useMemo(
+  const stateValue: Omit<PlayerContextValue, 'elapsed' | 'registerProgress'> = useMemo(
     () => ({ state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, refetch }),
     [state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, refetch]
   );
 
   return (
     <PlayerStateContext value={stateValue}>
-      <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
+      <PlayerProgressContext value={registerProgress}>
+        <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
+      </PlayerProgressContext>
     </PlayerStateContext>
   );
 }
@@ -170,7 +178,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
  * ticks every second. Use this in pages (SongsPage, PlaylistsPage, etc.) that
  * need queue state (e.g. loopMode) but don't care about elapsed.
  */
-export function usePlayerState(): Omit<PlayerContextValue, 'elapsed'> {
+export function usePlayerState(): Omit<PlayerContextValue, 'elapsed' | 'registerProgress'> {
   const context = useContext(PlayerStateContext);
   if (!context) {
     throw new Error('usePlayerState must be used within a PlayerProvider');
@@ -179,14 +187,16 @@ export function usePlayerState(): Omit<PlayerContextValue, 'elapsed'> {
 }
 
 /**
- * Full player context including elapsed. This re-renders every second during
- * playback. Use only in NowPlayingBar and QueuePanel.
+ * Full player context including elapsed and registerProgress. This
+ * re-renders every second during playback. Use only in NowPlayingBar
+ * and QueuePanel.
  */
 export function usePlayer(): PlayerContextValue {
   const stateContext = useContext(PlayerStateContext);
   const elapsed = useContext(PlayerElapsedContext);
+  const registerProgress = useContext(PlayerProgressContext);
   if (!stateContext) {
     throw new Error('usePlayer must be used within a PlayerProvider');
   }
-  return { ...stateContext, elapsed };
+  return { ...stateContext, elapsed, registerProgress };
 }

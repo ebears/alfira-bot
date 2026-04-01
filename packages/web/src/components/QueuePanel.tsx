@@ -31,7 +31,7 @@ type VirtualQueueItem = {
 };
 
 export default function QueuePanel({ onClose }: { onClose: () => void }) {
-  const { state, loading, elapsed, clear } = usePlayer();
+  const { state, loading, elapsed, registerProgress, clear } = usePlayer();
   const { isAdminView } = useAdminView();
   const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -43,10 +43,6 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
-  const progress =
-    currentSong && currentSong.duration > 0
-      ? Math.min((elapsed / currentSong.duration) * 100, 100)
-      : 0;
 
   const virtualItems: VirtualQueueItem[] = useMemo(() => {
     const items: VirtualQueueItem[] = [];
@@ -130,7 +126,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
             song={currentSong}
             isPlaying={isPlaying}
             elapsed={elapsed}
-            progress={progress}
+            registerProgress={registerProgress}
           />
         ) : (
           <IdleCard />
@@ -345,12 +341,12 @@ const NowPlayingCard = memo(function NowPlayingCard({
   song,
   isPlaying,
   elapsed,
-  progress,
+  registerProgress,
 }: {
   song: QueuedSong;
   isPlaying: boolean;
   elapsed: number;
-  progress: number;
+  registerProgress: (ref: HTMLDivElement | null) => void;
 }) {
   return (
     <div className="card overflow-hidden">
@@ -381,8 +377,9 @@ const NowPlayingCard = memo(function NowPlayingCard({
           <div className="mt-2">
             <div className="relative h-1.5 w-full bg-elevated rounded-full overflow-hidden">
               <div
-                className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-1000 ease-linear"
-                style={{ width: `${progress}%` }}
+                ref={registerProgress}
+                className="absolute inset-y-0 left-0 bg-accent rounded-full"
+                style={{ width: '0%' }}
               />
             </div>
             <div className="flex justify-between mt-1">
