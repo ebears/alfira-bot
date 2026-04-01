@@ -144,12 +144,12 @@ export class GuildPlayer {
         this.killFfmpeg();
         this.queue.clear();
         this.currentSong = null;
-        this.broadcast();
         this.sendToTextChannel(
           '⚠️ Lost the voice connection unexpectedly. Use **/play** or **/join** to reconnect.'
         );
       }
 
+      this.broadcast();
       this.onDestroyed();
     });
   }
@@ -211,6 +211,10 @@ export class GuildPlayer {
   stop(): void {
     this.intentionallyStopped = true;
     this.stopping = true;
+    this.killCurrentFfmpeg = null;
+    this.currentSong = null;
+    this.queue.clear();
+    this.priorityQueue = [];
     this.audioPlayer.stop(true);
     this.paused = false;
     this.trackStartedAt = null;
