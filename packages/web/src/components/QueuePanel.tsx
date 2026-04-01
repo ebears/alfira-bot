@@ -34,7 +34,10 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
-  const progress = currentSong && currentSong.duration > 0 ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
+  const progress =
+    currentSong && currentSong.duration > 0
+      ? Math.min((elapsed / currentSong.duration) * 100, 100)
+      : 0;
   const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
 
   const handleClear = useCallback(async () => {

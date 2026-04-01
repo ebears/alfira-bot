@@ -43,7 +43,10 @@ export function NowPlayingBar() {
     };
   }, [queueOpen]);
 
-  const progress = currentSong && currentSong.duration > 0 ? Math.min((elapsed / currentSong.duration) * 100, 100) : 0;
+  const progress =
+    currentSong && currentSong.duration > 0
+      ? Math.min((elapsed / currentSong.duration) * 100, 100)
+      : 0;
 
   const handlePauseResume = async () => {
     setPauseBusy(true);
