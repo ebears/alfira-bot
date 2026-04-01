@@ -1,5 +1,5 @@
 import type React from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 
 const STORAGE_KEY = 'alfira-admin-view';
@@ -34,13 +34,19 @@ export function AdminViewProvider({ children }: { children: React.ReactNode }) {
   // Non-admin users always get false, regardless of the toggle state.
   const isAdminView = (user?.isAdmin ?? false) && adminViewOn;
 
-  const toggleAdminView = () => {
+  const toggleAdminView = useCallback(() => {
     if (user?.isAdmin) {
       setAdminViewOn((v) => !v);
     }
-  };
+  }, [user?.isAdmin]);
 
-  return <AdminViewContext value={{ isAdminView, toggleAdminView }}>{children}</AdminViewContext>;
+  return (
+    <AdminViewContext
+      value={useMemo(() => ({ isAdminView, toggleAdminView }), [isAdminView, toggleAdminView])}
+    >
+      {children}
+    </AdminViewContext>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

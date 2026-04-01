@@ -139,6 +139,7 @@ export default function Layout() {
                     src={user.avatar}
                     alt={user.username}
                     className="w-full h-full object-cover"
+                    decoding="async"
                   />
                 ) : (
                   <span className="font-mono text-xs text-muted">
@@ -160,7 +161,12 @@ export default function Layout() {
             <>
               <div className="flex items-center gap-3 px-2 py-2 mb-1">
                 {user?.avatar ? (
-                  <img src={user.avatar} alt={user.username} className="w-7 h-7 rounded-full" />
+                  <img
+                    src={user.avatar}
+                    alt={user.username}
+                    className="w-7 h-7 rounded-full"
+                    decoding="async"
+                  />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
                     <span className="font-mono text-xs text-muted">

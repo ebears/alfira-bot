@@ -1,6 +1,6 @@
 import type { PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { addSongToPlaylist, getSongsPage } from '../api/api';
 import { Backdrop } from './Backdrop';
 import { Button } from './ui/Button';
@@ -27,24 +27,31 @@ export default function AddSongsModal({
     });
   }, []);
 
-  const filtered = allSongs.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
+  const searchLower = useMemo(() => search.toLowerCase(), [search]);
+  const filtered = useMemo(
+    () => allSongs.filter((s) => s.title.toLowerCase().includes(searchLower)),
+    [allSongs, searchLower]
+  );
 
-  const handleAdd = async (song: Song) => {
-    setAdding((prev) => new Set([...prev, song.id]));
-    try {
-      await addSongToPlaylist(playlist.id, song.id);
-      setAdded((prev) => new Set([...prev, song.id]));
-    } catch {
-      /* already added — mark as added */
-      setAdded((prev) => new Set([...prev, song.id]));
-    } finally {
-      setAdding((prev) => {
-        const n = new Set(prev);
-        n.delete(song.id);
-        return n;
-      });
-    }
-  };
+  const handleAdd = useCallback(
+    async (song: Song) => {
+      setAdding((prev) => new Set([...prev, song.id]));
+      try {
+        await addSongToPlaylist(playlist.id, song.id);
+        setAdded((prev) => new Set([...prev, song.id]));
+      } catch {
+        /* already added — mark as added */
+        setAdded((prev) => new Set([...prev, song.id]));
+      } finally {
+        setAdding((prev) => {
+          const n = new Set(prev);
+          n.delete(song.id);
+          return n;
+        });
+      }
+    },
+    [playlist.id]
+  );
 
   const hasAddedNew = added.size > playlist.songs.length;
 
@@ -90,6 +97,7 @@ export default function AddSongsModal({
                     alt={song.nickname || song.title}
                     className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
                     loading="lazy"
+                    decoding="async"
                   />
                   <span className="flex-1 font-body text-sm text-fg truncate">
                     {song.nickname || song.title}

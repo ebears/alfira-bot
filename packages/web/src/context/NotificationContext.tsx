@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 // ---------------------------------------------------------------------------
 // Notification Context
@@ -50,7 +58,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }, ms);
   }, []);
 
-  return <NotificationContext value={{ notification, notify }}>{children}</NotificationContext>;
+  return (
+    <NotificationContext value={useMemo(() => ({ notification, notify }), [notification, notify])}>
+      {children}
+    </NotificationContext>
+  );
 }
 
 export function useNotification(): NotificationContextValue {

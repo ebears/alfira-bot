@@ -1,6 +1,6 @@
 import type { User } from '@alfira-bot/shared';
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getMe, logout as logoutApi } from '../api/api';
 
 interface AuthContextValue {
@@ -36,7 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  return <AuthContext value={{ user, loading, logout, refetch }}>{children}</AuthContext>;
+  return (
+    <AuthContext
+      value={useMemo(() => ({ user, loading, logout, refetch }), [user, loading, logout, refetch])}
+    >
+      {children}
+    </AuthContext>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

@@ -50,7 +50,7 @@ export function useElapsedTimer(state: QueueState): number {
     }, 1000);
 
     return () => clearInterval(id);
-  }, [state.isPlaying, state.isPaused, state.currentSong, state.trackStartedAt]);
+  }, [state.isPlaying, state.isPaused, state.currentSong?.id, state.trackStartedAt]);
 
   return elapsed;
 }

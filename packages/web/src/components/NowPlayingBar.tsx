@@ -12,7 +12,7 @@ import {
   SkipForwardIcon,
   SparkleIcon,
 } from '@phosphor-icons/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { BarButton } from './BarButton';
 import QueuePanel from './QueuePanel';
@@ -48,7 +48,7 @@ export function NowPlayingBar() {
       ? Math.min((elapsed / currentSong.duration) * 100, 100)
       : 0;
 
-  const handlePauseResume = async () => {
+  const handlePauseResume = useCallback(async () => {
     setPauseBusy(true);
     try {
       await pause();
@@ -57,9 +57,9 @@ export function NowPlayingBar() {
     } finally {
       setPauseBusy(false);
     }
-  };
+  }, [pause]);
 
-  const handleSkip = async () => {
+  const handleSkip = useCallback(async () => {
     setSkipBusy(true);
     try {
       await skip();
@@ -68,13 +68,13 @@ export function NowPlayingBar() {
     } finally {
       setSkipBusy(false);
     }
-  };
+  }, [skip]);
 
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     leave().catch((e) => logger.error(e));
-  };
+  }, [leave]);
 
-  const handleCycleLoop = async () => {
+  const handleCycleLoop = useCallback(async () => {
     if (loopBusy) return;
     const next = loopMode === 'off' ? 'queue' : loopMode === 'queue' ? 'song' : 'off';
     setLoopBusy(true);
@@ -83,9 +83,9 @@ export function NowPlayingBar() {
     } finally {
       setLoopBusy(false);
     }
-  };
+  }, [loopMode, loopBusy, setLoop]);
 
-  const handleShuffleToggle = async () => {
+  const handleShuffleToggle = useCallback(async () => {
     if (shuffleBusy) return;
     setShuffleBusy(true);
     try {
@@ -97,7 +97,7 @@ export function NowPlayingBar() {
     } finally {
       setShuffleBusy(false);
     }
-  };
+  }, [isShuffled, shuffleBusy, shuffle, unshuffle]);
 
   const loopIcon =
     loopMode === 'song' ? (
@@ -260,6 +260,7 @@ export function NowPlayingBar() {
               src={currentSong.thumbnailUrl}
               alt={currentSong.title}
               className="w-full h-full object-cover"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
