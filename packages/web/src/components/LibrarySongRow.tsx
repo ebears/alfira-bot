@@ -39,7 +39,7 @@ export const LibrarySongRow = memo(
     });
 
     return (
-      <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg group bg-elevated clay-resting hover:clay-raised transition-shadow duration-100">
+      <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg bg-elevated clay-resting">
         <img
           src={song.thumbnailUrl}
           alt={song.nickname || song.title}
