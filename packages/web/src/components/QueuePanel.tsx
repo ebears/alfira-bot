@@ -11,6 +11,7 @@ import {
   PlusCircleIcon,
   XIcon,
 } from '@phosphor-icons/react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ConfirmModal from '../components/ConfirmModal';
@@ -22,6 +23,13 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { Button } from './ui/Button';
 
+type VirtualQueueItem = {
+  type: 'priority' | 'regular';
+  song: QueuedSong;
+  listIndex: number;
+  key: string;
+};
+
 export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const { state, loading, elapsed, clear } = usePlayer();
   const { isAdminView } = useAdminView();
@@ -32,12 +40,31 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   const [clearConfirm, setClearConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { currentSong, queue, priorityQueue, isPlaying } = state;
   const progress =
     currentSong && currentSong.duration > 0
       ? Math.min((elapsed / currentSong.duration) * 100, 100)
       : 0;
+
+  const virtualItems: VirtualQueueItem[] = useMemo(() => {
+    const items: VirtualQueueItem[] = [];
+    priorityQueue.forEach((song, i) => {
+      items.push({ type: 'priority', song, listIndex: i, key: `${song.id}-${i}` });
+    });
+    queue.forEach((song, i) => {
+      items.push({ type: 'regular', song, listIndex: i, key: `${song.id}-r${i}` });
+    });
+    return items;
+  }, [priorityQueue, queue]);
+
+  const virtualizer = useVirtualizer({
+    count: virtualItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 56,
+    overscan: 5,
+  });
   const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
 
   const handleClear = useCallback(async () => {
@@ -96,8 +123,8 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
     <div className="flex flex-col h-full">
       <PanelHeader onClose={onClose} />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Now Playing card */}
+      {/* Fixed content: Now Playing + Actions */}
+      <div className="p-4 space-y-4 shrink-0">
         {currentSong ? (
           <NowPlayingCard
             song={currentSong}
@@ -109,7 +136,6 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           <IdleCard />
         )}
 
-        {/* Actions */}
         <section className="flex items-center justify-between">
           <Button
             variant="primary"
@@ -134,10 +160,10 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           </Button>
         </section>
 
-        {/* Up Next (Priority Queue) */}
-        {priorityQueue.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-2">
+        {/* Section headers (fixed above scroll area) */}
+        {virtualItems.length > 0 && (
+          <div className="space-y-2">
+            {priorityQueue.length > 0 && (
               <h2 className="font-display text-lg text-fg tracking-wider">
                 <LightningIcon size={16} weight="duotone" className="inline mr-1" />
                 Up Next
@@ -145,18 +171,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
                   {priorityQueue.length}
                 </span>
               </h2>
-            </div>
-            <div className="space-y-1 border-l-2 border-accent/40 pl-3">
-              {priorityQueue.map((song, i) => (
-                <QueueSongItem key={`${i}-${song.id}`} song={song} index={i} accent />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Queue */}
-        <section>
-          <div className="flex items-center justify-between mb-2">
+            )}
             <h2 className="font-display text-lg text-fg tracking-wider">
               Queue
               {queue.length > 0 && (
@@ -166,28 +181,59 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
               )}
             </h2>
           </div>
-          {queue.length === 0 ? (
-            <div className="py-6 text-center border border-dashed border-border rounded-xl">
-              <p className="font-mono text-[11px] text-faint">queue is empty</p>
-              {priorityQueue.length === 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowLoadPlaylist(true)}
-                  className="mt-2 font-mono text-[11px] text-accent hover:underline"
-                >
-                  load a playlist to get started
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {queue.map((song, i) => (
-                <QueueSongItem key={`${i}-${song.id}`} song={song} index={i} />
-              ))}
-            </div>
-          )}
-        </section>
+        )}
+
+        {/* Empty state */}
+        {virtualItems.length === 0 && (
+          <div className="py-6 text-center border border-dashed border-border rounded-xl">
+            <p className="font-mono text-[11px] text-faint">queue is empty</p>
+            <button
+              type="button"
+              onClick={() => setShowLoadPlaylist(true)}
+              className="mt-2 font-mono text-[11px] text-accent hover:underline"
+            >
+              load a playlist to get started
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Virtualized scroll container */}
+      {virtualItems.length > 0 && (
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-4 min-h-0">
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const item = virtualItems[virtualRow.index];
+              if (item == null) return null;
+              return (
+                <div
+                  key={item.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <QueueSongItem
+                    song={item.song}
+                    index={item.listIndex}
+                    accent={item.type === 'priority'}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {menuOpen && (
         <ContextMenu
