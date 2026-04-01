@@ -59,6 +59,7 @@ const SongCardInner = ({
           alt={song.nickname || song.title}
           className="w-full h-full object-cover"
           loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
 

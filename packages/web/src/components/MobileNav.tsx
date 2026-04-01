@@ -83,6 +83,7 @@ export default function MobileNav() {
               src={user.avatar}
               alt={user.username}
               className="w-8 h-8 rounded-full border border-border"
+              decoding="async"
             />
           ) : (
             <div className="w-8 h-8 rounded-full bg-elevated border border-border flex items-center justify-center">
@@ -180,6 +181,7 @@ export default function MobileNav() {
                   src={user.avatar}
                   alt={user.username}
                   className="w-10 h-10 rounded-full border border-border"
+                  decoding="async"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-elevated border border-border flex items-center justify-center">

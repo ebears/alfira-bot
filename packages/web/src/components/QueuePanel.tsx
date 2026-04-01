@@ -11,7 +11,7 @@ import {
   PlusCircleIcon,
   XIcon,
 } from '@phosphor-icons/react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { ContextMenu, type MenuItem } from '../components/ContextMenu';
@@ -248,7 +248,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-function QueueSongItem({
+const QueueSongItem = memo(function QueueSongItem({
   song,
   index,
   accent,
@@ -269,6 +269,7 @@ function QueueSongItem({
         alt={song.nickname || song.title}
         className="w-10 h-7 object-cover rounded border border-border shrink-0"
         loading="lazy"
+        decoding="async"
       />
       <div className="flex-1 min-w-0">
         <p className="font-body text-xs font-medium text-fg truncate">
@@ -281,9 +282,9 @@ function QueueSongItem({
       </span>
     </div>
   );
-}
+});
 
-function PanelHeader({ onClose }: { onClose: () => void }) {
+const PanelHeader = memo(function PanelHeader({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
       <h1 className="font-display text-xl text-fg tracking-wider">Queue</h1>
@@ -292,9 +293,9 @@ function PanelHeader({ onClose }: { onClose: () => void }) {
       </Button>
     </div>
   );
-}
+});
 
-function NowPlayingCard({
+const NowPlayingCard = memo(function NowPlayingCard({
   song,
   isPlaying,
   elapsed,
@@ -313,6 +314,7 @@ function NowPlayingCard({
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
             className="w-20 h-20 rounded-xl border border-border object-cover"
+            decoding="async"
           />
           {isPlaying && (
             <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
@@ -348,9 +350,9 @@ function NowPlayingCard({
       </div>
     </div>
   );
-}
+});
 
-function IdleCard() {
+const IdleCard = memo(function IdleCard() {
   return (
     <div className="card flex items-center justify-center py-8 border-dashed">
       <div className="text-center">
@@ -364,4 +366,4 @@ function IdleCard() {
       </div>
     </div>
   );
-}
+});

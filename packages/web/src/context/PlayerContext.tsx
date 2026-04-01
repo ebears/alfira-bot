@@ -10,7 +10,7 @@ import {
   unshuffleQueue,
 } from '@alfira-bot/shared/api';
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useElapsedTimer } from '../hooks/useElapsedTimer';
 import { disposeSocket, useSocket } from '../hooks/useSocket';
 
@@ -153,18 +153,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await unshuffleQueue();
   }, []);
 
-  const stateValue: Omit<PlayerContextValue, 'elapsed'> = {
-    state,
-    loading,
-    skip,
-    leave,
-    pause,
-    clear,
-    setLoop,
-    shuffle,
-    unshuffle,
-    refetch,
-  };
+  const stateValue: Omit<PlayerContextValue, 'elapsed'> = useMemo(
+    () => ({ state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, refetch }),
+    [state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, refetch]
+  );
 
   return (
     <PlayerStateContext value={stateValue}>

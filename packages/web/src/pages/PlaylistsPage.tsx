@@ -1,5 +1,5 @@
 import type { PaginationMeta, Playlist } from '@alfira-bot/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylistsPage, startPlayback } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
@@ -45,12 +45,16 @@ export default function PlaylistsPage() {
     load(currentPage);
   }, [load, currentPage]);
 
+  // Keep a ref to all known item IDs so the socket handler can detect new items without subscribing to `items`
+  const itemIdsRef = useRef(new Set(items.map((p) => p.id)));
+  itemIdsRef.current = new Set(items.map((p) => p.id));
+
   // ---------------------------------------------------------------------------
   // Real-time socket wiring
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
-      const isNew = !items.some((p) => p.id === updated.id);
+      const isNew = !itemIdsRef.current.has(updated.id);
 
       setItems((prev) => {
         if (prev.some((p) => p.id === updated.id)) {
@@ -75,7 +79,7 @@ export default function PlaylistsPage() {
     return () => {
       socket.off('playlists:updated', handlePlaylistUpdated);
     };
-  }, [socket, currentPage, items]);
+  }, [socket, currentPage]);
 
   const handleAddToQueue = useCallback(
     async (playlistId: string) => {

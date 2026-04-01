@@ -1,5 +1,5 @@
 import type React from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 // Color themes based on D&D 5e core classes
 export type ColorThemeName =
@@ -175,20 +175,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(MODE_STORAGE_KEY, mode);
   }, [colorTheme, mode, resolvedMode]);
 
-  return (
-    <ThemeContext
-      value={{
-        colorTheme,
-        mode,
-        resolvedMode,
-        setColorTheme: setColorThemeState,
-        setMode: setModeState,
-        colorThemes: COLOR_THEMES,
-      }}
-    >
-      {children}
-    </ThemeContext>
+  const themeValue = useMemo(
+    () => ({
+      colorTheme,
+      mode,
+      resolvedMode,
+      setColorTheme: setColorThemeState,
+      setMode: setModeState,
+      colorThemes: COLOR_THEMES,
+    }),
+    [colorTheme, mode, resolvedMode]
   );
+
+  return <ThemeContext value={themeValue}>{children}</ThemeContext>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
