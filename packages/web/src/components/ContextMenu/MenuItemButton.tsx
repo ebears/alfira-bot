@@ -32,7 +32,6 @@ export function MenuItemButton({ item, onClick }: MenuItemButtonProps) {
     >
       {item.icon && <span className="shrink-0">{item.icon}</span>}
       <span className="truncate">{item.label}</span>
-      {(item.submenu || item.editSubmenu) && <span className="ml-auto text-muted">›</span>}
     </button>
   );
 }
