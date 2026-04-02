@@ -1,9 +1,19 @@
 import type { Song } from '@alfira-bot/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { addSong, importPlaylist } from '../api/api';
 import { apiErrorMessage } from '../utils/api';
 import { Backdrop } from './Backdrop';
 import { Button } from './ui/Button';
+
+const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'] as const;
+
+function isValidYouTubeUrl(url: string): boolean {
+  try {
+    return YOUTUBE_HOSTS.includes(new URL(url).hostname as (typeof YOUTUBE_HOSTS)[number]);
+  } catch {
+    return false;
+  }
+}
 
 export default function AddSongModal({
   onClose,
@@ -20,6 +30,9 @@ export default function AddSongModal({
   const isPlaylist = url.includes('list=');
   const [importFullPlaylist, setImportFullPlaylist] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const trimmedUrl = url.trim();
+  const urlIsValid = useMemo(() => isValidYouTubeUrl(trimmedUrl), [trimmedUrl]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -96,9 +109,9 @@ export default function AddSongModal({
           </label>
         )}
 
-        {!importFullPlaylist && (
+        {urlIsValid && !importFullPlaylist && (
           <input
-            className="input mb-3"
+            className="input mb-3 animate-fade-up"
             placeholder="Nickname (optional)"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
@@ -121,7 +134,13 @@ export default function AddSongModal({
           <Button variant="foreground" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={loading || !url.trim()}>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={
+              loading || (!importFullPlaylist && !urlIsValid) || (importFullPlaylist && !url.trim())
+            }
+          >
             {importFullPlaylist ? 'Import' : 'Add'}
           </Button>
         </div>
