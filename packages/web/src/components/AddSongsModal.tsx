@@ -1,6 +1,7 @@
 import type { PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { addSongToPlaylist, getSongsPage } from '../api/api';
 import { Backdrop } from './Backdrop';
 import { Button } from './ui/Button';
@@ -49,6 +50,14 @@ export default function AddSongsModal({
     [allSongs, searchLower]
   );
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 60,
+    overscan: 5,
+  });
+
   const handleAdd = useCallback(
     async (song: Song) => {
       setAdding((prev) => new Set([...prev, song.id]));
@@ -87,7 +96,7 @@ export default function AddSongsModal({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-4 md:p-6 space-y-2">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -100,40 +109,35 @@ export default function AddSongsModal({
           ) : filtered.length === 0 ? (
             <p className="p-4 md:p-6 font-mono text-xs text-muted text-center">no songs found</p>
           ) : (
-            filtered.map((song) => {
-              const isAdded = added.has(song.id);
-              const isAdding = adding.has(song.id);
-              return (
-                <div
-                  key={song.id}
-                  className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-3 hover:bg-elevated active:bg-elevated/80 transition-colors duration-100"
-                >
-                  <img
-                    src={song.thumbnailUrl}
-                    alt={song.nickname || song.title}
-                    className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span className="flex-1 font-body text-sm text-fg truncate">
-                    {song.nickname || song.title}
-                  </span>
-                  <span className="font-mono text-xs text-muted hidden sm:block">
-                    {formatDuration(song.duration)}
-                  </span>
-                  <Button
-                    variant="foreground"
-                    disabled={isAdded || isAdding}
-                    onClick={() => handleAdd(song)}
-                    className={`font-mono text-xs px-3 py-2 md:py-1 min-h-11 md:min-h-0 ${
-                      isAdded ? 'border-accent/30 text-accent bg-accent/5 cursor-default' : ''
-                    }`}
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const song = filtered[virtualRow.index];
+                if (song == null) return null;
+                const isAdded = added.has(song.id);
+                const isAdding = adding.has(song.id);
+                return (
+                  <div
+                    key={song.id}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
                   >
-                    {isAdding ? '...' : isAdded ? '✓' : 'add'}
-                  </Button>
-                </div>
-              );
-            })
+                    <SongRow song={song} isAdded={isAdded} isAdding={isAdding} onAdd={handleAdd} />
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
@@ -146,3 +150,43 @@ export default function AddSongsModal({
     </Backdrop>
   );
 }
+
+const SongRow = memo(function SongRow({
+  song,
+  isAdded,
+  isAdding,
+  onAdd,
+}: {
+  song: Song;
+  isAdded: boolean;
+  isAdding: boolean;
+  onAdd: (song: Song) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-3 hover:bg-elevated active:bg-elevated/80 transition-colors duration-100">
+      <img
+        src={song.thumbnailUrl}
+        alt={song.nickname || song.title}
+        className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
+        loading="lazy"
+        decoding="async"
+      />
+      <span className="flex-1 font-body text-sm text-fg truncate">
+        {song.nickname || song.title}
+      </span>
+      <span className="font-mono text-xs text-muted hidden sm:block">
+        {formatDuration(song.duration)}
+      </span>
+      <Button
+        variant="foreground"
+        disabled={isAdded || isAdding}
+        onClick={() => onAdd(song)}
+        className={`font-mono text-xs px-3 py-2 md:py-1 min-h-11 md:min-h-0 ${
+          isAdded ? 'border-accent/30 text-accent bg-accent/5 cursor-default' : ''
+        }`}
+      >
+        {isAdding ? '...' : isAdded ? '✓' : 'add'}
+      </Button>
+    </div>
+  );
+});
