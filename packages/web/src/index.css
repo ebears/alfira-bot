@@ -1317,18 +1317,19 @@
 }
 
 .expand-panel {
-    display: grid;
-    transition: grid-template-rows 0.3s ease;
+    max-height: 0px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
 }
 .expand-panel.expanded {
-    grid-template-rows: 1fr;
-}
-.expand-panel.collapsed {
-    grid-template-rows: 0fr;
+    max-height: 600px;
 }
 .expand-panel .expand-panel-content {
-    transition: opacity 0.25s ease;
+    transition: opacity 0.25s ease, visibility 0s linear 0s;
+    visibility: visible;
 }
 .expand-panel .expand-panel-content[data-closing="true"] {
     opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }

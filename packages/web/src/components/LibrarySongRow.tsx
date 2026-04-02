@@ -93,10 +93,8 @@ export const LibrarySongRow = memo(
         </div>
 
         {/* Inline edit panel */}
-        <div className={`expand-panel ${isOpen ? 'expanded' : 'collapsed'}`}>
-          <div style={{ minHeight: 0, overflow: 'hidden' }}>
-            <SongEditPanel song={song} isOpen={isOpen} onClose={() => setOpenSongId(null)} />
-          </div>
+        <div className={`expand-panel ${isOpen ? 'expanded' : ''}`}>
+          <SongEditPanel song={song} isOpen={isOpen} onClose={() => setOpenSongId(null)} />
         </div>
       </div>
     );
