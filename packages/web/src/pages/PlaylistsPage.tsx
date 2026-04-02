@@ -1,7 +1,7 @@
 import type { PaginationMeta, Playlist } from '@alfira-bot/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPlaylistsPage, startPlayback } from '../api/api';
+import { getPlaylistsPage } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
@@ -9,11 +9,9 @@ import { Pagination } from '../components/Pagination';
 import PlaylistRow from '../components/PlaylistRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
-import { usePlayerState } from '../context/PlayerContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
-import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
@@ -24,8 +22,7 @@ export default function PlaylistsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const { notification, notify } = useNotification();
-  const { state: queueState } = usePlayerState();
+  const { notification } = useNotification();
 
   const load = useCallback(
     async (page: number) => {
@@ -81,22 +78,6 @@ export default function PlaylistsPage() {
     };
   }, [socket, currentPage]);
 
-  const handleAddToQueue = useCallback(
-    async (playlistId: string) => {
-      try {
-        await startPlayback({ playlistId, mode: 'sequential', loop: queueState.loopMode });
-        notify('Playlist added to queue', 'success');
-      } catch (err: unknown) {
-        notify(
-          apiErrorMessage(err, 'Could not add to queue. Is the bot in a voice channel?'),
-          'error',
-          5000
-        );
-      }
-    },
-    [queueState.loopMode, notify]
-  );
-
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
       const row = e.currentTarget.closest('[data-playlist-id]');
@@ -104,17 +85,6 @@ export default function PlaylistsPage() {
       if (playlistId) navigate(`/playlists/${playlistId}`);
     },
     [navigate]
-  );
-
-  const handleRowAddToQueue = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      const target = e.currentTarget as HTMLElement;
-      const row = target.closest('[data-playlist-id]');
-      const playlistId = row?.getAttribute('data-playlist-id');
-      if (playlistId) handleAddToQueue(playlistId);
-    },
-    [handleAddToQueue]
   );
 
   return (
@@ -157,7 +127,6 @@ export default function PlaylistsPage() {
               animationDelay={`${Math.min(i * 40, 400)}ms`}
               data-playlist-id={pl.id}
               onClick={handleRowClick}
-              onAddToQueue={handleRowAddToQueue}
             />
           ))}
         </div>
