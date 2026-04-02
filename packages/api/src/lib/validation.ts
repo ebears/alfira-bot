@@ -133,3 +133,36 @@ export function validateNickname(nickname: unknown, res: Response): string | nul
   }
   return trimmed;
 }
+
+/** Validates an optional string field. Trims and returns null if empty. */
+export function validateOptionalString(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
+}
+
+/** Validates an artwork URL. Trims and checks it's a valid URL if non-empty. */
+export function validateArtworkUrl(value: unknown): string | null | false {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length > MAX_URL_LENGTH) return false;
+  try {
+    new URL(trimmed);
+  } catch {
+    return false;
+  }
+  return trimmed;
+}
+
+/** Validates tags: ensure string[], trim each, deduplicate */
+export function validateTags(value: unknown): string[] | false {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) return false;
+  const trimmed = value
+    .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
+    .map((t) => t.trim());
+  return [...new Set(trimmed)];
+}

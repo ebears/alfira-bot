@@ -22,6 +22,10 @@ export interface Song {
   addedBy: string; // Discord user ID
   addedByDisplayName?: string; // Resolved Discord display name (not persisted, populated at query time)
   nickname?: string | null; // Custom display name for the song
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: string[];
   createdAt: string; // ISO 8601 string (JSON wire format)
 }
 

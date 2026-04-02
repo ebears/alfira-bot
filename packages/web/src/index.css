@@ -1315,3 +1315,20 @@
 @utility clay-player-edge {
     box-shadow: var(--clay-shadow-player);
 }
+
+.expand-panel {
+    display: grid;
+    transition: grid-template-rows 0.3s ease;
+}
+.expand-panel.expanded {
+    grid-template-rows: 1fr;
+}
+.expand-panel.collapsed {
+    grid-template-rows: 0fr;
+}
+.expand-panel .expand-panel-content {
+    transition: opacity 0.25s ease;
+}
+.expand-panel .expand-panel-content[data-closing="true"] {
+    opacity: 0;
+}

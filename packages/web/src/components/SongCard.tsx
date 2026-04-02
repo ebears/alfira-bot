@@ -2,8 +2,10 @@ import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { CircleNotchIcon, PlayIcon } from '@phosphor-icons/react';
 import React, { useCallback, useMemo } from 'react';
+import { useSongEdit } from '../context/SongEditContext';
 import { useSongActions } from '../hooks/useSongActions';
 import { ContextMenu, ContextMenuTrigger } from './ContextMenu';
+import SongEditPanel from './SongEditPanel';
 import { Button } from './ui/Button';
 
 interface SongCardProps {
@@ -27,6 +29,8 @@ const SongCardInner = ({
   isPlaying,
   onAddToQueue,
 }: SongCardProps) => {
+  const { openSongId, setOpenSongId } = useSongEdit();
+  const isOpen = openSongId === song.id;
   const style = useMemo(
     () => ({ animationDelay: `${Math.min((delay ?? 0) * 30, 300)}ms` }),
     [delay]
@@ -79,7 +83,11 @@ const SongCardInner = ({
       </div>
 
       {/* Info */}
-      <div className="p-4 flex-1">
+      <div
+        className="p-4 flex-1"
+        onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
+        style={isAdmin ? { cursor: 'pointer' } : undefined}
+      >
         <div className="flex items-center gap-2">
           <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2 min-w-0">
             {song.nickname || song.title}
@@ -110,6 +118,13 @@ const SongCardInner = ({
           </div>
         </div>
         {song.nickname && <p className="text-[11px] text-faint truncate">{song.title}</p>}
+      </div>
+
+      {/* Inline edit panel */}
+      <div className={`expand-panel ${isOpen ? 'expanded' : 'collapsed'}`}>
+        <div style={{ minHeight: 0, overflow: 'hidden' }}>
+          <SongEditPanel song={song} isOpen={isOpen} onClose={() => setOpenSongId(null)} />
+        </div>
       </div>
     </div>
   );

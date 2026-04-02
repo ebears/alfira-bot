@@ -8,7 +8,10 @@ import {
   clampMaxVideos,
   fetchPlaylistMetadata,
   fetchYouTubeMetadata,
+  validateArtworkUrl,
   validateNickname,
+  validateOptionalString,
+  validateTags,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
   youTubeUrl,
@@ -44,6 +47,8 @@ router.get('/', requireAuth, async (req, res) => {
         OR: [
           { title: { contains: search, mode: 'insensitive' as const } },
           { nickname: { contains: search, mode: 'insensitive' as const } },
+          { artist: { contains: search, mode: 'insensitive' as const } },
+          { album: { contains: search, mode: 'insensitive' as const } },
         ],
       }
     : {};
@@ -246,21 +251,55 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 // PATCH /api/songs/:id
 //
-// Updates a song's nickname. Admin only.
-// Clears the nickname by passing null or empty string.
+// Updates a song's editable fields (nickname, artist, album, artwork, tags).
+// Admin only. Only fields present in the request body are updated.
 // ---------------------------------------------------------------------------
 router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = req.params.id as string;
-  const trimmed = validateNickname(req.body.nickname, res);
-  if (trimmed === false) return;
 
   const existing = await findOr404(() => prisma.song.findUnique({ where: { id } }), res, 'Song');
   if (!existing) return;
 
-  const song = await prisma.song.update({
-    where: { id },
-    data: { nickname: trimmed },
-  });
+  const data: Record<string, unknown> = {};
+
+  // Nickname
+  if ('nickname' in req.body) {
+    const trimmed = validateNickname(req.body.nickname, res);
+    if (trimmed === false) return;
+    data.nickname = trimmed;
+  }
+
+  // Artist
+  if ('artist' in req.body) {
+    data.artist = validateOptionalString(req.body.artist);
+  }
+
+  // Album
+  if ('album' in req.body) {
+    data.album = validateOptionalString(req.body.album);
+  }
+
+  // Artwork
+  if ('artwork' in req.body) {
+    const artwork = validateArtworkUrl(req.body.artwork);
+    if (artwork === false) {
+      res.status(400).json({ error: 'artwork must be a valid URL.' });
+      return;
+    }
+    data.artwork = artwork;
+  }
+
+  // Tags
+  if ('tags' in req.body) {
+    const tags = validateTags(req.body.tags);
+    if (tags === false) {
+      res.status(400).json({ error: 'tags must be an array of strings.' });
+      return;
+    }
+    data.tags = tags;
+  }
+
+  const song = await prisma.song.update({ where: { id }, data });
 
   emitSongUpdated(song);
   res.json(song);
