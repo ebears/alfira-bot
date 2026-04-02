@@ -1,34 +1,16 @@
 import type { Song } from '@alfira-bot/shared';
-import type { SongUpdateData } from '@alfira-bot/shared/api';
 import { updateSong } from '@alfira-bot/shared/api';
-import { ArrowCounterClockwiseIcon, Check, FloppyDisk } from '@phosphor-icons/react';
+import { ArrowCounterClockwiseIcon, Check, FloppyDisk, PencilSimple } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getTagColorClasses } from '../utils/tagColors';
 
-interface SongEditPanelProps {
+interface SongEditModalProps {
   song: Song;
-  isOpen: boolean;
   onClose: () => void;
+  onSave: () => void;
 }
 
-export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelProps) {
-  const [closing, setClosing] = useState(false);
-  const closingRef = useRef(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      closingRef.current = false;
-      setClosing(false);
-    } else if (!closingRef.current) {
-      closingRef.current = true;
-      setClosing(true);
-      setTimeout(() => {
-        closingRef.current = false;
-        setClosing(false);
-      }, 300);
-    }
-  }, [isOpen]);
-
+export default function SongEditModal({ song, onClose, onSave }: SongEditModalProps) {
   const songExtended = song as Song & {
     artist?: string | null;
     album?: string | null;
@@ -47,10 +29,17 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      inputRef.current?.focus();
-    }
-  }, [isOpen]);
+    inputRef.current?.focus();
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose, saving]);
 
   const hasChanges =
     nickname !== (song.nickname ?? '') ||
@@ -91,31 +80,41 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
       artwork: null,
       tags: [],
     });
-    onClose();
+    onSave();
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const data: SongUpdateData = {
+      await updateSong(song.id, {
         nickname: nickname.trim() || null,
         artist: artist.trim() || null,
         album: album.trim() || null,
         artwork: artwork.trim() || null,
         tags,
-      };
-      await updateSong(song.id, data);
-      onClose();
+      });
+      onSave();
     } finally {
       setSaving(false);
     }
   };
 
-  if (!isOpen && !closing) return null;
-
   return (
-    <div className="expand-panel-content" data-closing={closing ? 'true' : undefined}>
-      <div className="px-3 md:px-4 pt-4 pb-4 border-t border-border">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60" onClick={() => !saving && onClose()} />
+
+      {/* Modal */}
+      <div className="relative bg-surface border border-border rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+        <h2 className="font-display text-xl text-fg tracking-wider mb-4 flex items-center gap-2">
+          <PencilSimple size={18} weight="duotone" />
+          Edit Song
+        </h2>
+
         <div className="flex flex-col gap-3">
           <Field
             id="nickname"
