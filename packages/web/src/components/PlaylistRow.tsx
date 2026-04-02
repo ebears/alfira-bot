@@ -1,23 +1,16 @@
 import type { Playlist } from '@alfira-bot/shared';
-import { CaretRightIcon, GhostIcon, PlaylistIcon, PlusCircleIcon } from '@phosphor-icons/react';
+import { CaretRightIcon, GhostIcon, PlaylistIcon } from '@phosphor-icons/react';
 import { memo } from 'react';
 
 interface PlaylistRowProps {
   playlist: Playlist;
   animationDelay: string;
   onClick: (e: React.MouseEvent) => void;
-  onAddToQueue: (e: React.MouseEvent) => void;
   'data-playlist-id'?: string;
 }
 
 export const PlaylistRow = memo(
-  ({
-    playlist,
-    animationDelay,
-    onClick,
-    onAddToQueue,
-    'data-playlist-id': dataPlaylistId,
-  }: PlaylistRowProps) => {
+  ({ playlist, animationDelay, onClick, 'data-playlist-id': dataPlaylistId }: PlaylistRowProps) => {
     const count = playlist._count?.songs ?? 0;
     return (
       <div
@@ -38,15 +31,6 @@ export const PlaylistRow = memo(
         <div className="w-11 h-11 md:w-10 md:h-10 rounded-xl bg-accent/10 border border-accent/20 shrink-0 flex items-center justify-center">
           <PlaylistIcon size={18} weight="duotone" className="text-accent md:w-4 md:h-4" />
         </div>
-        {/* Add to queue button */}
-        <button
-          type="button"
-          onClick={onAddToQueue}
-          className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-fg/5"
-          title="Add to queue"
-        >
-          <PlusCircleIcon size={20} weight="duotone" />
-        </button>
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
