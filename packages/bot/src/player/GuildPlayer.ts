@@ -178,6 +178,13 @@ export class GuildPlayer {
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
     const arr = Array.isArray(songs) ? songs : [songs];
     this.queue.append(...arr);
+
+    // If paused, clear currentSong so newly added songs start playing
+    // instead of the previously-paused song resuming.
+    if (this.paused && this.currentSong !== null) {
+      this.currentSong = null;
+    }
+
     await this.ensurePlaying();
   }
 
@@ -190,6 +197,8 @@ export class GuildPlayer {
     this.queue.clear();
     this.priorityQueue = [];
     this.killFfmpeg();
+    this.currentSong = null;
+    this.paused = false;
     this.audioPlayer.stop(true);
     this.consecutiveFailures = 0;
     this.queue.replace(songs);
