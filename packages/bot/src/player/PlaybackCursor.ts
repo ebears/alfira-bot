@@ -170,4 +170,18 @@ export class PlaybackCursor<T> {
     }
     return result;
   }
+
+  /**
+   * Convert remaining items after the current one to an array.
+   * Excludes the item at the current read position (for "queue" display
+   * that should not include the currently-playing song).
+   */
+  toRemaining(): T[] {
+    const result: T[] = [];
+    for (let i = this.readIndex + 1; i < this.buffer.length; i++) {
+      const idx = this.playbackOrder ? this.playbackOrder[i] : i;
+      result.push(this.buffer[idx]);
+    }
+    return result;
+  }
 }
