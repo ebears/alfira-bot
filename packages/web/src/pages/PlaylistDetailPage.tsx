@@ -5,6 +5,7 @@ import {
   GhostIcon,
   LockIcon,
   LockOpenIcon,
+  PencilSimple,
   PlayCircleIcon,
   PlayIcon,
   PlusCircleIcon,
@@ -48,8 +49,8 @@ export default function PlaylistDetailPage() {
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [editingName, setEditingName] = useState(false);
-  const [nameValue, setNameValue] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [renameSaving, setRenameSaving] = useState(false);
   const [showAddSongs, setShowAddSongs] = useState(false);
   const [showPlay, setShowPlay] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
@@ -60,7 +61,6 @@ export default function PlaylistDetailPage() {
 
   const isOwner = user?.discordId === playlist?.createdBy;
   const canEdit = isAdminView || isOwner;
-  const nameInputRef = useRef<HTMLInputElement>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -80,7 +80,7 @@ export default function PlaylistDetailPage() {
         const pl = await getPlaylistPage(id, isAdminView, page, 30);
         setPlaylist(pl);
         setPagination(pl.pagination);
-        setNameValue(pl.name);
+        setRenameValue(pl.name);
       } catch {
         navigate('/playlists', { replace: true });
       } finally {
@@ -94,9 +94,6 @@ export default function PlaylistDetailPage() {
     load(currentPage);
   }, [load, currentPage]);
 
-  useEffect(() => {
-    if (editingName) nameInputRef.current?.focus();
-  }, [editingName]);
 
   // Refetch on any playlist mutation from other clients (payload lacks full songs array)
   useEffect(() => {
@@ -113,17 +110,19 @@ export default function PlaylistDetailPage() {
     };
   }, [socket, id, load, currentPage]);
 
-  const handleRename = async () => {
-    if (!playlist || !nameValue.trim() || nameValue.trim() === playlist.name) {
-      setEditingName(false);
-      setNameValue(playlist?.name ?? '');
+  const handleRenameSave = async () => {
+    if (!playlist || !renameValue.trim() || renameValue.trim() === playlist.name) {
+      setRenameValue('');
       return;
     }
-    const updated = await renamePlaylist(playlist.id, nameValue.trim());
-    setPlaylist((p) => (p ? { ...p, name: updated.name } : p));
-    setEditingName(false);
-    // The socket event from the rename will also arrive and trigger a refetch,
-    // but the optimistic update above means the user sees the change instantly.
+    setRenameSaving(true);
+    try {
+      const updated = await renamePlaylist(playlist.id, renameValue.trim());
+      setPlaylist((p) => (p ? { ...p, name: updated.name } : p));
+    } finally {
+      setRenameSaving(false);
+      setRenameValue('');
+    }
   };
 
   const handleRemoveSong = async (songId: string) => {
@@ -228,6 +227,20 @@ export default function PlaylistDetailPage() {
     ...(isOwner || isAdminView
       ? [
           {
+            id: 'rename',
+            label: 'Rename',
+            icon: <PencilSimple size={14} weight="duotone" />,
+            editSubmenu: {
+              title: 'Rename',
+              value: renameValue,
+              onChange: (val: string) => setRenameValue(val),
+              onSave: handleRenameSave,
+              onCancel: () => setRenameValue(''),
+              saving: renameSaving,
+              placeholder: 'Playlist name',
+            },
+          } as MenuItem,
+          {
             id: 'toggle-visibility',
             label: playlist?.isPrivate ? 'Make Public' : 'Make Private',
             icon: playlist?.isPrivate ? (
@@ -272,43 +285,17 @@ export default function PlaylistDetailPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 md:mb-8 gap-4">
         <div className="flex-1 min-w-0">
-          {editingName && canEdit ? (
-            <input
-              ref={nameInputRef}
-              value={nameValue}
-              onChange={(e) => setNameValue(e.target.value)}
-              onBlur={handleRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleRename();
-                if (e.key === 'Escape') {
-                  setEditingName(false);
-                  setNameValue(playlist.name);
-                }
-              }}
-              className="font-display text-3xl md:text-4xl bg-transparent text-fg tracking-wider border-b-2 border-accent outline-none w-full"
-              style={{ fontSize: '2rem', lineHeight: 1 }}
-            />
-          ) : (
-            <div className="flex items-center gap-2">
-              <h1
-                className={`font-display text-3xl md:text-4xl text-fg tracking-wider ${
-                  canEdit
-                    ? 'cursor-pointer hover:text-accent/90 active:text-accent transition-colors duration-150'
-                    : ''
-                }`}
-                onClick={() => canEdit && setEditingName(true)}
-                title={canEdit ? 'Click to rename' : undefined}
-              >
-                {playlist.name}
-              </h1>
-              {playlist.isPrivate && (
-                <span className="text-muted text-sm" title="Private playlist">
-                  <GhostIcon size={14} weight="duotone" className="inline mr-1" />
-                  private
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">
+              {playlist.name}
+            </h1>
+            {playlist.isPrivate && (
+              <span className="text-muted text-sm" title="Private playlist">
+                <GhostIcon size={14} weight="duotone" className="inline mr-1" />
+                private
+              </span>
+            )}
+          </div>
           <p className="font-mono text-xs text-muted mt-1">
             {pagination?.total ?? playlist.songs.length}{' '}
             {playlist.songs.length === 1 ? 'track' : 'tracks'}
