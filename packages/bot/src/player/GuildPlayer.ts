@@ -277,7 +277,7 @@ export class GuildPlayer {
   }
 
   getQueue(): QueuedSong[] {
-    return this.queue.toArray();
+    return this.queue.toRemaining();
   }
 
   getLoopMode(): LoopMode {
@@ -297,7 +297,7 @@ export class GuildPlayer {
       isShuffled: this.queue.isShuffled,
       currentSong: this.currentSong,
       priorityQueue: this.priorityQueue,
-      queue: this.queue.toArray(),
+      queue: this.queue.toRemaining(),
       trackStartedAt: this.trackStartedAt,
     };
   }
@@ -347,6 +347,14 @@ export class GuildPlayer {
       }
     }
 
+    // Song loop: replay current song and advance readIndex so that
+    // disabling loop mode mid-playthrough doesn't cause a ghost loop
+    if (this.loopMode === 'song' && this.currentSong) {
+      await this.playSong(this.currentSong);
+      this.queue.advance();
+      return;
+    }
+
     const next = this.queue.current();
     if (!next) {
       this.currentSong = null;
@@ -355,10 +363,7 @@ export class GuildPlayer {
     }
 
     this.currentSong = next;
-
-    if (this.loopMode !== 'song') {
-      this.queue.advance();
-    }
+    this.queue.advance();
 
     await this.playSong(next);
   }
