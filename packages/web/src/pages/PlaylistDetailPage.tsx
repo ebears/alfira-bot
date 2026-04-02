@@ -94,7 +94,6 @@ export default function PlaylistDetailPage() {
     load(currentPage);
   }, [load, currentPage]);
 
-
   // Refetch on any playlist mutation from other clients (payload lacks full songs array)
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
