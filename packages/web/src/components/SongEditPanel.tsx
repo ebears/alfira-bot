@@ -2,7 +2,7 @@ import type { Song } from '@alfira-bot/shared';
 import type { SongUpdateData } from '@alfira-bot/shared/api';
 import { updateSong } from '@alfira-bot/shared/api';
 import { ArrowCounterClockwiseIcon, Check, FloppyDisk } from '@phosphor-icons/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getTagColorClasses } from '../utils/tagColors';
 
 interface SongEditPanelProps {
@@ -15,7 +15,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen) {
       closingRef.current = false;
       setClosing(false);
@@ -114,7 +114,11 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   if (!isOpen && !closing) return null;
 
   return (
-    <div className="expand-panel-content" data-closing={closing ? 'true' : undefined}>
+    <div
+      className="expand-panel-content"
+      data-closing={closing ? 'true' : undefined}
+      style={closing ? { pointerEvents: 'none' } : undefined}
+    >
       <div className="px-3 md:px-4 pt-4 pb-4 border-t border-border">
         <div className="flex flex-col gap-3">
           <Field
