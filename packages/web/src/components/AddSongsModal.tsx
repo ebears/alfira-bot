@@ -1,10 +1,12 @@
 import type { PlaylistDetail, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { addSongToPlaylist, getSongsPage } from '../api/api';
 import { Backdrop } from './Backdrop';
 import { Button } from './ui/Button';
+
+const PAGE_SIZE = 30;
 
 export default function AddSongsModal({
   playlist,
@@ -15,20 +17,43 @@ export default function AddSongsModal({
   onClose: () => void;
   onAdded: () => void;
 }) {
-  const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [adding, setAdding] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState<Set<string>>(new Set(playlist.songs.map((ps) => ps.songId)));
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Stable refs to avoid recreating callbacks on every render
+  const hasMoreRef = useRef(true);
+  const loadingMoreRef = useRef(false);
+  const debouncedSearchRef = useRef('');
+  const pageRef = useRef(1);
+  hasMoreRef.current = hasMore;
+  loadingMoreRef.current = loadingMore;
+  debouncedSearchRef.current = debouncedSearch;
+  pageRef.current = page;
+
+  // Reset and fetch page 1 on search change
   useEffect(() => {
-    getSongsPage(1, 500).then((result) => {
-      setAllSongs(result.items);
+    setSongs([]);
+    setPage(1);
+    pageRef.current = 1;
+    setHasMore(true);
+    setLoading(true);
+    debouncedSearchRef.current = debouncedSearch;
+    getSongsPage(1, PAGE_SIZE, debouncedSearch || undefined).then((result) => {
+      setSongs(result.items);
+      setHasMore(result.items.length >= PAGE_SIZE);
+      hasMoreRef.current = result.items.length >= PAGE_SIZE;
       setLoading(false);
     });
-  }, []);
+  }, [debouncedSearch]);
 
   // Debounce search input
   useEffect(() => {
@@ -39,20 +64,37 @@ export default function AddSongsModal({
     };
   }, [search]);
 
-  const searchLower = debouncedSearch.toLowerCase();
-  const filtered = useMemo(
-    () =>
-      allSongs.filter(
-        (s) =>
-          s.title.toLowerCase().includes(searchLower) ||
-          s.nickname?.toLowerCase().includes(searchLower)
-      ),
-    [allSongs, searchLower]
-  );
+  const loadMore = useCallback(() => {
+    if (!hasMoreRef.current || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const nextPage = pageRef.current + 1;
+    getSongsPage(nextPage, PAGE_SIZE, debouncedSearchRef.current || undefined).then((result) => {
+      setSongs((prev) => [...prev, ...result.items]);
+      setPage(nextPage);
+      pageRef.current = nextPage;
+      setHasMore(result.items.length >= PAGE_SIZE);
+      hasMoreRef.current = result.items.length >= PAGE_SIZE;
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    });
+  }, []);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Check near-bottom on scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
+        loadMore();
+      }
+    };
+    el.addEventListener('scroll', check, { passive: true });
+    return () => el.removeEventListener('scroll', check);
+  }, [loadMore]);
+
   const virtualizer = useVirtualizer({
-    count: filtered.length,
+    count: songs.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 60,
     overscan: 5,
@@ -106,7 +148,7 @@ export default function AddSongsModal({
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : songs.length === 0 ? (
             <p className="p-4 md:p-6 font-mono text-xs text-muted text-center">no songs found</p>
           ) : (
             <div
@@ -116,7 +158,7 @@ export default function AddSongsModal({
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow) => {
-                const song = filtered[virtualRow.index];
+                const song = songs[virtualRow.index];
                 if (song == null) return null;
                 const isAdded = added.has(song.id);
                 const isAdding = adding.has(song.id);
@@ -138,6 +180,9 @@ export default function AddSongsModal({
                 );
               })}
             </div>
+          )}
+          {loadingMore && (
+            <p className="p-3 font-mono text-xs text-muted text-center">loading...</p>
           )}
         </div>
 
