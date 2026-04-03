@@ -45,13 +45,15 @@ const TagTicker = memo(({ tags, isHovered: externalHovered }: TagTickerProps) =>
 
   const effectiveHovered = externalHovered ?? isHovered;
 
-  const animationStyle: React.CSSProperties = shouldScroll
-    ? {
-        width: 'max-content',
-        animation: `ticker-scroll ${duration}s linear infinite`,
-        animationPlayState: effectiveHovered ? 'running' : 'paused',
-      }
-    : {};
+  const animationStyle: React.CSSProperties =
+    shouldScroll && effectiveHovered
+      ? {
+          width: 'max-content',
+          animation: `ticker-scroll ${duration}s linear infinite`,
+        }
+      : shouldScroll
+        ? { width: 'max-content' }
+        : {};
 
   return (
     <div
