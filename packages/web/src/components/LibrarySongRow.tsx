@@ -9,71 +9,31 @@ import {
   TagIcon,
   UserIcon,
 } from '@phosphor-icons/react';
-import type { RefObject } from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useSongEdit } from '../context/SongEditContext';
 import { useSongActions } from '../hooks/useSongActions';
-import { getTagColorClasses } from '../utils/tagColors';
 import { ContextMenu, ContextMenuTrigger } from './ContextMenu';
 import SongEditPanel from './SongEditPanel';
+import TagTicker from './TagTicker';
 import { Button } from './ui/Button';
 
 interface MetaInfoProps {
   song: Song;
-  tickerRef: RefObject<HTMLDivElement | null>;
-  tickerInnerRef: RefObject<HTMLDivElement | null>;
-  tagsOverflow: boolean;
+  isHovered?: boolean;
 }
 
-function MetaInfo({ song, tickerRef, tickerInnerRef, tagsOverflow }: MetaInfoProps) {
+function MetaInfo({ song, isHovered }: MetaInfoProps) {
   const tags = song.tags ?? [];
   return (
     <>
       <span className="flex items-center gap-1 font-mono text-xs text-muted">
-        <ClockIcon size={11} weight="fill" className="shrink-0" />
         {formatDuration(song.duration)}
+        <ClockIcon size={11} weight="fill" className="shrink-0" />
       </span>
       {tags.length > 0 && (
-        <div className="flex items-center gap-1 text-xs text-muted">
+        <div className="flex items-center gap-1 text-xs text-muted max-w-[20rem] justify-end">
+          <TagTicker tags={tags} isHovered={isHovered} />
           <TagIcon size={11} weight="fill" className="shrink-0" />
-          <div className="overflow-hidden py-0" ref={tickerRef}>
-            <div
-              className="flex gap-1"
-              ref={tickerInnerRef}
-              style={
-                tagsOverflow
-                  ? {
-                      width: 'max-content',
-                      animation: 'ticker-scroll 15s linear infinite',
-                    }
-                  : undefined
-              }
-            >
-              {tags.map((tag) => {
-                const colors = getTagColorClasses(tag);
-                return (
-                  <span
-                    key={`a-${tag}`}
-                    className={`inline-flex items-center px-1.5 py-0 rounded text-[11px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
-                  >
-                    {tag}
-                  </span>
-                );
-              })}
-              {tagsOverflow &&
-                tags.map((tag) => {
-                  const colors = getTagColorClasses(tag);
-                  return (
-                    <span
-                      key={`b-${tag}`}
-                      className={`inline-flex items-center px-1.5 py-0 rounded text-[11px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
-                    >
-                      {tag}
-                    </span>
-                  );
-                })}
-            </div>
-          </div>
         </div>
       )}
     </>
@@ -103,26 +63,8 @@ export const LibrarySongRow = memo(
     onAddToQueue,
   }: LibrarySongRowProps) => {
     const { openSongId, setOpenSongId } = useSongEdit();
+    const [isRowHovered, setIsRowHovered] = useState(false);
     const isOpen = openSongId === song.id;
-    const tickerRef = useRef<HTMLDivElement>(null);
-    const tickerInnerRef = useRef<HTMLDivElement>(null);
-    const tickerRefMobile = useRef<HTMLDivElement>(null);
-    const tickerInnerRefMobile = useRef<HTMLDivElement>(null);
-    const [tagsOverflow, setTagsOverflow] = useState(false);
-    const checkOverflow = useCallback(() => {
-      if (tickerRef.current && tickerInnerRef.current && tickerRef.current.clientWidth > 0) {
-        setTagsOverflow(tickerInnerRef.current.scrollWidth > tickerRef.current.clientWidth);
-        return;
-      }
-      if (tickerRefMobile.current && tickerInnerRefMobile.current) {
-        setTagsOverflow(
-          tickerInnerRefMobile.current.scrollWidth > tickerRefMobile.current.clientWidth
-        );
-      }
-    }, []);
-    useEffect(() => {
-      checkOverflow();
-    }, [checkOverflow]);
     const handleDelete = useCallback(() => onDelete(song.id), [onDelete, song.id]);
     const handlePlay = useCallback(() => onPlay(song.id), [onPlay, song.id]);
     const handleAddToQueue = useCallback(() => onAddToQueue(song.id), [onAddToQueue, song.id]);
@@ -144,6 +86,8 @@ export const LibrarySongRow = memo(
           className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-3"
           onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
           style={isAdmin ? { cursor: 'pointer' } : undefined}
+          onMouseEnter={() => setIsRowHovered(true)}
+          onMouseLeave={() => setIsRowHovered(false)}
         >
           <img
             src={song.thumbnailUrl}
@@ -184,44 +128,7 @@ export const LibrarySongRow = memo(
                   {tags.length > 0 && (
                     <div className="flex items-center gap-1 text-sm text-muted mt-1 md:hidden">
                       <TagIcon size={11} weight="fill" className="shrink-0" />
-                      <div className="overflow-hidden py-0" ref={tickerRefMobile}>
-                        <div
-                          className="flex gap-1"
-                          ref={tickerInnerRefMobile}
-                          style={
-                            tagsOverflow
-                              ? {
-                                  width: 'max-content',
-                                  animation: 'ticker-scroll 15s linear infinite',
-                                }
-                              : undefined
-                          }
-                        >
-                          {tags.map((tag) => {
-                            const colors = getTagColorClasses(tag);
-                            return (
-                              <span
-                                key={`a-${tag}`}
-                                className={`inline-flex items-center px-1.5 py-0 rounded text-[11px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
-                              >
-                                {tag}
-                              </span>
-                            );
-                          })}
-                          {tagsOverflow &&
-                            tags.map((tag) => {
-                              const colors = getTagColorClasses(tag);
-                              return (
-                                <span
-                                  key={`b-${tag}`}
-                                  className={`inline-flex items-center px-1.5 py-0 rounded text-[11px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
-                                >
-                                  {tag}
-                                </span>
-                              );
-                            })}
-                        </div>
-                      </div>
+                      <TagTicker tags={tags} />
                     </div>
                   )}
                 </>
@@ -229,12 +136,7 @@ export const LibrarySongRow = memo(
             })()}
           </div>
           <div className="hidden md:flex flex-col items-end gap-1.5 shrink-0 mr-2">
-            <MetaInfo
-              song={song}
-              tickerRef={tickerRef}
-              tickerInnerRef={tickerInnerRef}
-              tagsOverflow={tagsOverflow}
-            />
+            <MetaInfo song={song} isHovered={isRowHovered} />
           </div>
           <Button
             variant="primary"
