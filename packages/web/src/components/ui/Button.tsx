@@ -1,32 +1,56 @@
 import type React from 'react';
 import { forwardRef } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'foreground' | 'danger';
+type ButtonVariant = 'primary' | 'inherit' | 'danger';
 type ButtonSize = 'default' | 'icon';
+type ButtonSurface = 'base' | 'surface' | 'elevated';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  surface?: ButtonSurface;
 }
 
 const defaultClasses: Record<ButtonVariant, string> = {
   primary: 'btn-primary',
-  secondary: 'btn-secondary',
-  foreground: 'btn-foreground',
+  inherit: 'btn-inherit',
   danger: 'btn-danger',
 };
 
 const iconClasses: Record<ButtonVariant, string> = {
   primary: 'btn-icon-primary',
-  secondary: 'btn-icon-secondary',
-  foreground: 'btn-icon-foreground',
+  inherit: 'btn-icon-inherit',
   danger: 'btn-icon-danger',
 };
 
+const surfaceVars: Record<ButtonSurface, string> = {
+  base: 'var(--color-base)',
+  surface: 'var(--color-surface)',
+  elevated: 'var(--color-elevated)',
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'default', className, ...props }: ButtonProps,
+  {
+    variant = 'primary',
+    size = 'default',
+    surface = 'surface',
+    className,
+    style,
+    ...props
+  }: ButtonProps,
   ref
 ) {
   const base = size === 'icon' ? iconClasses[variant] : defaultClasses[variant];
-  return <button ref={ref} className={className ? `${base} ${className}` : base} {...props} />;
+  const inheritStyle: React.CSSProperties =
+    variant === 'inherit'
+      ? ({ ...style, '--btn-surface': surfaceVars[surface] } as React.CSSProperties)
+      : style || {};
+  return (
+    <button
+      ref={ref}
+      className={className ? `${base} ${className}` : base}
+      style={inheritStyle}
+      {...props}
+    />
+  );
 });

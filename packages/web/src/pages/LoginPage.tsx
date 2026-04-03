@@ -15,7 +15,7 @@ export default function LoginPage() {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-elevated flex items-center justify-center relative overflow-hidden">
       {/* Background texture */}
       <div
         className="absolute inset-0 opacity-[0.03]"

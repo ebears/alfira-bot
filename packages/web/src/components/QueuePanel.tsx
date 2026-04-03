@@ -144,7 +144,8 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           </Button>
           <Button
             ref={triggerRef}
-            variant="foreground"
+            variant="inherit"
+            surface="elevated"
             size="icon"
             type="button"
             aria-haspopup="true"
@@ -330,7 +331,14 @@ const PanelHeader = memo(function PanelHeader({ onClose }: { onClose: () => void
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
       <h1 className="font-display text-xl text-fg tracking-wider">Queue</h1>
-      <Button variant="foreground" size="icon" type="button" onClick={onClose} title="Close queue">
+      <Button
+        variant="inherit"
+        size="icon"
+        type="button"
+        onClick={onClose}
+        title="Close queue"
+        surface="elevated"
+      >
         <XIcon size={18} weight="bold" />
       </Button>
     </div>
@@ -369,7 +377,7 @@ const NowPlayingCard = memo(function NowPlayingCard({
             href={song.youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-body font-bold text-sm text-fg hover:text-accent line-clamp-2"
+            className="font-body text-sm text-fg hover:text-accent line-clamp-2"
           >
             {song.nickname || song.title}
           </a>

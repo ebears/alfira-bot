@@ -4,9 +4,9 @@ import {
   CircleNotchIcon,
   DoorOpenIcon,
   GuitarIcon,
-  ListIcon,
   PauseIcon,
   PlayIcon,
+  QueueIcon,
   RepeatIcon,
   RepeatOnceIcon,
   ShuffleIcon,
@@ -81,7 +81,8 @@ const PlaybackControls = memo(function PlaybackControls({
 
       {isConnectedToVoice && (
         <Button
-          variant="foreground"
+          variant="inherit"
+          surface="base"
           size="icon"
           onClick={onStop}
           title="Stop playback"
@@ -129,7 +130,8 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
       {currentSong && (
         <>
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="base"
             size="icon"
             onClick={onCycleLoop}
             disabled={loopBusy}
@@ -147,7 +149,8 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
             )}
           </Button>
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="base"
             size="icon"
             onClick={onShuffleToggle}
             disabled={shuffleBusy}
@@ -337,7 +340,7 @@ export function NowPlayingBar() {
   }, [isShuffled, shuffle, unshuffle]);
 
   return (
-    <div className="shrink-0 bg-elevated fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto safe-area-bottom clay-player-edge">
+    <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 safe-area-bottom clay-player-edge z-10">
       {/* Mobile: progress bar on top */}
       <ProgressBar currentSong={currentSong} registerProgress={registerProgress} variant="mobile" />
 
@@ -388,7 +391,8 @@ export function NowPlayingBar() {
             onShuffleToggle={handleShuffleToggle}
           />
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="base"
             size="icon"
             onClick={() => setQueueOpen(true)}
             title="Queue"
@@ -396,7 +400,11 @@ export function NowPlayingBar() {
               queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
             }`}
           >
-            <ListIcon size={20} weight={queueOpen ? 'fill' : 'duotone'} className="md:w-4 md:h-4" />
+            <QueueIcon
+              size={20}
+              weight={queueOpen ? 'fill' : 'duotone'}
+              className="md:w-4 md:h-4"
+            />
           </Button>
         </div>
       </div>

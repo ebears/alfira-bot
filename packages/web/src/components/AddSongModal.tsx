@@ -131,7 +131,7 @@ export default function AddSongModal({
         )}
 
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onClose} disabled={loading}>
+          <Button variant="inherit" onClick={onClose} disabled={loading} surface="surface">
             Cancel
           </Button>
           <Button

@@ -21,7 +21,8 @@ export function BarButton({
 }) {
   return (
     <Button
-      variant="foreground"
+      variant="inherit"
+      surface="base"
       size="icon"
       onClick={onClick}
       disabled={disabled}

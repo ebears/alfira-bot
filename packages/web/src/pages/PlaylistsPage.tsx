@@ -183,7 +183,7 @@ function CreatePlaylistModal({ onClose }: { onClose: () => void }) {
         />
         {state?.error && <p className="font-mono text-xs text-danger mb-3">{state.error}</p>}
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" type="button" onClick={onClose}>
+          <Button variant="inherit" type="button" onClick={onClose} surface="surface">
             Cancel
           </Button>
           <CreatePlaylistSubmitButton disabled={!name.trim()}>Create</CreatePlaylistSubmitButton>

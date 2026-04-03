@@ -223,7 +223,8 @@ const SongRow = memo(function SongRow({
         {formatDuration(song.duration)}
       </span>
       <Button
-        variant="foreground"
+        variant="inherit"
+        surface="surface"
         disabled={isAdded || isAdding}
         onClick={() => onAdd(song)}
         className={`font-mono text-xs px-3 py-2 md:py-1 min-h-11 md:min-h-0 ${

@@ -1,17 +1,23 @@
-import { CraneTowerIcon, GearIcon, GuitarIcon, ListIcon, XCircleIcon } from '@phosphor-icons/react';
+import {
+  CraneTowerIcon,
+  GuitarIcon,
+  HashIcon,
+  SignOutIcon,
+  XCircleIcon,
+} from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
-import SettingsContent from './SettingsContent';
 import { Button } from './ui/Button';
+import SettingsMenu from './SettingsMenu';
 
 export default function MobileNav() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { isAdminView } = useAdminView();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Close drawer on escape key
@@ -52,18 +58,24 @@ export default function MobileNav() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   return (
     <>
       {/* Mobile header bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 flex items-center justify-between px-4 bg-surface border-b border-border safe-area-top">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 flex items-center justify-between px-4 bg-elevated border-b border-border safe-area-top">
         {/* Left: Menu button */}
         <Button
-          variant="foreground"
+          variant="inherit"
+          surface="elevated"
           size="icon"
           onClick={() => setIsOpen(true)}
           aria-label="Open navigation menu"
         >
-          <ListIcon size={24} weight="duotone" />
+          <HashIcon size={24} weight="duotone" />
         </Button>
 
         {/* Center: Wordmark */}
@@ -117,21 +129,18 @@ export default function MobileNav() {
         {/* Drawer header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 flex items-center justify-center ${
-                isAdminView ? 'text-accent' : 'text-member'
-              }`}
-            >
+            <span className="flex items-center justify-center w-10 h-10 shrink-0 rounded border border-accent/30 bg-accent/10 self-end">
               {isAdminView ? (
-                <CraneTowerIcon size={20} weight="duotone" />
+                <CraneTowerIcon size={24} weight="duotone" className="text-accent" />
               ) : (
-                <GuitarIcon size={20} weight="duotone" />
+                <GuitarIcon size={24} weight="duotone" className="text-accent" />
               )}
-            </div>
+            </span>
             <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
           </div>
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="elevated"
             size="icon"
             onClick={() => setIsOpen(false)}
             aria-label="Close navigation menu"
@@ -141,112 +150,63 @@ export default function MobileNav() {
         </div>
 
         {/* Navigation links */}
-        <nav className="p-3 space-y-1">
+        <nav className="px-3 pt-3 pb-2 space-y-2">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-150 ${
-                  isActive ? 'btn-nav-active pressed text-accent' : 'btn-nav-inactive text-fg/90'
+                `flex items-center rounded-xl font-body font-bold transition-all duration-150 cursor-pointer px-3 py-3 ${
+                  isActive ? 'btn-inherit pressed' : 'btn-inherit'
                 }`
               }
+              style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
             >
-              <Icon size={20} weight="duotone" />
-              <span className="block">{label}</span>
+              <Icon size={18} weight="duotone" />
+              <span className="mr-auto">{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* Settings button and User info at bottom */}
-        <div className="mt-auto border-t border-border">
-          {/* Settings button */}
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-150 ${
-              isSettingsOpen ? 'btn-nav-active pressed' : 'btn-nav-inactive text-fg/90'
-            }`}
-          >
-            <GearIcon size={20} weight="duotone" />
-            Settings
-          </button>
+        {/* Bottom section: Settings, separator, user */}
+        <div className="mt-auto">
+          {/* Settings Menu */}
+          <SettingsMenu collapsed={false} />
 
-          {/* User info */}
-          <div className="p-4 border-t border-border safe-area-bottom">
-            <div className="flex items-center gap-3 px-2 py-2">
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.username}
-                  className="w-10 h-10 rounded-full border border-border"
-                  decoding="async"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-elevated border border-border flex items-center justify-center">
-                  <span className="font-mono text-sm text-muted">
-                    {user?.username?.[0]?.toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-fg truncate">{user?.username}</p>
-                <p className="text-xs text-muted">Logged in</p>
-              </div>
-            </div>
+          {/* Separator above user section */}
+          <div className="px-5">
+            <div className="h-px bg-fg/20" />
           </div>
-        </div>
-      </div>
 
-      {/* Settings panel - full height slide-in from right */}
-      {isSettingsOpen && (
-        <SettingsPanel
-          onClose={() => setIsSettingsOpen(false)}
-          onLogout={() => {
-            setIsSettingsOpen(false);
-            setIsOpen(false);
-          }}
-        />
-      )}
-    </>
-  );
-}
-
-// Settings panel component for mobile
-function SettingsPanel({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
-  return (
-    <>
-      {/* Backdrop */}
-      <button
-        type="button"
-        className="fixed inset-0 z-60 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape' || e.key === 'Enter') onClose();
-        }}
-      />
-
-      {/* Panel - full height slide in from right */}
-      <div className="fixed top-0 right-0 bottom-0 z-70 w-80 max-w-[85vw] bg-surface border-l border-border animate-slide-in-right safe-area-top safe-area-bottom">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
-          <Button variant="foreground" size="icon" onClick={onClose}>
-            <XCircleIcon size={24} weight="duotone" />
+          {/* User section */}
+        <div className="p-3">
+          <div className="flex items-center gap-3 px-2 py-2 mb-1">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.username}
+                className="w-7 h-7 rounded-full"
+                decoding="async"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
+                <span className="font-mono text-sm text-muted">
+                  {user?.username?.[0]?.toUpperCase()}
+                </span>
+              </div>
+            )}
+            <span className="text-fg font-body truncate flex-1">{user?.username}</span>
+          </div>
+          <Button
+            variant="danger"
+            onClick={handleLogout}
+            className="flex items-center rounded-xl transition-all duration-150 cursor-pointer px-3 py-2 w-full text-foreground"
+          >
+            <span className="mr-auto text-sm">log out</span>
+            <SignOutIcon size={18} weight="duotone" />
           </Button>
         </div>
-
-        {/* Content - scrollable */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <SettingsContent />
-        </div>
-
-        {/* Logout button at bottom */}
-        <div className="p-4 border-t border-border safe-area-bottom">
-          <Button variant="danger" className="w-full text-center" onClick={onLogout}>
-            Log out
-          </Button>
         </div>
       </div>
     </>

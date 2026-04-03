@@ -281,7 +281,8 @@ export default function SongsPage() {
         {/* View toggle */}
         <div className="flex items-center gap-1">
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="surface"
             size="icon"
             onClick={() => {
               startTransition(() => {
@@ -295,7 +296,8 @@ export default function SongsPage() {
             <SquaresFourIcon size={18} weight="duotone" />
           </Button>
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="surface"
             size="icon"
             onClick={() => {
               startTransition(() => {

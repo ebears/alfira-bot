@@ -23,7 +23,7 @@ export default function ConfirmModal({
         <h2 className="font-display text-2xl md:text-3xl text-fg tracking-wider mb-1">{title}</h2>
         <p className="font-body text-sm text-muted mb-4 md:mb-6">{message}</p>
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onCancel}>
+          <Button variant="inherit" onClick={onCancel} surface="surface">
             Cancel
           </Button>
           <Button variant="danger" onClick={onConfirm}>

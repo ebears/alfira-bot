@@ -40,7 +40,8 @@ export default function PlayModal({
           <div className="flex gap-2">
             {(['sequential', 'random'] as const).map((m) => (
               <Button
-                variant="foreground"
+                variant="inherit"
+                surface="surface"
                 key={m}
                 onClick={() => setMode(m)}
                 className={`flex-1 py-2 text-xs font-mono ${
@@ -56,7 +57,7 @@ export default function PlayModal({
         {error && <p className="font-mono text-xs text-danger mb-4">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" onClick={onClose} disabled={loading}>
+          <Button variant="inherit" surface="surface" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handlePlay} disabled={loading}>
