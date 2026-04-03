@@ -60,7 +60,9 @@ const PlayerStateContext = createContext<Omit<
   'elapsed' | 'registerProgress'
 > | null>(null);
 const PlayerElapsedContext = createContext<number>(0);
-const PlayerProgressContext = createContext<(ref: HTMLDivElement | null) => void>(() => {});
+const PlayerProgressContext = createContext<(ref: HTMLDivElement | null) => void>(() => {
+  /* noop */
+});
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);

@@ -120,8 +120,6 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
     ) : (
       <RepeatIcon size={18} weight="fill" className="md:w-4 md:h-4" />
     )
-  ) : loopMode === 'song' ? (
-    <RepeatOnceIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
   ) : (
     <RepeatIcon size={18} weight="duotone" className="md:w-4 md:h-4" />
   );

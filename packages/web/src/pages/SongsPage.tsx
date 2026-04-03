@@ -48,7 +48,9 @@ export default function SongsPage() {
   useEffect(() => {
     void getPlaylistsPage(isAdminView, 1, 100)
       .then((p) => setPlaylists(p.items))
-      .catch(() => {});
+      .catch(() => {
+        /* Silently ignore playlist fetch error */
+      });
   }, [isAdminView]);
 
   // Refs to track state for socket handlers without causing effect re-runs

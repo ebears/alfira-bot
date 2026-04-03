@@ -10,7 +10,6 @@ export function BarButton({
   title,
   hoverColor,
   pulse = false,
-  pressed = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -19,7 +18,6 @@ export function BarButton({
   title: string;
   hoverColor: string;
   pulse?: boolean;
-  pressed?: boolean;
 }) {
   return (
     <Button
