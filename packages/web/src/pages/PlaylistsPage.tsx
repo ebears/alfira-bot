@@ -10,6 +10,7 @@ import PlaylistRow from '../components/PlaylistRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
+import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 
@@ -23,19 +24,22 @@ export default function PlaylistsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const { notification } = useNotification();
+  const { itemsPerPage, setContainerRef } = useItemsPerPage();
+  const itemsPerPageRef = useRef(itemsPerPage);
+  itemsPerPageRef.current = itemsPerPage;
 
   const load = useCallback(
     async (page: number) => {
       setLoading(true);
       try {
-        const result = await getPlaylistsPage(isAdminView, page, 30);
+        const result = await getPlaylistsPage(isAdminView, page, itemsPerPage);
         setItems(result.items);
         setPagination(result.pagination);
       } finally {
         setLoading(false);
       }
     },
-    [isAdminView]
+    [isAdminView, itemsPerPage]
   );
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export default function PlaylistsPage() {
           return prev.map((p) => (p.id === updated.id ? updated : p));
         }
         // New — prepend if page 1 has room
-        if (currentPage === 1 && prev.length < 30) {
+        if (currentPage === 1 && prev.length < itemsPerPageRef.current) {
           return [updated, ...prev];
         }
         return prev;
@@ -88,7 +92,7 @@ export default function PlaylistsPage() {
   );
 
   return (
-    <div className="p-4 md:p-8">
+    <div ref={setContainerRef} className="p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
         <div>

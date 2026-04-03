@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Song" ADD COLUMN "artist" TEXT,
+ADD COLUMN "album" TEXT,
+ADD COLUMN "artwork" TEXT,
+ADD COLUMN "tags" TEXT[] DEFAULT ARRAY[]::TEXT[];

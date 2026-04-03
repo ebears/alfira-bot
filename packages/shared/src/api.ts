@@ -120,6 +120,24 @@ export function updateSongNickname(id: string, nickname: string | null): Promise
   return patch(`/api/songs/${id}`, { nickname });
 }
 
+/**
+ * Data for updating a song. Only provide fields you want to change.
+ */
+export interface SongUpdateData {
+  nickname?: string | null;
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: string[];
+}
+
+/**
+ * Update a song's editable fields. Admin only.
+ */
+export function updateSong(id: string, data: SongUpdateData): Promise<Song> {
+  return patch(`/api/songs/${id}`, data);
+}
+
 // ---------------------------------------------------------------------------
 // Playlists API Functions
 // ---------------------------------------------------------------------------

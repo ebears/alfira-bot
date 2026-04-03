@@ -42,6 +42,9 @@ export type SongMinAggregateOutputType = {
   thumbnailUrl: string | null;
   addedBy: string | null;
   nickname: string | null;
+  artist: string | null;
+  album: string | null;
+  artwork: string | null;
   createdAt: Date | null;
 };
 
@@ -54,6 +57,9 @@ export type SongMaxAggregateOutputType = {
   thumbnailUrl: string | null;
   addedBy: string | null;
   nickname: string | null;
+  artist: string | null;
+  album: string | null;
+  artwork: string | null;
   createdAt: Date | null;
 };
 
@@ -66,6 +72,10 @@ export type SongCountAggregateOutputType = {
   thumbnailUrl: number;
   addedBy: number;
   nickname: number;
+  artist: number;
+  album: number;
+  artwork: number;
+  tags: number;
   createdAt: number;
   _all: number;
 };
@@ -87,6 +97,9 @@ export type SongMinAggregateInputType = {
   thumbnailUrl?: true;
   addedBy?: true;
   nickname?: true;
+  artist?: true;
+  album?: true;
+  artwork?: true;
   createdAt?: true;
 };
 
@@ -99,6 +112,9 @@ export type SongMaxAggregateInputType = {
   thumbnailUrl?: true;
   addedBy?: true;
   nickname?: true;
+  artist?: true;
+  album?: true;
+  artwork?: true;
   createdAt?: true;
 };
 
@@ -111,6 +127,10 @@ export type SongCountAggregateInputType = {
   thumbnailUrl?: true;
   addedBy?: true;
   nickname?: true;
+  artist?: true;
+  album?: true;
+  artwork?: true;
+  tags?: true;
   createdAt?: true;
   _all?: true;
 };
@@ -211,6 +231,10 @@ export type SongGroupByOutputType = {
   thumbnailUrl: string;
   addedBy: string;
   nickname: string | null;
+  artist: string | null;
+  album: string | null;
+  artwork: string | null;
+  tags: string[];
   createdAt: Date;
   _count: SongCountAggregateOutputType | null;
   _avg: SongAvgAggregateOutputType | null;
@@ -243,6 +267,10 @@ export type SongWhereInput = {
   thumbnailUrl?: Prisma.StringFilter<'Song'> | string;
   addedBy?: Prisma.StringFilter<'Song'> | string;
   nickname?: Prisma.StringNullableFilter<'Song'> | string | null;
+  artist?: Prisma.StringNullableFilter<'Song'> | string | null;
+  album?: Prisma.StringNullableFilter<'Song'> | string | null;
+  artwork?: Prisma.StringNullableFilter<'Song'> | string | null;
+  tags?: Prisma.StringNullableListFilter<'Song'>;
   createdAt?: Prisma.DateTimeFilter<'Song'> | Date | string;
   playlistSongs?: Prisma.PlaylistSongListRelationFilter;
 };
@@ -256,6 +284,10 @@ export type SongOrderByWithRelationInput = {
   thumbnailUrl?: Prisma.SortOrder;
   addedBy?: Prisma.SortOrder;
   nickname?: Prisma.SortOrderInput | Prisma.SortOrder;
+  artist?: Prisma.SortOrderInput | Prisma.SortOrder;
+  album?: Prisma.SortOrderInput | Prisma.SortOrder;
+  artwork?: Prisma.SortOrderInput | Prisma.SortOrder;
+  tags?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   playlistSongs?: Prisma.PlaylistSongOrderByRelationAggregateInput;
 };
@@ -273,6 +305,10 @@ export type SongWhereUniqueInput = Prisma.AtLeast<
     thumbnailUrl?: Prisma.StringFilter<'Song'> | string;
     addedBy?: Prisma.StringFilter<'Song'> | string;
     nickname?: Prisma.StringNullableFilter<'Song'> | string | null;
+    artist?: Prisma.StringNullableFilter<'Song'> | string | null;
+    album?: Prisma.StringNullableFilter<'Song'> | string | null;
+    artwork?: Prisma.StringNullableFilter<'Song'> | string | null;
+    tags?: Prisma.StringNullableListFilter<'Song'>;
     createdAt?: Prisma.DateTimeFilter<'Song'> | Date | string;
     playlistSongs?: Prisma.PlaylistSongListRelationFilter;
   },
@@ -288,6 +324,10 @@ export type SongOrderByWithAggregationInput = {
   thumbnailUrl?: Prisma.SortOrder;
   addedBy?: Prisma.SortOrder;
   nickname?: Prisma.SortOrderInput | Prisma.SortOrder;
+  artist?: Prisma.SortOrderInput | Prisma.SortOrder;
+  album?: Prisma.SortOrderInput | Prisma.SortOrder;
+  artwork?: Prisma.SortOrderInput | Prisma.SortOrder;
+  tags?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   _count?: Prisma.SongCountOrderByAggregateInput;
   _avg?: Prisma.SongAvgOrderByAggregateInput;
@@ -308,6 +348,10 @@ export type SongScalarWhereWithAggregatesInput = {
   thumbnailUrl?: Prisma.StringWithAggregatesFilter<'Song'> | string;
   addedBy?: Prisma.StringWithAggregatesFilter<'Song'> | string;
   nickname?: Prisma.StringNullableWithAggregatesFilter<'Song'> | string | null;
+  artist?: Prisma.StringNullableWithAggregatesFilter<'Song'> | string | null;
+  album?: Prisma.StringNullableWithAggregatesFilter<'Song'> | string | null;
+  artwork?: Prisma.StringNullableWithAggregatesFilter<'Song'> | string | null;
+  tags?: Prisma.StringNullableListFilter<'Song'>;
   createdAt?: Prisma.DateTimeWithAggregatesFilter<'Song'> | Date | string;
 };
 
@@ -320,6 +364,10 @@ export type SongCreateInput = {
   thumbnailUrl: string;
   addedBy: string;
   nickname?: string | null;
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: Prisma.SongCreatetagsInput | string[];
   createdAt?: Date | string;
   playlistSongs?: Prisma.PlaylistSongCreateNestedManyWithoutSongInput;
 };
@@ -333,6 +381,10 @@ export type SongUncheckedCreateInput = {
   thumbnailUrl: string;
   addedBy: string;
   nickname?: string | null;
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: Prisma.SongCreatetagsInput | string[];
   createdAt?: Date | string;
   playlistSongs?: Prisma.PlaylistSongUncheckedCreateNestedManyWithoutSongInput;
 };
@@ -346,6 +398,10 @@ export type SongUpdateInput = {
   thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string;
   addedBy?: Prisma.StringFieldUpdateOperationsInput | string;
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artist?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  tags?: Prisma.SongUpdatetagsInput | string[];
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   playlistSongs?: Prisma.PlaylistSongUpdateManyWithoutSongNestedInput;
 };
@@ -359,6 +415,10 @@ export type SongUncheckedUpdateInput = {
   thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string;
   addedBy?: Prisma.StringFieldUpdateOperationsInput | string;
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artist?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  tags?: Prisma.SongUpdatetagsInput | string[];
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   playlistSongs?: Prisma.PlaylistSongUncheckedUpdateManyWithoutSongNestedInput;
 };
@@ -372,6 +432,10 @@ export type SongCreateManyInput = {
   thumbnailUrl: string;
   addedBy: string;
   nickname?: string | null;
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: Prisma.SongCreatetagsInput | string[];
   createdAt?: Date | string;
 };
 
@@ -384,6 +448,10 @@ export type SongUpdateManyMutationInput = {
   thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string;
   addedBy?: Prisma.StringFieldUpdateOperationsInput | string;
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artist?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  tags?: Prisma.SongUpdatetagsInput | string[];
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -396,7 +464,19 @@ export type SongUncheckedUpdateManyInput = {
   thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string;
   addedBy?: Prisma.StringFieldUpdateOperationsInput | string;
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artist?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  tags?: Prisma.SongUpdatetagsInput | string[];
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+};
+
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null;
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null;
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
+  isEmpty?: boolean;
 };
 
 export type SongCountOrderByAggregateInput = {
@@ -408,6 +488,10 @@ export type SongCountOrderByAggregateInput = {
   thumbnailUrl?: Prisma.SortOrder;
   addedBy?: Prisma.SortOrder;
   nickname?: Prisma.SortOrder;
+  artist?: Prisma.SortOrder;
+  album?: Prisma.SortOrder;
+  artwork?: Prisma.SortOrder;
+  tags?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
 };
 
@@ -424,6 +508,9 @@ export type SongMaxOrderByAggregateInput = {
   thumbnailUrl?: Prisma.SortOrder;
   addedBy?: Prisma.SortOrder;
   nickname?: Prisma.SortOrder;
+  artist?: Prisma.SortOrder;
+  album?: Prisma.SortOrder;
+  artwork?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
 };
 
@@ -436,6 +523,9 @@ export type SongMinOrderByAggregateInput = {
   thumbnailUrl?: Prisma.SortOrder;
   addedBy?: Prisma.SortOrder;
   nickname?: Prisma.SortOrder;
+  artist?: Prisma.SortOrder;
+  album?: Prisma.SortOrder;
+  artwork?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
 };
 
@@ -446,6 +536,10 @@ export type SongSumOrderByAggregateInput = {
 export type SongScalarRelationFilter = {
   is?: Prisma.SongWhereInput;
   isNot?: Prisma.SongWhereInput;
+};
+
+export type SongCreatetagsInput = {
+  set: string[];
 };
 
 export type StringFieldUpdateOperationsInput = {
@@ -462,6 +556,11 @@ export type IntFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null;
+};
+
+export type SongUpdatetagsInput = {
+  set?: string[];
+  push?: string | string[];
 };
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -503,6 +602,10 @@ export type SongCreateWithoutPlaylistSongsInput = {
   thumbnailUrl: string;
   addedBy: string;
   nickname?: string | null;
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: Prisma.SongCreatetagsInput | string[];
   createdAt?: Date | string;
 };
 
@@ -515,6 +618,10 @@ export type SongUncheckedCreateWithoutPlaylistSongsInput = {
   thumbnailUrl: string;
   addedBy: string;
   nickname?: string | null;
+  artist?: string | null;
+  album?: string | null;
+  artwork?: string | null;
+  tags?: Prisma.SongCreatetagsInput | string[];
   createdAt?: Date | string;
 };
 
@@ -555,6 +662,10 @@ export type SongUpdateWithoutPlaylistSongsInput = {
   thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string;
   addedBy?: Prisma.StringFieldUpdateOperationsInput | string;
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artist?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  tags?: Prisma.SongUpdatetagsInput | string[];
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -567,6 +678,10 @@ export type SongUncheckedUpdateWithoutPlaylistSongsInput = {
   thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string;
   addedBy?: Prisma.StringFieldUpdateOperationsInput | string;
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artist?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  tags?: Prisma.SongUpdatetagsInput | string[];
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -617,6 +732,10 @@ export type SongSelect<
     thumbnailUrl?: boolean;
     addedBy?: boolean;
     nickname?: boolean;
+    artist?: boolean;
+    album?: boolean;
+    artwork?: boolean;
+    tags?: boolean;
     createdAt?: boolean;
     playlistSongs?: boolean | Prisma.Song$playlistSongsArgs<ExtArgs>;
     _count?: boolean | Prisma.SongCountOutputTypeDefaultArgs<ExtArgs>;
@@ -636,6 +755,10 @@ export type SongSelectCreateManyAndReturn<
     thumbnailUrl?: boolean;
     addedBy?: boolean;
     nickname?: boolean;
+    artist?: boolean;
+    album?: boolean;
+    artwork?: boolean;
+    tags?: boolean;
     createdAt?: boolean;
   },
   ExtArgs['result']['song']
@@ -653,6 +776,10 @@ export type SongSelectUpdateManyAndReturn<
     thumbnailUrl?: boolean;
     addedBy?: boolean;
     nickname?: boolean;
+    artist?: boolean;
+    album?: boolean;
+    artwork?: boolean;
+    tags?: boolean;
     createdAt?: boolean;
   },
   ExtArgs['result']['song']
@@ -667,6 +794,10 @@ export type SongSelectScalar = {
   thumbnailUrl?: boolean;
   addedBy?: boolean;
   nickname?: boolean;
+  artist?: boolean;
+  album?: boolean;
+  artwork?: boolean;
+  tags?: boolean;
   createdAt?: boolean;
 };
 
@@ -681,6 +812,10 @@ export type SongOmit<
   | 'thumbnailUrl'
   | 'addedBy'
   | 'nickname'
+  | 'artist'
+  | 'album'
+  | 'artwork'
+  | 'tags'
   | 'createdAt',
   ExtArgs['result']['song']
 >;
@@ -714,6 +849,10 @@ export type $SongPayload<
       thumbnailUrl: string;
       addedBy: string;
       nickname: string | null;
+      artist: string | null;
+      album: string | null;
+      artwork: string | null;
+      tags: string[];
       createdAt: Date;
     },
     ExtArgs['result']['song']
@@ -1275,6 +1414,10 @@ export interface SongFieldRefs {
   readonly thumbnailUrl: Prisma.FieldRef<'Song', 'String'>;
   readonly addedBy: Prisma.FieldRef<'Song', 'String'>;
   readonly nickname: Prisma.FieldRef<'Song', 'String'>;
+  readonly artist: Prisma.FieldRef<'Song', 'String'>;
+  readonly album: Prisma.FieldRef<'Song', 'String'>;
+  readonly artwork: Prisma.FieldRef<'Song', 'String'>;
+  readonly tags: Prisma.FieldRef<'Song', 'String[]'>;
   readonly createdAt: Prisma.FieldRef<'Song', 'DateTime'>;
 }
 

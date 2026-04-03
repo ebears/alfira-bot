@@ -751,6 +751,10 @@ export const SongScalarFieldEnum = {
   thumbnailUrl: 'thumbnailUrl',
   addedBy: 'addedBy',
   nickname: 'nickname',
+  artist: 'artist',
+  album: 'album',
+  artwork: 'artwork',
+  tags: 'tags',
   createdAt: 'createdAt',
 } as const;
 

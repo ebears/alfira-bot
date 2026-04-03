@@ -53,6 +53,11 @@
     }
 }
 
+@keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
 /* ============================================
    COLOR THEME DEFINITIONS
    Each theme defines accent colors and palette
@@ -1086,6 +1091,12 @@
             var(--clay-shadow-flat),
             0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
     }
+    .input:focus-within {
+        border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+        box-shadow:
+            var(--clay-shadow-flat),
+            0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
+    }
 
     .card {
         @apply overflow-hidden transition-all duration-200;
@@ -1314,4 +1325,22 @@
 }
 @utility clay-player-edge {
     box-shadow: var(--clay-shadow-player);
+}
+
+.expand-panel {
+    max-height: 0px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+.expand-panel.expanded {
+    max-height: 600px;
+}
+.expand-panel .expand-panel-content {
+    transition: opacity 0.25s ease, visibility 0s linear 0s;
+    visibility: visible;
+}
+.expand-panel .expand-panel-content[data-closing="true"] {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }

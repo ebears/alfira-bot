@@ -2,8 +2,10 @@ import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import { CircleNotchIcon, PlayIcon } from '@phosphor-icons/react';
 import React, { useCallback, useMemo } from 'react';
+import { useSongEdit } from '../context/SongEditContext';
 import { useSongActions } from '../hooks/useSongActions';
 import { ContextMenu, ContextMenuTrigger } from './ContextMenu';
+import SongEditPanel from './SongEditPanel';
 import { Button } from './ui/Button';
 
 interface SongCardProps {
@@ -11,6 +13,7 @@ interface SongCardProps {
   isAdmin: boolean;
   playlists: Playlist[];
   delay?: number;
+  isAdminView?: boolean;
   onDelete: (id: string) => void;
   onPlay: (id: string) => void;
   isPlaying: boolean;
@@ -22,11 +25,14 @@ const SongCardInner = ({
   isAdmin,
   playlists,
   delay,
+  isAdminView,
   onDelete,
   onPlay,
   isPlaying,
   onAddToQueue,
 }: SongCardProps) => {
+  const { openSongId, setOpenSongId } = useSongEdit();
+  const isOpen = openSongId === song.id;
   const style = useMemo(
     () => ({ animationDelay: `${Math.min((delay ?? 0) * 30, 300)}ms` }),
     [delay]
@@ -49,8 +55,10 @@ const SongCardInner = ({
 
   return (
     <div
-      className="animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting"
+      className={`animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting transition-all duration-100${isAdminView ? ' hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 group cursor-pointer' : ''}`}
       style={style}
+      data-song-edit-container
+      onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
     >
       {/* Thumbnail with play overlay */}
       <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
@@ -110,6 +118,11 @@ const SongCardInner = ({
           </div>
         </div>
         {song.nickname && <p className="text-[11px] text-faint truncate">{song.title}</p>}
+      </div>
+
+      {/* Inline edit panel */}
+      <div className={`expand-panel ${isOpen ? 'expanded' : ''}`}>
+        <SongEditPanel song={song} isOpen={isOpen} onClose={() => setOpenSongId(null)} />
       </div>
     </div>
   );

@@ -3,12 +3,11 @@ import {
   ArrowSquareOutIcon,
   BombIcon,
   CassetteTapeIcon,
-  PencilSimpleIcon,
   UserIcon,
   VinylRecordIcon,
 } from '@phosphor-icons/react';
 import { useCallback, useMemo, useOptimistic, useRef, useState } from 'react';
-import { addSongToPlaylist, updateSongNickname } from '../api/api';
+import { addSongToPlaylist } from '../api/api';
 import type { MenuItem } from '../components/ContextMenu';
 import { useNotification } from './useNotification';
 
@@ -35,28 +34,12 @@ export function useSongActions({
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const [editValue, setEditValue] = useState('');
-  const [savingNickname, setSavingNickname] = useState(false);
-
   const { notify } = useNotification();
 
   const [optimisticAdded, addOptimistic] = useOptimistic(
     addedTo,
     (state: Set<string>, playlistId: string) => new Set([...state, playlistId])
   );
-
-  const cancelEdit = useCallback(() => {
-    setEditValue('');
-  }, []);
-
-  const saveNickname = useCallback(async () => {
-    setSavingNickname(true);
-    try {
-      await updateSongNickname(song.id, editValue.trim() || null);
-    } finally {
-      setSavingNickname(false);
-    }
-  }, [song.id, editValue]);
 
   const handleAddToPlaylist = useCallback(
     async (playlistId: string) => {
@@ -129,20 +112,6 @@ export function useSongActions({
               },
             } as MenuItem,
             {
-              id: 'edit-nickname',
-              label: 'Rename',
-              icon: <PencilSimpleIcon size={14} weight="duotone" />,
-              editSubmenu: {
-                title: 'Rename',
-                value: editValue,
-                onChange: setEditValue,
-                onSave: saveNickname,
-                onCancel: cancelEdit,
-                saving: savingNickname,
-                placeholder: 'Nickname (empty to clear)',
-              },
-            } as MenuItem,
-            {
               id: 'delete',
               label: 'Delete song',
               icon: <BombIcon size={14} weight="duotone" />,
@@ -164,10 +133,6 @@ export function useSongActions({
       playlists,
       optimisticAdded,
       handleAddToPlaylist,
-      editValue,
-      saveNickname,
-      cancelEdit,
-      savingNickname,
     ]
   );
 
