@@ -53,7 +53,7 @@ const SongCardInner = ({
 
   return (
     <div
-      className="animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting"
+      className="animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 transition-all duration-100 group cursor-pointer"
       style={style}
       data-song-edit-container
     >
