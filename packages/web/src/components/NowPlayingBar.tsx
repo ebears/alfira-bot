@@ -210,7 +210,7 @@ const ProgressBar = memo(function ProgressBar({
   return (
     <div className="hidden md:flex flex-col flex-1 items-center justify-start self-stretch px-4 min-w-0">
       {currentSong && (
-        <div className="text-center w-full truncate mb-2 h-13 flex flex-col justify-end min-h-13">
+        <div className="text-center w-full truncate mb-2 h-12 flex flex-col justify-center min-h-12">
           <p className="font-body text-sm font-semibold text-fg truncate">{displayName}</p>
           {artist && <p className="font-body text-xs text-muted truncate">{artist}</p>}
           {album && <p className="font-body text-xs text-faint truncate">{album}</p>}
