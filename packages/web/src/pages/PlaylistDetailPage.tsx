@@ -34,6 +34,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
+import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
@@ -66,6 +67,10 @@ export default function PlaylistDetailPage() {
 
   const { state: queueState } = usePlayerState();
 
+  const { itemsPerPage, setContainerRef } = useItemsPerPage();
+  const itemsPerPageRef = useRef(itemsPerPage);
+  itemsPerPageRef.current = itemsPerPage;
+
   // Refs to avoid stale closures in handleRemoveSong
   const paginationRef = useRef(pagination);
   const songsLengthRef = useRef(0);
@@ -77,7 +82,7 @@ export default function PlaylistDetailPage() {
       if (!id) return;
       setLoading(true);
       try {
-        const pl = await getPlaylistPage(id, isAdminView, page, 30);
+        const pl = await getPlaylistPage(id, isAdminView, page, itemsPerPage);
         setPlaylist(pl);
         setPagination(pl.pagination);
         setRenameValue(pl.name);
@@ -87,7 +92,7 @@ export default function PlaylistDetailPage() {
         setLoading(false);
       }
     },
-    [id, navigate, isAdminView]
+    [id, navigate, isAdminView, itemsPerPage]
   );
 
   useEffect(() => {
@@ -140,14 +145,19 @@ export default function PlaylistDetailPage() {
     );
     setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
 
-    // Refill page 1 if we dropped below 30
-    if (prevLength === 30 && paginationRef.current && paginationRef.current.total > 30 && id) {
-      getPlaylistPage(id, isAdminView, currentPage + 1, 30).then((result) => {
+    // Refill page 1 if we dropped below itemsPerPage
+    if (
+      prevLength === itemsPerPageRef.current &&
+      paginationRef.current &&
+      paginationRef.current.total > itemsPerPageRef.current &&
+      id
+    ) {
+      getPlaylistPage(id, isAdminView, currentPage + 1, itemsPerPageRef.current).then((result) => {
         setPlaylist((p) =>
           p
             ? {
                 ...p,
-                songs: [...p.songs, ...result.songs].slice(0, 30),
+                songs: [...p.songs, ...result.songs].slice(0, itemsPerPageRef.current),
               }
             : p
         );
@@ -270,7 +280,7 @@ export default function PlaylistDetailPage() {
   if (!playlist) return null;
 
   return (
-    <div className="p-4 md:p-8">
+    <div ref={setContainerRef} className="p-4 md:p-8">
       {/* Back */}
       <Button
         variant="foreground"

@@ -87,7 +87,9 @@ export const SongRow = memo(
             <p
               className={`flex items-center gap-1 truncate${song.nickname ? ' text-sm' : ' text-base font-medium text-fg'}`}
             >
-              {song.nickname && <PencilIcon size={11} weight="fill" className="shrink-0 text-muted" />}
+              {song.nickname && (
+                <PencilIcon size={11} weight="fill" className="shrink-0 text-muted" />
+              )}
               <span className="truncate">{song.nickname || song.title}</span>
             </p>
             {song.artist && (
