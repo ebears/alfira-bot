@@ -136,7 +136,12 @@ export default function SongsPage() {
     () =>
       search
         ? items.filter(
-            (s) => s.title.toLowerCase().includes(q) || s.nickname?.toLowerCase().includes(q)
+            (s) =>
+              s.title.toLowerCase().includes(q) ||
+              s.nickname?.toLowerCase().includes(q) ||
+              s.artist?.toLowerCase().includes(q) ||
+              s.album?.toLowerCase().includes(q) ||
+              s.tags?.some((t) => t.toLowerCase().includes(q))
           )
         : items,
     [search, items, q]
@@ -250,7 +255,7 @@ export default function SongsPage() {
           />
           <input
             className="input pl-10"
-            placeholder="Search by title or nickname..."
+            placeholder="Search by title, nickname, artist, album, or tag..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);

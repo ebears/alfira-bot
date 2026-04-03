@@ -42,6 +42,16 @@ router.get('/', requireAuth, async (req, res) => {
   const skip = (page - 1) * limit;
   const search = String(req.query.search ?? '').trim();
 
+  // Build tag-matching IDs via raw SQL (case-insensitive substring on array elements).
+  // Prisma's `has` filter does exact equality only.
+  const tagMatchingIds = search
+    ? (
+        await prisma.$queryRaw<
+          Array<{ id: string }>
+        >`SELECT id FROM "Song" WHERE array_to_string(tags, ',') ILIKE ${`%${search}%`}`
+      ).map((r) => r.id)
+    : [];
+
   const where = search
     ? {
         OR: [
@@ -49,6 +59,7 @@ router.get('/', requireAuth, async (req, res) => {
           { nickname: { contains: search, mode: 'insensitive' as const } },
           { artist: { contains: search, mode: 'insensitive' as const } },
           { album: { contains: search, mode: 'insensitive' as const } },
+          { id: { in: tagMatchingIds } },
         ],
       }
     : {};
