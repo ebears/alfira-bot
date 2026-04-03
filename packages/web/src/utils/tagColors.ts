@@ -1,9 +1,29 @@
 const TAG_COLORS = [
-  { bg: 'bg-orange-500/20', text: 'text-orange-300', border: 'border-orange-500/30' },
-  { bg: 'bg-sky-500/20', text: 'text-sky-300', border: 'border-sky-500/30' },
-  { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/30' },
-  { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
-  { bg: 'bg-violet-500/20', text: 'text-violet-300', border: 'border-violet-500/30' },
+  {
+    bg: 'light:bg-orange-500/15 bg-orange-500/20',
+    text: 'light:text-orange-600 text-orange-300',
+    border: 'light:border-orange-500/25 border-orange-500/30',
+  },
+  {
+    bg: 'light:bg-sky-500/15 bg-sky-500/20',
+    text: 'light:text-sky-600 text-sky-300',
+    border: 'light:border-sky-500/25 border-sky-500/30',
+  },
+  {
+    bg: 'light:bg-emerald-500/15 bg-emerald-500/20',
+    text: 'light:text-emerald-600 text-emerald-300',
+    border: 'light:border-emerald-500/25 border-emerald-500/30',
+  },
+  {
+    bg: 'light:bg-amber-500/15 bg-amber-500/20',
+    text: 'light:text-amber-700 text-amber-300',
+    border: 'light:border-amber-500/25 border-amber-500/30',
+  },
+  {
+    bg: 'light:bg-violet-500/15 bg-violet-500/20',
+    text: 'light:text-violet-600 text-violet-300',
+    border: 'light:border-violet-500/25 border-violet-500/30',
+  },
 ] as const;
 
 /** djb2 hash — deterministic, fast, good distribution for short strings */
