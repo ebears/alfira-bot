@@ -1,4 +1,4 @@
-import { CaretLeftIcon, CraneTowerIcon, GuitarIcon, SignOutIcon } from '@phosphor-icons/react';
+import { CaretLeftIcon, CraneTowerIcon, GuitarIcon, StairsIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
@@ -86,14 +86,14 @@ export default function Layout() {
               to={to}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center rounded-xl font-body font-bold transition-all duration-150 cursor-pointer ${
+                `flex items-center rounded-xl font-body font-bold text-lg transition-all duration-150 cursor-pointer ${
                   collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'
                 } ${isActive ? 'btn-inherit pressed' : 'btn-inherit'}`
               }
               style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
             >
               {!collapsed && <span className="mr-auto">{label}</span>}
-              <Icon size={18} weight="duotone" />
+              <Icon size={22} weight="duotone" />
             </NavLink>
           ))}
         </nav>
@@ -108,7 +108,7 @@ export default function Layout() {
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={`flex items-center rounded-xl font-body transition-all duration-150 cursor-pointer w-full ${
-              collapsed ? 'justify-center px-0 py-2' : 'px-3 py-2'
+              collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2'
             } btn-inherit`}
             style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
           >
@@ -173,15 +173,17 @@ export default function Layout() {
                   </span>
                 )}
               </div>
-              <Button
-                variant="danger"
-                size="icon"
-                className="w-7! h-7! rounded-xl transition-all duration-150 cursor-pointer text-foreground"
-                onClick={handleLogout}
-                title="Log out"
-              >
-                <SignOutIcon size={16} weight="duotone" />
-              </Button>
+              <div className="flex justify-center px-2 pb-2">
+                <Button
+                  variant="danger"
+                  size="default"
+                  className="w-full! flex justify-center py-2.5! rounded-xl! min-h-0!"
+                  onClick={handleLogout}
+                  title="Log out"
+                >
+                  <StairsIcon size={16} weight="duotone" />
+                </Button>
+              </div>
             </div>
           ) : (
             <>
@@ -205,10 +207,10 @@ export default function Layout() {
               <Button
                 variant="danger"
                 onClick={handleLogout}
-                className="flex items-center rounded-xl transition-all duration-150 cursor-pointer px-3 py-2 w-full text-foreground"
+                className="flex items-center px-3 py-2 w-full"
               >
                 <span className="mr-auto text-sm">log out</span>
-                <SignOutIcon size={18} weight="duotone" />
+                <StairsIcon size={18} weight="duotone" />
               </Button>
             </>
           )}

@@ -34,7 +34,7 @@ export default function SettingsContent() {
               key={t.name}
               variant="inherit"
               surface="base"
-              className={`flex items-center gap-2 ${colorTheme === t.name ? 'border-accent/40 text-accent' : ''}`}
+              className={`flex items-center gap-2 ${colorTheme === t.name ? 'pressed' : ''}`}
               onClick={() => setColorTheme(t.name)}
             >
               <span
@@ -54,7 +54,7 @@ export default function SettingsContent() {
           <Button
             variant="inherit"
             surface="base"
-            className={`flex-1 flex items-center gap-2 ${mode === 'auto' ? 'border-accent/40 text-accent' : ''}`}
+            className={`flex-1 flex items-center gap-2 ${mode === 'auto' ? 'pressed' : ''}`}
             onClick={() => setMode('auto')}
           >
             <DesktopIcon size={16} weight="duotone" />
@@ -63,7 +63,7 @@ export default function SettingsContent() {
           <Button
             variant="inherit"
             surface="base"
-            className={`flex-1 flex items-center gap-2 ${mode === 'light' ? 'border-accent/40 text-accent' : ''}`}
+            className={`flex-1 flex items-center gap-2 ${mode === 'light' ? 'pressed' : ''}`}
             onClick={() => setMode('light')}
           >
             <SunIcon size={16} weight="duotone" />
@@ -72,7 +72,7 @@ export default function SettingsContent() {
           <Button
             variant="inherit"
             surface="base"
-            className={`flex-1 flex items-center gap-2 ${mode === 'dark' ? 'border-accent/40 text-accent' : ''}`}
+            className={`flex-1 flex items-center gap-2 ${mode === 'dark' ? 'pressed' : ''}`}
             onClick={() => setMode('dark')}
           >
             <MoonIcon size={16} weight="duotone" />

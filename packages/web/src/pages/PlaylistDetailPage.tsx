@@ -331,7 +331,7 @@ export default function PlaylistDetailPage() {
           </Button>
           <ContextMenuTrigger
             ref={menuTriggerRef}
-            onOpen={() => setMenuOpen(true)}
+            onToggle={() => setMenuOpen((v) => !v)}
             isOpen={menuOpen}
           />
           {menuOpen && (

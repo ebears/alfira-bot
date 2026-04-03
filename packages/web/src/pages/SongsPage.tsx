@@ -4,10 +4,10 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
-import LibrarySongRow from '../components/LibrarySongRow';
 import NotificationToast from '../components/NotificationToast';
 import { Pagination } from '../components/Pagination';
 import SongCard from '../components/SongCard';
+import SongRow from '../components/SongRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayerState } from '../context/PlayerContext';
@@ -228,16 +228,16 @@ export default function SongsPage() {
   ) : (
     <div className="flex flex-col gap-1">
       {filtered.map((song) => (
-        <LibrarySongRow
+        <SongRow
           key={song.id}
           song={song}
           isAdmin={isAdminView}
           isAdminView={isAdminView}
           playlists={playlists}
           onDelete={handleSetDeleteId}
-          onPlay={handlePlayFromSong}
+          onPlay={() => handlePlayFromSong(song.id)}
           isPlaying={playingId === song.id}
-          onAddToQueue={handleAddToQueue}
+          onAddToQueue={() => handleAddToQueue(song.id)}
         />
       ))}
     </div>
@@ -248,7 +248,7 @@ export default function SongsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
         <div>
-          <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Library</h1>
+          <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Songs</h1>
           <p className="font-mono text-xs text-muted mt-1">
             {loading
               ? '—'

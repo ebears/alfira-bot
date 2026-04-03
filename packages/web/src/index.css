@@ -1028,6 +1028,9 @@
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
     }
+    [data-mode="light"] .btn-danger {
+        color: #1a1a1a;
+    }
 
     .btn-discord {
         @apply font-body text-sm px-4 py-2.5 md:py-2 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
@@ -1245,6 +1248,32 @@
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
         --icon-btn-accent: var(--color-danger);
         --icon-btn-shadow: color-mix(in srgb, var(--color-danger) 50%, black);
+    }
+    .btn-icon-danger:hover {
+        transform: var(--btn-transform-hover);
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--icon-btn-accent) 70%, white) 0%,
+            var(--icon-btn-accent) 100%
+        );
+        box-shadow:
+            0 2px 0 0 var(--icon-btn-shadow),
+            0 3px 6px -1px rgba(0, 0, 0, 0.25),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .btn-icon-danger:active {
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
+        box-shadow:
+            0 0 0 0 var(--icon-btn-shadow),
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+    }
+    .btn-icon-danger.pressed {
+        transform: var(--btn-transform-active-sm);
+        scale: var(--btn-scale-active);
+        box-shadow:
+            0 0 0 0 var(--icon-btn-shadow),
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
 }

@@ -53,13 +53,13 @@ interface ContextMenuProps {
 // --- Trigger ---
 
 export function ContextMenuTrigger({
-  onOpen,
+  onToggle,
   isOpen,
   ref,
   className,
   surface,
 }: {
-  onOpen: () => void;
+  onToggle: () => void;
   isOpen: boolean;
   ref: RefObject<HTMLButtonElement | null>;
   className?: string;
@@ -76,7 +76,7 @@ export function ContextMenuTrigger({
       surface={surface ?? 'elevated'}
       onClick={(e) => {
         e.stopPropagation();
-        onOpen();
+        onToggle();
       }}
       className={`${className ?? ''} ${isOpen ? 'pressed text-accent' : ''}`}
     >
