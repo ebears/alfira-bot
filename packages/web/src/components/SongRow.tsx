@@ -1,10 +1,10 @@
-import type { Song } from '@alfira-bot/shared';
+import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
   CircleNotchIcon,
   ClockIcon,
   DiscIcon,
-  PencilIcon,
+  MusicNoteIcon,
   PlayIcon,
   TagIcon,
   UserIcon,
@@ -44,9 +44,11 @@ interface SongRowProps {
   song: Song;
   isAdmin: boolean;
   isAdminView?: boolean;
+  playlists?: Playlist[];
+  onDelete?: (id: string) => void;
   // When provided, the context menu shows "Remove" (playlist detail context)
-  onRemove: () => void;
-  removeLabel: string;
+  onRemove?: () => void;
+  removeLabel?: string;
   onPlay: () => void;
   isPlaying?: boolean;
   onAddToQueue: () => void;
@@ -58,6 +60,8 @@ export const SongRow = memo(
     song,
     isAdmin,
     isAdminView,
+    playlists,
+    onDelete,
     onRemove,
     removeLabel,
     onPlay,
@@ -70,8 +74,9 @@ export const SongRow = memo(
     const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
       song,
       isAdmin,
-      playlists: [],
+      playlists: playlists ?? [],
       onAddToQueue,
+      ...(onDelete ? { onDelete: () => onDelete(song.id) } : {}),
       onRemove,
       removeLabel,
     });
@@ -106,21 +111,21 @@ export const SongRow = memo(
           />
           <div className="flex-1 min-w-0 flex flex-col gap-px">
             <p
-              className={`flex items-center gap-1 truncate${song.nickname ? ' text-sm' : ' text-fg font-medium'}`}
+              className={`flex items-center gap-1 truncate${song.nickname ? ' text-xs font-mono text-muted' : ' text-fg font-sm'}`}
             >
               {song.nickname && (
-                <PencilIcon size={11} weight="fill" className="shrink-0 text-muted" />
+                <MusicNoteIcon size={11} weight="fill" className="shrink-0 text-muted" />
               )}
               <span className="truncate">{song.nickname || song.title}</span>
             </p>
             {song.artist && (
-              <p className="flex items-center gap-1 text-sm truncate">
+              <p className="flex items-center gap-1 text-xs font-mono text-muted truncate">
                 <UserIcon size={11} weight="fill" className="shrink-0 text-muted" />
                 <span className="truncate">{song.artist}</span>
               </p>
             )}
             {song.album && (
-              <p className="flex items-center gap-1 text-sm truncate">
+              <p className="flex items-center gap-1 text-xs font-mono text-muted truncate">
                 <DiscIcon size={11} weight="fill" className="shrink-0 text-muted" />
                 <span className="truncate">{song.album}</span>
               </p>
@@ -163,7 +168,11 @@ export const SongRow = memo(
               <PlayIcon size={18} weight="duotone" />
             )}
           </Button>
-          <ContextMenuTrigger ref={triggerRef} onOpen={() => setMenuOpen(true)} isOpen={menuOpen} />
+          <ContextMenuTrigger
+            ref={triggerRef}
+            onToggle={() => setMenuOpen((v) => !v)}
+            isOpen={menuOpen}
+          />
           {menuOpen && (
             <ContextMenu
               items={menuItems}

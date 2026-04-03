@@ -112,7 +112,7 @@ const SongCardInner = ({
             </Button>
             <ContextMenuTrigger
               ref={triggerRef}
-              onOpen={() => setMenuOpen(true)}
+              onToggle={() => setMenuOpen((v) => !v)}
               isOpen={menuOpen}
             />
           </div>

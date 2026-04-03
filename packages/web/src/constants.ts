@@ -1,6 +1,6 @@
-import { CassetteTapeIcon, MusicNoteIcon } from '@phosphor-icons/react';
+import { MusicNotesIcon, PlaylistIcon } from '@phosphor-icons/react';
 
 export const NAV_ITEMS = [
-  { to: '/songs', label: 'Songs', icon: MusicNoteIcon },
-  { to: '/playlists', label: 'Playlists', icon: CassetteTapeIcon },
+  { to: '/songs', label: 'Songs', icon: MusicNotesIcon },
+  { to: '/playlists', label: 'Playlists', icon: PlaylistIcon },
 ];
