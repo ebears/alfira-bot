@@ -1,8 +1,8 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
-  ClockIcon,
   CircleNotchIcon,
+  ClockIcon,
   DiscIcon,
   PencilIcon,
   PlayIcon,
