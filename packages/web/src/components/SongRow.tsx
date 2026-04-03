@@ -1,6 +1,7 @@
 import type { Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
+  ClockIcon,
   CircleNotchIcon,
   DiscIcon,
   PencilIcon,
@@ -71,7 +72,7 @@ export const SongRow = memo(
         data-song-edit-container
       >
         <div
-          className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3"
+          className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-3"
           onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
           style={isAdmin ? { cursor: 'pointer' } : undefined}
         >
@@ -82,7 +83,7 @@ export const SongRow = memo(
             loading="lazy"
             decoding="async"
           />
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex-1 min-w-0 flex flex-col gap-px">
             <p
               className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-sm text-muted' : ' text-base font-medium text-fg'}`}
             >
@@ -122,7 +123,7 @@ export const SongRow = memo(
                       return (
                         <span
                           key={`a-${tag}`}
-                          className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
+                          className={`inline-flex items-center px-1.5 py-0 rounded text-[11px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
                         >
                           {tag}
                         </span>
@@ -134,7 +135,7 @@ export const SongRow = memo(
                         return (
                           <span
                             key={`b-${tag}`}
-                            className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
+                            className={`inline-flex items-center px-1.5 py-0 rounded text-[11px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
                           >
                             {tag}
                           </span>
@@ -145,7 +146,8 @@ export const SongRow = memo(
               </div>
             )}
           </div>
-          <span className="font-mono text-sm text-muted shrink-0">
+          <span className="flex items-center gap-1 font-mono text-xs text-muted shrink-0 mr-2">
+            <ClockIcon size={11} weight="fill" className="shrink-0" />
             {formatDuration(song.duration)}
           </span>
           <Button
