@@ -85,6 +85,14 @@ export const LibrarySongRow = memo(
         <div
           className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-3"
           onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
+          onKeyDown={(e) => {
+            if (isAdmin && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setOpenSongId(isOpen ? null : song.id);
+            }
+          }}
+          role="button"
+          tabIndex={0}
           style={isAdmin ? { cursor: 'pointer' } : undefined}
           onMouseEnter={() => setIsRowHovered(true)}
           onMouseLeave={() => setIsRowHovered(false)}
@@ -141,7 +149,10 @@ export const LibrarySongRow = memo(
           <Button
             variant="primary"
             size="icon"
-            onClick={handlePlay}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePlay();
+            }}
             disabled={isPlaying}
             className="p-2.5 md:p-1 disabled:opacity-50 disabled:cursor-default"
             title="Play from this song"

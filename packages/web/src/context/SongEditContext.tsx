@@ -14,7 +14,13 @@ const SongEditContext = createContext<{
   openSongId: string | null;
   closingSongId: string | null;
   setOpenSongId: (id: string | null) => void;
-}>({ openSongId: null, closingSongId: null, setOpenSongId: () => {} });
+}>({
+  openSongId: null,
+  closingSongId: null,
+  setOpenSongId: () => {
+    /* noop */
+  },
+});
 
 export function SongEditProvider({ children }: { children: ReactNode }) {
   const [openSongId, setOpenSongId] = useState<string | null>(null);
