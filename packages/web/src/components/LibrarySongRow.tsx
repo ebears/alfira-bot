@@ -1,6 +1,13 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
-import { CircleNotchIcon, DiscIcon, PlayIcon, UserIcon } from '@phosphor-icons/react';
+import {
+  CircleNotchIcon,
+  DiscIcon,
+  PencilIcon,
+  PlayIcon,
+  TagIcon,
+  UserIcon,
+} from '@phosphor-icons/react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useSongEdit } from '../context/SongEditContext';
 import { useSongActions } from '../hooks/useSongActions';
@@ -76,13 +83,11 @@ export const LibrarySongRow = memo(
             loading="lazy"
             decoding="async"
           />
-          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <p className="font-body text-sm font-medium text-fg truncate">
-              {song.nickname || song.title}
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <p className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-xs text-muted' : ' text-sm font-medium text-fg'}`}>
+              {song.nickname && <PencilIcon size={11} weight="fill" className="shrink-0" />}
+              <span className="truncate">{song.nickname || song.title}</span>
             </p>
-            {song.nickname && (
-              <p className="font-mono text-[10px] text-muted truncate">{song.title}</p>
-            )}
             {song.artist && (
               <p className="flex items-center gap-1 text-xs text-muted truncate">
                 <UserIcon size={11} weight="fill" className="shrink-0" />
@@ -96,38 +101,45 @@ export const LibrarySongRow = memo(
               </p>
             )}
             {tags.length > 0 && (
-              <div className="overflow-hidden py-0.5" ref={tickerRef}>
-                <div
-                  className="flex gap-1"
-                  ref={tickerInnerRef}
-                  style={tagsOverflow ? {
-                    width: 'max-content',
-                    animation: 'ticker-scroll 15s linear infinite',
-                  } : undefined}
-                >
-                  {tags.map((tag) => {
-                    const colors = getTagColorClasses(tag);
-                    return (
-                      <span
-                        key={`a-${tag}`}
-                        className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
-                      >
-                        {tag}
-                      </span>
-                    );
-                  })}
-                  {tagsOverflow &&
-                    tags.map((tag) => {
+              <div className="flex items-center gap-1 text-xs text-muted">
+                <TagIcon size={11} weight="fill" className="shrink-0" />
+                <div className="overflow-hidden py-0.5 flex-1 min-w-0" ref={tickerRef}>
+                  <div
+                    className="flex gap-1"
+                    ref={tickerInnerRef}
+                    style={
+                      tagsOverflow
+                        ? {
+                            width: 'max-content',
+                            animation: 'ticker-scroll 15s linear infinite',
+                          }
+                        : undefined
+                    }
+                  >
+                    {tags.map((tag) => {
                       const colors = getTagColorClasses(tag);
                       return (
                         <span
-                          key={`b-${tag}`}
+                          key={`a-${tag}`}
                           className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
                         >
                           {tag}
                         </span>
                       );
                     })}
+                    {tagsOverflow &&
+                      tags.map((tag) => {
+                        const colors = getTagColorClasses(tag);
+                        return (
+                          <span
+                            key={`b-${tag}`}
+                            className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium whitespace-nowrap ${colors.bg} ${colors.text}`}
+                          >
+                            {tag}
+                          </span>
+                        );
+                      })}
+                  </div>
                 </div>
               </div>
             )}
