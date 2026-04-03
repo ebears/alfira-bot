@@ -58,6 +58,7 @@ const SongCardInner = ({
       className={`animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting transition-all duration-100${isAdminView ? ' hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 group cursor-pointer' : ''}`}
       style={style}
       data-song-edit-container
+      onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
     >
       {/* Thumbnail with play overlay */}
       <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
@@ -86,11 +87,7 @@ const SongCardInner = ({
       </div>
 
       {/* Info */}
-      <div
-        className="p-4 flex-1"
-        onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
-        style={isAdmin ? { cursor: 'pointer' } : undefined}
-      >
+      <div className="p-4 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2 min-w-0">
             {song.nickname || song.title}
