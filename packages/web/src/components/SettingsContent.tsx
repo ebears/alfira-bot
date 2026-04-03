@@ -32,7 +32,8 @@ export default function SettingsContent() {
           {colorThemes.map((t) => (
             <Button
               key={t.name}
-              variant="foreground"
+              variant="inherit"
+              surface="base"
               className={`flex items-center gap-2 ${colorTheme === t.name ? 'border-accent/40 text-accent' : ''}`}
               onClick={() => setColorTheme(t.name)}
             >
@@ -51,7 +52,8 @@ export default function SettingsContent() {
         <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Appearance</h3>
         <div className="flex gap-2">
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="base"
             className={`flex-1 flex items-center gap-2 ${mode === 'auto' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('auto')}
           >
@@ -59,7 +61,8 @@ export default function SettingsContent() {
             <span>Auto</span>
           </Button>
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="base"
             className={`flex-1 flex items-center gap-2 ${mode === 'light' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('light')}
           >
@@ -67,7 +70,8 @@ export default function SettingsContent() {
             <span>Light</span>
           </Button>
           <Button
-            variant="foreground"
+            variant="inherit"
+            surface="base"
             className={`flex-1 flex items-center gap-2 ${mode === 'dark' ? 'border-accent/40 text-accent' : ''}`}
             onClick={() => setMode('dark')}
           >

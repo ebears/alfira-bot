@@ -57,20 +57,23 @@ export function ContextMenuTrigger({
   isOpen,
   ref,
   className,
+  surface,
 }: {
   onOpen: () => void;
   isOpen: boolean;
   ref: RefObject<HTMLButtonElement | null>;
   className?: string;
+  surface?: 'base' | 'surface' | 'elevated';
 }) {
   return (
     <Button
       ref={ref}
-      variant="foreground"
+      variant="inherit"
       size="icon"
       aria-haspopup="true"
       aria-expanded={isOpen}
       title="More actions"
+      surface={surface ?? 'elevated'}
       onClick={(e) => {
         e.stopPropagation();
         onOpen();
@@ -263,7 +266,7 @@ export function ContextMenu({
       role="menu"
       aria-label="Song actions"
       style={{ position: 'fixed', top: position.top, left: position.left }}
-      className="z-[9999] min-w-48"
+      className="z-9999 min-w-48"
       onKeyDown={activeEditItemId ? undefined : handleKeyDown}
     >
       <div className="bg-elevated rounded-2xl clay-floating overflow-hidden animate-fade-up">

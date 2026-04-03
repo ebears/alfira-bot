@@ -19,12 +19,13 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
           type="button"
           onClick={() => setIsOpen(true)}
           title={collapsed ? 'Settings' : undefined}
-          className={`flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 w-full ${
-            collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-          } ${isOpen ? 'btn-nav-active pressed' : 'btn-nav-inactive'}`}
+          className={`flex items-center rounded-xl font-body transition-all duration-150 cursor-pointer w-full ${
+            collapsed ? 'justify-center px-0 py-2' : 'px-3 py-2'
+          } ${isOpen ? 'btn-inherit pressed' : 'btn-inherit'}`}
+          style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
         >
-          <GearIcon size={16} weight="duotone" />
-          {!collapsed && 'Settings'}
+          {!collapsed && <span className="mr-auto">Settings</span>}
+          <GearIcon size={18} weight="duotone" />
         </button>
       </div>
 
@@ -33,13 +34,14 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
           <Backdrop onClose={() => setIsOpen(false)}>
             {/* Panel */}
-            <div className="relative w-full max-w-md bg-surface rounded-t-lg sm:rounded-lg modal-clay animate-fade-up max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-md bg-base rounded-t-lg sm:rounded-lg modal-clay animate-fade-up max-h-[85vh] overflow-hidden flex flex-col cursor-default">
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
                 <h2 className="font-display text-2xl text-fg tracking-wide">Settings</h2>
                 <Button
-                  variant="foreground"
+                  variant="inherit"
                   size="icon"
+                  surface="base"
                   onClick={() => {
                     setIsOpen(false);
                   }}

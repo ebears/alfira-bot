@@ -283,7 +283,8 @@ export default function PlaylistDetailPage() {
     <div ref={setContainerRef} className="p-4 md:p-8">
       {/* Back */}
       <Button
-        variant="foreground"
+        variant="inherit"
+        surface="surface"
         onClick={() => navigate('/playlists')}
         className="flex items-center gap-1.5 font-mono text-xs mb-4 md:mb-6 min-h-11 md:min-h-0"
       >

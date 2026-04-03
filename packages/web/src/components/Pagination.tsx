@@ -39,11 +39,12 @@ export const Pagination = memo(function Pagination({ pagination, onPageChange }:
   return (
     <div className="flex items-center justify-center gap-1 mt-6 md:mt-8">
       <Button
-        variant="foreground"
+        variant="inherit"
         size="icon"
         onClick={handlePrevious}
         disabled={page === 1}
         title="Previous page"
+        surface="surface"
       >
         <CaretLeftIcon size={16} weight="duotone" />
       </Button>
@@ -56,10 +57,11 @@ export const Pagination = memo(function Pagination({ pagination, onPageChange }:
         ) : (
           <Button
             key={p}
-            variant={p === page ? 'primary' : 'foreground'}
+            variant={p === page ? 'primary' : 'inherit'}
             size="icon"
             onClick={() => onPageChange(p)}
             className={p === page ? '' : 'opacity-60 hover:opacity-100'}
+            surface="surface"
           >
             {p}
           </Button>
@@ -67,11 +69,12 @@ export const Pagination = memo(function Pagination({ pagination, onPageChange }:
       )}
 
       <Button
-        variant="foreground"
+        variant="inherit"
         size="icon"
         onClick={handleNext}
         disabled={page === totalPages}
         title="Next page"
+        surface="surface"
       >
         <CaretRightIcon size={16} weight="duotone" />
       </Button>

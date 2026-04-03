@@ -23,7 +23,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-full bg-base">
+    <div className="flex h-full bg-surface">
       {/* ------------------------------------------------------------------ */}
       {/* Mobile Navigation - visible on small screens */}
       {/* ------------------------------------------------------------------ */}
@@ -35,7 +35,7 @@ export default function Layout() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-sidebar-edge`}
+        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-sidebar-edge h-[calc(100vh-6rem)]`}
       >
         {/* Wordmark */}
         <div
@@ -45,25 +45,27 @@ export default function Layout() {
         >
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-display text-5xl text-accent tracking-wider">Alfira</span>
-              {isAdminView && (
-                <span className="relative top-1 -left-1 flex items-center justify-center w-10 h-10 shrink-0 rounded border border-accent/30 bg-accent/10">
+              {isAdminView ? (
+                <span className="flex items-center justify-center w-10 h-10 shrink-0 rounded border border-accent/30 bg-accent/10 self-end">
                   <CraneTowerIcon size={24} weight="duotone" className="text-accent" />
                 </span>
+              ) : (
+                <span className="flex items-center justify-center w-10 h-10 shrink-0 rounded border border-accent/30 bg-accent/10 self-end">
+                  <GuitarIcon size={24} weight="duotone" className="text-accent" />
+                </span>
               )}
+              <span className="font-display text-5xl text-accent tracking-wider">Alfira</span>
             </div>
           )}
           {collapsed && (
             <div
-              className={`w-7 h-7 flex items-center justify-center ${
-                isAdminView ? 'text-accent' : 'text-member'
-              }`}
+              className="w-10 h-10 flex items-center justify-center shrink-0 rounded border border-accent/30 bg-accent/10"
               title={isAdminView ? 'Admin mode' : 'Member mode'}
             >
               {isAdminView ? (
-                <CraneTowerIcon size={18} weight="duotone" />
+                <CraneTowerIcon size={24} weight="duotone" className="text-accent" />
               ) : (
-                <GuitarIcon size={18} weight="duotone" />
+                <GuitarIcon size={24} weight="duotone" className="text-accent" />
               )}
             </div>
           )}
@@ -84,40 +86,42 @@ export default function Layout() {
               to={to}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 ${
-                  collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-                } ${isActive ? 'btn-nav-active pressed' : 'btn-nav-inactive'}`
+                `flex items-center rounded-xl font-body font-bold transition-all duration-150 cursor-pointer ${
+                  collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'
+                } ${isActive ? 'btn-inherit pressed' : 'btn-inherit'}`
               }
+              style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
             >
-              <Icon size={16} weight="duotone" />
-              {!collapsed && label}
+              {!collapsed && <span className="mr-auto">{label}</span>}
+              <Icon size={18} weight="duotone" />
             </NavLink>
           ))}
         </nav>
 
+        {/* Settings Menu */}
+        <SettingsMenu collapsed={collapsed} />
+
         {/* Collapse toggle */}
-        <div className={collapsed ? 'flex justify-center px-2 pb-2' : 'px-3 pb-2'}>
+        <div className={collapsed ? 'flex justify-center px-2 pb-4' : 'px-3 pb-4'}>
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 w-full ${
-              collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-            } btn-nav-inactive hover:bg-surface/50`}
+            className={`flex items-center rounded-xl font-body transition-all duration-150 cursor-pointer w-full ${
+              collapsed ? 'justify-center px-0 py-2' : 'px-3 py-2'
+            } btn-inherit`}
+            style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
           >
-            <CaretLeftIcon size={16} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
-            {!collapsed && 'Collapse'}
+            {!collapsed && <span className="mr-auto">Collapse</span>}
+            <CaretLeftIcon size={18} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
           </button>
         </div>
-
-        {/* Settings Menu */}
-        <SettingsMenu collapsed={collapsed} />
 
         {/* Connection status */}
         {connectionStatus !== 'connected' && (
           <div className="px-3 pb-2">
             <div
-              className={`flex items-center gap-2 text-xs font-mono px-2 py-1.5 rounded-lg ${
+              className={`flex items-center gap-2 text-sm font-mono px-2 py-1.5 rounded-lg ${
                 connectionStatus === 'reconnecting'
                   ? 'bg-warning/10 text-warning'
                   : 'bg-danger/10 text-danger'
@@ -137,6 +141,17 @@ export default function Layout() {
           </div>
         )}
 
+        {/* Separator above user section */}
+        {collapsed ? (
+          <div className="flex justify-center px-2">
+            <div className="w-full h-px bg-fg/20" />
+          </div>
+        ) : (
+          <div className="px-5">
+            <div className="h-px bg-fg/20" />
+          </div>
+        )}
+
         {/* User section */}
         <div className="p-3">
           {collapsed ? (
@@ -153,7 +168,7 @@ export default function Layout() {
                     decoding="async"
                   />
                 ) : (
-                  <span className="font-mono text-xs text-muted">
+                  <span className="font-mono text-sm text-muted">
                     {user?.username?.[0]?.toUpperCase()}
                   </span>
                 )}
@@ -161,11 +176,11 @@ export default function Layout() {
               <Button
                 variant="danger"
                 size="icon"
-                className="w-7! h-7!"
+                className="w-7! h-7! rounded-xl transition-all duration-150 cursor-pointer text-foreground"
                 onClick={handleLogout}
                 title="Log out"
               >
-                <SignOutIcon size={14} weight="duotone" />
+                <SignOutIcon size={16} weight="duotone" />
               </Button>
             </div>
           ) : (
@@ -180,15 +195,20 @@ export default function Layout() {
                   />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
-                    <span className="font-mono text-xs text-muted">
+                    <span className="font-mono text-sm text-muted">
                       {user?.username?.[0]?.toUpperCase()}
                     </span>
                   </div>
                 )}
-                <span className="text-sm font-body text-fg truncate flex-1">{user?.username}</span>
+                <span className="text-fg font-body truncate flex-1">{user?.username}</span>
               </div>
-              <Button variant="danger" onClick={handleLogout} className="w-full text-left text-xs">
-                log out
+              <Button
+                variant="danger"
+                onClick={handleLogout}
+                className="flex items-center rounded-xl transition-all duration-150 cursor-pointer px-3 py-2 w-full text-foreground"
+              >
+                <span className="mr-auto text-sm">log out</span>
+                <SignOutIcon size={18} weight="duotone" />
               </Button>
             </>
           )}
@@ -198,8 +218,8 @@ export default function Layout() {
       {/* ------------------------------------------------------------------ */}
       {/* Main content + now playing bar */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0">
-        <main className="flex-1 overflow-y-auto pb-28 md:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0 overflow-hidden">
+        <main className="flex-1 overflow-y-auto pb-28 md:pb-25">
           <Outlet />
         </main>
         <NowPlayingBar />

@@ -81,7 +81,7 @@
 }
 
 [data-color-theme="artificer"][data-mode="dark"] {
-    --color-base: #161616;
+    --color-base: #333333;
     --color-surface: #1e1e1e;
     --color-elevated: #282828;
     --color-border: #3a3a3a;
@@ -100,7 +100,7 @@
 }
 
 [data-color-theme="artificer"][data-mode="light"] {
-    --color-base: #fafafa;
+    --color-base: #dedede;
     --color-surface: #ffffff;
     --color-elevated: #f0f0f0;
     --color-border: #d9d9d9;
@@ -134,7 +134,7 @@
 }
 
 [data-color-theme="barbarian"][data-mode="dark"] {
-    --color-base: #161414;
+    --color-base: #352a2a;
     --color-surface: #1e1a1a;
     --color-elevated: #282020;
     --color-border: #3a3030;
@@ -153,7 +153,7 @@
 }
 
 [data-color-theme="barbarian"][data-mode="light"] {
-    --color-base: #faf8f8;
+    --color-base: #e7dbdb;
     --color-surface: #ffffff;
     --color-elevated: #f5f0f0;
     --color-border: #e5d9d9;
@@ -187,7 +187,7 @@
 }
 
 [data-color-theme="bard"][data-mode="dark"] {
-    --color-base: #161014;
+    --color-base: #35282d;
     --color-surface: #1e1618;
     --color-elevated: #281e22;
     --color-border: #3a2e34;
@@ -206,7 +206,7 @@
 }
 
 [data-color-theme="bard"][data-mode="light"] {
-    --color-base: #fdf8fa;
+    --color-base: #eacfe0;
     --color-surface: #ffffff;
     --color-elevated: #f5e8f0;
     --color-border: #e8d0d8;
@@ -240,7 +240,7 @@
 }
 
 [data-color-theme="cleric"][data-mode="dark"] {
-    --color-base: #16140e;
+    --color-base: #363121;
     --color-surface: #1e1a10;
     --color-elevated: #282418;
     --color-border: #3a3420;
@@ -259,7 +259,7 @@
 }
 
 [data-color-theme="cleric"][data-mode="light"] {
-    --color-base: #fefce8;
+    --color-base: #fdf5a0;
     --color-surface: #ffffff;
     --color-elevated: #fef9c3;
     --color-border: #fde68a;
@@ -293,7 +293,7 @@
 }
 
 [data-color-theme="druid"][data-mode="dark"] {
-    --color-base: #121812;
+    --color-base: #2a352a;
     --color-surface: #181e18;
     --color-elevated: #202820;
     --color-border: #2e3a2e;
@@ -312,7 +312,7 @@
 }
 
 [data-color-theme="druid"][data-mode="light"] {
-    --color-base: #f6faf6;
+    --color-base: #cfeacf;
     --color-surface: #ffffff;
     --color-elevated: #e8f5e8;
     --color-border: #c8e5c8;
@@ -346,7 +346,7 @@
 }
 
 [data-color-theme="fighter"][data-mode="dark"] {
-    --color-base: #141416;
+    --color-base: #2d2d34;
     --color-surface: #1a1a1e;
     --color-elevated: #222228;
     --color-border: #34343a;
@@ -365,7 +365,7 @@
 }
 
 [data-color-theme="fighter"][data-mode="light"] {
-    --color-base: #f4f4f8;
+    --color-base: #d2d2e2;
     --color-surface: #ffffff;
     --color-elevated: #e8e8f0;
     --color-border: #c8c8d8;
@@ -399,7 +399,7 @@
 }
 
 [data-color-theme="monk"][data-mode="dark"] {
-    --color-base: #101616;
+    --color-base: #283535;
     --color-surface: #161e1e;
     --color-elevated: #1e2828;
     --color-border: #2c3a3a;
@@ -418,7 +418,7 @@
 }
 
 [data-color-theme="monk"][data-mode="light"] {
-    --color-base: #f2fafa;
+    --color-base: #c5ecec;
     --color-surface: #ffffff;
     --color-elevated: #e0f5f5;
     --color-border: #c0e0e0;
@@ -452,7 +452,7 @@
 }
 
 [data-color-theme="paladin"][data-mode="dark"] {
-    --color-base: #121418;
+    --color-base: #29313e;
     --color-surface: #181c22;
     --color-elevated: #202630;
     --color-border: #303a4a;
@@ -471,7 +471,7 @@
 }
 
 [data-color-theme="paladin"][data-mode="light"] {
-    --color-base: #f8fafc;
+    --color-base: #d5dfee;
     --color-surface: #ffffff;
     --color-elevated: #eef2f8;
     --color-border: #d0dae8;
@@ -505,7 +505,7 @@
 }
 
 [data-color-theme="ranger"][data-mode="dark"] {
-    --color-base: #101510;
+    --color-base: #283623;
     --color-surface: #161e14;
     --color-elevated: #1e281a;
     --color-border: #2a3828;
@@ -524,7 +524,7 @@
 }
 
 [data-color-theme="ranger"][data-mode="light"] {
-    --color-base: #f1f8f0;
+    --color-base: #c5e3c2;
     --color-surface: #ffffff;
     --color-elevated: #dceeda;
     --color-border: #b0d4ac;
@@ -558,7 +558,7 @@
 }
 
 [data-color-theme="rogue"][data-mode="dark"] {
-    --color-base: #121216;
+    --color-base: #2a2a35;
     --color-surface: #18181e;
     --color-elevated: #202028;
     --color-border: #2e2e38;
@@ -577,7 +577,7 @@
 }
 
 [data-color-theme="rogue"][data-mode="light"] {
-    --color-base: #f5f5f8;
+    --color-base: #d4d4e4;
     --color-surface: #ffffff;
     --color-elevated: #eaeaf2;
     --color-border: #d0d0e0;
@@ -611,7 +611,7 @@
 }
 
 [data-color-theme="sorcerer"][data-mode="dark"] {
-    --color-base: #161012;
+    --color-base: #35282d;
     --color-surface: #1e1618;
     --color-elevated: #281e22;
     --color-border: #3a2830;
@@ -630,7 +630,7 @@
 }
 
 [data-color-theme="sorcerer"][data-mode="light"] {
-    --color-base: #fdf2f4;
+    --color-base: #f8c4cd;
     --color-surface: #ffffff;
     --color-elevated: #fce4e8;
     --color-border: #f8c8d0;
@@ -664,7 +664,7 @@
 }
 
 [data-color-theme="warlock"][data-mode="dark"] {
-    --color-base: #141018;
+    --color-base: #32273a;
     --color-surface: #1c1620;
     --color-elevated: #261e2c;
     --color-border: #382e40;
@@ -683,7 +683,7 @@
 }
 
 [data-color-theme="warlock"][data-mode="light"] {
-    --color-base: #faf8fc;
+    --color-base: #e4d5ee;
     --color-surface: #ffffff;
     --color-elevated: #f4eef8;
     --color-border: #e0d4e8;
@@ -717,7 +717,7 @@
 }
 
 [data-color-theme="wizard"][data-mode="dark"] {
-    --color-base: #101218;
+    --color-base: #272f3c;
     --color-surface: #161a22;
     --color-elevated: #1e242e;
     --color-border: #2c3444;
@@ -736,7 +736,7 @@
 }
 
 [data-color-theme="wizard"][data-mode="light"] {
-    --color-base: #f4f6fc;
+    --color-base: #cfd7ea;
     --color-surface: #ffffff;
     --color-elevated: #e8ecf5;
     --color-border: #c8d0e0;
@@ -794,19 +794,19 @@
     /* Clay elevation tokens — 4 deliberate depth levels */
     --clay-shadow-resting:
         0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        0 5px 14px -3px rgba(0, 0, 0, 0.25),
+        0 4px 8px -2px rgba(0, 0, 0, 0.12),
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
     --clay-shadow-lifted:
         0 5px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        0 7px 18px -3px rgba(0, 0, 0, 0.27),
+        0 5px 12px -2px rgba(0, 0, 0, 0.14),
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
     --clay-shadow-raised:
         0 6px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        0 8px 20px -3px rgba(0, 0, 0, 0.3),
+        0 6px 14px -2px rgba(0, 0, 0, 0.16),
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
     --clay-shadow-floating:
         0 10px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        0 13px 30px -6px rgba(0, 0, 0, 0.4),
+        0 10px 20px -4px rgba(0, 0, 0, 0.2),
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
     --clay-shadow-flat:
         inset 0 2px 4px 0 rgba(0, 0, 0, 0.15),
@@ -892,7 +892,7 @@
     }
 
     .btn-primary {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
+        @apply font-body text-sm px-4 py-2.5 md:py-2
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
@@ -934,80 +934,67 @@
             inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
     }
 
-    .btn-secondary {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
+    .btn-inherit {
+        @apply font-body text-sm px-4 py-2.5 md:py-2
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
-        color: var(--color-secondary);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--color-secondary) 65%, white) 0%,
-            var(--color-secondary) 100%
-        );
+        color: var(--color-fg);
+    }
+
+    /* Dark mode: lighten surface with white mix */
+    .btn-inherit {
+        background: color-mix(in srgb, var(--btn-surface) 95%, white);
         box-shadow: var(--clay-shadow-resting);
     }
-    .btn-secondary:hover {
+    .btn-inherit:hover {
         transform: var(--btn-transform-hover);
+        background: color-mix(in srgb, var(--btn-surface) 88%, white);
         box-shadow: var(--clay-shadow-raised);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--color-secondary) 75%, white) 0%,
-            var(--color-secondary) 100%
-        );
     }
-    .btn-secondary:active {
+    .btn-inherit:active {
         transform: var(--btn-transform-active-md);
         scale: var(--btn-scale-active);
+        background: var(--btn-surface);
         box-shadow: var(--clay-shadow-flat);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--color-secondary) 65%, white) 0%,
-            var(--color-secondary) 100%
-        );
     }
-    .btn-secondary.pressed {
+    .btn-inherit.pressed {
         transform: var(--btn-transform-active-md);
         scale: var(--btn-scale-active);
+        background: color-mix(in srgb, var(--btn-surface) 75%, black);
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
-    .btn-foreground {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed min-h-11 md:min-h-0;
-        border-radius: var(--clay-radius-lg);
-        color: var(--color-fg);
-        background: var(--color-elevated);
+    /* Light mode: distinguish via shadow + border */
+    .light .btn-inherit {
+        background: var(--btn-surface);
+        border: 1px solid color-mix(in srgb, var(--btn-surface) 80%, white);
         box-shadow: var(--clay-shadow-resting);
     }
-    .btn-foreground:hover {
-        transform: var(--btn-transform-hover);
+    .light .btn-inherit:hover {
+        border-color: color-mix(in srgb, var(--btn-surface) 70%, white);
         box-shadow: var(--clay-shadow-raised);
-        background: linear-gradient(180deg, var(--color-highlight) 35%);
     }
-    .btn-foreground:active {
-        transform: var(--btn-transform-active-md);
-        scale: var(--btn-scale-active);
+    .light .btn-inherit:active {
+        border-color: transparent;
         box-shadow: var(--clay-shadow-flat);
     }
-    .btn-foreground.pressed {
-        transform: var(--btn-transform-active-md);
-        scale: var(--btn-scale-active);
+    .light .btn-inherit.pressed {
+        border-color: transparent;
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
     .btn-danger {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2
+        @apply font-body text-sm px-4 py-2.5 md:py-2
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: #fff;
-        background: linear-gradient(
+           background: linear-gradient(
             180deg,
             color-mix(in srgb, var(--color-danger) 75%, white) 0%,
             var(--color-danger) 100%
@@ -1043,7 +1030,7 @@
     }
 
     .btn-discord {
-        @apply font-body font-bold text-sm px-4 py-2.5 md:py-2 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
+        @apply font-body text-sm px-4 py-2.5 md:py-2 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-h-11 md:min-h-0;
         border-radius: var(--clay-radius-lg);
         color: #fff;
         background: linear-gradient(
@@ -1115,12 +1102,10 @@
     }
     .modal-clay {
         border-radius: var(--clay-radius-lg);
-        box-shadow: var(--clay-shadow-floating);
-        background: linear-gradient(
-            180deg,
-            var(--clay-highlight) 0%,
-            var(--color-surface) 100%
-        );
+        box-shadow:
+            0 5px 0 0 color-mix(in srgb, var(--color-foreground) 60%, black),
+            0 13px 30px -6px rgba(0, 0, 0, 0.4);
+        background: var(--color-foreground);
     }
 
     .btn-icon-primary {
@@ -1175,65 +1160,70 @@
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
-    .btn-icon-secondary {
+    .btn-icon-inherit {
         @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
            transition-all duration-150 cursor-pointer disabled:opacity-40
            disabled:cursor-not-allowed;
         border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--icon-btn-accent) 65%, white) 0%,
-            var(--icon-btn-accent) 100%
-        );
-        box-shadow:
-            0 1px 0 0 var(--icon-btn-shadow),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
-        --icon-btn-accent: var(--color-secondary);
-        --icon-btn-shadow: color-mix(in srgb, var(--color-surface) 60%, black);
+        color: var(--color-fg);
     }
 
-    .btn-icon-foreground {
-        @apply w-11 h-11 md:w-10 md:h-10 flex items-center justify-center
-           transition-all duration-150 cursor-pointer disabled:opacity-40
-           disabled:cursor-not-allowed;
-        border-radius: var(--clay-radius-md);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--color-elevated) 75%, white) 0%,
-            var(--color-elevated) 100%
-        );
+    /* Dark mode: lighten surface with white mix */
+    .btn-icon-inherit {
+        background: color-mix(in srgb, var(--btn-surface) 88%, white);
         box-shadow:
             0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 2px 4px -1px rgba(0, 0, 0, 0.2),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .btn-icon-foreground:hover {
+    .btn-icon-inherit:hover {
         transform: var(--btn-transform-hover);
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--color-elevated) 65%, white) 0%,
-            var(--color-elevated) 100%
-        );
+        background: color-mix(in srgb, var(--btn-surface) 75%, white);
         box-shadow:
             0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 3px 6px -1px rgba(0, 0, 0, 0.25),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .btn-icon-foreground:active {
+    .btn-icon-inherit:active {
         transform: var(--btn-transform-active-sm);
         scale: var(--btn-scale-active);
+        background: var(--btn-surface);
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
-    .btn-icon-foreground.pressed {
+    .btn-icon-inherit.pressed {
         transform: var(--btn-transform-active-sm);
-        background: linear-gradient(
-            180deg,
-            var(--color-elevated) 0%,
-            color-mix(in srgb, var(--color-elevated) 85%, black) 100%
-        );
+        background: var(--btn-surface);
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    /* Light mode: distinguish via shadow + border */
+    .light .btn-icon-inherit {
+        background: var(--btn-surface);
+        border: 1px solid color-mix(in srgb, var(--btn-surface) 80%, white);
+        box-shadow:
+            0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .light .btn-icon-inherit:hover {
+        border-color: color-mix(in srgb, var(--btn-surface) 70%, white);
+        box-shadow:
+            0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            0 3px 6px -1px rgba(0, 0, 0, 0.25),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .light .btn-icon-inherit:active {
+        border-color: transparent;
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+    }
+    .light .btn-icon-inherit.pressed {
+        border-color: transparent;
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
@@ -1257,48 +1247,6 @@
         --icon-btn-shadow: color-mix(in srgb, var(--color-danger) 50%, black);
     }
 
-    .btn-nav-active {
-        @apply cursor-pointer;
-        color: var(--color-accent);
-        background: linear-gradient(
-            180deg,
-            var(--clay-highlight) 0%,
-            var(--color-elevated) 100%
-        );
-        box-shadow: var(--clay-shadow-raised);
-    }
-    .btn-nav-active:active {
-        transform: var(--btn-transform-active-sm);
-        box-shadow: var(--clay-shadow-flat);
-    }
-    .btn-nav-active.pressed {
-        transform: var(--btn-transform-active-md);
-        background: linear-gradient(
-            180deg,
-            var(--color-elevated) 0%,
-            color-mix(in srgb, var(--color-elevated) 75%, black) 100%
-        );
-        box-shadow: var(--clay-shadow-sunken);
-    }
-    .btn-nav-inactive {
-        @apply cursor-pointer;
-        color: var(--color-muted);
-        background: linear-gradient(
-            180deg,
-            var(--clay-highlight) 0%,
-            var(--color-elevated) 100%
-        );
-        box-shadow: var(--clay-shadow-resting);
-    }
-    .btn-nav-inactive:hover {
-        color: var(--color-fg);
-        transform: var(--btn-transform-hover);
-        box-shadow: var(--clay-shadow-lifted);
-    }
-    .btn-nav-inactive:active {
-        transform: var(--btn-transform-active-sm);
-        box-shadow: var(--clay-shadow-flat);
-    }
 }
 
 @utility clay-resting {

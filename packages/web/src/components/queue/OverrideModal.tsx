@@ -72,7 +72,13 @@ export default function OverrideModal({
         )}
 
         <div className="flex gap-2 justify-end">
-          <Button variant="foreground" type="button" onClick={onClose} disabled={submitting}>
+          <Button
+            variant="inherit"
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            surface="surface"
+          >
             Cancel
           </Button>
           <Button
