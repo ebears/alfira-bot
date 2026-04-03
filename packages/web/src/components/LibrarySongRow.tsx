@@ -86,20 +86,20 @@ export const LibrarySongRow = memo(
           />
           <div className="flex-1 min-w-0 flex flex-col gap-px">
             <p
-              className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-sm text-muted' : 'font-medium text-fg'}`}
+              className={`flex items-center gap-1 truncate${song.nickname ? ' text-sm' : 'font-medium text-fg'}`}
             >
-              {song.nickname && <PencilIcon size={11} weight="fill" className="shrink-0" />}
+              {song.nickname && <PencilIcon size={11} weight="fill" className="shrink-0 text-muted" />}
               <span className="truncate">{song.nickname || song.title}</span>
             </p>
             {song.artist && (
-              <p className="flex items-center gap-1 font-mono text-sm text-muted truncate">
-                <UserIcon size={11} weight="fill" className="shrink-0" />
+              <p className="flex items-center gap-1 text-sm truncate">
+                <UserIcon size={11} weight="fill" className="shrink-0 text-muted" />
                 <span className="truncate">{song.artist}</span>
               </p>
             )}
             {song.album && (
-              <p className="flex items-center gap-1 font-mono text-sm text-muted truncate">
-                <DiscIcon size={11} weight="fill" className="shrink-0" />
+              <p className="flex items-center gap-1 text-sm truncate">
+                <DiscIcon size={11} weight="fill" className="shrink-0 text-muted" />
                 <span className="truncate">{song.album}</span>
               </p>
             )}
