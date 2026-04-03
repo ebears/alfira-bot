@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+const DEBOUNCE_MS = 50;
+
 /**
  * Calculates how many items fill exactly 4 rows of the container grid.
  * Matches breakpoints used by the song grid layout in SongsPage.
@@ -28,6 +30,7 @@ function calculateCapacity(containerWidth: number): number {
 export function useItemsPerPage(defaultItems = 16) {
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const itemsPerPage = containerWidth === 0 ? defaultItems : calculateCapacity(containerWidth);
 
@@ -39,12 +42,18 @@ export function useItemsPerPage(defaultItems = 16) {
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        setContainerWidth(Math.round(entry.contentRect.width));
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          setContainerWidth(Math.round(entry.contentRect.width));
+        }, DEBOUNCE_MS);
       }
     });
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, []);
 
   const setContainerRef = (el: HTMLDivElement | null) => {
