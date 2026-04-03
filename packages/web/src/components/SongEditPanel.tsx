@@ -127,6 +127,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
       className="expand-panel-content"
       data-closing={closing ? 'true' : undefined}
       style={closing ? { pointerEvents: 'none' } : undefined}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="px-3 md:px-4 pt-4 pb-4 border-t border-border">
         <div className="flex flex-col gap-3">
@@ -181,7 +182,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
               Tags
             </label>
             <div
-              className="input p-2 flex flex-wrap gap-1.5 items-center min-h-[38px] cursor-text"
+              className="input text-sm flex flex-wrap gap-1.5 items-center min-h-[38px] cursor-text"
               onClick={() => tagInputRef.current?.focus()}
             >
               {tags.map((tag) => {

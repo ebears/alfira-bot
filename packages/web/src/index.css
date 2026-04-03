@@ -1086,6 +1086,12 @@
             var(--clay-shadow-flat),
             0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
     }
+    .input:focus-within {
+        border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+        box-shadow:
+            var(--clay-shadow-flat),
+            0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
+    }
 
     .card {
         @apply overflow-hidden transition-all duration-200;
