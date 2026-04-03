@@ -1,3 +1,6 @@
+@custom-variant light ([data-mode="light"] &);
+@custom-variant dark ([data-mode="dark"] &);
+
 @import "tailwindcss";
 
 /* Custom utilities for Now Playing bar heights */
