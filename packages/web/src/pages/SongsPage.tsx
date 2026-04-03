@@ -190,6 +190,7 @@ export default function SongsPage() {
           key={song.id}
           song={song}
           isAdmin={isAdminView}
+          isAdminView={isAdminView}
           playlists={playlists}
           delay={i}
           onDelete={handleSetDeleteId}
@@ -206,6 +207,7 @@ export default function SongsPage() {
           key={song.id}
           song={song}
           isAdmin={isAdminView}
+          isAdminView={isAdminView}
           playlists={playlists}
           onDelete={handleSetDeleteId}
           onPlay={handlePlayFromSong}

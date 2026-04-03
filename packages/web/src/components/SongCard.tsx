@@ -13,6 +13,7 @@ interface SongCardProps {
   isAdmin: boolean;
   playlists: Playlist[];
   delay?: number;
+  isAdminView?: boolean;
   onDelete: (id: string) => void;
   onPlay: (id: string) => void;
   isPlaying: boolean;
@@ -24,6 +25,7 @@ const SongCardInner = ({
   isAdmin,
   playlists,
   delay,
+  isAdminView,
   onDelete,
   onPlay,
   isPlaying,
@@ -53,7 +55,7 @@ const SongCardInner = ({
 
   return (
     <div
-      className="animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 transition-all duration-100 group cursor-pointer"
+      className={`animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting transition-all duration-100${isAdminView ? ' hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 group cursor-pointer' : ''}`}
       style={style}
       data-song-edit-container
     >

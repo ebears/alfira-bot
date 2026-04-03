@@ -345,6 +345,7 @@ export default function PlaylistDetailPage() {
               key={ps.id}
               ps={ps}
               canEdit={canEdit}
+              isAdminView={isAdminView}
               playingSongId={playingSongId}
               onPlayFromSong={handlePlayFromSong}
               onAddToQueue={handleAddToQueue}
@@ -415,6 +416,7 @@ export default function PlaylistDetailPage() {
 const PlaylistSongRow = memo(function PlaylistSongRow({
   ps,
   canEdit,
+  isAdminView,
   playingSongId,
   onPlayFromSong,
   onAddToQueue,
@@ -422,6 +424,7 @@ const PlaylistSongRow = memo(function PlaylistSongRow({
 }: {
   ps: PlaylistDetail['songs'][number];
   canEdit: boolean;
+  isAdminView: boolean;
   playingSongId: string | null;
   onPlayFromSong: (songId: string) => void;
   onAddToQueue: (songId: string) => void;
@@ -431,6 +434,7 @@ const PlaylistSongRow = memo(function PlaylistSongRow({
     <SongRow
       song={ps.song}
       isAdmin={canEdit}
+      isAdminView={isAdminView}
       onRemove={() => onRemoveSong(ps.songId)}
       removeLabel="Remove from playlist"
       onPlay={() => onPlayFromSong(ps.songId)}

@@ -11,6 +11,7 @@ import { Button } from './ui/Button';
 interface SongRowProps {
   song: Song;
   isAdmin: boolean;
+  isAdminView?: boolean;
   // When provided, the context menu shows "Remove" (playlist detail context)
   onRemove: () => void;
   removeLabel: string;
@@ -21,7 +22,7 @@ interface SongRowProps {
 }
 
 export const SongRow = memo(
-  ({ song, isAdmin, onRemove, removeLabel, onPlay, isPlaying, onAddToQueue }: SongRowProps) => {
+  ({ song, isAdmin, isAdminView, onRemove, removeLabel, onPlay, isPlaying, onAddToQueue }: SongRowProps) => {
     const { openSongId, setOpenSongId } = useSongEdit();
     const isOpen = openSongId === song.id;
     const { menuOpen, setMenuOpen, triggerRef, menuItems } = useSongActions({
@@ -34,7 +35,7 @@ export const SongRow = memo(
     });
 
     return (
-      <div className="flex flex-col rounded-lg bg-elevated clay-resting hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 transition-all duration-100" data-song-id={song.id} data-song-edit-container>
+      <div className={`flex flex-col rounded-lg bg-elevated clay-resting transition-all duration-100${isAdminView ? ' hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0' : ''}`} data-song-id={song.id} data-song-edit-container>
         <div
           className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3"
           onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
