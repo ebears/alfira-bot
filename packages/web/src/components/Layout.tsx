@@ -69,8 +69,15 @@ export default function Layout() {
           )}
         </div>
 
+        {/* Spacer between wordmark and nav */}
+        {!collapsed && (
+          <div className="px-5">
+            <div className="h-px bg-surface/50" />
+          </div>
+        )}
+
         {/* Nav */}
-        <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-3'} space-y-2`}>
+        <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-3 pt-3'} space-y-2`}>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

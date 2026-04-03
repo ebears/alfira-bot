@@ -83,7 +83,9 @@ export const SongRow = memo(
             decoding="async"
           />
           <div className="flex-1 min-w-0 flex flex-col gap-1">
-            <p className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-sm text-muted' : ' text-base font-medium text-fg'}`}>
+            <p
+              className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-sm text-muted' : ' text-base font-medium text-fg'}`}
+            >
               {song.nickname && <PencilIcon size={11} weight="fill" className="shrink-0" />}
               <span className="truncate">{song.nickname || song.title}</span>
             </p>
