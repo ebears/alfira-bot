@@ -16,10 +16,7 @@ function calculateCapacity(containerWidth: number): number {
     cols = containerWidth >= 640 ? 2 : 1;
   } else {
     // auto-fill: cols = floor((w + gap) / (270 + gap))
-    cols =
-      containerWidth >= 270 + gap
-        ? Math.floor((containerWidth + gap) / (270 + gap))
-        : 1;
+    cols = containerWidth >= 270 + gap ? Math.floor((containerWidth + gap) / (270 + gap)) : 1;
   }
 
   // Mobile (1 col): override to 10 items for a reasonable scroll length
