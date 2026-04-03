@@ -141,7 +141,7 @@ export const LibrarySongRow = memo(
           <Button
             variant="primary"
             size="icon"
-            onClick={handlePlay}
+            onClick={(e) => { e.stopPropagation(); handlePlay(); }}
             disabled={isPlaying}
             className="p-2.5 md:p-1 disabled:opacity-50 disabled:cursor-default"
             title="Play from this song"
