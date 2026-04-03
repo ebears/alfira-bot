@@ -184,7 +184,7 @@ export default function SongsPage() {
       <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
     </div>
   ) : isGrid ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4 items-start">
       {filtered.map((song, i) => (
         <SongCard
           key={song.id}
