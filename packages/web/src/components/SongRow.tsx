@@ -78,23 +78,23 @@ export const SongRow = memo(
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-20 h-12 md:w-16 md:h-10 object-cover rounded border border-border shrink-0"
+            className="w-24 h-14 md:w-20 md:h-12 object-cover rounded border border-border shrink-0"
             loading="lazy"
             decoding="async"
           />
           <div className="flex-1 min-w-0 flex flex-col gap-1">
-            <p className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-xs text-muted' : ' text-sm font-medium text-fg'}`}>
+            <p className={`flex items-center gap-1 truncate${song.nickname ? ' font-mono text-sm text-muted' : ' text-base font-medium text-fg'}`}>
               {song.nickname && <PencilIcon size={11} weight="fill" className="shrink-0" />}
               <span className="truncate">{song.nickname || song.title}</span>
             </p>
             {song.artist && (
-              <p className="flex items-center gap-1 text-xs text-muted truncate">
+              <p className="flex items-center gap-1 font-mono text-sm text-muted truncate">
                 <UserIcon size={11} weight="fill" className="shrink-0" />
                 <span className="truncate">{song.artist}</span>
               </p>
             )}
             {song.album && (
-              <p className="flex items-center gap-1 text-xs text-muted truncate">
+              <p className="flex items-center gap-1 font-mono text-sm text-muted truncate">
                 <DiscIcon size={11} weight="fill" className="shrink-0" />
                 <span className="truncate">{song.album}</span>
               </p>
@@ -143,7 +143,7 @@ export const SongRow = memo(
               </div>
             )}
           </div>
-          <span className="font-mono text-xs text-muted shrink-0">
+          <span className="font-mono text-sm text-muted shrink-0">
             {formatDuration(song.duration)}
           </span>
           <Button

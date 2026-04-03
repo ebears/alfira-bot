@@ -191,7 +191,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
               Tags
             </label>
             <div
-              className="input text-sm flex flex-wrap gap-1.5 items-center min-h-[38px] cursor-text"
+              className="input text-sm flex flex-wrap gap-1.5 items-center min-h-9.5 cursor-text"
               onClick={() => tagInputRef.current?.focus()}
             >
               {tags.map((tag) => {
@@ -215,7 +215,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
               <input
                 id="tag-input"
                 ref={tagInputRef}
-                className="flex-1 min-w-[80px] bg-transparent outline-none text-sm text-fg placeholder:text-faint"
+                className="flex-1 min-w-20 bg-transparent outline-none text-sm text-fg placeholder:text-faint"
                 placeholder={tags.length === 0 ? 'Custom grouping' : ''}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}

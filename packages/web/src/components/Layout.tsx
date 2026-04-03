@@ -37,20 +37,18 @@ export default function Layout() {
           collapsed ? 'w-16' : 'w-56'
         } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-sidebar-edge`}
       >
-        {/* Wordmark + collapse toggle */}
+        {/* Wordmark */}
         <div
           className={`flex pt-6 pb-4 ${
-            collapsed
-              ? 'flex-col items-center justify-start px-3 gap-2'
-              : 'items-center justify-between px-5'
+            collapsed ? 'flex-col items-center justify-start px-3 gap-2' : 'items-center px-5'
           }`}
         >
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-display text-3xl text-accent tracking-wider">Alfira</span>
+              <span className="font-display text-5xl text-accent tracking-wider">Alfira</span>
               {isAdminView && (
-                <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
-                  admin
+                <span className="relative top-1 -left-1 flex items-center justify-center w-10 h-10 shrink-0 rounded border border-accent/30 bg-accent/10">
+                  <CraneTowerIcon size={24} weight="duotone" className="text-accent" />
                 </span>
               )}
             </div>
@@ -69,19 +67,10 @@ export default function Layout() {
               )}
             </div>
           )}
-          <Button
-            variant="foreground"
-            size="icon"
-            className="!w-7 !h-7 shrink-0"
-            onClick={() => setCollapsed((c) => !c)}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <CaretLeftIcon size={16} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
-          </Button>
         </div>
 
         {/* Nav */}
-        <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-3'} space-y-0.5`}>
+        <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-3'} space-y-2`}>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -98,6 +87,21 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Collapse toggle */}
+        <div className={collapsed ? 'flex justify-center px-2 pb-2' : 'px-3 pb-2'}>
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={`flex items-center rounded-xl text-sm font-body font-medium transition-all duration-150 w-full ${
+              collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+            } btn-nav-inactive hover:bg-surface/50`}
+          >
+            <CaretLeftIcon size={16} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
+            {!collapsed && 'Collapse'}
+          </button>
+        </div>
 
         {/* Settings Menu */}
         <SettingsMenu collapsed={collapsed} />
@@ -150,7 +154,7 @@ export default function Layout() {
               <Button
                 variant="danger"
                 size="icon"
-                className="!w-7 !h-7"
+                className="w-7! h-7!"
                 onClick={handleLogout}
                 title="Log out"
               >

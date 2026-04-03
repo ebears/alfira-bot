@@ -155,7 +155,7 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
               Tags
             </label>
             <div
-              className="input p-2 flex flex-wrap gap-1.5 items-center min-h-[38px] cursor-text"
+              className="input p-2 flex flex-wrap gap-1.5 items-center min-h-9.5 cursor-text"
               onClick={() => tagInputRef.current?.focus()}
             >
               {tags.map((tag) => {
