@@ -79,7 +79,7 @@ export const SongRow = memo(
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-24 h-14 md:w-20 md:h-12 object-cover rounded border border-border shrink-0"
+            className="w-14 h-14 md:w-12 md:h-12 object-cover rounded border border-border shrink-0"
             loading="lazy"
             decoding="async"
           />

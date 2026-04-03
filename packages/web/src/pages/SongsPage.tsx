@@ -354,7 +354,7 @@ function SkeletonGrid({ itemsPerPage }: { itemsPerPage: number }) {
       {Array.from({ length: Math.max(4, Math.round(itemsPerPage / 2)) }).map((_, i) => (
         <div key={i} className="flex flex-col bg-elevated rounded-xl clay-resting">
           {/* Thumbnail */}
-          <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
+          <div className="relative aspect-square bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
             <div className="skeleton w-full h-full" />
             {/* Duration badge placeholder */}
             <div className="absolute bottom-2 right-2 z-20">
@@ -378,7 +378,7 @@ function SkeletonList({ itemsPerPage }: { itemsPerPage: number }) {
           key={i}
           className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg bg-elevated clay-resting"
         >
-          <div className="skeleton w-20 h-12 md:w-16 md:h-10 rounded border border-border shrink-0" />
+          <div className="skeleton w-12 h-12 md:w-10 md:h-10 rounded border border-border shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="skeleton h-3 w-3/4" />
             <div className="skeleton h-2 w-1/2 mt-1" />

@@ -309,7 +309,7 @@ const QueueSongItem = memo(function QueueSongItem({
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}
-        className="w-10 h-7 object-cover rounded border border-border shrink-0"
+        className="w-8 h-8 object-cover rounded border border-border shrink-0"
         loading="lazy"
         decoding="async"
       />

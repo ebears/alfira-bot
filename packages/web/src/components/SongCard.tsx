@@ -61,7 +61,7 @@ const SongCardInner = ({
       onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
     >
       {/* Thumbnail with play overlay */}
-      <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
+      <div className="relative aspect-square bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
         <img
           src={song.thumbnailUrl}
           alt={song.nickname || song.title}
