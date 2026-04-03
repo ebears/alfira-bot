@@ -55,6 +55,7 @@ const SongCardInner = ({
     <div
       className="animate-fade-up opacity-0 flex flex-col bg-elevated rounded-xl clay-resting"
       style={style}
+      data-song-edit-container
     >
       {/* Thumbnail with play overlay */}
       <div className="relative aspect-video bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">

@@ -1,4 +1,12 @@
-import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 const CLOSE_DURATION_MS = 300;
 
@@ -55,6 +63,21 @@ export function SongEditProvider({ children }: { children: ReactNode }) {
     },
     [openSongId, closingSongId]
   );
+
+  // Close panel when clicking outside any song edit container
+  useEffect(() => {
+    if (openSongId == null) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (!target.closest('[data-song-edit-container]')) {
+        setOpenSongIdSequenced(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [openSongId, setOpenSongIdSequenced]);
 
   return (
     <SongEditContext value={{ openSongId, closingSongId, setOpenSongId: setOpenSongIdSequenced }}>

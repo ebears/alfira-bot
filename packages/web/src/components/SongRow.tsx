@@ -34,7 +34,7 @@ export const SongRow = memo(
     });
 
     return (
-      <div className="flex flex-col rounded-lg bg-elevated clay-resting" data-song-id={song.id}>
+      <div className="flex flex-col rounded-lg bg-elevated clay-resting" data-song-id={song.id} data-song-edit-container>
         <div
           className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3"
           onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
