@@ -212,7 +212,7 @@ const SongRow = memo(function SongRow({
       <img
         src={song.thumbnailUrl}
         alt={song.nickname || song.title}
-        className="w-12 h-8 md:w-10 md:h-7 object-cover rounded border border-border shrink-0"
+        className="w-10 h-10 md:w-8 md:h-8 object-cover rounded border border-border shrink-0"
         loading="lazy"
         decoding="async"
       />
