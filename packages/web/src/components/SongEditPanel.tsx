@@ -49,6 +49,16 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   songIdRef.current = song.id;
   const fieldsRef = useRef(() => ({ nickname, artist, album, artwork, tags }));
   fieldsRef.current = () => ({ nickname, artist, album, artwork, tags });
+  const originalNicknameRef = useRef<string | null>(songExtended.nickname ?? null);
+  originalNicknameRef.current = songExtended.nickname ?? null;
+  const originalArtistRef = useRef<string | null>(songExtended.artist ?? null);
+  originalArtistRef.current = songExtended.artist ?? null;
+  const originalAlbumRef = useRef<string | null>(songExtended.album ?? null);
+  originalAlbumRef.current = songExtended.album ?? null;
+  const originalArtworkRef = useRef<string | null>(songExtended.artwork ?? null);
+  originalArtworkRef.current = songExtended.artwork ?? null;
+  const originalTagsRef = useRef<string[]>(songExtended.tags ?? []);
+  originalTagsRef.current = songExtended.tags ?? [];
   const savingRef = useRef(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -84,7 +94,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
     [addTag, tagInput, tags, removeTag]
   );
 
-  const doSave = async () => {
+  const doSave = useCallback(async () => {
     if (savingRef.current) return;
     savingRef.current = true;
     try {
@@ -101,24 +111,23 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
     } finally {
       savingRef.current = false;
     }
-  };
+  }, []);
 
   // Save when `isOpen` goes to false (e.g. user clicks the parent row to close)
   useEffect(() => {
     if (!isOpen && !savingRef.current) {
       const { nickname: nk, artist: ar, album: al, artwork: aw, tags: t } = fieldsRef.current();
       if (
-        nk !== (songExtended.nickname ?? '') ||
-        ar !== (songExtended.artist ?? '') ||
-        al !== (songExtended.album ?? '') ||
-        aw !== (songExtended.artwork ?? '') ||
-        JSON.stringify(t) !== JSON.stringify(songExtended.tags ?? [])
+        nk !== (originalNicknameRef.current ?? '') ||
+        ar !== (originalArtistRef.current ?? '') ||
+        al !== (originalAlbumRef.current ?? '') ||
+        aw !== (originalArtworkRef.current ?? '') ||
+        JSON.stringify(t) !== JSON.stringify(originalTagsRef.current)
       ) {
         void doSave();
       }
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: only want to trigger on `isOpen` changes
-  }, [isOpen, doSave, songExtended.artist, songExtended.nickname, songExtended.album, songExtended.artwork, songExtended.tags]);
+  }, [isOpen, doSave]);
 
   if (!isOpen && !closing) return null;
 

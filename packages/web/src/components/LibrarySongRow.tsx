@@ -45,7 +45,10 @@ export const LibrarySongRow = memo(
     });
 
     return (
-      <div className={`flex flex-col rounded-lg bg-elevated clay-resting transition-all duration-100${isAdminView ? ' hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0' : ''}`} data-song-edit-container>
+      <div
+        className={`flex flex-col rounded-lg bg-elevated clay-resting transition-all duration-100${isAdminView ? ' hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0' : ''}`}
+        data-song-edit-container
+      >
         <div
           className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3"
           onClick={() => isAdmin && setOpenSongId(isOpen ? null : song.id)}
