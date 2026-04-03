@@ -71,6 +71,9 @@ export default function PlaylistDetailPage() {
   const itemsPerPageRef = useRef(itemsPerPage);
   itemsPerPageRef.current = itemsPerPage;
 
+  // Avoid skeleton flash when itemsPerPage calibrates after initial ResizeObserver measurement
+  const hasLoadedRef = useRef(false);
+
   // Refs to avoid stale closures in handleRemoveSong
   const paginationRef = useRef(pagination);
   const songsLengthRef = useRef(0);
@@ -80,16 +83,17 @@ export default function PlaylistDetailPage() {
   const load = useCallback(
     async (page: number) => {
       if (!id) return;
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       try {
         const pl = await getPlaylistPage(id, isAdminView, page, itemsPerPage);
         setPlaylist(pl);
         setPagination(pl.pagination);
         setRenameValue(pl.name);
+        hasLoadedRef.current = true;
       } catch {
         navigate('/playlists', { replace: true });
       } finally {
-        setLoading(false);
+        setLoading((prev) => (hasLoadedRef.current ? false : prev));
       }
     },
     [id, navigate, isAdminView, itemsPerPage]

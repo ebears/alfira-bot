@@ -28,15 +28,19 @@ export default function PlaylistsPage() {
   const itemsPerPageRef = useRef(itemsPerPage);
   itemsPerPageRef.current = itemsPerPage;
 
+  // Avoid skeleton flash when itemsPerPage calibrates after initial ResizeObserver measurement
+  const hasLoadedRef = useRef(false);
+
   const load = useCallback(
     async (page: number) => {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       try {
         const result = await getPlaylistsPage(isAdminView, page, itemsPerPage);
         setItems(result.items);
         setPagination(result.pagination);
+        hasLoadedRef.current = true;
       } finally {
-        setLoading(false);
+        setLoading((prev) => (hasLoadedRef.current ? false : prev));
       }
     },
     [isAdminView, itemsPerPage]
