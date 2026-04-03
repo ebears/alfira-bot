@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const DEBOUNCE_MS = 250;
+const DEBOUNCE_MS = 50;
 
 /**
  * Calculates how many items fill exactly 4 rows of the container grid.

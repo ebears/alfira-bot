@@ -44,6 +44,10 @@ export default function SongsPage() {
   const itemsPerPageRef = useRef(itemsPerPage);
   itemsPerPageRef.current = itemsPerPage;
 
+  // Track if initial load has completed, to avoid showing skeleton again when
+  // itemsPerPage calibrates after ResizeObserver measures the container
+  const hasLoadedRef = useRef(false);
+
   // Lazy playlists fetch — fetched separately so it doesn't block the main load
   useEffect(() => {
     void getPlaylistsPage(isAdminView, 1, 100)
@@ -61,13 +65,14 @@ export default function SongsPage() {
 
   const load = useCallback(
     async (page: number, searchQuery?: string) => {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       try {
         const result = await getSongsPage(page, itemsPerPage, searchQuery);
         setItems(result.items);
         setPagination(result.pagination);
+        hasLoadedRef.current = true;
       } finally {
-        setLoading(false);
+        setLoading((prev) => (hasLoadedRef.current ? false : prev));
       }
     },
     [itemsPerPage]

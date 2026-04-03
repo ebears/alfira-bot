@@ -117,7 +117,7 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
 
         <div className="flex flex-col gap-3">
           <Field
-            id="nickname"
+            id="modal-nickname"
             label="Nickname"
             value={nickname}
             onChange={setNickname}
@@ -125,21 +125,21 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
             placeholder="Display name"
           />
           <Field
-            id="artist"
+            id="modal-artist"
             label="Artist"
             value={artist}
             onChange={setArtist}
             placeholder="Artist name"
           />
           <Field
-            id="album"
+            id="modal-album"
             label="Album"
             value={album}
             onChange={setAlbum}
             placeholder="Album name"
           />
           <Field
-            id="artwork"
+            id="modal-artwork"
             label="Artwork URL"
             value={artwork}
             onChange={setArtwork}
@@ -149,7 +149,7 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
           {/* Tags */}
           <div>
             <label
-              htmlFor="tag-input"
+              htmlFor="modal-tag-input"
               className="block font-mono text-[10px] text-muted uppercase mb-1"
             >
               Tags
@@ -177,7 +177,7 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
                 );
               })}
               <input
-                id="tag-input"
+                id="modal-tag-input"
                 ref={tagInputRef}
                 className="flex-1 min-w-20 bg-transparent outline-none text-sm text-fg placeholder:text-faint"
                 placeholder={tags.length === 0 ? 'Custom grouping (enter to confirm)' : ''}

@@ -10,8 +10,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
-import { Button } from './ui/Button';
 import SettingsMenu from './SettingsMenu';
+import { Button } from './ui/Button';
 
 export default function MobileNav() {
   const { user, logout } = useAuth();
@@ -180,33 +180,33 @@ export default function MobileNav() {
           </div>
 
           {/* User section */}
-        <div className="p-3">
-          <div className="flex items-center gap-3 px-2 py-2 mb-1">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.username}
-                className="w-7 h-7 rounded-full"
-                decoding="async"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
-                <span className="font-mono text-sm text-muted">
-                  {user?.username?.[0]?.toUpperCase()}
-                </span>
-              </div>
-            )}
-            <span className="text-fg font-body truncate flex-1">{user?.username}</span>
+          <div className="p-3">
+            <div className="flex items-center gap-3 px-2 py-2 mb-1">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.username}
+                  className="w-7 h-7 rounded-full"
+                  decoding="async"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center">
+                  <span className="font-mono text-sm text-muted">
+                    {user?.username?.[0]?.toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <span className="text-fg font-body truncate flex-1">{user?.username}</span>
+            </div>
+            <Button
+              variant="danger"
+              onClick={handleLogout}
+              className="flex items-center rounded-xl transition-all duration-150 cursor-pointer px-3 py-2 w-full text-foreground"
+            >
+              <span className="mr-auto text-sm">log out</span>
+              <SignOutIcon size={18} weight="duotone" />
+            </Button>
           </div>
-          <Button
-            variant="danger"
-            onClick={handleLogout}
-            className="flex items-center rounded-xl transition-all duration-150 cursor-pointer px-3 py-2 w-full text-foreground"
-          >
-            <span className="mr-auto text-sm">log out</span>
-            <SignOutIcon size={18} weight="duotone" />
-          </Button>
-        </div>
         </div>
       </div>
     </>

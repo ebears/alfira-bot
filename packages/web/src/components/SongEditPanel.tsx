@@ -141,7 +141,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
       <div className="px-3 md:px-4 pt-4 pb-4 border-t border-border">
         <div className="flex flex-col gap-3">
           <Field
-            id="nickname"
+            id="panel-nickname"
             label="Nickname"
             value={nickname}
             onChange={setNickname}
@@ -152,7 +152,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             }}
           />
           <Field
-            id="artist"
+            id="panel-artist"
             label="Artist"
             value={artist}
             onChange={setArtist}
@@ -162,7 +162,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             }}
           />
           <Field
-            id="album"
+            id="panel-album"
             label="Album"
             value={album}
             onChange={setAlbum}
@@ -172,7 +172,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             }}
           />
           <Field
-            id="artwork"
+            id="panel-artwork"
             label="Artwork URL"
             value={artwork}
             onChange={setArtwork}
@@ -185,7 +185,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
           {/* Tags */}
           <div>
             <label
-              htmlFor="tag-input"
+              htmlFor="panel-tag-input"
               className="block font-mono text-[10px] text-muted uppercase mb-1"
             >
               Tags
@@ -213,7 +213,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
                 );
               })}
               <input
-                id="tag-input"
+                id="panel-tag-input"
                 ref={tagInputRef}
                 className="flex-1 min-w-20 bg-transparent outline-none text-sm text-fg placeholder:text-faint"
                 placeholder={tags.length === 0 ? 'Custom grouping (enter to confirm)' : ''}
