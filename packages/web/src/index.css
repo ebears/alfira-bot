@@ -53,6 +53,11 @@
     }
 }
 
+@keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
 /* ============================================
    COLOR THEME DEFINITIONS
    Each theme defines accent colors and palette
