@@ -1,7 +1,6 @@
 import type { Song } from '@alfira-bot/shared';
 import type { SongUpdateData } from '@alfira-bot/shared/api';
 import { updateSong } from '@alfira-bot/shared/api';
-import { ArrowCounterClockwiseIcon, Check, FloppyDisk } from '@phosphor-icons/react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getTagColorClasses } from '../utils/tagColors';
 
@@ -41,23 +40,25 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   const [artwork, setArtwork] = useState(songExtended.artwork ?? '');
   const [tags, setTags] = useState<string[]>(songExtended.tags ?? []);
   const [tagInput, setTagInput] = useState('');
-  const [saving, setSaving] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
 
+  // Refs for save logic so we don't recreate handlers on every render
+  const songIdRef = useRef(song.id);
+  songIdRef.current = song.id;
+  const fieldsRef = useRef(() => ({ nickname, artist, album, artwork, tags }));
+  fieldsRef.current = () => ({ nickname, artist, album, artwork, tags });
+  const savingRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (isOpen) {
+      savingRef.current = false;
       inputRef.current?.focus();
     }
   }, [isOpen]);
-
-  const hasChanges =
-    nickname !== (song.nickname ?? '') ||
-    artist !== (songExtended.artist ?? '') ||
-    album !== (songExtended.album ?? '') ||
-    artwork !== (songExtended.artwork ?? '') ||
-    JSON.stringify(tags) !== JSON.stringify(songExtended.tags ?? []);
 
   const addTag = useCallback(() => {
     const trimmed = tagInput.trim();
@@ -83,33 +84,42 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
     [addTag, tagInput, tags, removeTag]
   );
 
-  const handleReset = async () => {
-    await updateSong(song.id, {
-      nickname: null,
-      artist: null,
-      album: null,
-      artwork: null,
-      tags: [],
-    });
-    onClose();
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
+  const doSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     try {
+      const { nickname: nk, artist: ar, album: al, artwork: aw, tags: t } = fieldsRef.current();
       const data: SongUpdateData = {
-        nickname: nickname.trim() || null,
-        artist: artist.trim() || null,
-        album: album.trim() || null,
-        artwork: artwork.trim() || null,
-        tags,
+        nickname: nk.trim() || null,
+        artist: ar.trim() || null,
+        album: al.trim() || null,
+        artwork: aw.trim() || null,
+        tags: t,
       };
-      await updateSong(song.id, data);
-      onClose();
+      await updateSong(songIdRef.current, data);
+      onCloseRef.current();
     } finally {
-      setSaving(false);
+      savingRef.current = false;
     }
   };
+
+  // Save when `isOpen` goes to false (e.g. user clicks the parent row to close)
+  useEffect(() => {
+    if (!isOpen && !savingRef.current) {
+      const { nickname: nk, artist: ar, album: al, artwork: aw, tags: t } = fieldsRef.current();
+      // biome-ignore lint/correctness/useExhaustiveDependencies: songExtended is stable for the current render; saving checks only on unmount
+      if (
+        nk !== (songExtended.nickname ?? '') ||
+        ar !== (songExtended.artist ?? '') ||
+        al !== (songExtended.album ?? '') ||
+        aw !== (songExtended.artwork ?? '') ||
+        JSON.stringify(t) !== JSON.stringify(songExtended.tags ?? [])
+      ) {
+        void doSave();
+      }
+    }
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only want to trigger on `isOpen` changes
+  }, [isOpen]);
 
   if (!isOpen && !closing) return null;
 
@@ -128,6 +138,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             onChange={setNickname}
             inputRef={inputRef}
             placeholder="Custom display name"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void doSave();
+            }}
           />
           <Field
             id="artist"
@@ -135,6 +148,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             value={artist}
             onChange={setArtist}
             placeholder="Artist name"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void doSave();
+            }}
           />
           <Field
             id="album"
@@ -142,6 +158,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             value={album}
             onChange={setAlbum}
             placeholder="Album name"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void doSave();
+            }}
           />
           <Field
             id="artwork"
@@ -149,6 +168,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             value={artwork}
             onChange={setArtwork}
             placeholder="https://example.com/artwork.jpg"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void doSave();
+            }}
           />
 
           {/* Tags */}
@@ -193,55 +215,6 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             </div>
           </div>
         </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-4">
-          <button
-            type="button"
-            className="btn btn--primary flex-1 h-10 text-xs font-mono flex items-center justify-center gap-1.5"
-            onClick={handleSave}
-            disabled={saving || !hasChanges}
-          >
-            <FloppyDisk size={14} weight="duotone" />
-            Save
-          </button>
-          {hasChanges && (
-            <button
-              type="button"
-              className="btn h-10 w-10 text-xs font-mono flex items-center justify-center text-muted hover:text-fg"
-              onClick={() => {
-                setNickname(song.nickname ?? '');
-                setArtist(songExtended.artist ?? '');
-                setAlbum(songExtended.album ?? '');
-                setArtwork(songExtended.artwork ?? '');
-                setTags(songExtended.tags ?? []);
-                setTagInput('');
-              }}
-              disabled={saving}
-              title="Reset changes"
-            >
-              <ArrowCounterClockwiseIcon size={16} weight="duotone" />
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn h-10 w-10 text-xs font-mono flex items-center justify-center text-muted hover:text-fg"
-            onClick={onClose}
-            disabled={saving}
-            title="Close"
-          >
-            <Check size={16} weight="duotone" />
-          </button>
-          <button
-            type="button"
-            className="btn h-10 w-10 text-xs font-mono flex items-center justify-center text-danger/70 hover:text-danger"
-            onClick={handleReset}
-            disabled={saving}
-            title="Reset all fields to defaults"
-          >
-            <ArrowCounterClockwiseIcon size={16} weight="duotone" />
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -254,6 +227,7 @@ function Field({
   onChange,
   placeholder,
   inputRef,
+  onKeyDown,
 }: {
   id: string;
   label: string;
@@ -261,6 +235,7 @@ function Field({
   onChange: (v: string) => void;
   placeholder?: string;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div>
@@ -273,6 +248,7 @@ function Field({
         className="input text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
       />
     </div>
