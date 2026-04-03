@@ -107,7 +107,6 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   useEffect(() => {
     if (!isOpen && !savingRef.current) {
       const { nickname: nk, artist: ar, album: al, artwork: aw, tags: t } = fieldsRef.current();
-      // biome-ignore lint/correctness/useExhaustiveDependencies: songExtended is stable for the current render; saving checks only on unmount
       if (
         nk !== (songExtended.nickname ?? '') ||
         ar !== (songExtended.artist ?? '') ||
@@ -119,7 +118,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
       }
     }
     // biome-ignore lint/correctness/useExhaustiveDependencies: only want to trigger on `isOpen` changes
-  }, [isOpen]);
+  }, [isOpen, doSave, songExtended.artist, songExtended.nickname, songExtended.album, songExtended.artwork, songExtended.tags]);
 
   if (!isOpen && !closing) return null;
 
