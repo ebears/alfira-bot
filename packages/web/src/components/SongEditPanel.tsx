@@ -146,7 +146,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
             value={nickname}
             onChange={setNickname}
             inputRef={inputRef}
-            placeholder="Custom display name"
+            placeholder="Display name"
             onKeyDown={(e) => {
               if (e.key === 'Enter') void doSave();
             }}
@@ -216,7 +216,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
                 id="tag-input"
                 ref={tagInputRef}
                 className="flex-1 min-w-20 bg-transparent outline-none text-sm text-fg placeholder:text-faint"
-                placeholder={tags.length === 0 ? 'Custom grouping' : ''}
+                placeholder={tags.length === 0 ? 'Custom grouping (press enter to confirm)' : ''}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}

@@ -103,10 +103,15 @@ export const LibrarySongRow = memo(
                 <span className="truncate">{song.album}</span>
               </p>
             )}
+          </div>
+          <div className="flex flex-col items-end gap-1.5 shrink-0 mr-2">
+            <span className="flex items-center gap-1 font-mono text-xs text-muted">
+              {formatDuration(song.duration)}
+              <ClockIcon size={11} weight="fill" className="shrink-0" />
+            </span>
             {tags.length > 0 && (
               <div className="flex items-center gap-1 text-xs text-muted">
-                <TagIcon size={11} weight="fill" className="shrink-0" />
-                <div className="overflow-hidden py-0.5 flex-1 min-w-0" ref={tickerRef}>
+                <div className="overflow-hidden py-0" ref={tickerRef}>
                   <div
                     className="flex gap-1"
                     ref={tickerInnerRef}
@@ -142,15 +147,12 @@ export const LibrarySongRow = memo(
                           </span>
                         );
                       })}
+                    <TagIcon size={11} weight="fill" className="shrink-0" />
                   </div>
                 </div>
               </div>
             )}
           </div>
-          <span className="flex items-center gap-1 font-mono text-xs text-muted shrink-0 mr-2">
-            <ClockIcon size={11} weight="fill" className="shrink-0" />
-            {formatDuration(song.duration)}
-          </span>
           <Button
             variant="primary"
             size="icon"

@@ -122,7 +122,7 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
             value={nickname}
             onChange={setNickname}
             inputRef={inputRef}
-            placeholder="Custom display name"
+            placeholder="Display name"
           />
           <Field
             id="artist"
@@ -179,8 +179,8 @@ export default function SongEditModal({ song, onClose, onSave }: SongEditModalPr
               <input
                 id="tag-input"
                 ref={tagInputRef}
-                className="flex-1 min-w-[80px] bg-transparent outline-none text-sm text-fg placeholder:text-faint"
-                placeholder={tags.length === 0 ? 'Custom grouping' : ''}
+                className="flex-1 min-w-20 bg-transparent outline-none text-sm text-fg placeholder:text-faint"
+                placeholder={tags.length === 0 ? 'Custom grouping (press enter to confirm)' : ''}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
