@@ -52,46 +52,42 @@ const PlaybackControls = memo(function PlaybackControls({
 }: PlaybackControlsProps) {
   return (
     <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
-      {currentSong && (
-        <>
-          <BarButton
-            onClick={onPauseResume}
-            busy={pauseBusy}
-            disabled={pauseBusy || skipBusy}
-            title={isPaused || isStopped ? 'Resume' : 'Pause'}
-            hoverColor="hover:text-fg"
-            pulse={isPlaying && !isPaused}
-          >
-            {isPaused || isStopped ? (
-              <PlayIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
-            ) : (
-              <PauseIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
-            )}
-          </BarButton>
-          <BarButton
-            onClick={onSkip}
-            busy={skipBusy}
-            disabled={pauseBusy || skipBusy}
-            title="Skip"
-            hoverColor="hover:text-fg"
-          >
-            <SkipForwardIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
-          </BarButton>
-        </>
-      )}
+      <BarButton
+        onClick={onPauseResume}
+        busy={pauseBusy}
+        disabled={!currentSong || pauseBusy || skipBusy}
+        title={isPaused || isStopped ? 'Resume' : 'Pause'}
+        hoverColor="hover:text-fg"
+        pulse={isPlaying && !isPaused}
+      >
+        {isPaused || isStopped ? (
+          <PlayIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
+        ) : (
+          <PauseIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
+        )}
+      </BarButton>
+      <BarButton
+        onClick={onSkip}
+        busy={skipBusy}
+        disabled={!currentSong || pauseBusy || skipBusy}
+        title="Skip"
+        hoverColor="hover:text-fg"
+        className="hidden md:flex"
+      >
+        <SkipForwardIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
+      </BarButton>
 
-      {isConnectedToVoice && (
-        <Button
-          variant="inherit"
-          surface="base"
-          size="icon"
-          onClick={onStop}
-          title="Stop playback"
-          className="text-muted hover:text-danger"
-        >
-          <DoorOpenIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
-        </Button>
-      )}
+      <Button
+        variant="inherit"
+        surface="base"
+        size="icon"
+        onClick={onStop}
+        disabled={!isConnectedToVoice}
+        title="Stop playback"
+        className="text-muted hover:text-danger"
+      >
+        <DoorOpenIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
+      </Button>
     </div>
   );
 });
@@ -127,53 +123,45 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
   );
 
   return (
-    <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
-      {currentSong && (
-        <>
-          <Button
-            variant="inherit"
-            surface="base"
-            size="icon"
-            onClick={onCycleLoop}
-            disabled={loopBusy}
-            title={`Loop: ${loopMode}`}
-            className={`shrink-0 disabled:opacity-50 ${
-              isLoopActive
-                ? 'pressed text-accent hover:text-accent-muted'
-                : 'text-muted hover:text-fg'
-            }`}
-          >
-            {loopBusy ? (
-              <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
-            ) : (
-              loopIcon
-            )}
-          </Button>
-          <Button
-            variant="inherit"
-            surface="base"
-            size="icon"
-            onClick={onShuffleToggle}
-            disabled={shuffleBusy}
-            title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
-            className={`shrink-0 disabled:opacity-50 ${
-              isShuffled
-                ? 'pressed text-accent hover:text-accent-muted'
-                : 'text-muted hover:text-fg'
-            }`}
-          >
-            {shuffleBusy ? (
-              <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
-            ) : (
-              <ShuffleIcon
-                size={20}
-                weight={isShuffled ? 'fill' : 'duotone'}
-                className="md:w-4 md:h-4"
-              />
-            )}
-          </Button>
-        </>
-      )}
+    <div className="hidden md:flex items-center gap-1 md:gap-1.5 shrink-0">
+      <Button
+        variant="inherit"
+        surface="base"
+        size="icon"
+        onClick={onCycleLoop}
+        disabled={!currentSong || loopBusy}
+        title={`Loop: ${loopMode}`}
+        className={`shrink-0 disabled:opacity-50 ${
+          isLoopActive ? 'pressed text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+        }`}
+      >
+        {loopBusy ? (
+          <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
+        ) : (
+          loopIcon
+        )}
+      </Button>
+      <Button
+        variant="inherit"
+        surface="base"
+        size="icon"
+        onClick={onShuffleToggle}
+        disabled={!currentSong || shuffleBusy}
+        title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
+        className={`shrink-0 disabled:opacity-50 ${
+          isShuffled ? 'pressed text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+        }`}
+      >
+        {shuffleBusy ? (
+          <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-4 md:h-4" />
+        ) : (
+          <ShuffleIcon
+            size={20}
+            weight={isShuffled ? 'fill' : 'duotone'}
+            className="md:w-4 md:h-4"
+          />
+        )}
+      </Button>
     </div>
   );
 });
@@ -207,18 +195,18 @@ const ProgressBar = memo(function ProgressBar({
 
   const displayName = currentSong ? currentSong.nickname || currentSong.title : '';
   const artist = currentSong?.artist || null;
-  const album = currentSong?.album || null;
 
   return (
-    <div className="hidden md:flex flex-col flex-1 items-center justify-start self-stretch px-4 min-w-0">
+    <div className="hidden md:flex flex-col flex-1 items-center xl:items-end self-stretch px-4 min-h-0 gap-1">
       {currentSong ? (
-        <div className="text-center w-full truncate mb-2 h-12 flex flex-col justify-center min-h-12">
+        <div className="text-center w-full truncate xl:text-right mb-0.5 h-12 flex flex-col justify-center min-h-12">
           <p className="font-body text-sm font-semibold text-fg truncate">{displayName}</p>
           {artist && <p className="font-body text-xs text-muted truncate">{artist}</p>}
-          {album && <p className="font-body text-xs text-faint truncate">{album}</p>}
         </div>
       ) : (
-        <div className="h-12 mb-2 shrink-0" />
+        <div className="h-12 mb-0.5 shrink-0 flex items-center xl:justify-end justify-center">
+          <p className="font-body text-sm text-muted">Nothing playing</p>
+        </div>
       )}
       <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
         <div
@@ -328,14 +316,14 @@ export function NowPlayingBar() {
   }, [isShuffled, shuffle, unshuffle]);
 
   return (
-    <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 safe-area-bottom z-10">
+    <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 z-10">
       {/* Mobile: progress bar on top */}
       <ProgressBar currentSong={currentSong} registerProgress={registerProgress} variant="mobile" />
 
       <div
-        className={`h-26 md:h-24 flex flex-row items-center px-3 md:px-5 gap-2 md:gap-3 ${!currentSong ? 'justify-end md:justify-start' : ''}`}
+        className={`h-22 md:h-20 flex flex-row items-center px-3 md:px-5 gap-1 md:gap-1.5 ${!currentSong ? 'justify-end md:justify-start' : ''}`}
       >
-        {/* Playback controls: Play/Pause, Skip, Leave */}
+        {/* Playback controls: Play/Pause (desktop: also Skip, Leave) */}
         <PlaybackControls
           currentSong={currentSong}
           isPaused={isPaused}
@@ -349,11 +337,6 @@ export function NowPlayingBar() {
           onStop={handleStop}
         />
 
-        {/* Separator */}
-        {isConnectedToVoice && (
-          <div className="w-px h-8 md:h-10 bg-border shrink-0 mx-0.5 md:mx-1" />
-        )}
-
         {/* Desktop: centered progress bar */}
         <ProgressBar
           currentSong={currentSong}
@@ -361,35 +344,59 @@ export function NowPlayingBar() {
           variant="desktop"
         />
 
-        {/* Album art */}
-        <AlbumArt currentSong={currentSong} isPlaying={isPlaying} isPaused={isPaused} />
+        {/* Right-aligned group: metadata, art, queue */}
+        <div className="flex items-center ms-auto shrink-0">
+          {/* Mobile: metadata (left of art, right-aligned text) */}
+          {currentSong ? (
+            <div className="md:hidden max-w-32 min-w-0 mr-2">
+              <p className="font-body text-sm font-semibold text-fg truncate text-right">
+                {currentSong.nickname || currentSong.title}
+              </p>
+              {currentSong.artist && (
+                <p className="font-body text-xs text-muted truncate text-right">
+                  {currentSong.artist}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="md:hidden min-w-0 mr-2">
+              <p className="font-body text-sm text-muted text-right">Nothing playing</p>
+            </div>
+          )}
 
-        {/* Separator */}
-        {currentSong && <div className="w-px h-8 md:h-10 bg-border shrink-0 mx-0.5 md:mx-1" />}
+          {/* Album art */}
+          <AlbumArt currentSong={currentSong} isPlaying={isPlaying} isPaused={isPaused} />
 
-        {/* Loop + Shuffle + Queue */}
-        <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
-          <LoopShuffleControls
-            currentSong={currentSong}
-            loopMode={loopMode}
-            isShuffled={isShuffled}
-            loopBusy={loopBusy}
-            shuffleBusy={shuffleBusy}
-            onCycleLoop={handleCycleLoop}
-            onShuffleToggle={handleShuffleToggle}
-          />
-          <Button
-            variant="inherit"
-            surface="base"
-            size="icon"
-            onClick={() => setQueueOpen(!queueOpen)}
-            title="Queue"
-            className={`shrink-0 ${
-              queueOpen ? 'pressed text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
-            }`}
-          >
-            <QueueIcon size={20} weight="duotone" className="md:w-4 md:h-4" />
-          </Button>
+          {/* Separator */}
+          <div className="hidden md:block w-px h-8 md:h-10 bg-border shrink-0 mx-3 md:mx-5" />
+          <div className="md:hidden w-px h-8 bg-border shrink-0 mx-1" />
+
+          {/* Queue button (with desktop-only loop/shuffle) */}
+          <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
+            <LoopShuffleControls
+              currentSong={currentSong}
+              loopMode={loopMode}
+              isShuffled={isShuffled}
+              loopBusy={loopBusy}
+              shuffleBusy={shuffleBusy}
+              onCycleLoop={handleCycleLoop}
+              onShuffleToggle={handleShuffleToggle}
+            />
+            <Button
+              variant="inherit"
+              surface="base"
+              size="icon"
+              onClick={() => setQueueOpen(!queueOpen)}
+              title="Queue"
+              className={`shrink-0 ${
+                queueOpen
+                  ? 'pressed text-accent hover:text-accent-muted'
+                  : 'text-muted hover:text-fg'
+              }`}
+            >
+              <QueueIcon size={20} weight="duotone" className="md:w-4 md:h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -402,7 +409,19 @@ export function NowPlayingBar() {
             role="presentation"
           />
           <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-surface rounded-t-2xl flex flex-col clay-floating animate-slide-up">
-            <QueuePanel />
+            <QueuePanel
+              mobileQuickControls={{
+                currentSong,
+                loopMode,
+                isShuffled,
+                loopBusy,
+                shuffleBusy,
+                skipBusy,
+                onSkip: handleSkip,
+                onCycleLoop: handleCycleLoop,
+                onShuffleToggle: handleShuffleToggle,
+              }}
+            />
           </div>
         </div>
       )}

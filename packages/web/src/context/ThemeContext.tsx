@@ -175,7 +175,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(MODE_STORAGE_KEY, mode);
 
     // Update PWA theme-color to match the app's elevated surface color
-    const elevated = getComputedStyle(document.documentElement).getPropertyValue('--color-elevated').trim();
+    const elevated = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-elevated')
+      .trim();
     if (elevated) {
       document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
         el.setAttribute('content', elevated);

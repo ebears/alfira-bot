@@ -55,7 +55,7 @@ function LayoutContent() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden h-[calc(100vh-6rem)]`}
+        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden h-[calc(100vh-5rem)]`}
       >
         {/* Wordmark */}
         <div
@@ -255,7 +255,7 @@ function QueueLayout() {
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0 overflow-hidden">
-        <main className="flex-1 overflow-y-auto pb-28 md:pb-25">
+        <main className="flex-1 overflow-y-auto pb-22 md:pb-20">
           <Outlet />
         </main>
         <NowPlayingBar />
@@ -263,7 +263,7 @@ function QueueLayout() {
 
       {/* Desktop: right-side panel that pushes content */}
       <aside
-        className={`${queueOpen ? 'w-96' : 'w-0'} shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-floating md:flex hidden h-[calc(100vh-6rem)]`}
+        className={`${queueOpen ? 'w-96' : 'w-0'} shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-floating md:flex hidden h-[calc(100vh-5rem)]`}
       >
         {queueOpen && <QueuePanel />}
       </aside>
