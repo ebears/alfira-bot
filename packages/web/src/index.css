@@ -786,9 +786,9 @@
     --animate-slide-up: slideUp 0.3s ease forwards;
     --animate-pulse-gentle: pulseGentle 2.4s ease-in-out infinite;
     /* Clay radius tokens — consistent "pebble" proportions */
-    --clay-radius-sm: 12px;
-    --clay-radius-md: 16px;
-    --clay-radius-lg: 20px;
+    --clay-radius-sm: 9px;
+    --clay-radius-md: 12px;
+    --clay-radius-lg: 14px;
     /* Clay highlight — top-light gradient endpoint */
     --clay-highlight: color-mix(in srgb, var(--color-elevated) 65%, white);
     /* Clay elevation tokens — 4 deliberate depth levels */

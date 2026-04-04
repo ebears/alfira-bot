@@ -157,7 +157,7 @@ export default function MobileNav() {
               to={to}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center rounded-xl font-body font-bold text-lg transition-all duration-150 cursor-pointer px-3 py-3 ${
+                `flex items-center rounded-xl font-body text-lg transition-all duration-150 cursor-pointer px-3 py-3 ${
                   isActive ? 'btn-inherit pressed' : 'btn-inherit'
                 }`
               }
@@ -181,7 +181,7 @@ export default function MobileNav() {
 
           {/* User section */}
           <div className="p-3">
-            <div className="flex items-center gap-3 px-2 py-2 mb-1">
+            <div className="flex items-center gap-3 px-2 py-2 mb-3">
               {user?.avatar ? (
                 <img
                   src={user.avatar}

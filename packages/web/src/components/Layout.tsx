@@ -4,13 +4,23 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
+import { QueuePanelProvider, useQueuePanel } from '../context/QueuePanelContext';
 import { useConnectionStatus } from '../hooks/useSocket';
 import MobileNav from './MobileNav';
 import { NowPlayingBar } from './NowPlayingBar';
+import QueuePanel from './QueuePanel';
 import SettingsMenu from './SettingsMenu';
 import { Button } from './ui/Button';
 
 export default function Layout() {
+  return (
+    <QueuePanelProvider>
+      <LayoutContent />
+    </QueuePanelProvider>
+  );
+}
+
+function LayoutContent() {
   const { user, logout } = useAuth();
   const { isAdminView } = useAdminView();
   const connectionStatus = useConnectionStatus();
@@ -72,21 +82,25 @@ export default function Layout() {
         </div>
 
         {/* Spacer between wordmark and nav */}
-        {!collapsed && (
+        {collapsed ? (
+          <div className="flex justify-center px-2">
+            <div className="w-full h-px bg-fg/20" />
+          </div>
+        ) : (
           <div className="px-5">
-            <div className="h-px bg-surface/50" />
+            <div className="h-px bg-fg/20" />
           </div>
         )}
 
         {/* Nav */}
-        <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-3 pt-3'} space-y-2`}>
+        <nav className={`flex-1 ${collapsed ? 'px-2 pt-3' : 'px-3 pt-3'} space-y-2`}>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center rounded-xl font-body font-bold text-lg transition-all duration-150 cursor-pointer ${
+                `flex items-center rounded-xl font-body text-md transition-all duration-150 cursor-pointer ${
                   collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'
                 } ${isActive ? 'btn-inherit pressed' : 'btn-inherit'}`
               }
@@ -108,7 +122,7 @@ export default function Layout() {
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={`flex items-center rounded-xl font-body transition-all duration-150 cursor-pointer w-full ${
-              collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2'
+              collapsed ? 'justify-center px-0 py-2' : 'px-3 py-2'
             } btn-inherit`}
             style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
           >
@@ -155,7 +169,7 @@ export default function Layout() {
         {/* User section */}
         <div className="p-3">
           {collapsed ? (
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-4">
               <div
                 className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center overflow-hidden"
                 title={user?.username}
@@ -173,7 +187,7 @@ export default function Layout() {
                   </span>
                 )}
               </div>
-              <div className="flex justify-center px-2 pb-2">
+              <div className="flex justify-center px-2 pt-1">
                 <Button
                   variant="danger"
                   size="default"
@@ -187,7 +201,7 @@ export default function Layout() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-3 px-2 py-2 mb-1">
+              <div className="flex items-center gap-3 px-2 py-2 mb-3">
                 {user?.avatar ? (
                   <img
                     src={user.avatar}
@@ -218,14 +232,31 @@ export default function Layout() {
       </aside>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Main content + now playing bar */}
+      {/* Main content + now playing bar + queue panel */}
       {/* ------------------------------------------------------------------ */}
+      <QueueLayout />
+    </div>
+  );
+}
+
+function QueueLayout() {
+  const { queueOpen } = useQueuePanel();
+
+  return (
+    <>
       <div className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0 overflow-hidden">
         <main className="flex-1 overflow-y-auto pb-28 md:pb-25">
           <Outlet />
         </main>
         <NowPlayingBar />
       </div>
-    </div>
+
+      {/* Desktop: right-side panel that pushes content */}
+      <aside
+        className={`${queueOpen ? 'w-96' : 'w-0'} shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-floating md:flex hidden h-[calc(100vh-6rem)]`}
+      >
+        {queueOpen && <QueuePanel />}
+      </aside>
+    </>
   );
 }

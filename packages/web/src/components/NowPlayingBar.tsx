@@ -13,8 +13,9 @@ import {
   SkipForwardIcon,
   SparkleIcon,
 } from '@phosphor-icons/react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { usePlayer } from '../context/PlayerContext';
+import { useQueuePanel } from '../context/QueuePanelContext';
 import { BarButton } from './BarButton';
 import QueuePanel from './QueuePanel';
 import { Button } from './ui/Button';
@@ -270,25 +271,12 @@ export function NowPlayingBar() {
   const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode, isShuffled } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
+  const { queueOpen, setQueueOpen } = useQueuePanel();
+
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
-  const [queueOpen, setQueueOpen] = useState(false);
-
-  // Escape key handler + body scroll lock
-  useEffect(() => {
-    if (!queueOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setQueueOpen(false);
-    };
-    document.addEventListener('keydown', handler);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handler);
-      document.body.style.overflow = '';
-    };
-  }, [queueOpen]);
 
   const handlePauseResume = useCallback(async () => {
     setPauseBusy(true);
@@ -394,44 +382,29 @@ export function NowPlayingBar() {
             variant="inherit"
             surface="base"
             size="icon"
-            onClick={() => setQueueOpen(true)}
+            onClick={() => setQueueOpen(!queueOpen)}
             title="Queue"
             className={`shrink-0 ${
-              queueOpen ? 'text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+              queueOpen ? 'pressed text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
             }`}
           >
-            <QueueIcon
-              size={20}
-              weight={queueOpen ? 'fill' : 'duotone'}
-              className="md:w-4 md:h-4"
-            />
+            <QueueIcon size={20} weight="duotone" className="md:w-4 md:h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Queue slideout */}
+      {/* Mobile: bottom sheet */}
       {queueOpen && (
-        <>
-          {/* Backdrop */}
+        <div className="md:hidden fixed inset-0 z-50">
           <div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm cursor-pointer"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
             onClick={() => setQueueOpen(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setQueueOpen(false);
-            }}
             role="presentation"
           />
-
-          {/* Desktop: right panel */}
-          <div className="hidden md:flex fixed z-60 right-0 top-0 bottom-0 w-96 bg-surface animate-slide-in-right flex-col clay-floating">
-            <QueuePanel onClose={() => setQueueOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-surface rounded-t-2xl flex flex-col clay-floating animate-slide-up">
+            <QueuePanel />
           </div>
-
-          {/* Mobile: bottom sheet */}
-          <div className="md:hidden fixed z-60 bottom-0 left-0 right-0 max-h-[85vh] bg-surface rounded-t-2xl animate-slide-up flex flex-col clay-floating">
-            <QueuePanel onClose={() => setQueueOpen(false)} />
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
