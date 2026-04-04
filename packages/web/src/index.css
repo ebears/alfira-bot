@@ -1344,3 +1344,38 @@
     visibility: hidden;
     transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
+
+/* Volume range input — fill track using accent color up to thumb position */
+.volume-range-input {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(
+        to right,
+        var(--color-accent) 0%,
+        var(--color-accent) var(--volume-pct, 50%),
+        var(--color-border) var(--volume-pct, 50%),
+        var(--color-border) 100%
+    );
+    outline: none;
+    cursor: pointer;
+}
+.volume-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 2px solid var(--color-accent);
+    cursor: pointer;
+}
+.volume-range-input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 2px solid var(--color-accent);
+    cursor: pointer;
+}

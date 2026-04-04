@@ -129,6 +129,7 @@ export interface SongUpdateData {
   album?: string | null;
   artwork?: string | null;
   tags?: string[];
+  volumeOffset?: number | null;
 }
 
 /**

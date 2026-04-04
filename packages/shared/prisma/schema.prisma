@@ -23,6 +23,7 @@ model Song {
   album         String?
   artwork       String?
   tags          String[]       @default([])
+  volumeOffset  Int?
   createdAt     DateTime       @default(now())
   playlistSongs PlaylistSong[]
 }

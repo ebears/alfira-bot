@@ -40,6 +40,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   const [artwork, setArtwork] = useState(songExtended.artwork ?? '');
   const [tags, setTags] = useState<string[]>(songExtended.tags ?? []);
   const [tagInput, setTagInput] = useState('');
+  const [volumeOffset, setVolumeOffset] = useState(
+    songExtended.volumeOffset != null ? String(songExtended.volumeOffset) : ''
+  );
 
   const inputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
@@ -47,8 +50,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   // Refs for save logic so we don't recreate handlers on every render
   const songIdRef = useRef(song.id);
   songIdRef.current = song.id;
-  const fieldsRef = useRef(() => ({ nickname, artist, album, artwork, tags }));
-  fieldsRef.current = () => ({ nickname, artist, album, artwork, tags });
+  const fieldsRef = useRef(() => ({ nickname, artist, album, artwork, tags, volumeOffset }));
+  fieldsRef.current = () => ({ nickname, artist, album, artwork, tags, volumeOffset });
   const originalNicknameRef = useRef<string | null>(songExtended.nickname ?? null);
   originalNicknameRef.current = songExtended.nickname ?? null;
   const originalArtistRef = useRef<string | null>(songExtended.artist ?? null);
@@ -59,6 +62,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   originalArtworkRef.current = songExtended.artwork ?? null;
   const originalTagsRef = useRef<string[]>(songExtended.tags ?? []);
   originalTagsRef.current = songExtended.tags ?? [];
+  const originalVolumeOffsetRef = useRef<number | null>(songExtended.volumeOffset ?? null);
+  originalVolumeOffsetRef.current = songExtended.volumeOffset ?? null;
   const savingRef = useRef(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -98,13 +103,22 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
     if (savingRef.current) return;
     savingRef.current = true;
     try {
-      const { nickname: nk, artist: ar, album: al, artwork: aw, tags: t } = fieldsRef.current();
+      const {
+        nickname: nk,
+        artist: ar,
+        album: al,
+        artwork: aw,
+        tags: t,
+        volumeOffset: vo,
+      } = fieldsRef.current();
+      const parsedOffset = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
       const data: SongUpdateData = {
         nickname: nk.trim() || null,
         artist: ar.trim() || null,
         album: al.trim() || null,
         artwork: aw.trim() || null,
         tags: t,
+        volumeOffset: Number.isNaN(parsedOffset) ? null : parsedOffset,
       };
       await updateSong(songIdRef.current, data);
       onCloseRef.current();
@@ -116,13 +130,22 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   // Save when `isOpen` goes to false (e.g. user clicks the parent row to close)
   useEffect(() => {
     if (!isOpen && !savingRef.current) {
-      const { nickname: nk, artist: ar, album: al, artwork: aw, tags: t } = fieldsRef.current();
+      const {
+        nickname: nk,
+        artist: ar,
+        album: al,
+        artwork: aw,
+        tags: t,
+        volumeOffset: vo,
+      } = fieldsRef.current();
+      const parsedOffset = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
       if (
         nk !== (originalNicknameRef.current ?? '') ||
         ar !== (originalArtistRef.current ?? '') ||
         al !== (originalAlbumRef.current ?? '') ||
         aw !== (originalArtworkRef.current ?? '') ||
-        JSON.stringify(t) !== JSON.stringify(originalTagsRef.current)
+        JSON.stringify(t) !== JSON.stringify(originalTagsRef.current) ||
+        parsedOffset !== originalVolumeOffsetRef.current
       ) {
         void doSave();
       }
@@ -223,7 +246,77 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
               />
             </div>
           </div>
+
+          <VolumeSlider
+            value={volumeOffset}
+            onChange={setVolumeOffset}
+            min={-12}
+            max={12}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void doSave();
+            }}
+          />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function VolumeSlider({
+  value,
+  onChange,
+  min,
+  max,
+  onKeyDown,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  min: number;
+  max: number;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}) {
+  const numeric = value.trim() === '' ? 0 : Math.min(max, Math.max(min, parseInt(value, 10) || 0));
+  const pct = `${((numeric - min) / (max - min)) * 100}%`;
+
+  return (
+    <div>
+      <span className="block font-mono text-[10px] text-muted uppercase mb-1">Volume Offset</span>
+      <div className="flex items-center gap-3">
+        <input
+          id="panel-volume-offset"
+          className="input text-sm w-16 text-center"
+          type="text"
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === '' || /^-?\d*$/.test(v)) onChange(v);
+          }}
+          onKeyDown={onKeyDown}
+          onBlur={() => {
+            if (value.trim() === '') {
+              onChange('0');
+            } else {
+              const n = parseInt(value, 10);
+              if (!Number.isNaN(n)) {
+                onChange(String(Math.min(max, Math.max(min, n))));
+              }
+            }
+          }}
+        />
+        <span className="text-xs text-muted font-mono w-8 text-left">dB</span>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={numeric}
+          onChange={(e) => onChange(e.target.value)}
+          className="volume-range-input"
+          style={
+            {
+              ['--volume-pct' as string]: pct,
+            } as React.CSSProperties
+          }
+        />
       </div>
     </div>
   );
@@ -237,6 +330,9 @@ function Field({
   placeholder,
   inputRef,
   onKeyDown,
+  type,
+  min,
+  max,
 }: {
   id: string;
   label: string;
@@ -245,6 +341,9 @@ function Field({
   placeholder?: string;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  type?: 'text' | 'number';
+  min?: number;
+  max?: number;
 }) {
   return (
     <div>
@@ -255,6 +354,9 @@ function Field({
         id={id}
         ref={inputRef}
         className="input text-sm"
+        type={type}
+        min={type === 'number' ? min : undefined}
+        max={type === 'number' ? max : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
