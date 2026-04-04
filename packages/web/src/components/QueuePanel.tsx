@@ -5,6 +5,7 @@ import {
   BombIcon,
   CakeIcon,
   CatIcon,
+  CircleNotchIcon,
   CookieIcon,
   DotsThreeOutlineVerticalIcon,
   GhostIcon,
@@ -17,7 +18,11 @@ import {
   PlayCircleIcon,
   PlayIcon,
   PlusCircleIcon,
+  RepeatIcon,
+  RepeatOnceIcon,
   RocketLaunchIcon,
+  ShuffleIcon,
+  SkipForwardIcon,
   SkullIcon,
   SmileyAngryIcon,
   SockIcon,
@@ -37,6 +42,18 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { Button } from './ui/Button';
 
+export interface MobileQuickControls {
+  currentSong: QueuedSong | null;
+  loopMode: 'off' | 'queue' | 'song';
+  isShuffled: boolean;
+  loopBusy: boolean;
+  shuffleBusy: boolean;
+  skipBusy: boolean;
+  onSkip: () => void;
+  onCycleLoop: () => void;
+  onShuffleToggle: () => void;
+}
+
 type VirtualQueueItem =
   | {
       type: 'song';
@@ -47,7 +64,11 @@ type VirtualQueueItem =
     }
   | { type: 'header'; variant: 'priority' | 'regular'; key: string };
 
-export default function QueuePanel() {
+export default function QueuePanel({
+  mobileQuickControls,
+}: {
+  mobileQuickControls?: MobileQuickControls;
+}) {
   const { state, loading, elapsed, registerProgress, clear } = usePlayer();
   const { isAdminView } = useAdminView();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -149,6 +170,7 @@ export default function QueuePanel() {
           triggerRef={triggerRef}
           menuOpen={menuOpen}
           onToggleMenu={() => setMenuOpen(!menuOpen)}
+          mobileQuickControls={mobileQuickControls}
         />
         <div className="flex-1 p-4 space-y-3">
           <div className="skeleton h-5 w-48 rounded" />
@@ -166,6 +188,7 @@ export default function QueuePanel() {
         triggerRef={triggerRef}
         menuOpen={menuOpen}
         onToggleMenu={() => setMenuOpen(!menuOpen)}
+        mobileQuickControls={mobileQuickControls}
       />
 
       {/* Fixed content: Now Playing */}
@@ -367,27 +390,101 @@ const PanelHeader = memo(function PanelHeader({
   triggerRef,
   menuOpen,
   onToggleMenu,
+  mobileQuickControls,
 }: {
   triggerRef: React.RefObject<HTMLButtonElement | null>;
   menuOpen: boolean;
   onToggleMenu: () => void;
+  mobileQuickControls?: MobileQuickControls;
 }) {
+  const mqc = mobileQuickControls;
+  const isLoopActive = mqc ? mqc.loopMode !== 'off' : false;
+  const loopIcon =
+    mqc && isLoopActive ? (
+      mqc.loopMode === 'song' ? (
+        <RepeatOnceIcon size={16} weight="fill" />
+      ) : (
+        <RepeatIcon size={16} weight="fill" />
+      )
+    ) : (
+      <RepeatIcon size={16} weight="duotone" />
+    );
+
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
       <h1 className="font-display text-3xl text-fg tracking-wider">Queue</h1>
-      <Button
-        ref={triggerRef}
-        variant="inherit"
-        size="icon"
-        type="button"
-        aria-haspopup="true"
-        aria-expanded={menuOpen}
-        title="More actions"
-        className={`${menuOpen ? 'pressed text-accent' : ''}`}
-        onClick={onToggleMenu}
-      >
-        <DotsThreeOutlineVerticalIcon size={18} weight="duotone" />
-      </Button>
+      <div className="flex items-center gap-1">
+        {mqc && (
+          <>
+            <Button
+              variant="inherit"
+              surface="base"
+              size="icon"
+              onClick={mqc.onSkip}
+              disabled={!mqc.currentSong || mqc.skipBusy}
+              title="Skip"
+              className="text-muted hover:text-fg disabled:opacity-50"
+            >
+              {mqc.skipBusy ? (
+                <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+              ) : (
+                <SkipForwardIcon size={20} weight="duotone" />
+              )}
+            </Button>
+            <Button
+              variant="inherit"
+              surface="base"
+              size="icon"
+              onClick={mqc.onCycleLoop}
+              disabled={!mqc.currentSong || mqc.loopBusy}
+              title={`Loop: ${mqc.loopMode}`}
+              className={`disabled:opacity-50 ${
+                isLoopActive
+                  ? 'pressed text-accent hover:text-accent-muted'
+                  : 'text-muted hover:text-fg'
+              }`}
+            >
+              {mqc.loopBusy ? (
+                <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+              ) : (
+                loopIcon
+              )}
+            </Button>
+            <Button
+              variant="inherit"
+              surface="base"
+              size="icon"
+              onClick={mqc.onShuffleToggle}
+              disabled={!mqc.currentSong || mqc.shuffleBusy}
+              title={mqc.isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
+              className={`disabled:opacity-50 ${
+                mqc.isShuffled
+                  ? 'pressed text-accent hover:text-accent-muted'
+                  : 'text-muted hover:text-fg'
+              }`}
+            >
+              {mqc.shuffleBusy ? (
+                <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+              ) : (
+                <ShuffleIcon size={20} weight={mqc.isShuffled ? 'fill' : 'duotone'} />
+              )}
+            </Button>
+          </>
+        )}
+        <Button
+          ref={triggerRef}
+          variant="inherit"
+          size="icon"
+          type="button"
+          aria-haspopup="true"
+          aria-expanded={menuOpen}
+          title="More actions"
+          className={`${menuOpen ? 'pressed text-accent' : ''}`}
+          onClick={onToggleMenu}
+        >
+          <DotsThreeOutlineVerticalIcon size={18} weight="duotone" />
+        </Button>
+      </div>
     </div>
   );
 });

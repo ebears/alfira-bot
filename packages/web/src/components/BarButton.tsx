@@ -10,6 +10,7 @@ export function BarButton({
   title,
   hoverColor,
   pulse = false,
+  className = '',
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -18,6 +19,7 @@ export function BarButton({
   title: string;
   hoverColor: string;
   pulse?: boolean;
+  className?: string;
 }) {
   return (
     <Button
@@ -31,7 +33,7 @@ export function BarButton({
         busy
           ? 'text-muted'
           : `${pulse ? 'pressed text-accent' : 'text-muted'} ${hoverColor} cursor-pointer`
-      } disabled:pointer-events-none`}
+      } disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {busy ? (
         <CircleNotchIcon size={18} weight="bold" className="animate-spin md:w-3.5 md:h-3.5" />

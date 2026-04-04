@@ -1193,7 +1193,7 @@
 
     /* Dark mode: lighten surface with white mix */
     .btn-icon-inherit {
-        background: color-mix(in srgb, var(--btn-surface) 88%, white);
+        background: color-mix(in srgb, var(--btn-surface) 92%, white);
         box-shadow:
             0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 2px 4px -1px rgba(0, 0, 0, 0.2),
@@ -1201,7 +1201,7 @@
     }
     .btn-icon-inherit:hover {
         transform: var(--btn-transform-hover);
-        background: color-mix(in srgb, var(--btn-surface) 75%, white);
+        background: color-mix(in srgb, var(--btn-surface) 88%, white);
         box-shadow:
             0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 3px 6px -1px rgba(0, 0, 0, 0.25),
