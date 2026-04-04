@@ -26,6 +26,7 @@ export interface Song {
   album?: string | null;
   artwork?: string | null;
   tags?: string[];
+  volumeOffset?: number | null;
   createdAt: string; // ISO 8601 string (JSON wire format)
 }
 

@@ -755,6 +755,7 @@ export const SongScalarFieldEnum = {
   album: 'album',
   artwork: 'artwork',
   tags: 'tags',
+  volumeOffset: 'volumeOffset',
   createdAt: 'createdAt',
 } as const;
 

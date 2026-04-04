@@ -12,6 +12,7 @@ import {
   validateNickname,
   validateOptionalString,
   validateTags,
+  validateVolumeOffset,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
   youTubeUrl,
@@ -308,6 +309,16 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
       return;
     }
     data.tags = tags;
+  }
+
+  // Volume offset
+  if ('volumeOffset' in req.body) {
+    const volumeOffset = validateVolumeOffset(req.body.volumeOffset);
+    if (volumeOffset === false) {
+      res.status(400).json({ error: 'volumeOffset must be an integer between -30 and +30.' });
+      return;
+    }
+    data.volumeOffset = volumeOffset;
   }
 
   const song = await prisma.song.update({ where: { id }, data });

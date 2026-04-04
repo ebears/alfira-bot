@@ -402,10 +402,12 @@ export class GuildPlayer {
 
     let stream: Readable;
     let kill: () => void;
+    let actualIsWebmOpus: boolean;
     try {
-      const handle = createAudioStream(streamUrl, isWebmOpus);
+      const handle = createAudioStream(streamUrl, isWebmOpus, next.volumeOffset);
       stream = handle.stream;
       kill = handle.kill;
+      actualIsWebmOpus = handle.isOutputWebmOpus;
     } catch (error) {
       logger.error({ guildId: this.guildId, track: next.title, error }, 'Failed to spawn FFmpeg');
       await this.handlePlaybackFailure('FFmpeg failed to start');
@@ -414,7 +416,7 @@ export class GuildPlayer {
     this.killCurrentFfmpeg = kill;
 
     const resource = createAudioResource(stream, {
-      inputType: isWebmOpus ? StreamType.WebmOpus : StreamType.OggOpus,
+      inputType: actualIsWebmOpus ? StreamType.WebmOpus : StreamType.OggOpus,
     });
 
     this.audioPlayer.play(resource);

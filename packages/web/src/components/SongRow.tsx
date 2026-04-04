@@ -4,6 +4,7 @@ import {
   CircleNotchIcon,
   ClockIcon,
   DiscIcon,
+  HeadphonesIcon,
   MusicNoteIcon,
   PlayIcon,
   TagIcon,
@@ -26,7 +27,15 @@ function MetaInfo({ song, isHovered }: MetaInfoProps) {
   const tags = song.tags ?? [];
   return (
     <>
-      <span className="flex items-center gap-1 font-mono text-xs text-muted">
+      <span className="flex items-center gap-1.5 font-mono text-xs text-muted">
+        {song.volumeOffset != null && song.volumeOffset !== 0 && (
+          <HeadphonesIcon
+            size={11}
+            weight="fill"
+            className="shrink-0"
+            style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}
+          />
+        )}
         {formatDuration(song.duration)}
         <ClockIcon size={11} weight="fill" className="shrink-0" />
       </span>

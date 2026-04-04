@@ -74,13 +74,36 @@ export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
 export interface AudioStreamHandle {
   stream: Readable;
   kill: () => void;
+  isOutputWebmOpus: boolean;
 }
 
 /** Spawn FFmpeg with HTTP reconnect flags and fs-capacitor for disk-buffered decoupling. */
-export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStreamHandle {
-  const outputArgs = isWebmOpus
+export function createAudioStream(
+  cdnUrl: string,
+  isWebmOpus = true,
+  volumeOffset?: number | null
+): AudioStreamHandle {
+  // When a volume offset is set, stream copy is incompatible — must re-encode.
+  const applyVolume = volumeOffset != null && volumeOffset !== 0;
+  const actualIsWebmOpus = isWebmOpus && !applyVolume;
+
+  const outputArgs = actualIsWebmOpus
     ? ['-vn', '-c:a', 'copy', '-f', 'webm', 'pipe:1']
-    : ['-vn', '-ar', '48000', '-ac', '2', '-c:a', 'libopus', '-b:a', '96k', '-f', 'ogg', 'pipe:1'];
+    : [
+        '-vn',
+        '-ar',
+        '48000',
+        '-ac',
+        '2',
+        '-c:a',
+        'libopus',
+        '-b:a',
+        '96k',
+        ...(applyVolume ? ['-af', `volume=${volumeOffset}dB`] : []),
+        '-f',
+        actualIsWebmOpus ? 'webm' : 'ogg',
+        'pipe:1',
+      ];
 
   const ffmpeg: ChildProcess = spawn(
     'ffmpeg',
@@ -134,7 +157,7 @@ export function createAudioStream(cdnUrl: string, isWebmOpus = true): AudioStrea
     }
   };
 
-  return { stream: readStream, kill };
+  return { stream: readStream, kill, isOutputWebmOpus: actualIsWebmOpus };
 }
 
 function youtubeThumbnail(videoId: string): string {

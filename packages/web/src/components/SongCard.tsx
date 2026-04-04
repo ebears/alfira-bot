@@ -1,6 +1,6 @@
 import type { Playlist, Song } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
-import { CircleNotchIcon, PlayIcon } from '@phosphor-icons/react';
+import { CircleNotchIcon, HeadphonesIcon, PlayIcon } from '@phosphor-icons/react';
 import React, { useCallback, useMemo } from 'react';
 import { useSongEdit } from '../context/SongEditContext';
 import { useSongActions } from '../hooks/useSongActions';
@@ -75,10 +75,19 @@ const SongCardInner = ({
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
 
-        {/* Duration badge — bottom right */}
-        <span className="absolute bottom-2 right-2 z-20 font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
-          {formatDuration(song.duration)}
-        </span>
+        {/* Duration badge + volume indicator — bottom right */}
+        <div className="absolute bottom-2 right-2 z-20 flex items-center gap-1">
+          {song.volumeOffset != null && song.volumeOffset !== 0 && (
+            <HeadphonesIcon
+              size={11}
+              weight="fill"
+              style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}
+            />
+          )}
+          <span className="font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
+            {formatDuration(song.duration)}
+          </span>
+        </div>
 
         {menuOpen && (
           <ContextMenu

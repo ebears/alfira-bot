@@ -27,10 +27,12 @@ export type AggregateSong = {
 
 export type SongAvgAggregateOutputType = {
   duration: number | null;
+  volumeOffset: number | null;
 };
 
 export type SongSumAggregateOutputType = {
   duration: number | null;
+  volumeOffset: number | null;
 };
 
 export type SongMinAggregateOutputType = {
@@ -45,6 +47,7 @@ export type SongMinAggregateOutputType = {
   artist: string | null;
   album: string | null;
   artwork: string | null;
+  volumeOffset: number | null;
   createdAt: Date | null;
 };
 
@@ -60,6 +63,7 @@ export type SongMaxAggregateOutputType = {
   artist: string | null;
   album: string | null;
   artwork: string | null;
+  volumeOffset: number | null;
   createdAt: Date | null;
 };
 
@@ -76,16 +80,19 @@ export type SongCountAggregateOutputType = {
   album: number;
   artwork: number;
   tags: number;
+  volumeOffset: number;
   createdAt: number;
   _all: number;
 };
 
 export type SongAvgAggregateInputType = {
   duration?: true;
+  volumeOffset?: true;
 };
 
 export type SongSumAggregateInputType = {
   duration?: true;
+  volumeOffset?: true;
 };
 
 export type SongMinAggregateInputType = {
@@ -100,6 +107,7 @@ export type SongMinAggregateInputType = {
   artist?: true;
   album?: true;
   artwork?: true;
+  volumeOffset?: true;
   createdAt?: true;
 };
 
@@ -115,6 +123,7 @@ export type SongMaxAggregateInputType = {
   artist?: true;
   album?: true;
   artwork?: true;
+  volumeOffset?: true;
   createdAt?: true;
 };
 
@@ -131,6 +140,7 @@ export type SongCountAggregateInputType = {
   album?: true;
   artwork?: true;
   tags?: true;
+  volumeOffset?: true;
   createdAt?: true;
   _all?: true;
 };
@@ -235,6 +245,7 @@ export type SongGroupByOutputType = {
   album: string | null;
   artwork: string | null;
   tags: string[];
+  volumeOffset: number | null;
   createdAt: Date;
   _count: SongCountAggregateOutputType | null;
   _avg: SongAvgAggregateOutputType | null;
@@ -271,6 +282,7 @@ export type SongWhereInput = {
   album?: Prisma.StringNullableFilter<'Song'> | string | null;
   artwork?: Prisma.StringNullableFilter<'Song'> | string | null;
   tags?: Prisma.StringNullableListFilter<'Song'>;
+  volumeOffset?: Prisma.IntNullableFilter<'Song'> | number | null;
   createdAt?: Prisma.DateTimeFilter<'Song'> | Date | string;
   playlistSongs?: Prisma.PlaylistSongListRelationFilter;
 };
@@ -288,6 +300,7 @@ export type SongOrderByWithRelationInput = {
   album?: Prisma.SortOrderInput | Prisma.SortOrder;
   artwork?: Prisma.SortOrderInput | Prisma.SortOrder;
   tags?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrderInput | Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   playlistSongs?: Prisma.PlaylistSongOrderByRelationAggregateInput;
 };
@@ -309,6 +322,7 @@ export type SongWhereUniqueInput = Prisma.AtLeast<
     album?: Prisma.StringNullableFilter<'Song'> | string | null;
     artwork?: Prisma.StringNullableFilter<'Song'> | string | null;
     tags?: Prisma.StringNullableListFilter<'Song'>;
+    volumeOffset?: Prisma.IntNullableFilter<'Song'> | number | null;
     createdAt?: Prisma.DateTimeFilter<'Song'> | Date | string;
     playlistSongs?: Prisma.PlaylistSongListRelationFilter;
   },
@@ -328,6 +342,7 @@ export type SongOrderByWithAggregationInput = {
   album?: Prisma.SortOrderInput | Prisma.SortOrder;
   artwork?: Prisma.SortOrderInput | Prisma.SortOrder;
   tags?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrderInput | Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   _count?: Prisma.SongCountOrderByAggregateInput;
   _avg?: Prisma.SongAvgOrderByAggregateInput;
@@ -352,6 +367,7 @@ export type SongScalarWhereWithAggregatesInput = {
   album?: Prisma.StringNullableWithAggregatesFilter<'Song'> | string | null;
   artwork?: Prisma.StringNullableWithAggregatesFilter<'Song'> | string | null;
   tags?: Prisma.StringNullableListFilter<'Song'>;
+  volumeOffset?: Prisma.IntNullableWithAggregatesFilter<'Song'> | number | null;
   createdAt?: Prisma.DateTimeWithAggregatesFilter<'Song'> | Date | string;
 };
 
@@ -368,6 +384,7 @@ export type SongCreateInput = {
   album?: string | null;
   artwork?: string | null;
   tags?: Prisma.SongCreatetagsInput | string[];
+  volumeOffset?: number | null;
   createdAt?: Date | string;
   playlistSongs?: Prisma.PlaylistSongCreateNestedManyWithoutSongInput;
 };
@@ -385,6 +402,7 @@ export type SongUncheckedCreateInput = {
   album?: string | null;
   artwork?: string | null;
   tags?: Prisma.SongCreatetagsInput | string[];
+  volumeOffset?: number | null;
   createdAt?: Date | string;
   playlistSongs?: Prisma.PlaylistSongUncheckedCreateNestedManyWithoutSongInput;
 };
@@ -402,6 +420,7 @@ export type SongUpdateInput = {
   album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   tags?: Prisma.SongUpdatetagsInput | string[];
+  volumeOffset?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   playlistSongs?: Prisma.PlaylistSongUpdateManyWithoutSongNestedInput;
 };
@@ -419,6 +438,7 @@ export type SongUncheckedUpdateInput = {
   album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   tags?: Prisma.SongUpdatetagsInput | string[];
+  volumeOffset?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   playlistSongs?: Prisma.PlaylistSongUncheckedUpdateManyWithoutSongNestedInput;
 };
@@ -436,6 +456,7 @@ export type SongCreateManyInput = {
   album?: string | null;
   artwork?: string | null;
   tags?: Prisma.SongCreatetagsInput | string[];
+  volumeOffset?: number | null;
   createdAt?: Date | string;
 };
 
@@ -452,6 +473,7 @@ export type SongUpdateManyMutationInput = {
   album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   tags?: Prisma.SongUpdatetagsInput | string[];
+  volumeOffset?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -468,6 +490,7 @@ export type SongUncheckedUpdateManyInput = {
   album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   tags?: Prisma.SongUpdatetagsInput | string[];
+  volumeOffset?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -492,11 +515,13 @@ export type SongCountOrderByAggregateInput = {
   album?: Prisma.SortOrder;
   artwork?: Prisma.SortOrder;
   tags?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
 };
 
 export type SongAvgOrderByAggregateInput = {
   duration?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrder;
 };
 
 export type SongMaxOrderByAggregateInput = {
@@ -511,6 +536,7 @@ export type SongMaxOrderByAggregateInput = {
   artist?: Prisma.SortOrder;
   album?: Prisma.SortOrder;
   artwork?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
 };
 
@@ -526,11 +552,13 @@ export type SongMinOrderByAggregateInput = {
   artist?: Prisma.SortOrder;
   album?: Prisma.SortOrder;
   artwork?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
 };
 
 export type SongSumOrderByAggregateInput = {
   duration?: Prisma.SortOrder;
+  volumeOffset?: Prisma.SortOrder;
 };
 
 export type SongScalarRelationFilter = {
@@ -561,6 +589,14 @@ export type NullableStringFieldUpdateOperationsInput = {
 export type SongUpdatetagsInput = {
   set?: string[];
   push?: string | string[];
+};
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null;
+  increment?: number;
+  decrement?: number;
+  multiply?: number;
+  divide?: number;
 };
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -606,6 +642,7 @@ export type SongCreateWithoutPlaylistSongsInput = {
   album?: string | null;
   artwork?: string | null;
   tags?: Prisma.SongCreatetagsInput | string[];
+  volumeOffset?: number | null;
   createdAt?: Date | string;
 };
 
@@ -622,6 +659,7 @@ export type SongUncheckedCreateWithoutPlaylistSongsInput = {
   album?: string | null;
   artwork?: string | null;
   tags?: Prisma.SongCreatetagsInput | string[];
+  volumeOffset?: number | null;
   createdAt?: Date | string;
 };
 
@@ -666,6 +704,7 @@ export type SongUpdateWithoutPlaylistSongsInput = {
   album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   tags?: Prisma.SongUpdatetagsInput | string[];
+  volumeOffset?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -682,6 +721,7 @@ export type SongUncheckedUpdateWithoutPlaylistSongsInput = {
   album?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   artwork?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   tags?: Prisma.SongUpdatetagsInput | string[];
+  volumeOffset?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
@@ -736,6 +776,7 @@ export type SongSelect<
     album?: boolean;
     artwork?: boolean;
     tags?: boolean;
+    volumeOffset?: boolean;
     createdAt?: boolean;
     playlistSongs?: boolean | Prisma.Song$playlistSongsArgs<ExtArgs>;
     _count?: boolean | Prisma.SongCountOutputTypeDefaultArgs<ExtArgs>;
@@ -759,6 +800,7 @@ export type SongSelectCreateManyAndReturn<
     album?: boolean;
     artwork?: boolean;
     tags?: boolean;
+    volumeOffset?: boolean;
     createdAt?: boolean;
   },
   ExtArgs['result']['song']
@@ -780,6 +822,7 @@ export type SongSelectUpdateManyAndReturn<
     album?: boolean;
     artwork?: boolean;
     tags?: boolean;
+    volumeOffset?: boolean;
     createdAt?: boolean;
   },
   ExtArgs['result']['song']
@@ -798,6 +841,7 @@ export type SongSelectScalar = {
   album?: boolean;
   artwork?: boolean;
   tags?: boolean;
+  volumeOffset?: boolean;
   createdAt?: boolean;
 };
 
@@ -816,6 +860,7 @@ export type SongOmit<
   | 'album'
   | 'artwork'
   | 'tags'
+  | 'volumeOffset'
   | 'createdAt',
   ExtArgs['result']['song']
 >;
@@ -853,6 +898,7 @@ export type $SongPayload<
       album: string | null;
       artwork: string | null;
       tags: string[];
+      volumeOffset: number | null;
       createdAt: Date;
     },
     ExtArgs['result']['song']
@@ -1418,6 +1464,7 @@ export interface SongFieldRefs {
   readonly album: Prisma.FieldRef<'Song', 'String'>;
   readonly artwork: Prisma.FieldRef<'Song', 'String'>;
   readonly tags: Prisma.FieldRef<'Song', 'String[]'>;
+  readonly volumeOffset: Prisma.FieldRef<'Song', 'Int'>;
   readonly createdAt: Prisma.FieldRef<'Song', 'DateTime'>;
 }
 
