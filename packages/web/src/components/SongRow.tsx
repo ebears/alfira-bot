@@ -28,17 +28,15 @@ function MetaInfo({ song, isHovered }: MetaInfoProps) {
   return (
     <>
       <span className="flex items-center gap-1.5 font-mono text-xs text-muted">
-        {song.volumeOffset != null && song.volumeOffset !== 0 && (
-          <HeadphonesIcon
-            size={11}
-            weight="fill"
-            className="shrink-0"
-            style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}
-          />
-        )}
         {formatDuration(song.duration)}
         <ClockIcon size={11} weight="fill" className="shrink-0" />
       </span>
+      {song.volumeOffset != null && song.volumeOffset !== 0 && (
+        <span className="flex items-center gap-0.5 text-xs" style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}>
+          {song.volumeOffset > 0 ? '+' : '-'}{Math.abs(song.volumeOffset)} dB
+          <HeadphonesIcon size={11} weight="fill" className="shrink-0" />
+        </span>
+      )}
       {tags.length > 0 && (
         <div className="flex items-center gap-1 text-xs text-muted max-w-[20rem] justify-end">
           <TagTicker tags={tags} isHovered={isHovered} />
@@ -159,7 +157,7 @@ export const SongRow = memo(
               );
             })()}
           </div>
-          <div className="hidden md:flex flex-col items-end gap-1.5 shrink-0 mr-2">
+          <div className="hidden md:flex flex-col items-end gap-px shrink-0 mr-2">
             <MetaInfo song={song} isHovered={isRowHovered} />
           </div>
           <Button

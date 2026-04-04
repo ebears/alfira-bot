@@ -250,8 +250,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
           <VolumeSlider
             value={volumeOffset}
             onChange={setVolumeOffset}
-            min={-30}
-            max={30}
+            min={-12}
+            max={12}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void doSave();
             }}
@@ -293,7 +293,14 @@ function VolumeSlider({
           }}
           onKeyDown={onKeyDown}
           onBlur={() => {
-            if (value.trim() === '') onChange('0');
+            if (value.trim() === '') {
+              onChange('0');
+            } else {
+              const n = parseInt(value, 10);
+              if (!Number.isNaN(n)) {
+                onChange(String(Math.min(max, Math.max(min, n))));
+              }
+            }
           }}
         />
         <span className="text-xs text-muted font-mono w-8 text-left">dB</span>

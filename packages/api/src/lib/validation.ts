@@ -171,13 +171,13 @@ export function validateTags(value: unknown): string[] | false {
  * Validates an optional volume offset in dB.
  * Returns `undefined` when absent (PATCH skips it),
  * `null` when explicitly cleared,
- * the integer when valid (-30 to +30),
+ * the integer when valid (-12 to +12),
  * `false` when invalid.
  */
 export function validateVolumeOffset(value: unknown): number | null | false | undefined {
   if (value === undefined) return undefined;
   if (value === null) return null;
   if (typeof value !== 'number' || !Number.isInteger(value)) return false;
-  if (value < -30 || value > 30) return false;
+  if (value < -12 || value > 12) return false;
   return value;
 }

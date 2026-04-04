@@ -315,7 +315,7 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   if ('volumeOffset' in req.body) {
     const volumeOffset = validateVolumeOffset(req.body.volumeOffset);
     if (volumeOffset === false) {
-      res.status(400).json({ error: 'volumeOffset must be an integer between -30 and +30.' });
+      res.status(400).json({ error: 'volumeOffset must be an integer between -12 and +12.' });
       return;
     }
     data.volumeOffset = volumeOffset;
