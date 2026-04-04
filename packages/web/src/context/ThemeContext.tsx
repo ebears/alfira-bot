@@ -173,6 +173,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.setAttribute('data-mode', resolvedMode);
     localStorage.setItem(COLOR_THEME_STORAGE_KEY, colorTheme);
     localStorage.setItem(MODE_STORAGE_KEY, mode);
+
+    // Update PWA theme-color to match the app's elevated surface color
+    const elevated = getComputedStyle(document.documentElement).getPropertyValue('--color-elevated').trim();
+    if (elevated) {
+      document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
+        el.setAttribute('content', elevated);
+      });
+    }
   }, [colorTheme, mode, resolvedMode]);
 
   const themeValue = useMemo(

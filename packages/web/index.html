@@ -5,6 +5,17 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>alfira</title>
+    <script>
+      const phrases = [
+        'Based',
+        'Disarm Immediately',
+        'Roll for Initiative',
+        'Critical Hit',
+        'Nat 20',
+      ];
+      const pick = phrases[Math.floor(Math.random() * phrases.length)];
+      document.title = 'Alfira - ' + pick;
+    </script>
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
