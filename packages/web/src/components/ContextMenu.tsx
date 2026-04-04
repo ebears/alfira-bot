@@ -73,7 +73,7 @@ export function ContextMenuTrigger({
       aria-haspopup="true"
       aria-expanded={isOpen}
       title="More actions"
-      surface={surface ?? 'elevated'}
+      surface={surface ?? 'base'}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
@@ -269,7 +269,7 @@ export function ContextMenu({
       className="z-9999 min-w-48"
       onKeyDown={activeEditItemId ? undefined : handleKeyDown}
     >
-      <div className="bg-elevated rounded-2xl clay-floating overflow-hidden animate-fade-up">
+      <div className="bg-base rounded-2xl clay-floating overflow-hidden animate-fade-up">
         {activeSubmenu ? (
           <SubmenuPanel
             config={activeSubmenu}
@@ -296,29 +296,31 @@ export function ContextMenu({
             }}
           />
         ) : (
-          items.map((item) => {
+          items.map((item, index) => {
             if (item.info) {
               return <InfoRow key={item.id} item={item} />;
             }
             return (
-              <MenuItemButton
-                key={item.id}
-                item={item}
-                onClick={() => {
-                  if (item.submenu) {
-                    setActiveSubmenu(item.submenu);
-                    setSubmenuParentIndex(focusedIndex);
-                    setFocusedIndex(0);
-                  } else if (item.editSubmenu) {
-                    setActiveEditItemId(item.id);
-                    setSubmenuParentIndex(focusedIndex);
-                    setFocusedIndex(0);
-                  } else {
-                    item.onClick?.();
-                    onClose();
-                  }
-                }}
-              />
+              <div key={item.id}>
+                {index > 0 && <div className="border-b border-border" />}
+                <MenuItemButton
+                  item={item}
+                  onClick={() => {
+                    if (item.submenu) {
+                      setActiveSubmenu(item.submenu);
+                      setSubmenuParentIndex(focusedIndex);
+                      setFocusedIndex(0);
+                    } else if (item.editSubmenu) {
+                      setActiveEditItemId(item.id);
+                      setSubmenuParentIndex(focusedIndex);
+                      setFocusedIndex(0);
+                    } else {
+                      item.onClick?.();
+                      onClose();
+                    }
+                  }}
+                />
+              </div>
             );
           })
         )}

@@ -122,7 +122,7 @@ export default function MobileNav() {
       {/* Slide-out drawer */}
       <div
         ref={drawerRef}
-        className={`md:hidden fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85vw] bg-elevated border-r border-border flex flex-col transform transition-transform duration-300 ease-out safe-area-top clay-sidebar-edge ${
+        className={`md:hidden fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85vw] bg-elevated border-r border-border flex flex-col transform transition-transform duration-300 ease-out safe-area-top ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

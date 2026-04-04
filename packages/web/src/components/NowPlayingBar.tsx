@@ -328,7 +328,7 @@ export function NowPlayingBar() {
   }, [isShuffled, shuffle, unshuffle]);
 
   return (
-    <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 safe-area-bottom clay-player-edge z-10">
+    <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 safe-area-bottom z-10">
       {/* Mobile: progress bar on top */}
       <ProgressBar currentSong={currentSong} registerProgress={registerProgress} variant="mobile" />
 

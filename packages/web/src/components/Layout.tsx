@@ -55,7 +55,7 @@ function LayoutContent() {
       <aside
         className={`hidden md:flex ${
           collapsed ? 'w-16' : 'w-56'
-        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden clay-sidebar-edge h-[calc(100vh-6rem)]`}
+        } shrink-0 flex-col bg-elevated transition-[width] duration-200 overflow-hidden h-[calc(100vh-6rem)]`}
       >
         {/* Wordmark */}
         <div
