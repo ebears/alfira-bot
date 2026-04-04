@@ -965,6 +965,7 @@
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        color: var(--color-accent);
     }
 
     /* Light mode: distinguish via shadow + border */
@@ -986,6 +987,7 @@
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        color: var(--color-accent);
     }
 
     .btn-danger {
