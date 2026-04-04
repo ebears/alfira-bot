@@ -102,13 +102,15 @@ export const SongRow = memo(
           onMouseEnter={() => setIsRowHovered(true)}
           onMouseLeave={() => setIsRowHovered(false)}
         >
-          <img
-            src={song.thumbnailUrl}
-            alt={song.nickname || song.title}
-            className="w-14 h-14 md:w-12 md:h-12 object-cover rounded border border-border shrink-0"
-            loading="lazy"
-            decoding="async"
-          />
+          <div className="overflow-hidden w-14 h-14 md:w-12 md:h-12 rounded border border-border shrink-0">
+            <img
+              src={song.thumbnailUrl}
+              alt={song.nickname || song.title}
+              className="w-full h-full object-cover scale-[1.33]"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
           <div className="flex-1 min-w-0 flex flex-col gap-px">
             <p
               className={`flex items-center gap-1 truncate${song.nickname ? ' text-xs font-mono text-muted' : ' text-fg font-sm'}`}

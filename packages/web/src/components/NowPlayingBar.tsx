@@ -237,7 +237,7 @@ const AlbumArt = memo(function AlbumArt({ currentSong, isPlaying, isPaused }: Al
         <img
           src={currentSong.thumbnailUrl}
           alt={currentSong.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-[1.33]"
           decoding="async"
         />
       ) : (

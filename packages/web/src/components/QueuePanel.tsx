@@ -366,13 +366,15 @@ const QueueSongItem = memo(function QueueSongItem({
       >
         {index + 1}
       </span>
-      <img
-        src={song.thumbnailUrl}
-        alt={song.nickname || song.title}
-        className="w-8 h-8 object-cover rounded border border-border shrink-0"
-        loading="lazy"
-        decoding="async"
-      />
+      <div className="overflow-hidden w-8 h-8 rounded border border-border shrink-0">
+        <img
+          src={song.thumbnailUrl}
+          alt={song.nickname || song.title}
+          className="w-full h-full object-cover scale-[1.33]"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="font-body text-xs font-medium text-fg truncate">
           {song.nickname || song.title}
@@ -503,11 +505,11 @@ const NowPlayingCard = memo(function NowPlayingCard({
   return (
     <div className="card overflow-hidden" style={{ background: 'var(--color-base)' }}>
       <div className="flex gap-3 p-3">
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 overflow-hidden rounded-xl">
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-20 h-20 rounded-xl border border-border object-cover"
+            className="w-20 h-20 rounded-xl border border-border scale-[1.33]"
             decoding="async"
           />
           {isPlaying && (
