@@ -14,7 +14,7 @@ export const PlaylistRow = memo(
     const count = playlist._count?.songs ?? 0;
     return (
       <div
-        className="flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 md:py-4 cursor-pointer group animate-fade-up opacity-0 bg-elevated rounded-xl clay-resting hover:clay-raised active:clay-flat transition-all duration-100"
+        className="flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 md:py-4 cursor-pointer group animate-fade-up opacity-0 bg-elevated rounded-xl clay-resting hover:clay-raised hover:-translate-y-px active:clay-flat active:translate-y-0 transition-all duration-100"
         style={{ animationDelay }}
         data-playlist-id={dataPlaylistId}
         onClick={onClick}
@@ -34,7 +34,7 @@ export const PlaylistRow = memo(
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-body font-semibold text-fg group-hover:text-accent transition-colors duration-150">
+            <p className="font-body font-medium text-fg transition-colors duration-150">
               {playlist.name}
             </p>
             {playlist.isPrivate && (
