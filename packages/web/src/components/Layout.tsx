@@ -1,5 +1,5 @@
 import { CaretLeftIcon, CraneTowerIcon, GuitarIcon, StairsIcon } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useAdminView } from '../context/AdminViewContext';
@@ -25,7 +25,17 @@ function LayoutContent() {
   const { isAdminView } = useAdminView();
   const connectionStatus = useConnectionStatus();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('alfira-sidebar-collapsed');
+      if (stored !== null) return stored === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('alfira-sidebar-collapsed', String(collapsed));
+  }, [collapsed]);
 
   const handleLogout = async () => {
     await logout();
