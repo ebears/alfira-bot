@@ -10,6 +10,7 @@ import {
 } from 'discord.js';
 import { commands } from './commands';
 import { setClient } from './lib/client';
+import { initVoiceIdleMonitor } from './player/manager';
 import type { Command } from './types';
 
 // ---------------------------------------------------------------------------
@@ -30,7 +31,7 @@ export { getClient } from './lib/client';
 export { VOICE_CONNECTION_TIMEOUT_MS } from './lib/constants';
 export { GuildPlayer } from './player/GuildPlayer';
 // Player manager (guild-level player lifecycle)
-export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
+export { createPlayer, destroyAllPlayers, getPlayer, initVoiceIdleMonitor } from './player/manager';
 
 // YouTube utilities (URL validation, metadata fetching)
 export {
@@ -88,6 +89,8 @@ export async function startBot(): Promise<void> {
 
   client.once('clientReady', async (readyClient) => {
     logger.info(`Bot logged in as ${readyClient.user.tag}`);
+
+    initVoiceIdleMonitor(client);
 
     const shouldAutoDeploy = AUTO_DEPLOY_COMMANDS !== 'false';
     if (shouldAutoDeploy) {

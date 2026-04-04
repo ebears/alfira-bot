@@ -43,6 +43,10 @@ export class GuildPlayer {
   // FFmpeg kill function, stored to prevent zombie processes on skip/stop.
   private killCurrentFfmpeg: (() => void) | null = null;
 
+  private idleTimer: NodeJS.Timeout | null = null;
+  private pausedByIdle = false;
+  readonly idleTimeoutMinutes: number;
+
   private readonly connection: VoiceConnection;
   private readonly audioPlayer: AudioPlayer;
   private readonly guildId: string;
@@ -139,6 +143,8 @@ export class GuildPlayer {
     this.connection.on(VoiceConnectionStatus.Destroyed, () => {
       logger.info({ guildId: this.guildId }, 'Voice connection destroyed.');
 
+      this.resetIdleTimer();
+
       if (!this.intentionallyStopped) {
         this.audioPlayer.stop(true);
         this.killFfmpeg();
@@ -173,6 +179,71 @@ export class GuildPlayer {
 
     this.setupAudioPlayerListeners();
     this.setupConnectionListeners();
+
+    const idleMin = parseInt(process.env.VOICE_IDLE_TIMEOUT_MINUTES ?? '5', 10);
+    this.idleTimeoutMinutes = Number.isNaN(idleMin) ? 5 : idleMin;
+  }
+
+  private resetIdleTimer(): void {
+    if (this.idleTimer !== null) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+  }
+
+  private startIdleTimer(): void {
+    if (this.idleTimeoutMinutes === 0) return;
+    this.resetIdleTimer();
+    this.idleTimer = setTimeout(() => this.onIdleTimeout(), this.idleTimeoutMinutes * 60_000);
+    this.idleTimer.unref();
+  }
+
+  private onIdleTimeout(): void {
+    this.idleTimer = null;
+    if (this.connection.state.status === VoiceConnectionStatus.Destroyed) return;
+
+    this.intentionallyStopped = true;
+    this.stopping = true;
+    this.currentSong = null;
+    this.queue.clear();
+    this.priorityQueue = [];
+    this.audioPlayer.stop(true);
+    this.paused = false;
+    this.pausedByIdle = false;
+    this.trackStartedAt = null;
+    this.broadcast();
+    this.sendToTextChannel('⏹️ Left the voice channel after being idle.');
+    const connection = this.connection;
+    if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
+      connection.destroy();
+    }
+  }
+
+  /** Called by the voice state listener when all humans leave the channel. */
+  onEveryoneLeftChannel(): void {
+    if (!this.paused && this.currentSong) {
+      this.pausedAt = Date.now();
+      this.audioPlayer.pause(true);
+      this.paused = true;
+      this.pausedByIdle = true;
+      this.broadcast();
+    }
+  }
+
+  /** Called by the voice state listener when a human rejoins the channel. */
+  onHumanJoinedChannel(): void {
+    if (this.pausedByIdle && this.paused && this.currentSong) {
+      this.pausedByIdle = false;
+      if (this.pausedAt !== null) {
+        const pauseDuration = Date.now() - this.pausedAt;
+        if (this.trackStartedAt !== null) {
+          this.trackStartedAt += pauseDuration;
+        }
+        this.pausedAt = null;
+      }
+      this.unpause();
+      this.broadcast();
+    }
   }
 
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
@@ -218,6 +289,7 @@ export class GuildPlayer {
   }
 
   stop(): void {
+    this.resetIdleTimer();
     this.intentionallyStopped = true;
     this.stopping = true;
     this.killCurrentFfmpeg = null;
@@ -226,6 +298,7 @@ export class GuildPlayer {
     this.priorityQueue = [];
     this.audioPlayer.stop(true);
     this.paused = false;
+    this.pausedByIdle = false;
     this.trackStartedAt = null;
     this.broadcast();
   }
@@ -268,6 +341,7 @@ export class GuildPlayer {
       this.paused = true;
     }
 
+    this.resetIdleTimer();
     this.broadcast();
     return this.paused;
   }
@@ -343,6 +417,7 @@ export class GuildPlayer {
         this.currentSong = null;
         this.queue.clear();
         this.broadcast();
+        this.startIdleTimer();
         return;
       }
     }
@@ -439,6 +514,7 @@ export class GuildPlayer {
     this.consecutiveFailures = 0;
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
+    this.resetIdleTimer();
     this.broadcast();
     this.sendToTextChannel({ embeds: [buildNowPlayingEmbed(next, this.loopMode)] });
   }

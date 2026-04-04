@@ -1,6 +1,12 @@
 import type { VoiceConnection } from '@discordjs/voice';
 import { getVoiceConnection } from '@discordjs/voice';
-import type { TextChannel } from 'discord.js';
+import {
+  ChannelType,
+  type Client,
+  type TextChannel,
+  type VoiceChannel,
+  type VoiceState,
+} from 'discord.js';
 import { GuildPlayer } from './GuildPlayer';
 
 // ---------------------------------------------------------------------------
@@ -60,4 +66,39 @@ export function destroyAllPlayers(): void {
     if (connection) connection.destroy();
   }
   players.clear();
+}
+
+/**
+ * Register a voiceStateUpdate listener that pauses playback when all humans
+ * leave the channel and resumes when a human returns.
+ */
+export function initVoiceIdleMonitor(client: Client): void {
+  client.on('voiceStateUpdate', (oldState: VoiceState, newState: VoiceState) => {
+    const guildId = newState.guild.id || oldState.guild.id;
+    const player = getPlayer(guildId);
+    if (!player) return;
+
+    const connection = getVoiceConnection(guildId);
+    if (!connection) return;
+    const botChannelId = connection.joinConfig.channelId;
+    if (!botChannelId) return;
+
+    const member = newState.member ?? oldState.member;
+    if (!member || member.user.bot) return;
+
+    const wasInBotChannel = oldState.channelId === botChannelId;
+    const isInBotChannel = newState.channelId === botChannelId;
+
+    if (wasInBotChannel && !isInBotChannel) {
+      const botChannel = newState.guild.channels.cache.get(botChannelId);
+      if (!botChannel || botChannel.type !== ChannelType.GuildVoice) return;
+      const vc = botChannel as VoiceChannel;
+      const humansInChannel = vc.members.filter((m) => !m.user.bot).size;
+      if (humansInChannel === 0) {
+        player.onEveryoneLeftChannel();
+      }
+    } else if (!wasInBotChannel && isInBotChannel) {
+      player.onHumanJoinedChannel();
+    }
+  });
 }
