@@ -80,7 +80,7 @@ export default function MobileNav() {
 
         {/* Center: Wordmark */}
         <div className="flex items-center gap-2">
-          <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
+          <span className="font-display text-3xl text-accent tracking-wider">Alfira</span>
           {isAdminView && (
             <span className="text-[9px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded uppercase tracking-widest">
               admin
@@ -136,7 +136,7 @@ export default function MobileNav() {
                 <GuitarIcon size={24} weight="duotone" className="text-accent" />
               )}
             </span>
-            <span className="font-display text-2xl text-accent tracking-wider">Alfira</span>
+            <span className="font-display text-3xl text-accent tracking-wider">Alfira</span>
           </div>
           <Button
             variant="inherit"
@@ -157,14 +157,14 @@ export default function MobileNav() {
               to={to}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center rounded-xl font-body font-bold text-lg transition-all duration-150 cursor-pointer px-3 py-3 ${
+                `flex items-center rounded-xl font-body transition-all duration-150 cursor-pointer px-3 py-3 ${
                   isActive ? 'btn-inherit pressed' : 'btn-inherit'
                 }`
               }
               style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
             >
-              <Icon size={22} weight="duotone" />
               <span className="mr-auto">{label}</span>
+              <Icon size={22} weight="duotone" />
             </NavLink>
           ))}
         </nav>
@@ -181,7 +181,7 @@ export default function MobileNav() {
 
           {/* User section */}
           <div className="p-3">
-            <div className="flex items-center gap-3 px-2 py-2 mb-1">
+            <div className="flex items-center gap-3 px-2 py-2 mb-3">
               {user?.avatar ? (
                 <img
                   src={user.avatar}

@@ -1,4 +1,4 @@
-import { GearIcon, XCircleIcon } from '@phosphor-icons/react';
+import { WrenchIcon, XCircleIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Backdrop } from './Backdrop';
 import SettingsContent from './SettingsContent';
@@ -20,12 +20,12 @@ export default function SettingsMenu({ collapsed = false }: SettingsMenuProps) {
           onClick={() => setIsOpen(true)}
           title={collapsed ? 'Settings' : undefined}
           className={`flex items-center rounded-xl font-body transition-all duration-150 cursor-pointer w-full ${
-            collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2'
+            collapsed ? 'justify-center px-0 py-2' : 'px-3 py-2'
           } ${isOpen ? 'btn-inherit pressed' : 'btn-inherit'}`}
           style={{ '--btn-surface': 'var(--color-elevated)' } as React.CSSProperties}
         >
           {!collapsed && <span className="mr-auto">Settings</span>}
-          <GearIcon size={18} weight="duotone" />
+          <WrenchIcon size={18} weight="duotone" />
         </button>
       </div>
 

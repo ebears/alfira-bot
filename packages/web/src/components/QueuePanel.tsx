@@ -1,15 +1,29 @@
 import type { QueuedSong } from '@alfira-bot/shared';
 import { formatDuration } from '@alfira-bot/shared';
 import {
+  AlienIcon,
   BombIcon,
+  CakeIcon,
+  CatIcon,
+  CookieIcon,
   DotsThreeOutlineVerticalIcon,
-  GuitarIcon,
+  GhostIcon,
   LightningIcon,
   ListIcon,
+  MoonIcon,
+  OnigiriIcon,
+  PizzaIcon,
+  PlanetIcon,
   PlayCircleIcon,
   PlayIcon,
   PlusCircleIcon,
-  XIcon,
+  RocketLaunchIcon,
+  SkullIcon,
+  SmileyAngryIcon,
+  SockIcon,
+  SwordIcon,
+  ToiletPaperIcon,
+  YinYangIcon,
 } from '@phosphor-icons/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -23,18 +37,21 @@ import { useAdminView } from '../context/AdminViewContext';
 import { usePlayer } from '../context/PlayerContext';
 import { Button } from './ui/Button';
 
-type VirtualQueueItem = {
-  type: 'priority' | 'regular';
-  song: QueuedSong;
-  listIndex: number;
-  key: string;
-};
+type VirtualQueueItem =
+  | {
+      type: 'song';
+      variant: 'priority' | 'regular';
+      song: QueuedSong;
+      listIndex: number;
+      key: string;
+    }
+  | { type: 'header'; variant: 'priority' | 'regular'; key: string };
 
-export default function QueuePanel({ onClose }: { onClose: () => void }) {
+export default function QueuePanel() {
   const { state, loading, elapsed, registerProgress, clear } = usePlayer();
   const { isAdminView } = useAdminView();
-  const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showLoadPlaylist, setShowLoadPlaylist] = useState(false);
   const [showOverride, setShowOverride] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
   const [clearConfirm, setClearConfirm] = useState(false);
@@ -46,19 +63,37 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
 
   const virtualItems: VirtualQueueItem[] = useMemo(() => {
     const items: VirtualQueueItem[] = [];
-    priorityQueue.forEach((song, i) => {
-      items.push({ type: 'priority', song, listIndex: i, key: `${song.id}-${i}` });
-    });
-    queue.forEach((song, i) => {
-      items.push({ type: 'regular', song, listIndex: i, key: `${song.id}-r${i}` });
-    });
+    if (priorityQueue.length > 0) {
+      items.push({ type: 'header', variant: 'priority', key: 'header-priority' });
+      priorityQueue.forEach((song, i) => {
+        items.push({
+          type: 'song',
+          variant: 'priority',
+          song,
+          listIndex: i,
+          key: `${song.id}-p${i}`,
+        });
+      });
+    }
+    if (queue.length > 0) {
+      items.push({ type: 'header', variant: 'regular', key: 'header-regular' });
+      queue.forEach((song, i) => {
+        items.push({
+          type: 'song',
+          variant: 'regular',
+          song,
+          listIndex: i,
+          key: `${song.id}-r${i}`,
+        });
+      });
+    }
     return items;
   }, [priorityQueue, queue]);
 
   const virtualizer = useVirtualizer({
     count: virtualItems.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 56,
+    estimateSize: (i) => (virtualItems[i]?.type === 'header' ? 36 : 56),
     overscan: 5,
   });
   const isQueueEmpty = queue.length === 0 && priorityQueue.length === 0 && !currentSong;
@@ -74,6 +109,12 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
 
   const menuItems: MenuItem[] = useMemo(() => {
     const items: MenuItem[] = [
+      {
+        id: 'load-playlist',
+        label: 'Load Playlist',
+        icon: <ListIcon size={14} weight="duotone" />,
+        onClick: () => setShowLoadPlaylist(true),
+      },
       {
         id: 'quick-add',
         label: 'Quick Add',
@@ -104,7 +145,11 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <PanelHeader onClose={onClose} />
+        <PanelHeader
+          triggerRef={triggerRef}
+          menuOpen={menuOpen}
+          onToggleMenu={() => setMenuOpen(!menuOpen)}
+        />
         <div className="flex-1 p-4 space-y-3">
           <div className="skeleton h-5 w-48 rounded" />
           <div className="skeleton h-12 w-full rounded" />
@@ -117,9 +162,13 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      <PanelHeader onClose={onClose} />
+      <PanelHeader
+        triggerRef={triggerRef}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen(!menuOpen)}
+      />
 
-      {/* Fixed content: Now Playing + Actions */}
+      {/* Fixed content: Now Playing */}
       <div className="p-4 space-y-4 shrink-0">
         {currentSong ? (
           <NowPlayingCard
@@ -132,62 +181,14 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
           <IdleCard />
         )}
 
-        <section className="flex items-center justify-between">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={() => setShowLoadPlaylist(true)}
-            className={`flex items-center gap-2 ${showLoadPlaylist ? 'pressed' : ''}`}
-          >
-            <ListIcon size={16} weight="duotone" />
-            <span>Load Playlist</span>
-          </Button>
-          <Button
-            ref={triggerRef}
-            variant="inherit"
-            surface="elevated"
-            size="icon"
-            type="button"
-            aria-haspopup="true"
-            aria-expanded={menuOpen}
-            title="More actions"
-            onClick={() => setMenuOpen(true)}
-          >
-            <DotsThreeOutlineVerticalIcon size={16} weight="duotone" />
-          </Button>
-        </section>
-
-        {/* Section headers (fixed above scroll area) */}
-        {virtualItems.length > 0 && (
-          <div className="space-y-2">
-            {priorityQueue.length > 0 && (
-              <h2 className="font-display text-lg text-fg tracking-wider">
-                <LightningIcon size={16} weight="duotone" className="inline mr-1" />
-                Up Next
-                <span className="ml-2 font-mono text-xs text-accent normal-case tracking-normal">
-                  {priorityQueue.length}
-                </span>
-              </h2>
-            )}
-            <h2 className="font-display text-lg text-fg tracking-wider">
-              Queue
-              {queue.length > 0 && (
-                <span className="ml-2 font-mono text-xs text-muted normal-case tracking-normal">
-                  {queue.length}
-                </span>
-              )}
-            </h2>
-          </div>
-        )}
-
         {/* Empty state */}
         {virtualItems.length === 0 && (
-          <div className="py-6 text-center border border-dashed border-border rounded-xl">
+          <div className="py-8 text-center space-y-2">
             <p className="font-mono text-[11px] text-faint">queue is empty</p>
             <button
               type="button"
               onClick={() => setShowLoadPlaylist(true)}
-              className="mt-2 font-mono text-[11px] text-accent hover:underline"
+              className="cursor-pointer font-mono text-[11px] text-accent hover:underline"
             >
               load a playlist to get started
             </button>
@@ -207,6 +208,41 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const item = virtualItems[virtualRow.index];
               if (item == null) return null;
+
+              if (item.type === 'header') {
+                return (
+                  <div
+                    key={item.key}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    {item.variant === 'priority' ? (
+                      <h2 className="font-display text-lg text-fg tracking-wider">
+                        <LightningIcon size={16} weight="duotone" className="inline mr-1" />
+                        Up Next
+                        <span className="ml-2 font-mono text-xs text-accent normal-case tracking-normal">
+                          {priorityQueue.length}
+                        </span>
+                      </h2>
+                    ) : (
+                      <h2 className="font-display text-lg text-fg tracking-wider">
+                        Queue
+                        {queue.length > 0 && (
+                          <span className="ml-2 font-mono text-xs text-muted normal-case tracking-normal">
+                            {queue.length}
+                          </span>
+                        )}
+                      </h2>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={item.key}
@@ -223,7 +259,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
                   <QueueSongItem
                     song={item.song}
                     index={item.listIndex}
-                    accent={item.type === 'priority'}
+                    accent={item.variant === 'priority'}
                   />
                 </div>
               );
@@ -301,7 +337,7 @@ const QueueSongItem = memo(function QueueSongItem({
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-elevated clay-resting">
+    <div className="flex items-center gap-2 px-3 py-2.5">
       <span
         className={`font-mono text-[10px] w-4 text-right shrink-0 ${accent ? 'text-accent' : 'text-faint'}`}
       >
@@ -327,19 +363,30 @@ const QueueSongItem = memo(function QueueSongItem({
   );
 });
 
-const PanelHeader = memo(function PanelHeader({ onClose }: { onClose: () => void }) {
+const PanelHeader = memo(function PanelHeader({
+  triggerRef,
+  menuOpen,
+  onToggleMenu,
+}: {
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
+  menuOpen: boolean;
+  onToggleMenu: () => void;
+}) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-      <h1 className="font-display text-xl text-fg tracking-wider">Queue</h1>
+      <h1 className="font-display text-3xl text-fg tracking-wider">Queue</h1>
       <Button
+        ref={triggerRef}
         variant="inherit"
         size="icon"
         type="button"
-        onClick={onClose}
-        title="Close queue"
-        surface="elevated"
+        aria-haspopup="true"
+        aria-expanded={menuOpen}
+        title="More actions"
+        className={`${menuOpen ? 'pressed text-accent' : ''}`}
+        onClick={onToggleMenu}
       >
-        <XIcon size={18} weight="bold" />
+        <DotsThreeOutlineVerticalIcon size={18} weight="duotone" />
       </Button>
     </div>
   );
@@ -357,7 +404,7 @@ const NowPlayingCard = memo(function NowPlayingCard({
   registerProgress: (ref: HTMLDivElement | null) => void;
 }) {
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden" style={{ background: 'var(--color-base)' }}>
       <div className="flex gap-3 p-3">
         <div className="relative shrink-0">
           <img
@@ -403,17 +450,48 @@ const NowPlayingCard = memo(function NowPlayingCard({
   );
 });
 
+const IdleIcons = [
+  AlienIcon,
+  BombIcon,
+  CakeIcon,
+  CatIcon,
+  CookieIcon,
+  GhostIcon,
+  MoonIcon,
+  OnigiriIcon,
+  PizzaIcon,
+  PlanetIcon,
+  RocketLaunchIcon,
+  SkullIcon,
+  SmileyAngryIcon,
+  SockIcon,
+  SwordIcon,
+  ToiletPaperIcon,
+  YinYangIcon,
+];
+
+let lastIndex = -1;
+function getRandomIdleIcon() {
+  let idx: number;
+  do {
+    idx = Math.floor(Math.random() * IdleIcons.length);
+  } while (IdleIcons.length > 1 && idx === lastIndex);
+  lastIndex = idx;
+  return IdleIcons[idx] ?? IdleIcons[0];
+}
+
 const IdleCard = memo(function IdleCard() {
+  const [Icon] = useState(getRandomIdleIcon);
   return (
-    <div className="card flex items-center justify-center py-8 border-dashed">
+    <div
+      className="card flex items-center justify-center py-8"
+      style={{ background: 'var(--color-base)' }}
+    >
       <div className="text-center">
         <div className="w-12 h-12 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-3">
-          <GuitarIcon size={20} weight="duotone" className="text-faint" />
+          <Icon size={20} weight="duotone" className="text-faint" />
         </div>
         <p className="font-display text-xl text-faint tracking-wider mb-1">Nothing Playing</p>
-        <p className="font-mono text-[10px] text-faint">
-          use /join in Discord, then load a playlist
-        </p>
       </div>
     </div>
   );
