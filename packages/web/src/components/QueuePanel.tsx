@@ -370,7 +370,7 @@ const QueueSongItem = memo(function QueueSongItem({
         <img
           src={song.thumbnailUrl}
           alt={song.nickname || song.title}
-          className="w-full h-full object-cover scale-[1.3]"
+          className="w-full h-full object-cover scale-[1.33]"
           loading="lazy"
           decoding="async"
         />
@@ -509,7 +509,7 @@ const NowPlayingCard = memo(function NowPlayingCard({
           <img
             src={song.thumbnailUrl}
             alt={song.nickname || song.title}
-            className="w-20 h-20 rounded-xl border border-border scale-[1.3]"
+            className="w-20 h-20 rounded-xl border border-border scale-[1.33]"
             decoding="async"
           />
           {isPlaying && (

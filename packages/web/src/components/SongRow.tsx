@@ -106,7 +106,7 @@ export const SongRow = memo(
             <img
               src={song.thumbnailUrl}
               alt={song.nickname || song.title}
-              className="w-full h-full object-cover scale-[1.3]"
+              className="w-full h-full object-cover scale-[1.33]"
               loading="lazy"
               decoding="async"
             />
