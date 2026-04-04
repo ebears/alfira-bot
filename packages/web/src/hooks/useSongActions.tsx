@@ -56,19 +56,14 @@ export function useSongActions({
 
   const menuItems: MenuItem[] = useMemo(
     () => [
+      // Always present
       {
         id: 'add-to-queue',
         label: 'Add to Up Next',
         icon: <VinylRecordIcon size={14} weight="duotone" />,
         onClick: onAddToQueue,
       },
-      {
-        id: 'open-link',
-        label: 'Open Link',
-        icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
-        onClick: () => window.open(song.youtubeUrl, '_blank'),
-      },
-      // Playlist remove action (when onRemove is provided, skip full admin submenu)
+      // (when onRemove is provided, skip full admin submenu)
       ...(onRemove
         ? [
             {
@@ -79,47 +74,55 @@ export function useSongActions({
               onClick: onRemove,
             } as MenuItem,
           ]
-        : []),
-      // Full admin submenu (when onDelete is provided, library context)
-      ...(onDelete && !onRemove
-        ? [
+        : [
+            // Full admin submenu (when onDelete is provided, library context)
+            ...(isAdmin && onDelete
+              ? [
+                  {
+                    id: 'add-to-playlist',
+                    label: 'Add to playlist',
+                    icon: <CassetteTapeIcon size={14} weight="duotone" />,
+                    submenu: {
+                      title: 'Add to playlist',
+                      items: playlists.map((pl) => ({
+                        id: pl.id,
+                        label: pl.name,
+                        disabled: optimisticAdded.has(pl.id),
+                      })),
+                      onSelect: handleAddToPlaylist,
+                      emptyMessage: 'no playlists yet',
+                    },
+                  } as MenuItem,
+                ]
+              : []),
             {
-              id: 'user-info',
-              label: '',
-              icon: <UserIcon size={14} weight="duotone" />,
-              info: {
-                label: song.addedByDisplayName || song.addedBy || '',
-                icon: <UserIcon size={14} weight="duotone" />,
-              },
+              id: 'open-link',
+              label: 'Open Link',
+              icon: <ArrowSquareOutIcon size={14} weight="duotone" />,
+              onClick: () => window.open(song.youtubeUrl, '_blank'),
             },
-          ]
-        : []),
-      ...(isAdmin && onDelete && !onRemove
-        ? [
-            {
-              id: 'add-to-playlist',
-              label: 'Add to playlist',
-              icon: <CassetteTapeIcon size={14} weight="duotone" />,
-              submenu: {
-                title: 'Add to playlist',
-                items: playlists.map((pl) => ({
-                  id: pl.id,
-                  label: pl.name,
-                  disabled: optimisticAdded.has(pl.id),
-                })),
-                onSelect: handleAddToPlaylist,
-                emptyMessage: 'no playlists yet',
-              },
-            } as MenuItem,
-            {
-              id: 'delete',
-              label: 'Delete song',
-              icon: <BombIcon size={14} weight="duotone" />,
-              danger: true,
-              onClick: onDelete,
-            } as MenuItem,
-          ]
-        : []),
+            // Delete + Requested By (library context, admin only)
+            ...(isAdmin && onDelete
+              ? [
+                  {
+                    id: 'delete',
+                    label: 'Delete song',
+                    icon: <BombIcon size={14} weight="duotone" />,
+                    danger: true,
+                    onClick: onDelete,
+                  } as MenuItem,
+                  {
+                    id: 'user-info',
+                    label: '',
+                    icon: <UserIcon size={14} weight="duotone" />,
+                    info: {
+                      label: song.addedByDisplayName || song.addedBy || '',
+                      icon: <UserIcon size={14} weight="duotone" />,
+                    },
+                  },
+                ]
+              : []),
+          ]),
     ],
     [
       onAddToQueue,
