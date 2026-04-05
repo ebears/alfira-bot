@@ -102,3 +102,32 @@ export function requirePlayingCommand(
     },
   };
 }
+
+/**
+ * Like requirePlayingCommand but also requires the user to be in a voice
+ * channel. Used for playback-control commands that should be restricted
+ * to users actively participating in voice.
+ */
+export function requirePlayingVoiceCommand(
+  data: SlashCommandBuilder,
+  handler: (interaction: ChatInputCommandInteraction, player: GuildPlayer) => Promise<void>
+): Command {
+  return {
+    data,
+    async execute(interaction) {
+      const guild = await requireGuild(interaction);
+      if (!guild) return;
+
+      const player = getPlayer(guild.id);
+      if (!player?.getCurrentSong()) {
+        await interaction.reply({ content: 'Nothing is currently playing.', flags: 'Ephemeral' });
+        return;
+      }
+
+      const voiceChannel = await requireVoiceChannel(interaction);
+      if (!voiceChannel) return;
+
+      await handler(interaction, player);
+    },
+  };
+}

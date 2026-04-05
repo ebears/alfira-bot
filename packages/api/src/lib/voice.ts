@@ -70,3 +70,31 @@ export async function resolveOrAutoJoinPlayer(
     return null;
   }
 }
+
+/**
+ * Middleware that verifies the requesting user is in a voice channel.
+ * Sends 403 and returns false if not in voice, true otherwise.
+ */
+export async function requireUserInVoice(req: Request, res: Response): Promise<boolean> {
+  const client = getClient();
+  if (!client) {
+    res.status(503).json({ error: 'Discord bot is not ready yet.' });
+    return false;
+  }
+
+  try {
+    const guild = await client.guilds.fetch(GUILD_ID);
+    const member = await guild.members.fetch(req.user?.discordId ?? '');
+
+    if (!member.voice.channel) {
+      res.status(403).json({ error: 'You must be in a voice channel to control playback.' });
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    logger.error({ err: error as Error }, 'Failed to verify voice channel membership');
+    res.status(503).json({ error: 'Could not verify voice channel membership.' });
+    return false;
+  }
+}

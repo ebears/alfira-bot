@@ -21,7 +21,7 @@ import {
   validateYouTubeUrl,
   youTubeUrl,
 } from '../lib/validation';
-import { resolveOrAutoJoinPlayer } from '../lib/voice';
+import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -61,6 +61,9 @@ router.get('/queue', requireAuth, (_req, res) => {
 
 // POST /api/player/play — load songs and start playback. Member accessible.
 router.post('/play', requireAuth, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const { playlistId, mode, loop, startFromSongId } = req.body as {
     playlistId?: string;
     mode?: 'sequential' | 'random';
@@ -131,7 +134,10 @@ router.post('/play', requireAuth, async (req, res) => {
 });
 
 // POST /api/player/skip — skip current song. Member accessible.
-router.post('/skip', requireAuth, playerLimiter, (_req, res) => {
+router.post('/skip', requireAuth, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const player = requirePlaying(res);
   if (!player) return;
 
@@ -140,7 +146,10 @@ router.post('/skip', requireAuth, playerLimiter, (_req, res) => {
 });
 
 // POST /api/player/leave — stop and disconnect. Member accessible.
-router.post('/leave', requireAuth, playerLimiter, (_req, res) => {
+router.post('/leave', requireAuth, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const player = getPlayer(GUILD_ID);
   const connection = getVoiceConnection(GUILD_ID);
 
@@ -156,7 +165,9 @@ router.post('/leave', requireAuth, playerLimiter, (_req, res) => {
 });
 
 // POST /api/player/loop — set loop mode. Member accessible.
-router.post('/loop', requireAuth, playerLimiter, (req, res) => {
+router.post('/loop', requireAuth, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
   const { mode } = req.body as { mode?: LoopMode };
 
   if (!mode || !['off', 'song', 'queue'].includes(mode)) {
@@ -172,7 +183,9 @@ router.post('/loop', requireAuth, playerLimiter, (req, res) => {
 });
 
 // POST /api/player/shuffle — shuffle queue. Admin only.
-router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
+router.post('/shuffle', requireAuth, requireAdmin, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
   const player = getPlayer(GUILD_ID);
 
   if (!player || player.getQueue().length === 0) {
@@ -185,7 +198,9 @@ router.post('/shuffle', requireAuth, requireAdmin, (_req, res) => {
 });
 
 // POST /api/player/unshuffle — restore original queue order. Admin only.
-router.post('/unshuffle', requireAuth, requireAdmin, (_req, res) => {
+router.post('/unshuffle', requireAuth, requireAdmin, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
   const player = requirePlayer(res);
   if (!player) return;
 
@@ -195,6 +210,9 @@ router.post('/unshuffle', requireAuth, requireAdmin, (_req, res) => {
 
 // POST /api/player/quick-add — add YouTube URL to priority queue. Admin only.
 router.post('/quick-add', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const url = validateYouTubeUrl(req.body.youtubeUrl, res);
   if (!url) return;
 
@@ -227,6 +245,9 @@ router.post('/quick-add', requireAuth, requireAdmin, playerLimiter, async (req, 
 
 // POST /api/player/quick-add-playlist — add playlist to queue. Admin only.
 router.post('/quick-add-playlist', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
   const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
   if (!url) return;
@@ -262,7 +283,10 @@ router.post('/quick-add-playlist', requireAuth, requireAdmin, playerLimiter, asy
 });
 
 // POST /api/player/pause-toggle — pause/resume. Member accessible.
-router.post('/pause-toggle', requireAuth, playerLimiter, (_req, res) => {
+router.post('/pause-toggle', requireAuth, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const player = requirePlaying(res);
   if (!player) return;
 
@@ -271,7 +295,10 @@ router.post('/pause-toggle', requireAuth, playerLimiter, (_req, res) => {
 });
 
 // POST /api/player/clear — clear queue. Admin only.
-router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
+router.post('/clear', requireAuth, requireAdmin, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const player = requirePlayer(res);
   if (!player) return;
 
@@ -281,6 +308,9 @@ router.post('/clear', requireAuth, requireAdmin, (_req, res) => {
 
 // POST /api/player/add-to-priority — add library song to Up Next. Admin only.
 router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const { songId } = req.body as { songId?: string };
 
   if (!songId || typeof songId !== 'string') {
@@ -316,6 +346,9 @@ router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async 
 
 // POST /api/player/override — immediately play YouTube URL. Admin only.
 router.post('/override', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
+  const inVoice = await requireUserInVoice(req, res);
+  if (!inVoice) return;
+
   const url = validateYouTubeUrl(req.body.youtubeUrl, res);
   if (!url) return;
 

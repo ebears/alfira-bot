@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
 import { pluralize } from '../utils/format';
-import { requireGuild } from './guards';
+import { requireGuild, requireVoiceChannel } from './guards';
 
 export const shuffleCommand: Command = {
   data: new SlashCommandBuilder()
@@ -12,6 +12,9 @@ export const shuffleCommand: Command = {
   async execute(interaction) {
     const guild = await requireGuild(interaction);
     if (!guild) return;
+
+    const voiceChannel = await requireVoiceChannel(interaction);
+    if (!voiceChannel) return;
 
     const player = getPlayer(guild.id);
     const queue = player?.getQueue() ?? [];

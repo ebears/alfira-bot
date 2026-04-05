@@ -81,8 +81,12 @@ const SongCardInner = ({
             {formatDuration(song.duration)}
           </span>
           {song.volumeOffset != null && song.volumeOffset !== 0 && (
-            <span className="flex items-center gap-0.5 text-[10px]" style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}>
-              {song.volumeOffset > 0 ? '+' : '-'}{Math.abs(song.volumeOffset)} dB
+            <span
+              className="flex items-center gap-0.5 text-[10px]"
+              style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}
+            >
+              {song.volumeOffset > 0 ? '+' : '-'}
+              {Math.abs(song.volumeOffset)} dB
               <HeadphonesIcon size={11} weight="fill" />
             </span>
           )}

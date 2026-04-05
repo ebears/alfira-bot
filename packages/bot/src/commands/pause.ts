@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { requirePlayingCommand } from './guards';
+import { requirePlayingVoiceCommand } from './guards';
 
-export const pauseCommand = requirePlayingCommand(
+export const pauseCommand = requirePlayingVoiceCommand(
   new SlashCommandBuilder().setName('pause').setDescription('Pause or resume playback.'),
   async (interaction, player) => {
     const isPaused = player.togglePause();

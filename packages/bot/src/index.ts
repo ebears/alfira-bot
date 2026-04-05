@@ -1,4 +1,5 @@
 import { logger } from '@alfira-bot/shared';
+import { getVoiceConnection } from '@discordjs/voice';
 import {
   Client,
   Collection,
@@ -10,6 +11,7 @@ import {
 } from 'discord.js';
 import { commands } from './commands';
 import { setClient } from './lib/client';
+import { getPlayer } from './player/manager';
 import type { Command } from './types';
 
 // ---------------------------------------------------------------------------
@@ -96,6 +98,37 @@ export async function startBot(): Promise<void> {
       logger.info(
         'Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
       );
+    }
+  });
+
+  client.on('voiceStateUpdate', (oldState, newState) => {
+    // Ignore the bot's own voice changes.
+    if (newState.member?.user.bot && oldState.member?.user.bot) return;
+
+    const guildId = oldState.guild.id;
+    const connection = getVoiceConnection(guildId);
+    if (!connection) return;
+
+    const connectionChannelId = connection.joinConfig.channelId;
+    if (!connectionChannelId) return;
+
+    // Only act when a user left the bot's voice channel.
+    const leftBotChannel = oldState.channelId === connectionChannelId;
+    const joinedBotChannel = newState.channelId === connectionChannelId;
+    if (!leftBotChannel || joinedBotChannel) return;
+
+    // Count remaining non-bot members in the bot's voice channel.
+    const voiceChannel = oldState.channel;
+    if (!voiceChannel) return;
+
+    const humanCount = voiceChannel.members.filter((m) => !m.user.bot).size;
+
+    if (humanCount === 0) {
+      const player = getPlayer(guildId);
+      if (player?.getCurrentSong() && player.isPlaying()) {
+        player.togglePause();
+        logger.info({ guildId }, "Auto-paused: no humans left in the bot's voice channel.");
+      }
     }
   });
 

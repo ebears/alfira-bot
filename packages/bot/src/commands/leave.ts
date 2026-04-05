@@ -2,7 +2,7 @@ import { getVoiceConnection } from '@discordjs/voice';
 import { SlashCommandBuilder } from 'discord.js';
 import { getPlayer } from '../player/manager';
 import type { Command } from '../types';
-import { requireGuild } from './guards';
+import { requireGuild, requireVoiceChannel } from './guards';
 
 export const leaveCommand: Command = {
   data: new SlashCommandBuilder()
@@ -12,6 +12,9 @@ export const leaveCommand: Command = {
   async execute(interaction) {
     const guild = await requireGuild(interaction);
     if (!guild) return;
+
+    const voiceChannel = await requireVoiceChannel(interaction);
+    if (!voiceChannel) return;
 
     const guildId = guild.id;
     const connection = getVoiceConnection(guildId);
