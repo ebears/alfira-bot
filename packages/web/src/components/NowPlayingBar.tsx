@@ -13,7 +13,7 @@ import {
   SkipForwardIcon,
   SparkleIcon,
 } from '@phosphor-icons/react';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { useQueuePanel } from '../context/QueuePanelContext';
 import { BarButton } from './BarButton';
@@ -84,7 +84,7 @@ const PlaybackControls = memo(function PlaybackControls({
         onClick={onStop}
         disabled={!isConnectedToVoice}
         title="Stop playback"
-        className="text-muted hover:text-danger"
+        className="text-black dark:text-white hover:text-danger"
       >
         <DoorOpenIcon size={20} weight="duotone" className="md:w-4.5 md:h-4.5" />
       </Button>
@@ -132,7 +132,7 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
         disabled={!currentSong || loopBusy}
         title={`Loop: ${loopMode}`}
         className={`shrink-0 disabled:opacity-50 ${
-          isLoopActive ? 'pressed text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+          isLoopActive ? 'pressed text-accent hover:text-accent-muted' : 'text-black dark:text-white hover:text-fg'
         }`}
       >
         {loopBusy ? (
@@ -149,7 +149,7 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
         disabled={!currentSong || shuffleBusy}
         title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
         className={`shrink-0 disabled:opacity-50 ${
-          isShuffled ? 'pressed text-accent hover:text-accent-muted' : 'text-muted hover:text-fg'
+          isShuffled ? 'pressed text-accent hover:text-accent-muted' : 'text-black dark:text-white hover:text-fg'
         }`}
       >
         {shuffleBusy ? (
@@ -263,6 +263,7 @@ export function NowPlayingBar() {
 
   const [pauseBusy, setPauseBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
+  const busySongIdRef = useRef<string | null>(null);
   const [loopBusy, setLoopBusy] = useState(false);
   const [shuffleBusy, setShuffleBusy] = useState(false);
 
@@ -279,14 +280,21 @@ export function NowPlayingBar() {
 
   const handleSkip = useCallback(async () => {
     setSkipBusy(true);
+    busySongIdRef.current = currentSong?.id ?? null;
     try {
       await skip();
     } catch (e) {
       logger.error(e);
-    } finally {
       setSkipBusy(false);
     }
-  }, [skip]);
+  }, [skip, currentSong]);
+
+  useEffect(() => {
+    if (skipBusy && currentSong?.id !== busySongIdRef.current) {
+      setSkipBusy(false);
+      busySongIdRef.current = null;
+    }
+  }, [skipBusy, currentSong]);
 
   const handleStop = useCallback(() => {
     leave().catch((e) => logger.error(e));
@@ -391,7 +399,7 @@ export function NowPlayingBar() {
               className={`shrink-0 ${
                 queueOpen
                   ? 'pressed text-accent hover:text-accent-muted'
-                  : 'text-muted hover:text-fg'
+                  : 'text-black dark:text-white hover:text-fg'
               }`}
             >
               <QueueIcon size={20} weight="duotone" className="md:w-4 md:h-4" />
