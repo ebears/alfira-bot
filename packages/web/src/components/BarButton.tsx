@@ -31,8 +31,8 @@ export function BarButton({
       title={title}
       className={`${
         busy
-          ? 'text-muted'
-          : `${pulse ? 'pressed text-accent' : 'text-muted'} ${hoverColor} cursor-pointer`
+          ? 'text-black/50 dark:text-white/50'
+          : `${pulse ? 'pressed text-accent' : 'text-black dark:text-white'} ${hoverColor} cursor-pointer`
       } disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {busy ? (
