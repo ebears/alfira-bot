@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { requirePlayingCommand } from './guards';
+import { requirePlayingVoiceCommand } from './guards';
 
-export const skipCommand = requirePlayingCommand(
+export const skipCommand = requirePlayingVoiceCommand(
   new SlashCommandBuilder().setName('skip').setDescription('Skip the current song.'),
   async (interaction, player) => {
     const currentTitle = player.getCurrentSong()?.title;

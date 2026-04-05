@@ -40,6 +40,48 @@ export class GuildPlayer {
 
   private isReconnecting = false;
 
+  // Auto-leave idle timer.
+  private idleLeaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private getIdleTimeoutMinutes(): number {
+    const raw = process.env.VOICE_IDLE_TIMEOUT_MINUTES;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
+  }
+
+  private scheduleIdleLeave(): void {
+    this.cancelIdleLeave();
+    const minutes = this.getIdleTimeoutMinutes();
+    this.idleLeaveTimer = setTimeout(() => this.leaveOnIdle(), minutes * 60 * 1000);
+  }
+
+  private cancelIdleLeave(): void {
+    if (this.idleLeaveTimer !== null) {
+      clearTimeout(this.idleLeaveTimer);
+      this.idleLeaveTimer = null;
+    }
+  }
+
+  private readonly LEAVE_PHRASES = [
+    '👋 "Fine, I\'ll leave."',
+    '🚪 "I found something."',
+    '💥 "Careful, I\'ve spotted a trap."',
+    '✉️ Alfira has left the party.',
+    '😵 Alfira was killed.',
+    '💀 Alfira failed the last death saving throw.',
+  ];
+
+  private leaveOnIdle(): void {
+    logger.info(
+      { guildId: this.guildId },
+      `Auto-leaving voice channel after idle (${this.getIdleTimeoutMinutes()} minutes).`
+    );
+    const phrase = this.LEAVE_PHRASES[Math.floor(Math.random() * this.LEAVE_PHRASES.length)];
+    this.sendToTextChannel(`${phrase} (Left the voice channel due to inactivity.)`);
+    this.stop();
+    this.connection.destroy();
+  }
+
   // FFmpeg kill function, stored to prevent zombie processes on skip/stop.
   private killCurrentFfmpeg: (() => void) | null = null;
 
@@ -139,6 +181,8 @@ export class GuildPlayer {
     this.connection.on(VoiceConnectionStatus.Destroyed, () => {
       logger.info({ guildId: this.guildId }, 'Voice connection destroyed.');
 
+      this.cancelIdleLeave();
+
       if (!this.intentionallyStopped) {
         this.audioPlayer.stop(true);
         this.killFfmpeg();
@@ -186,6 +230,7 @@ export class GuildPlayer {
     }
 
     await this.ensurePlaying();
+    this.cancelIdleLeave();
   }
 
   async addToPriorityQueue(song: QueuedSong): Promise<void> {
@@ -202,6 +247,7 @@ export class GuildPlayer {
     this.audioPlayer.stop(true);
     this.consecutiveFailures = 0;
     this.queue.replace(songs);
+    this.cancelIdleLeave();
     await this.playNext();
     this.broadcast();
   }
@@ -220,6 +266,7 @@ export class GuildPlayer {
   stop(): void {
     this.intentionallyStopped = true;
     this.stopping = true;
+    this.cancelIdleLeave();
     this.killCurrentFfmpeg = null;
     this.currentSong = null;
     this.queue.clear();
@@ -254,6 +301,7 @@ export class GuildPlayer {
     if (!this.currentSong) return false;
 
     if (this.paused) {
+      this.cancelIdleLeave();
       if (this.pausedAt !== null) {
         const pauseDuration = Date.now() - this.pausedAt;
         if (this.trackStartedAt !== null) {
@@ -266,6 +314,7 @@ export class GuildPlayer {
       this.pausedAt = Date.now();
       this.audioPlayer.pause(true);
       this.paused = true;
+      this.scheduleIdleLeave();
     }
 
     this.broadcast();
@@ -343,6 +392,7 @@ export class GuildPlayer {
         this.currentSong = null;
         this.queue.clear();
         this.broadcast();
+        this.scheduleIdleLeave();
         return;
       }
     }
@@ -369,6 +419,7 @@ export class GuildPlayer {
   }
 
   private async playSong(next: QueuedSong): Promise<void> {
+    this.cancelIdleLeave();
     this.paused = false;
 
     let streamUrl: string;
