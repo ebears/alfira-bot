@@ -14,10 +14,6 @@ updates:
         patterns:
           - "discord.js"
           - "@discordjs/*"
-      prisma:
-        patterns:
-          - "prisma"
-          - "@prisma/*"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
