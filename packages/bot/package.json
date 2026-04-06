@@ -14,7 +14,7 @@
   "dependencies": {
     "@alfira-bot/shared": "workspace:*",
     "@discordjs/voice": "^0.19.2",
-    "@snazzah/davey": "^0.1.10",
+    "@snazzah/davey": "^0.1.11",
     "discord.js": "^14.14.1",
     "dotenv": "^17.3.1",
     "fs-capacitor": "^8.0.0",
