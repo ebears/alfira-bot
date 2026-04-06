@@ -4,16 +4,11 @@
   "private": true,
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./prisma": "./dist/lib/prisma.js"
+    ".": "./dist/index.js"
   },
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "tsc",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "build": "tsc"
   },
   "dependencies": {
     "@alfira-bot/bot": "workspace:*",
@@ -25,6 +20,7 @@
     "cors": "^2.8.5",
     "discord.js": "^14.14.1",
     "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",

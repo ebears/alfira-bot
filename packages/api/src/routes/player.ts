@@ -1,18 +1,18 @@
 import { getPlayer } from '@alfira-bot/bot';
 import {
-  fisherYatesShuffle,
+  fisherYatesShuffle as fisherYatesShuffleImpl,
   getRequestedBy,
   type LoopMode,
-  PLAYLIST_SONGS_INCLUDE,
   toQueuedSong,
 } from '@alfira-bot/shared';
+import { eq, findPlaylistWithSongs, tables } from '@alfira-bot/shared/db';
 import { getVoiceConnection } from '@discordjs/voice';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { GUILD_ID } from '../lib/config';
+import { db } from '../lib/db';
 import { requirePlayer, requirePlaying } from '../lib/player';
 import { canAccessPlaylist } from '../lib/playlistAccess';
-import prisma from '../lib/prisma';
 import {
   clampMaxVideos,
   fetchPlaylistMetadata,
@@ -24,6 +24,8 @@ import {
 import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
+
+const { song: songTable } = tables;
 
 const router = Router();
 
@@ -74,13 +76,10 @@ router.post('/play', requireAuth, async (req, res) => {
   const player = await resolveOrAutoJoinPlayer(req, res);
   if (!player) return;
 
-  let dbSongs: Awaited<ReturnType<typeof prisma.song.findMany>>;
+  let dbSongs: (typeof songTable.$inferSelect)[];
 
   if (playlistId) {
-    const playlist = await prisma.playlist.findUnique({
-      where: { id: playlistId },
-      include: PLAYLIST_SONGS_INCLUDE,
-    });
+    const playlist = await findPlaylistWithSongs(playlistId);
 
     if (!playlist) {
       res.status(404).json({ error: 'Playlist not found.' });
@@ -91,9 +90,7 @@ router.post('/play', requireAuth, async (req, res) => {
 
     dbSongs = playlist.songs.map((ps) => ps.song);
   } else {
-    dbSongs = await prisma.song.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
+    dbSongs = await db.select().from(songTable).orderBy(songTable.createdAt);
   }
 
   if (dbSongs.length === 0) {
@@ -113,7 +110,7 @@ router.post('/play', requireAuth, async (req, res) => {
   }
 
   if (mode === 'random') {
-    fisherYatesShuffle(dbSongs);
+    fisherYatesShuffleImpl(dbSongs);
   }
 
   const targetLoopMode = loop ?? player.getLoopMode();
@@ -318,9 +315,7 @@ router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async 
     return;
   }
 
-  const song = await prisma.song.findUnique({
-    where: { id: songId },
-  });
+  const [song] = await db.select().from(songTable).where(eq(songTable.id, songId)).limit(1);
 
   if (!song) {
     res.status(404).json({ error: 'Song not found.' });

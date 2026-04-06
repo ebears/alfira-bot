@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
 import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
-import { logger } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared/logger';
 import {
   type AudioPlayer,
   AudioPlayerStatus,

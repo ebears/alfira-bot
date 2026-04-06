@@ -29,24 +29,12 @@ services:
     # expose:
     #   - 5432
 
-  migrate:
-    image: ghcr.io/ebears/alfira-bot-migrate:latest
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: "no"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-
   api:
     image: ghcr.io/ebears/alfira-bot-api:latest
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 3001

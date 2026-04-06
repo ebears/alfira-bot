@@ -2,6 +2,13 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@alfira-bot/shared": ["./node_modules/@alfira-bot/shared/dist/"],
+      "@alfira-bot/shared/db": ["./node_modules/@alfira-bot/shared/dist/db/index.d.ts"],
+      "@alfira-bot/shared/logger": ["./node_modules/@alfira-bot/shared/dist/logger.d.ts"]
+    },
     "lib": ["ES2020"],
     "outDir": "./dist",
     "strict": true,
@@ -10,10 +17,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
-    "paths": {
-      "@alfira-bot/shared/prisma": ["./node_modules/@alfira-bot/shared/dist/lib/prisma"]
-    }
+    "declarationMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

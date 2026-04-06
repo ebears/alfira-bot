@@ -20,26 +20,31 @@
       "source": "./src/format.ts",
       "default": "./dist/format.js"
     },
-    "./prisma": {
-      "types": "./dist/lib/prisma.d.ts",
-      "source": "./src/lib/prisma.ts",
-      "default": "./dist/lib/prisma.js"
+    "./logger": {
+      "types": "./dist/logger.d.ts",
+      "source": "./src/logger.ts",
+      "default": "./dist/logger.js"
+    },
+    "./db": {
+      "types": "./dist/db/index.d.ts",
+      "source": "./src/db/index.ts",
+      "default": "./dist/db/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:generate": "cd ../.. && drizzle-kit generate",
+    "db:migrate": "cd ../.. && drizzle-kit migrate",
+    "db:migrate:deploy": "cd ../.. && drizzle-kit migrate",
+    "db:studio": "cd ../.. && drizzle-kit studio"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.4.2",
-    "@prisma/client": "^7.4.2",
-    "pino": "^10.3.1"
+    "drizzle-orm": "^0.45.2",
+    "pino": "^10.3.1",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "prisma": "^7.4.2",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^5.4.5"
   }
 }

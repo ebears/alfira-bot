@@ -1,4 +1,4 @@
-import { logger } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared/logger';
 import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
 import { getOrCreateConnection, requireGuild, requireVoiceChannel } from './guards';

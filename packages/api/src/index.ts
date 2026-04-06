@@ -1,13 +1,14 @@
 import 'dotenv/config';
 import http from 'node:http';
 import { destroyAllPlayers, setBroadcastQueueUpdate, startBot } from '@alfira-bot/bot';
+import { $client, db } from '@alfira-bot/shared/db';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { sql } from 'drizzle-orm';
 import express from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { logger, WEB_UI_ORIGIN } from './lib/config';
-import prisma from './lib/prisma';
 import { emitPlayerUpdate, getIo, initSocket } from './lib/socket';
 import { errorHandler } from './middleware/errorHandler';
 import authRouter from './routes/auth';
@@ -17,12 +18,6 @@ import songsRouter from './routes/songs';
 
 // ---------------------------------------------------------------------------
 // Validate required environment variables.
-//
-// JWT_SECRET and DISCORD_CLIENT_SECRET are included here even though they
-// aren't used directly in this file. Without them the server starts fine but
-// then fails mid-request in auth flows — JWT signing throws at runtime and
-// the OAuth token exchange returns a 401 from Discord. Catching both at boot
-// gives a clear error message instead of a cryptic runtime failure.
 // ---------------------------------------------------------------------------
 const requiredVars = [
   'DISCORD_BOT_TOKEN',
@@ -48,13 +43,8 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10);
 // ---------------------------------------------------------------------------
 const app = express();
 
-// Trust X-Forwarded-For only from the Caddy machine.
-// Replace with your actual Caddy machine's LAN IP.
 app.set('trust proxy', process.env.TRUSTED_PROXY_IP ?? false);
 
-// Security headers middleware.
-// CSP is disabled since this is an API-only server; the web frontend
-// should set its own Content-Security-Policy.
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -74,7 +64,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Request logging with structured JSON output.
 app.use(pinoHttp({ logger }));
 
 // ---------------------------------------------------------------------------
@@ -88,7 +77,7 @@ app.use('/auth', authRouter);
 // Health check — verifies database connectivity.
 app.get('/health', async (_req, res) => {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await db.execute(sql`SELECT 1`);
     res.json({ status: 'ok' });
   } catch {
     res.status(503).json({ status: 'degraded' });
@@ -100,30 +89,16 @@ app.use(errorHandler);
 
 // ---------------------------------------------------------------------------
 // Create the HTTP server.
-//
-// We wrap Express in a plain http.Server so Socket.io can share the same
-// port. Both HTTP (REST) and WebSocket (Socket.io) traffic are handled on
-// PORT=3001 — no extra port needed.
 // ---------------------------------------------------------------------------
 const httpServer = http.createServer(app);
 
 // ---------------------------------------------------------------------------
 // Startup sequence
-//
-// Order matters:
-//   1. Verify the database is reachable.
-//   2. Initialise Socket.io on the HTTP server.
-//   3. Inject the broadcast function into the bot package so GuildPlayer can
-//      call broadcastQueueUpdate() without importing from the API.
-//   4. Start the HTTP server.
-//   5. Start the Discord bot.
 // ---------------------------------------------------------------------------
 async function main(): Promise<void> {
   // 1. Verify database connectivity.
-  // Prisma's $connect() is lazy and doesn't actually validate the connection.
-  // Use a raw query to ensure the database is reachable before proceeding.
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await db.execute(sql`SELECT 1`);
     logger.info('Connected to database');
   } catch (error) {
     logger.error(error, 'Could not connect to the database');
@@ -135,8 +110,6 @@ async function main(): Promise<void> {
   initSocket(httpServer);
 
   // 3. Inject the broadcast function into the bot package.
-  //    GuildPlayer calls broadcastQueueUpdate() after every state change;
-  //    this wires it to the real Socket.io emit.
   setBroadcastQueueUpdate(emitPlayerUpdate);
 
   // 4. Start the HTTP server (Express + Socket.io on the same port).
@@ -149,7 +122,6 @@ async function main(): Promise<void> {
     await startBot();
   } catch (error) {
     logger.error(error, 'Failed to start the Discord bot');
-    // Don't exit — the API is still useful for testing even if the bot fails.
   }
 }
 
@@ -160,13 +132,6 @@ main().catch((err) => {
 
 // ---------------------------------------------------------------------------
 // Graceful shutdown
-//
-// On SIGTERM (Docker stop, k8s) or SIGINT (Ctrl+C):
-//   1. Stop accepting new HTTP connections.
-//   2. Disconnect all Socket.io clients.
-//   3. Destroy all GuildPlayers (stops FFmpeg, tears down voice connections).
-//   4. Disconnect Prisma.
-//   5. Exit cleanly.
 // ---------------------------------------------------------------------------
 let shuttingDown = false;
 
@@ -193,8 +158,8 @@ async function shutdown(signal: string): Promise<void> {
   destroyAllPlayers();
   logger.info('All players destroyed');
 
-  // 4. Disconnect database.
-  await prisma.$disconnect();
+  // 4. Close database connection.
+  await $client.end();
   logger.info('Database disconnected');
 
   logger.info('Graceful shutdown complete');

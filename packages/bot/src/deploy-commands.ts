@@ -14,7 +14,7 @@
  */
 
 import 'dotenv/config';
-import { logger } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared/logger';
 import { commands } from './commands';
 import { deployCommands } from './index';
 
