@@ -1,6 +1,7 @@
 import type { QueuedSong } from '@alfira-bot/shared';
-import { logger, toQueuedSong } from '@alfira-bot/shared';
-import prisma from '@alfira-bot/shared/prisma';
+import { toQueuedSong } from '@alfira-bot/shared';
+import { db, eq, tables } from '@alfira-bot/shared/db';
+import { logger } from '@alfira-bot/shared/logger';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
 import { getMetadata, isValidYouTubeUrl } from '../utils/ytdlp';
@@ -45,9 +46,11 @@ export const playCommand: Command = {
       return;
     }
 
-    const dbSong = await prisma.song.findUnique({
-      where: { youtubeId: metadata.youtubeId },
-    });
+    const [dbSong] = await db
+      .select()
+      .from(tables.song)
+      .where(eq(tables.song.youtubeId, metadata.youtubeId))
+      .limit(1);
 
     const player = await getOrCreateConnection(interaction, guild, voiceChannel);
     if (!player) return;

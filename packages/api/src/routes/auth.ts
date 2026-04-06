@@ -1,11 +1,15 @@
 import crypto from 'node:crypto';
+import { tables } from '@alfira-bot/shared/db';
 import axios, { isAxiosError } from 'axios';
+import { and, eq, lt } from 'drizzle-orm';
 import { type Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import { logger, WEB_UI_ORIGIN } from '../lib/config';
-import prisma from '../lib/prisma';
+import { db } from '../lib/db';
 import { requireAuth } from '../middleware/requireAuth';
+
+const { refreshToken: refreshTokenTable } = tables;
 
 const router = Router();
 
@@ -235,12 +239,10 @@ async function generateAndStoreTokens(
   // Store refresh token hash in database
   const refreshTokenHash = hashToken(refreshToken);
   const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
-  await prisma.refreshToken.create({
-    data: {
-      tokenHash: refreshTokenHash,
-      discordId: discordUser.id,
-      expiresAt: refreshTokenExpiry,
-    },
+  await db.insert(refreshTokenTable).values({
+    tokenHash: refreshTokenHash,
+    discordId: discordUser.id,
+    expiresAt: refreshTokenExpiry,
   });
 
   return { accessToken, refreshToken };
@@ -309,9 +311,11 @@ router.post('/refresh', async (req, res) => {
 
   // 2. Check if the refresh token exists in the database (not revoked).
   const tokenHash = hashToken(refreshToken);
-  const storedToken = await prisma.refreshToken.findUnique({
-    where: { tokenHash },
-  });
+  const [storedToken] = await db
+    .select()
+    .from(refreshTokenTable)
+    .where(eq(refreshTokenTable.tokenHash, tokenHash))
+    .limit(1);
   if (!storedToken) {
     clearAuthCookies(res);
     res.status(401).json({ error: 'Refresh token has been revoked.' });
@@ -320,29 +324,31 @@ router.post('/refresh', async (req, res) => {
 
   // 3. Check if the refresh token has expired.
   if (storedToken.expiresAt < new Date()) {
-    await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+    await db.delete(refreshTokenTable).where(eq(refreshTokenTable.id, storedToken.id));
     clearAuthCookies(res);
     res.status(401).json({ error: 'Refresh token has expired.' });
     return;
   }
 
   // 4. Delete the used refresh token (single-use for security).
-  await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+  await db.delete(refreshTokenTable).where(eq(refreshTokenTable.id, storedToken.id));
 
   // 5. Clean up expired tokens for this user (lazy cleanup).
-  await prisma.refreshToken.deleteMany({
-    where: {
-      discordId: decoded.discordId,
-      expiresAt: { lt: new Date() },
-    },
-  });
+  await db
+    .delete(refreshTokenTable)
+    .where(
+      and(
+        eq(refreshTokenTable.discordId, decoded.discordId),
+        lt(refreshTokenTable.expiresAt, new Date())
+      )
+    );
 
   // 6. Re-fetch user info from Discord (including admin status).
   const userInfo = await fetchUserAdminStatus(decoded.discordId);
   if (!userInfo) {
     // User is no longer in the guild or Discord is unreachable.
     // Clear all refresh tokens for this user for security.
-    await prisma.refreshToken.deleteMany({ where: { discordId: decoded.discordId } });
+    await db.delete(refreshTokenTable).where(eq(refreshTokenTable.discordId, decoded.discordId));
     clearAuthCookies(res);
     res.status(401).json({ error: 'Unable to verify user membership. Please log in again.' });
     return;
@@ -361,12 +367,10 @@ router.post('/refresh', async (req, res) => {
   // 8. Store new refresh token.
   const newTokenHash = hashToken(newRefreshToken);
   const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
-  await prisma.refreshToken.create({
-    data: {
-      tokenHash: newTokenHash,
-      discordId: decoded.discordId,
-      expiresAt: newExpiry,
-    },
+  await db.insert(refreshTokenTable).values({
+    tokenHash: newTokenHash,
+    discordId: decoded.discordId,
+    expiresAt: newExpiry,
   });
 
   // 9. Set cookies and return user info.
@@ -384,7 +388,7 @@ router.post('/logout', async (req, res) => {
   if (refreshToken) {
     try {
       const tokenHash = hashToken(refreshToken);
-      await prisma.refreshToken.deleteMany({ where: { tokenHash } });
+      await db.delete(refreshTokenTable).where(eq(refreshTokenTable.tokenHash, tokenHash));
     } catch {
       logger.warn('Failed to revoke refresh token on logout');
     }

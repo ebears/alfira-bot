@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm run db:generate
-
       - name: Build shared package
         run: pnpm --filter @alfira-bot/shared run build
 

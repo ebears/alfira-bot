@@ -1,17 +1,18 @@
+import { tables } from '@alfira-bot/shared/db';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import type { Response } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
-import { findOr404 } from '../lib/findOr404';
 import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
-import prisma from '../lib/prisma';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { validatePlaylistName } from '../lib/validation';
 import { requireAuth } from '../middleware/requireAuth';
 
-const router = Router();
+const { playlist: playlistTable, playlistSong: playlistSongTable } = tables;
 
-const PLAYLIST_WITH_COUNT = { _count: { select: { songs: true } } };
+const router = Router();
 
 // Rate limit playlist mutations to prevent abuse.
 const playlistLimiter = rateLimit({
@@ -22,33 +23,91 @@ const playlistLimiter = rateLimit({
   message: { error: 'Too many requests. Please slow down.' },
 });
 
-function findPlaylistOr404(id: string, res: Response, include?: Record<string, unknown>) {
-  return findOr404(
-    () => prisma.playlist.findUnique({ where: { id }, ...(include ? { include } : {}) }),
-    res,
-    'Playlist'
-  );
+type PlaylistRow = {
+  id: string;
+  name: string;
+  createdBy: string;
+  isPrivate: boolean;
+  createdAt: Date;
+  _count?: { songs: number };
+};
+
+async function findPlaylistOr404(
+  id: string,
+  res: Response,
+  withCount = false
+): Promise<PlaylistRow | null> {
+  const [row] = await db
+    .select({
+      id: playlistTable.id,
+      name: playlistTable.name,
+      createdBy: playlistTable.createdBy,
+      isPrivate: playlistTable.isPrivate,
+      createdAt: playlistTable.createdAt,
+    })
+    .from(playlistTable)
+    .where(eq(playlistTable.id, id))
+    .limit(1);
+  if (!row) {
+    res.status(404).json({ error: 'Playlist not found.' });
+    return null;
+  }
+  if (withCount) {
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(playlistSongTable)
+      .where(eq(playlistSongTable.playlistId, id));
+    return {
+      ...row,
+      _count: { songs: value },
+    };
+  }
+  return row;
 }
 
-/**
- * Finds a playlist by ID and checks owner/admin access.
- * Sends 404 or 403 and returns null if access is denied.
- */
+/** Finds a playlist by ID and checks owner/admin access. Sends 404 or 403 and returns null if access denied. */
 async function requirePlaylistAccess(
   id: string,
   user: UserContext | undefined,
   res: Response,
   action: string,
-  include?: Record<string, unknown>
+  withCount = false
 ) {
-  const playlist = await findPlaylistOr404(id, res, include);
+  const playlist = await findPlaylistOr404(id, res, withCount);
   if (!playlist) return null;
-  // Treat admins as having admin view for mutation operations
   if (!canAccessPlaylist(playlist, user, undefined, true)) {
     res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
     return null;
   }
   return playlist;
+}
+
+function formatPlaylist(pl: typeof playlistTable.$inferSelect, songCount?: number) {
+  const result: {
+    id: string;
+    name: string;
+    createdBy: string;
+    isPrivate: boolean;
+    createdAt: string;
+    _count?: { songs: number };
+  } = {
+    ...pl,
+    createdAt: pl.createdAt.toISOString(),
+  };
+  if (songCount !== undefined) {
+    result._count = { songs: songCount };
+  }
+  return result;
+}
+
+function formatPlaylistSongWithSong(
+  ps: typeof playlistSongTable.$inferSelect,
+  song: typeof tables.song.$inferSelect
+) {
+  return {
+    ...ps,
+    song: { ...song, createdAt: song.createdAt.toISOString(), tags: song.tags ?? [] },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -63,18 +122,24 @@ router.get('/', requireAuth, async (req, res) => {
   const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
   const skip = (page - 1) * limit;
 
-  const [playlists, total] = await Promise.all([
-    prisma.playlist.findMany({
-      orderBy: { createdAt: 'asc' },
-      skip,
-      take: limit,
-      include: PLAYLIST_WITH_COUNT,
-    }),
-    prisma.playlist.count(),
+  const [playlists, [{ count: total }]] = await Promise.all([
+    db.select().from(playlistTable).orderBy(playlistTable.createdAt).limit(limit).offset(skip),
+    db.select({ count: count() }).from(playlistTable),
   ]);
 
+  // Fetch song counts for each playlist
+  const playlistsWithCounts = await Promise.all(
+    playlists.map(async (pl) => {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(playlistSongTable)
+        .where(eq(playlistSongTable.playlistId, pl.id));
+      return formatPlaylist(pl, value);
+    })
+  );
+
   // Filter private playlists: only visible to creator and admins (in Admin View)
-  const filteredPlaylists = playlists.filter((pl) =>
+  const filteredPlaylists = playlistsWithCounts.filter((pl) =>
     canAccessPlaylist(pl, req.user, undefined, adminView)
   );
 
@@ -107,14 +172,15 @@ router.post('/', requireAuth, playlistLimiter, async (req, res) => {
   const trimmedName = validatePlaylistName(name, res);
   if (!trimmedName) return;
 
-  const playlist = await prisma.playlist.create({
-    data: {
+  const [playlist] = await db
+    .insert(playlistTable)
+    .values({
       name: trimmedName,
       createdBy: req.user?.discordId ?? '',
-    },
-  });
+    })
+    .returning();
 
-  emitPlaylistUpdated({ ...playlist, _count: { songs: 0 } });
+  emitPlaylistUpdated(formatPlaylist(playlist, 0));
   res.status(201).json(playlist);
 });
 
@@ -133,28 +199,49 @@ router.get('/:id', requireAuth, async (req, res) => {
   const id = req.params.id as string;
 
   // Fetch playlist metadata and total song count
-  const playlist = await findPlaylistOr404(id, res, {
-    _count: { select: { songs: true } },
-  });
+  const playlist = await findPlaylistOr404(id, res, true);
   if (!playlist) return;
 
   if (!canAccessPlaylist(playlist, req.user, res, adminView)) return;
 
   // Fetch paginated songs
-  const [playlistSongs, total] = await Promise.all([
-    prisma.playlistSong.findMany({
-      where: { playlistId: id },
-      orderBy: { position: 'asc' },
-      skip,
-      take: limit,
-      include: { song: true },
-    }),
-    prisma.playlistSong.count({ where: { playlistId: id } }),
+  const [playlistSongs, [{ count: total }]] = await Promise.all([
+    db
+      .select()
+      .from(playlistSongTable)
+      .where(eq(playlistSongTable.playlistId, id))
+      .orderBy(playlistSongTable.position)
+      .limit(limit)
+      .offset(skip),
+    db
+      .select({ count: count() })
+      .from(playlistSongTable)
+      .where(eq(playlistSongTable.playlistId, id)),
   ]);
+
+  // Fetch the actual song data for each playlist entry
+  const songIds = playlistSongs.map((ps) => ps.songId);
+  const songs =
+    songIds.length > 0
+      ? await db.select().from(tables.song).where(inArray(tables.song.id, songIds))
+      : [];
+  const songMap = new Map<string, typeof tables.song.$inferSelect>();
+  for (const s of songs) {
+    songMap.set(s.id, s);
+  }
 
   res.json({
     ...playlist,
-    songs: playlistSongs,
+    createdAt:
+      playlist.createdAt instanceof Date
+        ? playlist.createdAt.toISOString()
+        : playlist.createdAt,
+    songs: playlistSongs
+      .map((ps) => {
+        const song = songMap.get(ps.songId);
+        return song ? formatPlaylistSongWithSong(ps, song) : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null),
     createdByDisplayName: await getUserDisplayName(playlist.createdBy),
     pagination: {
       page,
@@ -184,14 +271,18 @@ router.patch('/:id/visibility', requireAuth, async (req, res) => {
   // Check permissions: creator or admin (in Admin View)
   if (!canAccessPlaylist(existing, req.user, res, adminView)) return;
 
-  const playlist = await prisma.playlist.update({
-    where: { id: req.params.id as string },
-    data: { isPrivate },
-    include: PLAYLIST_WITH_COUNT,
-  });
+  const [updatedPlaylist] = await db
+    .update(playlistTable)
+    .set({ isPrivate })
+    .where(eq(playlistTable.id, req.params.id as string))
+    .returning();
 
-  emitPlaylistUpdated(playlist);
-  res.json(playlist);
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(playlistSongTable)
+    .where(eq(playlistSongTable.playlistId, updatedPlaylist.id));
+  emitPlaylistUpdated(formatPlaylist(updatedPlaylist, value));
+  res.json(updatedPlaylist);
 });
 
 // ---------------------------------------------------------------------------
@@ -209,14 +300,18 @@ router.patch('/:id', requireAuth, async (req, res) => {
   const existing = await requirePlaylistAccess(id, req.user, res, 'rename this playlist');
   if (!existing) return;
 
-  const playlist = await prisma.playlist.update({
-    where: { id },
-    data: { name: trimmedName },
-    include: PLAYLIST_WITH_COUNT,
-  });
+  const [updatedPlaylist] = await db
+    .update(playlistTable)
+    .set({ name: trimmedName })
+    .where(eq(playlistTable.id, id))
+    .returning();
 
-  emitPlaylistUpdated(playlist);
-  res.json(playlist);
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(playlistSongTable)
+    .where(eq(playlistSongTable.playlistId, updatedPlaylist.id));
+  emitPlaylistUpdated(formatPlaylist(updatedPlaylist, value));
+  res.json(updatedPlaylist);
 });
 
 // ---------------------------------------------------------------------------
@@ -231,7 +326,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
   const existing = await requirePlaylistAccess(id, req.user, res, 'delete this playlist');
   if (!existing) return;
 
-  await prisma.playlist.delete({ where: { id } });
+  await db.delete(playlistTable).where(eq(playlistTable.id, id));
 
   res.status(204).send();
 });
@@ -255,18 +350,23 @@ router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
   const playlist = await requirePlaylistAccess(id, req.user, res, 'add songs to this playlist');
   if (!playlist) return;
 
-  const song = await prisma.song.findUnique({ where: { id: songId } });
+  const [song] = await db.select().from(tables.song).where(eq(tables.song.id, songId)).limit(1);
   if (!song) {
     res.status(404).json({ error: 'Song not found.' });
     return;
   }
 
   // Check for duplicate.
-  const existing = await prisma.playlistSong.findUnique({
-    where: {
-      playlistId_songId: { playlistId: playlist.id, songId: song.id },
-    },
-  });
+  const [existing] = await db
+    .select()
+    .from(playlistSongTable)
+    .where(
+      and(
+        eq(playlistSongTable.playlistId, playlist.id as string),
+        eq(playlistSongTable.songId, song.id)
+      )
+    )
+    .limit(1);
 
   if (existing) {
     res.status(409).json({ error: 'This song is already in the playlist.' });
@@ -274,29 +374,35 @@ router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
   }
 
   // Find the current highest position so we can append.
-  const lastEntry = await prisma.playlistSong.findFirst({
-    where: { playlistId: playlist.id },
-    orderBy: { position: 'desc' },
-  });
+  const [lastEntry] = await db
+    .select()
+    .from(playlistSongTable)
+    .where(eq(playlistSongTable.playlistId, playlist.id as string))
+    .orderBy(desc(playlistSongTable.position))
+    .limit(1);
 
   const nextPosition = (lastEntry?.position ?? -1) + 1;
 
-  const playlistSong = await prisma.playlistSong.create({
-    data: {
-      playlistId: playlist.id,
+  const [ps] = await db
+    .insert(playlistSongTable)
+    .values({
+      playlistId: playlist.id as string,
       songId: song.id,
       position: nextPosition,
-    },
-    include: { song: true },
-  });
+    })
+    .returning();
 
-  const updatedPlaylist = await prisma.playlist.findUnique({
-    where: { id: playlist.id },
-    include: PLAYLIST_WITH_COUNT,
-  });
-  if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+  const songData = { ...song, createdAt: song.createdAt.toISOString(), tags: song.tags ?? [] };
+  const [countRow] = await db
+    .select({ value: count() })
+    .from(playlistSongTable)
+    .where(eq(playlistSongTable.playlistId, playlist.id as string));
+  emitPlaylistUpdated(formatPlaylist(playlist, countRow.value));
 
-  res.status(201).json(playlistSong);
+  res.status(201).json({
+    ...ps,
+    song: songData,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -314,14 +420,11 @@ router.delete('/:id/songs/:songId', requireAuth, playlistLimiter, async (req, re
   const playlist = await requirePlaylistAccess(pid, req.user, res, 'remove songs');
   if (!playlist) return;
 
-  const entry = await prisma.playlistSong.findUnique({
-    where: {
-      playlistId_songId: {
-        playlistId: pid,
-        songId: sid,
-      },
-    },
-  });
+  const [entry] = await db
+    .select()
+    .from(playlistSongTable)
+    .where(and(eq(playlistSongTable.playlistId, pid), eq(playlistSongTable.songId, sid)))
+    .limit(1);
 
   if (!entry) {
     res.status(404).json({ error: 'Song not found in playlist.' });
@@ -329,37 +432,31 @@ router.delete('/:id/songs/:songId', requireAuth, playlistLimiter, async (req, re
   }
 
   // Delete and re-index in a transaction to prevent inconsistent positions.
-  await prisma.$transaction(async (tx) => {
-    await tx.playlistSong.delete({
-      where: {
-        playlistId_songId: {
-          playlistId: pid,
-          songId: sid,
-        },
-      },
-    });
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(playlistSongTable)
+      .where(and(eq(playlistSongTable.playlistId, pid), eq(playlistSongTable.songId, sid)));
 
     // Re-index remaining songs to close the gap in positions.
-    const remaining = await tx.playlistSong.findMany({
-      where: { playlistId: pid },
-      orderBy: { position: 'asc' },
-    });
+    const remaining = await tx
+      .select()
+      .from(playlistSongTable)
+      .where(eq(playlistSongTable.playlistId, pid))
+      .orderBy(playlistSongTable.position);
 
     await Promise.all(
-      remaining.map((ps: { id: string }, index: number) =>
-        tx.playlistSong.update({
-          where: { id: ps.id },
-          data: { position: index },
-        })
+      remaining.map((ps, index) =>
+        tx.update(playlistSongTable).set({ position: index }).where(eq(playlistSongTable.id, ps.id))
       )
     );
   });
 
-  const updatedPlaylist = await prisma.playlist.findUnique({
-    where: { id: pid },
-    include: PLAYLIST_WITH_COUNT,
-  });
-  if (updatedPlaylist) emitPlaylistUpdated(updatedPlaylist);
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(playlistSongTable)
+    .where(eq(playlistSongTable.playlistId, pid));
+  const updatedPlaylist = formatPlaylist(playlist, value);
+  emitPlaylistUpdated(updatedPlaylist);
 
   res.status(204).send();
 });

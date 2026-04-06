@@ -1,5 +1,5 @@
-import { PLAYLIST_SONGS_INCLUDE, toQueuedSong } from '@alfira-bot/shared';
-import prisma from '@alfira-bot/shared/prisma';
+import { toQueuedSong } from '@alfira-bot/shared';
+import { db, findPlaylistWithSongs, ilike, tables } from '@alfira-bot/shared/db';
 import { type GuildMember, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../types';
 import { pluralize } from '../utils/format';
@@ -33,20 +33,26 @@ export const playlistCommand: Command = {
       // Database lookup can take a moment; defer immediately.
       await interaction.deferReply();
 
-      const playlist = await prisma.playlist.findFirst({
-        where: { name: { equals: name, mode: 'insensitive' } },
-        include: PLAYLIST_SONGS_INCLUDE,
-      });
+      // Find playlist by name (case-insensitive)
+      const [pl] = await db
+        .select()
+        .from(tables.playlist)
+        .where(ilike(tables.playlist.name, name))
+        .limit(1);
 
-      if (!playlist) {
+      if (!pl) {
         await interaction.editReply(
-          `❌ No playlist found named **${name}**. Check your spelling or use the web UI to see all playlists.`
+          `No playlist found named **${name}**. Check your spelling or use the web UI to see all playlists.`
         );
         return;
       }
 
-      if (playlist.songs.length === 0) {
-        await interaction.editReply(`❌ **${playlist.name}** exists but has no songs in it yet.`);
+      // Fetch songs for this playlist
+      const playlist = await findPlaylistWithSongs(pl.id);
+      if (!playlist || playlist.songs.length === 0) {
+        await interaction.editReply(
+          `**${playlist?.name ?? pl.name}** exists but has no songs in it yet.`
+        );
         return;
       }
 
@@ -62,7 +68,7 @@ export const playlistCommand: Command = {
 
       const count = queuedSongs.length;
       await interaction.editReply(
-        `✅ Queued **${pluralize(count, 'song')}** from **${playlist.name}**.`
+        `Queued **${pluralize(count, 'song')}** from **${playlist.name}**.`
       );
     }
   },

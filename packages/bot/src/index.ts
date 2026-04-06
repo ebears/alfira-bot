@@ -1,4 +1,4 @@
-import { logger } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared/logger';
 import { getVoiceConnection } from '@discordjs/voice';
 import {
   Client,

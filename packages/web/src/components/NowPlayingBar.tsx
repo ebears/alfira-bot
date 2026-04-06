@@ -1,5 +1,4 @@
 import type { QueuedSong } from '@alfira-bot/shared';
-import { logger } from '@alfira-bot/shared';
 import {
   CircleNotchIcon,
   DoorOpenIcon,
@@ -132,7 +131,9 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
         disabled={!currentSong || loopBusy}
         title={`Loop: ${loopMode}`}
         className={`shrink-0 disabled:opacity-50 ${
-          isLoopActive ? 'pressed text-accent hover:text-accent-muted' : 'text-black dark:text-white hover:text-fg'
+          isLoopActive
+            ? 'pressed text-accent hover:text-accent-muted'
+            : 'text-black dark:text-white hover:text-fg'
         }`}
       >
         {loopBusy ? (
@@ -149,7 +150,9 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
         disabled={!currentSong || shuffleBusy}
         title={isShuffled ? 'Unshuffle queue' : 'Shuffle queue'}
         className={`shrink-0 disabled:opacity-50 ${
-          isShuffled ? 'pressed text-accent hover:text-accent-muted' : 'text-black dark:text-white hover:text-fg'
+          isShuffled
+            ? 'pressed text-accent hover:text-accent-muted'
+            : 'text-black dark:text-white hover:text-fg'
         }`}
       >
         {shuffleBusy ? (
@@ -272,7 +275,7 @@ export function NowPlayingBar() {
     try {
       await pause();
     } catch (e) {
-      logger.error(e);
+      console.error(e);
     } finally {
       setPauseBusy(false);
     }
@@ -284,7 +287,7 @@ export function NowPlayingBar() {
     try {
       await skip();
     } catch (e) {
-      logger.error(e);
+      console.error(e);
       setSkipBusy(false);
     }
   }, [skip, currentSong]);
@@ -297,7 +300,7 @@ export function NowPlayingBar() {
   }, [skipBusy, currentSong]);
 
   const handleStop = useCallback(() => {
-    leave().catch((e) => logger.error(e));
+    leave().catch((e) => console.error(e));
   }, [leave]);
 
   const handleCycleLoop = useCallback(async () => {

@@ -34,11 +34,8 @@
       }
     },
     "onlyBuiltDependencies": [
-      "@prisma/adapter-pg",
-      "@prisma/engines",
       "@tailwindcss/vite",
       "esbuild",
-      "prisma",
       "vite"
     ],
     "blockExoticSubdeps": true,

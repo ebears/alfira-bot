@@ -23,13 +23,10 @@ RUN npm install -g pnpm
 # Install system dependencies needed for build and runtime
 # ffmpeg: audio processing for the bot
 # python3: required for yt-dlp
-# openssl, libc6-compat: required for Prisma
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
-    ca-certificates \
-    openssl \
-    libc6-compat
+    ca-certificates
 
 # Copy yt-dlp from shared stage
 COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
@@ -49,16 +46,10 @@ RUN pnpm install --frozen-lockfile
 # Development stage - for local development with hot reload
 # ---------------------------------------------------------------------------
 FROM deps AS dev
-# Copy prisma.config.ts (Prisma 7 requires it at project root)
-COPY prisma.config.ts ./prisma.config.ts
-# Copy all source files (needed for building bot)
+# Copy all source files (needed for building bot/shared)
 COPY packages ./packages
 
-# Generate Prisma client (in shared package, used by both api and bot)
-# Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @alfira-bot/shared run db:generate
-
-# Build shared (prisma singleton + runtime exports), then bot
+# Build shared (db singleton + runtime exports), then bot
 RUN pnpm --filter @alfira-bot/shared run build && \
     pnpm --filter @alfira-bot/bot run build
 
@@ -72,14 +63,8 @@ CMD ["pnpm", "run", "dev"]
 # Builder stage - compile TypeScript and prepare production assets
 # ---------------------------------------------------------------------------
 FROM deps AS builder
-# Copy prisma.config.ts (Prisma 7 requires it at project root)
-COPY prisma.config.ts ./prisma.config.ts
 # Copy all package source files
 COPY packages ./packages
-
-# Generate Prisma client (in shared package, used by both api and bot)
-# Provide dummy DATABASE_URL for generate (actual URL used at runtime)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @alfira-bot/shared run db:generate
 
 # Build shared, bot, and API (shared must build first — both api and bot import from it)
 RUN pnpm --filter @alfira-bot/shared run build && \
@@ -110,9 +95,7 @@ FROM node:24-alpine AS runtime
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
-    ca-certificates \
-    openssl \
-    libc6-compat
+    ca-certificates
 
 # Copy yt-dlp from shared stage (no re-download needed)
 COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
@@ -133,13 +116,7 @@ COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/shared/node_modules ./
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 
-# Copy Prisma client (generated in shared package)
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/src/generated ./packages/shared/src/generated
-
-# Copy prisma.config.ts (Prisma 7 requires it at project root)
-COPY --from=builder --chown=nodejs:nodejs /app/prisma.config.ts ./prisma.config.ts
-
-# Copy package.json files (needed for runtime)
+# Copy package.json files for runtime
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/package.json ./packages/api/package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/package.json ./packages/bot/package.json

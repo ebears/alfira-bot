@@ -1,7 +1,7 @@
 import type { ChildProcess } from 'node:child_process';
 import { execFile, spawn } from 'node:child_process';
 import type { Readable } from 'node:stream';
-import { logger } from '@alfira-bot/shared';
+import { logger } from '@alfira-bot/shared/logger';
 import { WriteStream as CapacitorWriteStream } from 'fs-capacitor';
 
 interface SongMetadata {

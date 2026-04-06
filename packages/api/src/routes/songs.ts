@@ -1,8 +1,9 @@
+import { tables } from '@alfira-bot/shared/db';
+import { eq, sql } from 'drizzle-orm';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
-import { findOr404 } from '../lib/findOr404';
-import prisma from '../lib/prisma';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
   clampMaxVideos,
@@ -20,6 +21,8 @@ import {
 import { requireAdmin } from '../middleware/requireAdmin';
 import { requireAuth } from '../middleware/requireAuth';
 
+const { song: songTable } = tables;
+
 const router = Router();
 
 // Rate limit playlist import to prevent abuse.
@@ -30,6 +33,11 @@ const importLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many imports. Please slow down.' },
 });
+
+// Helper: convert Drizzle row (with Date) to wire format (with string).
+function formatSong(s: typeof songTable.$inferSelect) {
+  return { ...s, createdAt: s.createdAt.toISOString(), tags: s.tags ?? [] };
+}
 
 // ---------------------------------------------------------------------------
 // GET /api/songs
@@ -44,36 +52,34 @@ router.get('/', requireAuth, async (req, res) => {
   const search = String(req.query.search ?? '').trim();
 
   // Build tag-matching IDs via raw SQL (case-insensitive substring on array elements).
-  // Prisma's `has` filter does exact equality only.
   const tagMatchingIds = search
     ? (
-        await prisma.$queryRaw<
-          Array<{ id: string }>
-        >`SELECT id FROM "Song" WHERE array_to_string(tags, ',') ILIKE ${`%${search}%`}`
+        await db.execute<{ id: string }>(
+          sql`SELECT id FROM "Song" WHERE array_to_string(tags, ',') ILIKE ${`%${search}%`}`
+        )
       ).map((r) => r.id)
     : [];
 
   const where = search
-    ? {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' as const } },
-          { nickname: { contains: search, mode: 'insensitive' as const } },
-          { artist: { contains: search, mode: 'insensitive' as const } },
-          { album: { contains: search, mode: 'insensitive' as const } },
-          { id: { in: tagMatchingIds } },
-        ],
-      }
-    : {};
+    ? tagMatchingIds.length > 0
+      ? sql`(title ILIKE ${`%${search}%`} OR nickname ILIKE ${`%${search}%`} OR artist ILIKE ${`%${search}%`} OR album ILIKE ${`%${search}%`} OR id IN (${sql.join(
+          tagMatchingIds.map((id) => sql.raw(`'${id}'`)),
+          sql`,`
+        )}))`
+      : sql`(title ILIKE ${`%${search}%`} OR nickname ILIKE ${`%${search}%`} OR artist ILIKE ${`%${search}%`} OR album ILIKE ${`%${search}%`})`
+    : undefined;
 
-  const [songs, total] = await Promise.all([
-    prisma.song.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    }),
-    prisma.song.count({ where }),
+  const [songs, [{ count }]] = await Promise.all([
+    db
+      .select()
+      .from(songTable)
+      .where(where)
+      .orderBy(sql`"createdAt" DESC`)
+      .offset(skip)
+      .limit(limit),
+    db.select({ count: sql<number>`count(*)` }).from(songTable).where(where),
   ]);
+  const total = parseInt(String(count), 10);
 
   // Resolve Discord display names for unique addedBy IDs
   const uniqueIds = [...new Set(songs.map((s) => s.addedBy))];
@@ -85,7 +91,7 @@ router.get('/', requireAuth, async (req, res) => {
   );
 
   const songsWithNames = songs.map((s) => ({
-    ...s,
+    ...formatSong(s),
     addedByDisplayName: nameMap.get(s.addedBy) ?? s.addedBy,
   }));
 
@@ -104,13 +110,6 @@ router.get('/', requireAuth, async (req, res) => {
 // POST /api/songs
 //
 // Adds a new song by YouTube URL. Admin only.
-//
-// Flow:
-// 1. Validate the URL format and length.
-// 2. Fetch metadata via yt-dlp (title, duration, youtubeId).
-// 3. Check for duplicates by youtubeId.
-// 4. Save to the database.
-// 5. Emit songs:added so all connected clients update in real time.
 // ---------------------------------------------------------------------------
 router.post('/', requireAuth, requireAdmin, async (req, res) => {
   const trimmedNickname = validateNickname(req.body.nickname, res);
@@ -122,21 +121,24 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   const metadata = await fetchYouTubeMetadata(url, res);
   if (!metadata) return;
 
-  // Check for duplicate by youtubeId (more reliable than URL comparison).
-  const existing = await prisma.song.findUnique({
-    where: { youtubeId: metadata.youtubeId },
-  });
+  // Check for duplicate by youtubeId.
+  const [existing] = await db
+    .select()
+    .from(songTable)
+    .where(eq(songTable.youtubeId, metadata.youtubeId))
+    .limit(1);
 
   if (existing) {
     res.status(409).json({
       error: 'This song is already in your library.',
-      song: existing,
+      song: formatSong(existing),
     });
     return;
   }
 
-  const song = await prisma.song.create({
-    data: {
+  const [song] = await db
+    .insert(songTable)
+    .values({
       title: metadata.title,
       youtubeUrl: url,
       youtubeId: metadata.youtubeId,
@@ -144,25 +146,19 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
       thumbnailUrl: metadata.thumbnailUrl ?? '',
       addedBy: req.user?.discordId ?? '',
       nickname: trimmedNickname,
-    },
-  });
+    })
+    .returning();
 
-  emitSongAdded(song);
+  const formatted = formatSong(song);
+  emitSongAdded(formatted);
 
-  res.status(201).json(song);
+  res.status(201).json(formatted);
 });
 
 // ---------------------------------------------------------------------------
 // POST /api/songs/import-playlist
 //
 // Imports all songs from a YouTube playlist into the library. Admin only.
-//
-// Flow:
-// 1. Validate the URL is a YouTube playlist URL.
-// 2. Fetch playlist metadata via yt-dlp (title, videos).
-// 3. For each video, check for duplicates by youtubeId AND youtubeUrl.
-// 4. Create songs in the database (batch insert).
-// 5. Emit songs:added for each new song.
 // ---------------------------------------------------------------------------
 router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async (req, res) => {
   const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
@@ -178,16 +174,21 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
     canonicalUrl: youTubeUrl(v.id),
   }));
 
-  // Get existing songs that match either by youtubeId OR youtubeUrl
-  const existingSongs = await prisma.song.findMany({
-    where: {
-      OR: [
-        { youtubeId: { in: videosWithUrls.map((v) => v.id) } },
-        { youtubeUrl: { in: videosWithUrls.map((v) => v.canonicalUrl) } },
-      ],
-    },
-    select: { youtubeId: true, youtubeUrl: true },
-  });
+  let existingSongs: { youtubeId: string; youtubeUrl: string }[] = [];
+  if (videosWithUrls.length > 0) {
+    existingSongs = await db
+      .select({ youtubeId: songTable.youtubeId, youtubeUrl: songTable.youtubeUrl })
+      .from(songTable)
+      .where(
+        sql`"youtubeId" = ANY(ARRAY[${sql.join(
+          videosWithUrls.map((v) => v.id),
+          sql`,`
+        )}]::text[]) OR "youtubeUrl" = ANY(ARRAY[${sql.join(
+          videosWithUrls.map((v) => v.canonicalUrl),
+          sql`,`
+        )}]::text[])`
+      );
+  }
 
   // Create sets for quick lookup
   const existingYoutubeIds = new Set(existingSongs.map((s) => s.youtubeId));
@@ -209,25 +210,26 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
     return;
   }
 
-  // Create songs
-  const createdSongs = await prisma.$transaction(
-    newVideos.map((video) =>
-      prisma.song.create({
-        data: {
+  // Create songs in a transaction
+  const createdSongs = await db.transaction((tx) => {
+    return tx
+      .insert(songTable)
+      .values(
+        newVideos.map((video) => ({
           title: video.title,
           youtubeUrl: video.canonicalUrl,
           youtubeId: video.id,
           duration: video.duration,
           thumbnailUrl: video.thumbnailUrl ?? '',
           addedBy: req.user?.discordId ?? '',
-        },
-      })
-    )
-  );
+        }))
+      )
+      .returning();
+  });
 
   // Emit socket events for each new song
   for (const song of createdSongs) {
-    emitSongAdded(song);
+    emitSongAdded(formatSong(song));
   }
 
   res.status(201).json({
@@ -236,7 +238,7 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
     totalVideos: playlistMetadata.videoCount,
     importedCount: createdSongs.length,
     skippedCount: playlistMetadata.videos.length - newVideos.length,
-    songs: createdSongs,
+    songs: createdSongs.map(formatSong),
   });
 });
 
@@ -249,10 +251,13 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = req.params.id as string;
 
-  const existing = await findOr404(() => prisma.song.findUnique({ where: { id } }), res, 'Song');
-  if (!existing) return;
+  const [existing] = await db.select().from(songTable).where(eq(songTable.id, id)).limit(1);
+  if (!existing) {
+    res.status(404).json({ error: 'Song not found.' });
+    return;
+  }
 
-  await prisma.song.delete({ where: { id } });
+  await db.delete(songTable).where(eq(songTable.id, id));
 
   // Notify all connected clients so the Songs page removes the card in real time.
   emitSongDeleted(id);
@@ -269,8 +274,11 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
 router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = req.params.id as string;
 
-  const existing = await findOr404(() => prisma.song.findUnique({ where: { id } }), res, 'Song');
-  if (!existing) return;
+  const [existing] = await db.select().from(songTable).where(eq(songTable.id, id)).limit(1);
+  if (!existing) {
+    res.status(404).json({ error: 'Song not found.' });
+    return;
+  }
 
   const data: Record<string, unknown> = {};
 
@@ -321,10 +329,14 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
     data.volumeOffset = volumeOffset;
   }
 
-  const song = await prisma.song.update({ where: { id }, data });
+  const [updatedSong] = await db
+    .update(songTable)
+    .set(data)
+    .where(eq(songTable.id, id))
+    .returning();
 
-  emitSongUpdated(song);
-  res.json(song);
+  emitSongUpdated(formatSong(updatedSong));
+  res.json(formatSong(updatedSong));
 });
 
 export default router;

@@ -5,17 +5,17 @@ import { Server as SocketIOServer } from 'socket.io';
 import { verifySessionToken } from '../middleware/requireAuth';
 import { logger, WEB_UI_ORIGIN } from './config';
 
-type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: Date };
-type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: Date };
+// Accept both Date and string createdAt — Prisma used Date, Drizzle uses Date at the DB level
+// but we serialize to ISO string for Socket.io JSON serialization.
+type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
+type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Date };
 
 // Socket.io server singleton. Call initSocket(httpServer) once at startup.
-// Events: player:update, songs:added, songs:updated, songs:deleted, playlists:updated
 
 let _io: SocketIOServer | null = null;
 
 /**
  * Attach Socket.io to the HTTP server and store the instance.
- * Must be called before any broadcast helpers are used.
  */
 export function initSocket(httpServer: HTTPServer): SocketIOServer {
   _io = new SocketIOServer(httpServer, {
@@ -25,15 +25,6 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
     },
   });
 
-  // ---------------------------------------------------------------------------
-  // Socket.io authentication middleware
-  //
-  // Verifies the JWT from the 'session' cookie before allowing a WebSocket
-  // connection. This prevents unauthenticated clients from receiving real-time
-  // events (player:update, songs:added, etc.).
-  //
-  // The session cookie is HttpOnly and set by the OAuth flow in auth.ts.
-  // ---------------------------------------------------------------------------
   _io.use((socket, next) => {
     const cookies = parse(socket.handshake.headers.cookie || '');
     const token = cookies.session;
@@ -49,8 +40,6 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
       return;
     }
 
-    // Attach the decoded user to socket.data for potential future use
-    // (e.g., admin-only socket events, user-specific rooms)
     socket.data.user = payload;
     next();
   });
@@ -72,8 +61,6 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
 
 /**
  * Emit the full queue state to all connected clients.
- * Triggered by any playback change: song start, skip, stop, shuffle, loop.
- * Validates the payload shape before emitting to catch contract drift at runtime.
  */
 export function emitPlayerUpdate(state: QueueState): void {
   _io?.emit('player:update', state);
@@ -81,15 +68,16 @@ export function emitPlayerUpdate(state: QueueState): void {
 
 /**
  * Emit a newly added song to all connected clients.
- * Allows the Songs page to append the card in real time.
  */
 export function emitSongAdded(song: SerializedSong): void {
-  _io?.emit('songs:added', { ...song, createdAt: song.createdAt.toISOString() });
+  _io?.emit('songs:added', {
+    ...song,
+    createdAt: song.createdAt instanceof Date ? song.createdAt.toISOString() : song.createdAt,
+  });
 }
 
 /**
  * Emit the deleted song's ID to all connected clients.
- * Allows the Songs page to remove the card in real time.
  */
 export function emitSongDeleted(id: string): void {
   _io?.emit('songs:deleted', id);
@@ -97,10 +85,12 @@ export function emitSongDeleted(id: string): void {
 
 /**
  * Emit an updated song to all connected clients.
- * Allows the Library page to reflect nickname changes in real time.
  */
 export function emitSongUpdated(song: SerializedSong): void {
-  _io?.emit('songs:updated', { ...song, createdAt: song.createdAt.toISOString() });
+  _io?.emit('songs:updated', {
+    ...song,
+    createdAt: song.createdAt instanceof Date ? song.createdAt.toISOString() : song.createdAt,
+  });
 }
 
 /**
@@ -108,7 +98,11 @@ export function emitSongUpdated(song: SerializedSong): void {
  * Covers: create, rename, song added, song removed.
  */
 export function emitPlaylistUpdated(playlist: SerializedPlaylist): void {
-  _io?.emit('playlists:updated', { ...playlist, createdAt: playlist.createdAt.toISOString() });
+  _io?.emit('playlists:updated', {
+    ...playlist,
+    createdAt:
+      playlist.createdAt instanceof Date ? playlist.createdAt.toISOString() : playlist.createdAt,
+  });
 }
 
 /**

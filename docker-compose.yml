@@ -46,17 +46,6 @@ services:
       timeout: 5s
       retries: 5
 
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile.migrate
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: on-failure
-    environment:
-      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
-
   api:
     build:
       context: .
@@ -66,8 +55,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     env_file:
       # Local .env files provide Discord tokens, OAuth secrets, JWT secret, etc.
       # Copy the .env.example files and fill in real values before first run.
@@ -83,9 +70,8 @@ services:
       # Live-mount API source files — restart the service to pick up changes.
       # The bot's compiled dist/ is baked into the image and stays intact here.
       - ./packages/api/src:/app/packages/api/src
-      # Mount shared source for prisma singleton hot-reload
+      # Mount shared source so hot-reload picks up DB changes.
       - ./packages/shared/src:/app/packages/shared/src
-      - ./packages/shared/prisma:/app/packages/shared/prisma
     healthcheck:
       test:
         [
