@@ -12,32 +12,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "pnpm"
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v4
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build shared package
-        run: pnpm --filter @alfira-bot/shared run build
+        run: bun run --filter @alfira-bot/shared build
 
       - name: Build bot package
-        run: pnpm --filter @alfira-bot/bot run build
+        run: bun run --filter @alfira-bot/bot build
 
       - name: Lint with Biome
-        run: pnpm run lint
+        run: bun run lint
 
       - name: Typecheck API
-        run: pnpm exec tsc --noEmit -p packages/api/tsconfig.json
+        run: bunx tsc --noEmit -p packages/api/tsconfig.json
 
       - name: Typecheck bot
-        run: pnpm exec tsc --noEmit -p packages/bot/tsconfig.json
+        run: bunx tsc --noEmit -p packages/bot/tsconfig.json
 
       - name: Typecheck web
-        run: pnpm exec tsc --noEmit -p packages/web/tsconfig.json
+        run: bunx tsc --noEmit -p packages/web/tsconfig.json
