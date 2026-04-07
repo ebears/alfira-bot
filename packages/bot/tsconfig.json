@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": ".",
     "paths": {
       "@alfira-bot/shared": ["./node_modules/@alfira-bot/shared/dist/"],
       "@alfira-bot/shared/db": ["./node_modules/@alfira-bot/shared/dist/db/index.d.ts"],
@@ -16,7 +17,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
