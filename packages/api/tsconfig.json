@@ -3,7 +3,6 @@
     "target": "ES2020",
     "module": "commonjs",
     "moduleResolution": "node",
-    "baseUrl": ".",
     "paths": {
       "@alfira-bot/shared": ["./node_modules/@alfira-bot/shared/dist/"],
       "@alfira-bot/shared/*": ["./node_modules/@alfira-bot/shared/dist/*"]
@@ -16,8 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
-    "ignoreDeprecations": "6.0"
+    "declarationMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

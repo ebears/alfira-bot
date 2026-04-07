@@ -24,6 +24,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.4.9
         version: 2.4.9
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   packages/api:
     dependencies:
@@ -154,7 +157,7 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
       typescript:
-        specifier: ^5.4.5
+        specifier: 5.9.3
         version: 5.9.3
 
   packages/web:
