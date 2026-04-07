@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "paths": {
       "@alfira-bot/shared": ["./node_modules/@alfira-bot/shared/dist/"],
       "@alfira-bot/shared/*": ["./node_modules/@alfira-bot/shared/dist/*"]
