@@ -233,9 +233,7 @@ router.get('/:id', requireAuth, async (req, res) => {
   res.json({
     ...playlist,
     createdAt:
-      playlist.createdAt instanceof Date
-        ? playlist.createdAt.toISOString()
-        : playlist.createdAt,
+      playlist.createdAt instanceof Date ? playlist.createdAt.toISOString() : playlist.createdAt,
     songs: playlistSongs
       .map((ps) => {
         const song = songMap.get(ps.songId);

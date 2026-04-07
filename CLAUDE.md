@@ -8,7 +8,7 @@ Alfira is a self-hosted Discord music bot with a web UI as the primary interface
 
 - `packages/shared` — Shared types and utilities (formatDuration, fisherYatesShuffle)
 - `packages/bot` — Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
-- `packages/api` — Express API, Prisma, Socket.io server
+- `packages/api` — Express API, Drizzle ORM, Socket.io server
 - `packages/web` — Vite + React + Tailwind web UI
 
 The bot and API run in a **single Node.js process**, sharing memory for player state. This allows Socket.io to broadcast real-time updates directly from playback events.
@@ -21,7 +21,7 @@ The bot and API run in a **single Node.js process**, sharing memory for player s
 - **Audio:** yt-dlp + ffmpeg
 - **API:** Express.js 5
 - **Real-time:** Socket.io
-- **Database:** PostgreSQL 16 + Prisma 7
+- **Database:** PostgreSQL 16 + Drizzle ORM
 - **Frontend:** React 19 + Vite 8 + Tailwind CSS 4
 - **Linting:** Biome
 
@@ -34,10 +34,10 @@ pnpm run dev
 # Start the Vite dev server for web UI
 pnpm run web:dev
 
-# Generate Prisma client
+# Generate Drizzle migration files
 pnpm run db:generate
 
-# Run Prisma migrations
+# Run Drizzle migrations
 pnpm run db:migrate
 
 # Lint + format with auto-fix (run before committing)

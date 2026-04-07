@@ -50,7 +50,7 @@ export const tables = {
 };
 
 // ---------------------------------------------------------------------------
-// Relations — helpers for multi-table queries that replace Prisma includes.
+// Relations — helpers for multi-table queries.
 // ---------------------------------------------------------------------------
 
 /** Fetch a single playlist with its songs ordered by position. */
