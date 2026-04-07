@@ -69,6 +69,7 @@ COPY package.json bun.lock ./
 COPY packages/api/package.json packages/api/package.json
 COPY packages/bot/package.json packages/bot/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY packages/web/package.json packages/web/package.json
 
 RUN bun install --production
 
