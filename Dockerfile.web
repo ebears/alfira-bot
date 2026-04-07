@@ -1,20 +1,17 @@
 # ---------------------------------------------------------------------------
-# Dependencies stage - install pnpm packages
+# Dependencies stage - install bun packages
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS deps
-
-# Install pnpm globally
-RUN npm install -g pnpm
+FROM oven/bun:1-alpine AS deps
 
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages/web/package.json ./packages/web/
-COPY packages/shared/package.json ./packages/shared/
+COPY package.json bun.lock ./
+COPY packages/web/package.json packages/web/package.json
+COPY packages/shared/package.json packages/shared/package.json
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN bun install
 
 # ---------------------------------------------------------------------------
 # Development stage - for local development with Vite HMR
@@ -31,7 +28,7 @@ ENV NODE_ENV=development
 
 EXPOSE 5173
 
-CMD ["pnpm", "--filter", "@alfira-bot/web", "exec", "vite"]
+CMD ["bun", "run", "--filter", "@alfira-bot/web", "exec", "vite"]
 
 # ---------------------------------------------------------------------------
 # Builder stage - compile TypeScript and build static assets
@@ -45,8 +42,8 @@ COPY packages/web ./packages/web
 COPY packages/shared ./packages/shared
 
 # Build shared package (required for type declarations) then web
-RUN pnpm --filter @alfira-bot/shared run build && \
-    pnpm --filter @alfira-bot/web run build
+RUN bun run --filter @alfira-bot/shared build && \
+    bun run --filter @alfira-bot/web build
 
 # ---------------------------------------------------------------------------
 # Runtime stage - minimal nginx image serving static files

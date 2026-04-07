@@ -4,7 +4,7 @@ Guidance for Claude Code when working with this codebase.
 
 ## Project Overview
 
-Alfira is a self-hosted Discord music bot with a web UI as the primary interface. It's a pnpm workspaces monorepo with four packages:
+Alfira is a self-hosted Discord music bot with a web UI as the primary interface. It's a Bun workspaces monorepo with four packages:
 
 - `packages/shared` — Shared types and utilities (formatDuration, fisherYatesShuffle)
 - `packages/bot` — Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
@@ -29,25 +29,25 @@ The bot and API run in a **single Node.js process**, sharing memory for player s
 
 ```bash
 # Start the API + bot (Docker)
-pnpm run dev
+bun run dev
 
 # Start the Vite dev server for web UI
-pnpm run web:dev
+bun run web:dev
 
 # Generate Drizzle migration files
-pnpm run db:generate
+bun run db:generate
 
 # Run Drizzle migrations
-pnpm run db:migrate
+bun run db:migrate
 
 # Lint + format with auto-fix (run before committing)
-pnpm run check
+bun run check
 
 # Lint only, with auto-fix
-pnpm run lint:fix
+bun run lint:fix
 
 # Format only, with auto-fix
-pnpm run format
+bun run format
 ```
 
 ## Key Architecture Notes
@@ -56,7 +56,7 @@ pnpm run format
 
 The bot package is pre-compiled during Docker image build:
 
-1. `Dockerfile.api` runs `npm run -w packages/bot build`
+1. `Dockerfile.api` runs `bun run --filter @alfira-bot/bot build`
 2. Compiled output is baked into the image at `packages/bot/dist/`
 3. API source files are mounted as volumes, but bot's `dist/` stays in the image
 
@@ -73,7 +73,7 @@ The bot package is pre-compiled during Docker image build:
 Commands must be registered with Discord:
 
 ```bash
-docker compose exec api pnpm run bot:deploy
+docker compose exec api bun run bot:deploy
 ```
 
 Commands are auto-registered on startup by default (configurable via `AUTO_DEPLOY_COMMANDS`).
@@ -81,8 +81,8 @@ Commands are auto-registered on startup by default (configurable via `AUTO_DEPLO
 ## Code Style
 
 - Biome for linting and formatting
-- Run `pnpm run check` before committing
-- CI runs `pnpm run lint` — code must pass before merging
+- Run `bun run check` before committing
+- CI runs `bun run lint` — code must pass before merging
 
 ## Shared Package Exports
 

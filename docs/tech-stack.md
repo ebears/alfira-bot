@@ -66,7 +66,7 @@ The bot and API run in a **single Node.js process**, sharing the same memory for
 
 ## Project Structure
 
-The project is a pnpm workspaces monorepo:
+The project is a Bun workspaces monorepo:
 
 ```
 packages/
@@ -82,13 +82,13 @@ Top-level scripts:
 
 | Script | Description |
 |--------|-------------|
-| `pnpm run dev` | Start the API + bot |
-| `pnpm run web:dev` | Start the Vite dev server for the web UI |
-| `pnpm run db:generate` | Generate Drizzle migration files |
-| `pnpm run db:migrate` | Run Drizzle migrations |
-| `pnpm run check` | Lint and format with auto-fix (Biome) |
-| `pnpm run lint:fix` | Lint with auto-fix |
-| `pnpm run format` | Format with auto-fix |
+| `bun run dev` | Start the API + bot |
+| `bun run web:dev` | Start the Vite dev server for the web UI |
+| `bun run db:generate` | Generate Drizzle migration files |
+| `bun run db:migrate` | Run Drizzle migrations |
+| `bun run check` | Lint and format with auto-fix (Biome) |
+| `bun run lint:fix` | Lint with auto-fix |
+| `bun run format` | Format with auto-fix |
 
 ## Shared Package Exports
 
