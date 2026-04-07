@@ -9,7 +9,7 @@
 // Song
 //
 // Matches the database schema exactly. This is what the API returns and what
-// Prisma queries produce. It does NOT include queue-time properties like
+// Drizzle queries produce. It does NOT include queue-time properties like
 // requestedBy — use QueuedSong for that.
 // ---------------------------------------------------------------------------
 export interface Song {
@@ -71,8 +71,7 @@ export interface QueueState {
 // ---------------------------------------------------------------------------
 // Playlist / PlaylistSong
 //
-// Match the database schema. _count is added by Prisma when using the
-// include: { _count: { select: { songs: true } } } query option.
+// Match the database schema.
 // ---------------------------------------------------------------------------
 export interface Playlist {
   id: string;

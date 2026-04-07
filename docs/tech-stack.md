@@ -10,7 +10,7 @@
 | **Audio** | `yt-dlp`, `ffmpeg` |
 | **API** | Express.js 5 |
 | **Real-time** | Socket.io |
-| **Database** | PostgreSQL 16 + Prisma 7 |
+| **Database** | PostgreSQL 16 + Drizzle ORM |
 | **Frontend** | React 19 + Vite 8 + Tailwind CSS 4 |
 | **Logging** | Pino |
 
@@ -36,7 +36,7 @@ flowchart TB
     end
 
     subgraph Data["Data Layer"]
-        PRISMA[Prisma ORM]
+        DRIZZLE[Drizzle ORM]
         PG[(PostgreSQL)]
     end
 
@@ -48,7 +48,7 @@ flowchart TB
     DISC <-->|Voice Channel| VOICE
 
     %% Server internal
-    API <--> PRISMA
+    API <--> DRIZZLE
     BOT <--> SOCKET
     API <--> SOCKET
 
@@ -59,7 +59,7 @@ flowchart TB
     BOT --> YTDLP
 
     %% Database
-    PRISMA --> PG
+    DRIZZLE --> PG
 ```
 
 The bot and API run in a **single Node.js process**, sharing the same memory for the player state. This allows Socket.io to broadcast real-time updates directly from the bot's playback events without any additional infrastructure.
@@ -72,7 +72,7 @@ The project is a pnpm workspaces monorepo:
 packages/
 ├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
 ├── bot       # Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
-├── api       # Express API, Prisma, Socket.io server
+├── api       # Express API, Drizzle ORM, Socket.io server
 └── web       # Vite + React + Tailwind web UI
 ```
 
@@ -84,8 +84,8 @@ Top-level scripts:
 |--------|-------------|
 | `pnpm run dev` | Start the API + bot |
 | `pnpm run web:dev` | Start the Vite dev server for the web UI |
-| `pnpm run db:generate` | Generate Prisma client |
-| `pnpm run db:migrate` | Run Prisma migrations |
+| `pnpm run db:generate` | Generate Drizzle migration files |
+| `pnpm run db:migrate` | Run Drizzle migrations |
 | `pnpm run check` | Lint and format with auto-fix (Biome) |
 | `pnpm run lint:fix` | Lint with auto-fix |
 | `pnpm run format` | Format with auto-fix |

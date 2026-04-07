@@ -23,12 +23,10 @@ build/
 *.tsbuildinfo
 
 # -----------------------------------------------
-# Prisma
+# Drizzle ORM
 # Migrations are committed — they are part of the
-# project history. The generated client is not.
+# project history. Generated files are not.
 # -----------------------------------------------
-packages/api/prisma/generated/
-packages/shared/prisma/generated/
 packages/api/src/generated/
 
 # -----------------------------------------------

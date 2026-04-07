@@ -5,7 +5,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { verifySessionToken } from '../middleware/requireAuth';
 import { logger, WEB_UI_ORIGIN } from './config';
 
-// Accept both Date and string createdAt — Prisma used Date, Drizzle uses Date at the DB level
+// Accept both Date and string createdAt — Drizzle uses Date at the DB level,
 // but we serialize to ISO string for Socket.io JSON serialization.
 type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
 type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Date };

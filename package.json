@@ -39,10 +39,6 @@
       "esbuild",
       "vite"
     ],
-    "ignoredBuiltDependencies": [
-      "@prisma/engines",
-      "prisma"
-    ],
     "blockExoticSubdeps": true,
     "minimumReleaseAge": 1440
   },
