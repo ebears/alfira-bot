@@ -45,9 +45,10 @@ export function useSocket(): Socket {
   if (!_socket) {
     _socket = io({
       withCredentials: true,
-      // Try WebSocket first; fall back to long-polling if the WS upgrade
-      // fails (e.g. during dev when Vite's proxy hasn't fully warmed up).
-      transports: ['websocket', 'polling'],
+      // Start with long-polling; Socket.io will upgrade to WebSocket once
+      // connected. This ordering is more reliable when WebSocket upgrades
+      // through Vite's proxy fail (e.g. in Docker dev environments).
+      transports: ['polling', 'websocket'],
     });
 
     _socket.on('connect', () => setStatus('connected'));
