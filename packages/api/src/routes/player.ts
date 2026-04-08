@@ -1,16 +1,13 @@
 import { getPlayer } from '@alfira-bot/bot';
 import {
   fisherYatesShuffle as fisherYatesShuffleImpl,
-  getRequestedBy,
   type LoopMode,
   toQueuedSong,
 } from '@alfira-bot/shared';
-import { eq, findPlaylistWithSongs, tables } from '@alfira-bot/shared/db';
+import { db, eq, findPlaylistWithSongs, tables } from '@alfira-bot/shared/db';
 import { getVoiceConnection } from '@discordjs/voice';
-import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import type { RouteContext } from '../index';
 import { GUILD_ID } from '../lib/config';
-import { db } from '../lib/db';
 import { requirePlayer, requirePlaying } from '../lib/player';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import {
@@ -22,29 +19,29 @@ import {
   youTubeUrl,
 } from '../lib/validation';
 import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
-import { requireAdmin } from '../middleware/requireAdmin';
-import { requireAuth } from '../middleware/requireAuth';
 
 const { song: songTable } = tables;
 
-const router = Router();
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
-// Rate limit player action routes to prevent abuse.
-const playerLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests. Please slow down.' },
-});
+// ---------------------------------------------------------------------------
+// GET /api/player/queue — returns current queue state
+// ---------------------------------------------------------------------------
+function handleGetQueue(ctx: RouteContext): Response {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-// GET /api/player/queue — returns current queue state. Member accessible.
-router.get('/queue', requireAuth, (_req, res) => {
   const player = getPlayer(GUILD_ID);
   const connection = getVoiceConnection(GUILD_ID);
 
   if (!player) {
-    res.json({
+    return json({
       isPlaying: false,
       isPaused: false,
       isConnectedToVoice: !!connection,
@@ -55,26 +52,39 @@ router.get('/queue', requireAuth, (_req, res) => {
       queue: [],
       trackStartedAt: null,
     });
-    return;
   }
 
-  res.json(player.getQueueState());
-});
+  return json(player.getQueueState());
+}
 
-// POST /api/player/play — load songs and start playback. Member accessible.
-router.post('/play', requireAuth, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/play — load songs and start playback
+// ---------------------------------------------------------------------------
+async function handlePlay(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-  const { playlistId, mode, loop, startFromSongId } = req.body as {
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
+
+  let body: {
     playlistId?: string;
     mode?: 'sequential' | 'random';
     loop?: LoopMode;
     startFromSongId?: string;
   };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  const player = await resolveOrAutoJoinPlayer(req, res);
-  if (!player) return;
+  const { playlistId, mode, loop, startFromSongId } = body;
+
+  const playerResult = await resolveOrAutoJoinPlayer(ctx.user.discordId ?? '');
+  if (!playerResult.ok) return playerResult.response;
+  const player = playerResult.player;
 
   let dbSongs: (typeof songTable.$inferSelect)[];
 
@@ -82,11 +92,13 @@ router.post('/play', requireAuth, async (req, res) => {
     const playlist = await findPlaylistWithSongs(playlistId);
 
     if (!playlist) {
-      res.status(404).json({ error: 'Playlist not found.' });
-      return;
+      return json({ error: 'Playlist not found.' }, 404);
     }
 
-    if (!canAccessPlaylist(playlist, req.user, res)) return;
+    const accessResult = canAccessPlaylist(playlist, ctx.user, undefined);
+    if (!accessResult.ok) {
+      return json({ error: accessResult.error }, 403);
+    }
 
     dbSongs = playlist.songs.map((ps) => ps.song);
   } else {
@@ -94,16 +106,14 @@ router.post('/play', requireAuth, async (req, res) => {
   }
 
   if (dbSongs.length === 0) {
-    res.status(422).json({ error: 'No songs found to play.' });
-    return;
+    return json({ error: 'No songs found to play.' }, 422);
   }
 
   if (startFromSongId) {
     const startIndex = dbSongs.findIndex((s) => s.id === startFromSongId);
 
     if (startIndex === -1) {
-      res.status(404).json({ error: 'Start song not found in playlist.' });
-      return;
+      return json({ error: 'Start song not found in playlist.' }, 404);
     }
 
     dbSongs = [...dbSongs.slice(startIndex), ...dbSongs.slice(0, startIndex)];
@@ -116,7 +126,7 @@ router.post('/play', requireAuth, async (req, res) => {
   const targetLoopMode = loop ?? player.getLoopMode();
   player.setLoopMode(targetLoopMode);
 
-  const { username: requestedBy } = getRequestedBy(req);
+  const requestedBy = ctx.user.username;
   const queuedSongs = dbSongs.map((song) =>
     toQueuedSong({ ...song, createdAt: song.createdAt.toISOString() }, requestedBy)
   );
@@ -127,99 +137,162 @@ router.post('/play', requireAuth, async (req, res) => {
     await player.addToQueue(queuedSongs);
   }
 
-  res.json({ message: `Queued ${queuedSongs.length} song(s).` });
-});
+  return json({ message: `Queued ${queuedSongs.length} song(s).` });
+}
 
-// POST /api/player/skip — skip current song. Member accessible.
-router.post('/skip', requireAuth, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/skip — skip current song
+// ---------------------------------------------------------------------------
+async function handleSkip(ctx: RouteContext): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-  const player = requirePlaying(res);
-  if (!player) return;
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-  player.skip();
-  res.json({ message: 'Skipped.' });
-});
+  const playingResult = requirePlaying();
+  if (!playingResult.ok) return playingResult.response;
 
-// POST /api/player/leave — stop and disconnect. Member accessible.
-router.post('/leave', requireAuth, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+  playingResult.player.skip();
+  return json({ message: 'Skipped.' });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/player/leave — stop and disconnect
+// ---------------------------------------------------------------------------
+async function handleLeave(ctx: RouteContext): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
   const player = getPlayer(GUILD_ID);
   const connection = getVoiceConnection(GUILD_ID);
 
   if (!player && !connection) {
-    res.status(409).json({ error: 'The bot is not in a voice channel.' });
-    return;
+    return json({ error: 'The bot is not in a voice channel.' }, 409);
   }
 
   if (player) player.stop();
   if (connection) connection.destroy();
 
-  res.json({ message: 'Left the voice channel.' });
-});
+  return json({ message: 'Left the voice channel.' });
+}
 
-// POST /api/player/loop — set loop mode. Member accessible.
-router.post('/loop', requireAuth, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
-  const { mode } = req.body as { mode?: LoopMode };
-
-  if (!mode || !['off', 'song', 'queue'].includes(mode)) {
-    res.status(400).json({ error: 'mode must be "off", "song", or "queue".' });
-    return;
+// ---------------------------------------------------------------------------
+// POST /api/player/loop — set loop mode
+// ---------------------------------------------------------------------------
+async function handleLoop(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
   }
 
-  const player = requirePlayer(res);
-  if (!player) return;
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-  player.setLoopMode(mode);
-  res.json({ loopMode: mode });
-});
+  let body: { mode?: LoopMode };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-// POST /api/player/shuffle — shuffle queue. Admin only.
-router.post('/shuffle', requireAuth, requireAdmin, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+  const { mode } = body;
+
+  if (!mode || !['off', 'song', 'queue'].includes(mode)) {
+    return json({ error: 'mode must be "off", "song", or "queue".' }, 400);
+  }
+
+  const playerResult = requirePlayer();
+  if (!playerResult.ok) return playerResult.response;
+
+  playerResult.player.setLoopMode(mode);
+  return json({ loopMode: mode });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/player/shuffle — shuffle queue (admin only)
+// ---------------------------------------------------------------------------
+async function handleShuffle(ctx: RouteContext): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
+
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
+
   const player = getPlayer(GUILD_ID);
 
   if (!player || player.getQueue().length === 0) {
-    res.status(409).json({ error: 'No songs in the queue to shuffle.' });
-    return;
+    return json({ error: 'No songs in the queue to shuffle.' }, 409);
   }
 
   player.shuffle();
-  res.json({ message: 'Queue shuffled.' });
-});
+  return json({ message: 'Queue shuffled.' });
+}
 
-// POST /api/player/unshuffle — restore original queue order. Admin only.
-router.post('/unshuffle', requireAuth, requireAdmin, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
-  const player = requirePlayer(res);
-  if (!player) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/unshuffle — restore original queue order (admin only)
+// ---------------------------------------------------------------------------
+async function handleUnshuffle(ctx: RouteContext): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  player.unshuffle();
-  res.json({ message: 'Queue order restored.' });
-});
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-// POST /api/player/quick-add — add YouTube URL to priority queue. Admin only.
-router.post('/quick-add', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+  const playerResult = requirePlayer();
+  if (!playerResult.ok) return playerResult.response;
 
-  const url = validateYouTubeUrl(req.body.youtubeUrl, res);
-  if (!url) return;
+  playerResult.player.unshuffle();
+  return json({ message: 'Queue order restored.' });
+}
 
-  const player = await resolveOrAutoJoinPlayer(req, res);
-  if (!player) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/quick-add — add YouTube URL to priority queue (admin only)
+// ---------------------------------------------------------------------------
+async function handleQuickAdd(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  const metadata = await fetchYouTubeMetadata(url, res);
-  if (!metadata) return;
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-  const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+  let body: { youtubeUrl?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
+
+  const urlResult = validateYouTubeUrl(body.youtubeUrl);
+  if (!urlResult.ok) return urlResult.response;
+  const url = urlResult.value;
+
+  const playerResult = await resolveOrAutoJoinPlayer(ctx.user.discordId ?? '');
+  if (!playerResult.ok) return playerResult.response;
+  const player = playerResult.player;
+
+  const metadataResult = await fetchYouTubeMetadata(url);
+  if (!metadataResult.ok) return metadataResult.response;
+  const metadata = metadataResult.value;
+
+  const requestedBy = ctx.user.username;
+  const addedBy = ctx.user.discordId ?? '';
   const queuedSong = {
     id: `temp-${Date.now()}`,
     title: metadata.title,
@@ -234,28 +307,48 @@ router.post('/quick-add', requireAuth, requireAdmin, playerLimiter, async (req, 
 
   await player.addToPriorityQueue(queuedSong);
 
-  res.json({
+  return json({
     message: `Added "${metadata.title}" to the queue.`,
     song: queuedSong,
   });
-});
+}
 
-// POST /api/player/quick-add-playlist — add playlist to queue. Admin only.
-router.post('/quick-add-playlist', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/quick-add-playlist — add playlist to queue (admin only)
+// ---------------------------------------------------------------------------
+async function handleQuickAddPlaylist(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
-  const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
-  if (!url) return;
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-  const player = await resolveOrAutoJoinPlayer(req, res);
-  if (!player) return;
+  let body: { youtubeUrl?: unknown; maxVideos?: number };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
-  if (!playlistMetadata) return;
+  const maxVideos = clampMaxVideos(body.maxVideos);
+  const urlResult = validateYouTubePlaylistUrl(body.youtubeUrl);
+  if (!urlResult.ok) return urlResult.response;
+  const url = urlResult.value;
 
-  const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+  const playerResult = await resolveOrAutoJoinPlayer(ctx.user.discordId ?? '');
+  if (!playerResult.ok) return playerResult.response;
+  const player = playerResult.player;
+
+  const playlistResult = await fetchPlaylistMetadata(url, maxVideos);
+  if (!playlistResult.ok) return playlistResult.response;
+  const playlistMetadata = playlistResult.value;
+
+  const requestedBy = ctx.user.username;
+  const addedBy = ctx.user.discordId ?? '';
   const queuedSongs = playlistMetadata.videos.map((video) => ({
     id: `temp-${Date.now()}-${video.id}`,
     title: video.title,
@@ -270,62 +363,92 @@ router.post('/quick-add-playlist', requireAuth, requireAdmin, playerLimiter, asy
 
   await player.addToQueue(queuedSongs);
 
-  res.json({
+  return json({
     message: `Added ${queuedSongs.length} song(s) from "${playlistMetadata.title}" to the queue.`,
     playlistTitle: playlistMetadata.title,
     totalVideos: playlistMetadata.videoCount,
     queuedCount: queuedSongs.length,
     songs: queuedSongs,
   });
-});
+}
 
-// POST /api/player/pause-toggle — pause/resume. Member accessible.
-router.post('/pause-toggle', requireAuth, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/pause-toggle — pause/resume
+// ---------------------------------------------------------------------------
+async function handlePauseToggle(ctx: RouteContext): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-  const player = requirePlaying(res);
-  if (!player) return;
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-  const isPaused = player.togglePause();
-  res.json({ isPaused });
-});
+  const playingResult = requirePlaying();
+  if (!playingResult.ok) return playingResult.response;
 
-// POST /api/player/clear — clear queue. Admin only.
-router.post('/clear', requireAuth, requireAdmin, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+  const isPaused = playingResult.player.togglePause();
+  return json({ isPaused });
+}
 
-  const player = requirePlayer(res);
-  if (!player) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/clear — clear queue (admin only)
+// ---------------------------------------------------------------------------
+async function handleClear(ctx: RouteContext): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  player.clearQueue();
-  res.json({ message: 'Queue cleared.' });
-});
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-// POST /api/player/add-to-priority — add library song to Up Next. Admin only.
-router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+  const playerResult = requirePlayer();
+  if (!playerResult.ok) return playerResult.response;
 
-  const { songId } = req.body as { songId?: string };
+  playerResult.player.clearQueue();
+  return json({ message: 'Queue cleared.' });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/player/add-to-priority — add library song to Up Next (admin only)
+// ---------------------------------------------------------------------------
+async function handleAddToPriority(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
+
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
+
+  let body: { songId?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
+
+  const { songId } = body;
 
   if (!songId || typeof songId !== 'string') {
-    res.status(400).json({ error: 'songId is required.' });
-    return;
+    return json({ error: 'songId is required.' }, 400);
   }
 
   const [song] = await db.select().from(songTable).where(eq(songTable.id, songId)).limit(1);
 
   if (!song) {
-    res.status(404).json({ error: 'Song not found.' });
-    return;
+    return json({ error: 'Song not found.' }, 404);
   }
 
-  const player = await resolveOrAutoJoinPlayer(req, res);
-  if (!player) return;
+  const playerResult = await resolveOrAutoJoinPlayer(ctx.user.discordId ?? '');
+  if (!playerResult.ok) return playerResult.response;
+  const player = playerResult.player;
 
-  const { username: requestedBy } = getRequestedBy(req);
+  const requestedBy = ctx.user.username;
   const queuedSong = toQueuedSong(
     { ...song, createdAt: song.createdAt.toISOString() },
     requestedBy
@@ -333,27 +456,47 @@ router.post('/add-to-priority', requireAuth, requireAdmin, playerLimiter, async 
 
   await player.addToPriorityQueue(queuedSong);
 
-  res.json({
+  return json({
     message: `Added "${song.nickname || song.title}" to Up Next.`,
     song: queuedSong,
   });
-});
+}
 
-// POST /api/player/override — immediately play YouTube URL. Admin only.
-router.post('/override', requireAuth, requireAdmin, playerLimiter, async (req, res) => {
-  const inVoice = await requireUserInVoice(req, res);
-  if (!inVoice) return;
+// ---------------------------------------------------------------------------
+// POST /api/player/override — immediately play YouTube URL (admin only)
+// ---------------------------------------------------------------------------
+async function handleOverride(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  const url = validateYouTubeUrl(req.body.youtubeUrl, res);
-  if (!url) return;
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
 
-  const player = await resolveOrAutoJoinPlayer(req, res);
-  if (!player) return;
+  let body: { youtubeUrl?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  const metadata = await fetchYouTubeMetadata(url, res);
-  if (!metadata) return;
+  const urlResult = validateYouTubeUrl(body.youtubeUrl);
+  if (!urlResult.ok) return urlResult.response;
+  const url = urlResult.value;
 
-  const { username: requestedBy, discordId: addedBy } = getRequestedBy(req);
+  const playerResult = await resolveOrAutoJoinPlayer(ctx.user.discordId ?? '');
+  if (!playerResult.ok) return playerResult.response;
+  const player = playerResult.player;
+
+  const metadataResult = await fetchYouTubeMetadata(url);
+  if (!metadataResult.ok) return metadataResult.response;
+  const metadata = metadataResult.value;
+
+  const requestedBy = ctx.user.username;
+  const addedBy = ctx.user.discordId ?? '';
   const queuedSong = {
     id: `temp-${Date.now()}`,
     title: metadata.title,
@@ -368,10 +511,38 @@ router.post('/override', requireAuth, requireAdmin, playerLimiter, async (req, r
 
   await player.replaceQueueAndPlay([queuedSong]);
 
-  res.json({
+  return json({
     message: `Now playing "${metadata.title}".`,
     song: queuedSong,
   });
-});
+}
 
-export default router;
+// ---------------------------------------------------------------------------
+// Dispatcher
+// ---------------------------------------------------------------------------
+
+export async function handlePlayer(ctx: RouteContext, request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // Strip /api/player prefix
+  const path = pathname.slice('/api/player'.length);
+
+  if (path === '/queue' && request.method === 'GET') return await handleGetQueue(ctx);
+  if (path === '/play' && request.method === 'POST') return await handlePlay(ctx, request);
+  if (path === '/skip' && request.method === 'POST') return await handleSkip(ctx);
+  if (path === '/leave' && request.method === 'POST') return await handleLeave(ctx);
+  if (path === '/loop' && request.method === 'POST') return await handleLoop(ctx, request);
+  if (path === '/shuffle' && request.method === 'POST') return await handleShuffle(ctx);
+  if (path === '/unshuffle' && request.method === 'POST') return await handleUnshuffle(ctx);
+  if (path === '/quick-add' && request.method === 'POST') return await handleQuickAdd(ctx, request);
+  if (path === '/quick-add-playlist' && request.method === 'POST')
+    return await handleQuickAddPlaylist(ctx, request);
+  if (path === '/pause-toggle' && request.method === 'POST') return await handlePauseToggle(ctx);
+  if (path === '/clear' && request.method === 'POST') return await handleClear(ctx);
+  if (path === '/add-to-priority' && request.method === 'POST')
+    return await handleAddToPriority(ctx, request);
+  if (path === '/override' && request.method === 'POST') return await handleOverride(ctx, request);
+
+  return json({ error: 'Not Found' }, 404);
+}

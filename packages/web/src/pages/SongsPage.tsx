@@ -14,12 +14,11 @@ import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
-import { useSocket } from '../hooks/useSocket';
+import { onSocketEvent } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
-  const socket = useSocket();
   const { state: queueState } = usePlayerState();
   const [items, setItems] = useState<Song[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
@@ -134,16 +133,16 @@ export default function SongsPage() {
       );
     };
 
-    socket.on('songs:added', handleSongAdded);
-    socket.on('songs:deleted', handleSongDeleted);
-    socket.on('songs:updated', handleSongUpdated);
+    const offAdded = onSocketEvent('songs:added', handleSongAdded);
+    const offDeleted = onSocketEvent('songs:deleted', handleSongDeleted);
+    const offUpdated = onSocketEvent('songs:updated', handleSongUpdated);
 
     return () => {
-      socket.off('songs:added', handleSongAdded);
-      socket.off('songs:deleted', handleSongDeleted);
-      socket.off('songs:updated', handleSongUpdated);
+      offAdded();
+      offDeleted();
+      offUpdated();
     };
-  }, [socket, currentPage]);
+  }, [currentPage]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);

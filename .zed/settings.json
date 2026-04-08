@@ -1,0 +1,36 @@
+{
+  "languages": {
+    "CSS": {
+      "language_servers": ["tailwindcss-intellisense-css", "!vscode-css-language-server", "..."]
+    },
+    "JavaScript": {
+      "language_servers": ["biome", "..."],
+      "formatter": "language_server",
+      "format_on_save": "on"
+    },
+    "TypeScript": {
+      "language_servers": ["biome", "..."],
+      "formatter": "language_server",
+      "format_on_save": "on"
+    },
+    "TSX": {
+      "language_servers": ["biome", "..."],
+      "formatter": "language_server",
+      "format_on_save": "on"
+    },
+    "JSON": {
+      "language_servers": ["biome", "..."],
+      "formatter": "language_server",
+      "format_on_save": "on"
+    }
+  },
+  "formatter": {
+    "language_server": {
+      "name": "biome"
+    }
+  },
+  "code_actions_on_format": {
+    "source.organizeImports.biome": true,
+    "source.fixAll.biome": true
+  }
+}

@@ -1,18 +1,5 @@
 import type { User } from '@alfira-bot/shared';
-import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-
-// ---------------------------------------------------------------------------
-// Augment Express's Request type so req.user is available in all route
-// handlers without needing a cast.
-// ---------------------------------------------------------------------------
-declare global {
-  namespace Express {
-    interface Request {
-      user?: User;
-    }
-  }
-}
 
 /**
  * Verifies a JWT session token and returns the decoded payload.
@@ -27,29 +14,4 @@ export function verifySessionToken(token: string): User | null {
   } catch {
     return null;
   }
-}
-
-// ---------------------------------------------------------------------------
-// requireAuth
-//
-// Reads the JWT from the HttpOnly 'session' cookie, verifies it, and
-// attaches the decoded payload to req.user. Returns 401 if the token is
-// missing or invalid (expired, tampered, wrong secret).
-// ---------------------------------------------------------------------------
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const token = req.cookies?.session;
-
-  if (!token) {
-    res.status(401).json({ error: 'Not authenticated. Please log in at /auth/login.' });
-    return;
-  }
-
-  const payload = verifySessionToken(token);
-  if (!payload) {
-    res.status(401).json({ error: 'Session expired or invalid. Please log in again.' });
-    return;
-  }
-
-  req.user = payload;
-  next();
 }

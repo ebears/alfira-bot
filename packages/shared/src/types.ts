@@ -54,7 +54,7 @@ export type LoopMode = 'off' | 'song' | 'queue';
 // QueueState
 //
 // A snapshot of the GuildPlayer's current state. This is the payload for
-// GET /api/player/queue and the Socket.io player:update event (Phase 8).
+// GET /api/player/queue and the player:update event.
 // ---------------------------------------------------------------------------
 export interface QueueState {
   isPlaying: boolean;

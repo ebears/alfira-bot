@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "bun run --filter @alfira-bot/api dev",
-    "web:dev": "bun run --filter @alfira-bot/web dev",
+    "web:build": "bun run --filter @alfira-bot/web build",
     "bot:deploy": "bun run --filter @alfira-bot/bot deploy",
     "db:migrate": "bun run --filter @alfira-bot/shared db:migrate",
     "db:generate": "bun run --filter @alfira-bot/shared db:generate",
@@ -21,8 +21,6 @@
   "overrides": {
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "hono": "4.12.8",
-    "@hono/node-server": "1.19.11",
     "serialize-javascript": "7.0.4",
     "undici": "6.24.0",
     "lodash": "4.17.23"
@@ -30,8 +28,5 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.9",
     "typescript": "5.9.3"
-  },
-  "dependencies": {
-    "cookie": "^1.1.1"
   }
 }

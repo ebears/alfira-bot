@@ -1,7 +1,6 @@
 import { tables } from '@alfira-bot/shared/db';
 import { eq, sql } from 'drizzle-orm';
-import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import type { RouteContext } from '../index';
 import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
@@ -18,21 +17,15 @@ import {
   validateYouTubeUrl,
   youTubeUrl,
 } from '../lib/validation';
-import { requireAdmin } from '../middleware/requireAdmin';
-import { requireAuth } from '../middleware/requireAuth';
 
 const { song: songTable } = tables;
 
-const router = Router();
-
-// Rate limit playlist import to prevent abuse.
-const importLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many imports. Please slow down.' },
-});
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 // Helper: convert Drizzle row (with Date) to wire format (with string).
 function formatSong(s: typeof songTable.$inferSelect) {
@@ -40,16 +33,21 @@ function formatSong(s: typeof songTable.$inferSelect) {
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/songs
-//
-// Returns paginated songs, newest first. Accessible to any authenticated user.
-// Query params: page (default 1), limit (default 30).
+// GET /api/songs — paginated list of songs, newest first.
 // ---------------------------------------------------------------------------
-router.get('/', requireAuth, async (req, res) => {
-  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
+async function handleGetSongs(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(url.searchParams.get('limit') ?? '30', 10) || 30)
+  );
   const skip = (page - 1) * limit;
-  const search = String(req.query.search ?? '').trim();
+  const search = url.searchParams.get('search')?.trim() ?? '';
 
   // Build tag-matching IDs via raw SQL (case-insensitive substring on array elements).
   const tagMatchingIds = search
@@ -95,7 +93,7 @@ router.get('/', requireAuth, async (req, res) => {
     addedByDisplayName: nameMap.get(s.addedBy) ?? s.addedBy,
   }));
 
-  res.json({
+  return json({
     items: songsWithNames,
     pagination: {
       page,
@@ -104,22 +102,36 @@ router.get('/', requireAuth, async (req, res) => {
       totalPages: Math.ceil(total / limit),
     },
   });
-});
+}
 
 // ---------------------------------------------------------------------------
-// POST /api/songs
-//
-// Adds a new song by YouTube URL. Admin only.
+// POST /api/songs — add a song by YouTube URL. Admin only.
 // ---------------------------------------------------------------------------
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
-  const trimmedNickname = validateNickname(req.body.nickname, res);
-  if (trimmedNickname === false) return;
+async function handlePostSong(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  const url = validateYouTubeUrl(req.body.youtubeUrl, res);
-  if (!url) return;
+  let body: { youtubeUrl?: unknown; nickname?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  const metadata = await fetchYouTubeMetadata(url, res);
-  if (!metadata) return;
+  const nicknameResult = validateNickname(body.nickname);
+  if (!nicknameResult.ok) return nicknameResult.response;
+
+  const urlResult = validateYouTubeUrl(body.youtubeUrl);
+  if (!urlResult.ok) return urlResult.response;
+  const url = urlResult.value;
+
+  const metadataResult = await fetchYouTubeMetadata(url);
+  if (!metadataResult.ok) return metadataResult.response;
+  const metadata = metadataResult.value;
 
   // Check for duplicate by youtubeId.
   const [existing] = await db
@@ -129,11 +141,13 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
     .limit(1);
 
   if (existing) {
-    res.status(409).json({
-      error: 'This song is already in your library.',
-      song: formatSong(existing),
-    });
-    return;
+    return json(
+      {
+        error: 'This song is already in your library.',
+        song: formatSong(existing),
+      },
+      409
+    );
   }
 
   const [song] = await db
@@ -144,29 +158,43 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
       youtubeId: metadata.youtubeId,
       duration: metadata.duration,
       thumbnailUrl: metadata.thumbnailUrl ?? '',
-      addedBy: req.user?.discordId ?? '',
-      nickname: trimmedNickname,
+      addedBy: ctx.user.discordId ?? '',
+      nickname: nicknameResult.value,
     })
     .returning();
 
   const formatted = formatSong(song);
   emitSongAdded(formatted);
 
-  res.status(201).json(formatted);
-});
+  return json(formatted, 201);
+}
 
 // ---------------------------------------------------------------------------
-// POST /api/songs/import-playlist
-//
-// Imports all songs from a YouTube playlist into the library. Admin only.
+// POST /api/songs/import-playlist — import YouTube playlist. Admin only.
 // ---------------------------------------------------------------------------
-router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async (req, res) => {
-  const maxVideos = clampMaxVideos((req.body as { maxVideos?: number }).maxVideos);
-  const url = validateYouTubePlaylistUrl(req.body.youtubeUrl, res);
-  if (!url) return;
+async function handleImportPlaylist(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
-  const playlistMetadata = await fetchPlaylistMetadata(url, res, maxVideos);
-  if (!playlistMetadata) return;
+  let body: { youtubeUrl?: unknown; maxVideos?: number };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
+
+  const maxVideos = clampMaxVideos(body.maxVideos);
+  const urlResult = validateYouTubePlaylistUrl(body.youtubeUrl);
+  if (!urlResult.ok) return urlResult.response;
+  const url = urlResult.value;
+
+  const playlistResult = await fetchPlaylistMetadata(url, maxVideos);
+  if (!playlistResult.ok) return playlistResult.response;
+  const playlistMetadata = playlistResult.value;
 
   // Build the canonical URL format for each video
   const videosWithUrls = playlistMetadata.videos.map((v) => ({
@@ -200,15 +228,17 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
   );
 
   if (newVideos.length === 0) {
-    res.status(200).json({
+    return json({
       message: 'All songs from this playlist are already in your library.',
       playlistTitle: playlistMetadata.title,
       totalVideos: playlistMetadata.videoCount,
       importedCount: 0,
       skippedCount: playlistMetadata.videos.length,
     });
-    return;
   }
+
+  // Capture discordId before transaction to avoid TypeScript narrowing issues in callbacks
+  const addedByDiscordId = ctx.user?.discordId ?? '';
 
   // Create songs in a transaction
   const createdSongs = await db.transaction((tx) => {
@@ -221,7 +251,7 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
           youtubeId: video.id,
           duration: video.duration,
           thumbnailUrl: video.thumbnailUrl ?? '',
-          addedBy: req.user?.discordId ?? '',
+          addedBy: addedByDiscordId,
         }))
       )
       .returning();
@@ -232,29 +262,37 @@ router.post('/import-playlist', requireAuth, requireAdmin, importLimiter, async 
     emitSongAdded(formatSong(song));
   }
 
-  res.status(201).json({
-    message: `Successfully imported ${createdSongs.length} song(s) from "${playlistMetadata.title}".`,
-    playlistTitle: playlistMetadata.title,
-    totalVideos: playlistMetadata.videoCount,
-    importedCount: createdSongs.length,
-    skippedCount: playlistMetadata.videos.length - newVideos.length,
-    songs: createdSongs.map(formatSong),
-  });
-});
+  return json(
+    {
+      message: `Successfully imported ${createdSongs.length} song(s) from "${playlistMetadata.title}".`,
+      playlistTitle: playlistMetadata.title,
+      totalVideos: playlistMetadata.videoCount,
+      importedCount: createdSongs.length,
+      skippedCount: playlistMetadata.videos.length - newVideos.length,
+      songs: createdSongs.map(formatSong),
+    },
+    201
+  );
+}
 
 // ---------------------------------------------------------------------------
-// DELETE /api/songs/:id
-//
-// Deletes a song and all its PlaylistSong associations (via cascade).
-// Admin only.
+// DELETE /api/songs/:id — delete a song. Admin only.
 // ---------------------------------------------------------------------------
-router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
-  const id = req.params.id as string;
+async function handleDeleteSong(
+  ctx: RouteContext,
+  _request: Request,
+  id: string
+): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
 
   const [existing] = await db.select().from(songTable).where(eq(songTable.id, id)).limit(1);
   if (!existing) {
-    res.status(404).json({ error: 'Song not found.' });
-    return;
+    return json({ error: 'Song not found.' }, 404);
   }
 
   await db.delete(songTable).where(eq(songTable.id, id));
@@ -262,71 +300,70 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   // Notify all connected clients so the Songs page removes the card in real time.
   emitSongDeleted(id);
 
-  res.status(204).send();
-});
+  return new Response(null, { status: 204 });
+}
 
 // ---------------------------------------------------------------------------
-// PATCH /api/songs/:id
-//
-// Updates a song's editable fields (nickname, artist, album, artwork, tags).
-// Admin only. Only fields present in the request body are updated.
+// PATCH /api/songs/:id — update song fields. Admin only.
 // ---------------------------------------------------------------------------
-router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
-  const id = req.params.id as string;
+async function handlePatchSong(ctx: RouteContext, request: Request, id: string): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  if (!ctx.isAdmin) {
+    return json({ error: 'Admin access required.' }, 403);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
   const [existing] = await db.select().from(songTable).where(eq(songTable.id, id)).limit(1);
   if (!existing) {
-    res.status(404).json({ error: 'Song not found.' });
-    return;
+    return json({ error: 'Song not found.' }, 404);
   }
 
   const data: Record<string, unknown> = {};
 
   // Nickname
-  if ('nickname' in req.body) {
-    const trimmed = validateNickname(req.body.nickname, res);
-    if (trimmed === false) return;
-    data.nickname = trimmed;
+  if ('nickname' in body) {
+    const result = validateNickname(body.nickname);
+    if (!result.ok) return result.response;
+    data.nickname = result.value;
   }
 
   // Artist
-  if ('artist' in req.body) {
-    data.artist = validateOptionalString(req.body.artist);
+  if ('artist' in body) {
+    data.artist = validateOptionalString(body.artist);
   }
 
   // Album
-  if ('album' in req.body) {
-    data.album = validateOptionalString(req.body.album);
+  if ('album' in body) {
+    data.album = validateOptionalString(body.album);
   }
 
   // Artwork
-  if ('artwork' in req.body) {
-    const artwork = validateArtworkUrl(req.body.artwork);
-    if (artwork === false) {
-      res.status(400).json({ error: 'artwork must be a valid URL.' });
-      return;
-    }
-    data.artwork = artwork;
+  if ('artwork' in body) {
+    const artworkResult = validateArtworkUrl(body.artwork);
+    if (!artworkResult.ok) return artworkResult.response;
+    data.artwork = artworkResult.value;
   }
 
   // Tags
-  if ('tags' in req.body) {
-    const tags = validateTags(req.body.tags);
-    if (tags === false) {
-      res.status(400).json({ error: 'tags must be an array of strings.' });
-      return;
-    }
-    data.tags = tags;
+  if ('tags' in body) {
+    const tagsResult = validateTags(body.tags);
+    if (!tagsResult.ok) return tagsResult.response;
+    data.tags = tagsResult.value;
   }
 
   // Volume offset
-  if ('volumeOffset' in req.body) {
-    const volumeOffset = validateVolumeOffset(req.body.volumeOffset);
-    if (volumeOffset === false) {
-      res.status(400).json({ error: 'volumeOffset must be an integer between -12 and +12.' });
-      return;
-    }
-    data.volumeOffset = volumeOffset;
+  if ('volumeOffset' in body) {
+    const volumeResult = validateVolumeOffset(body.volumeOffset);
+    if (!volumeResult.ok) return volumeResult.response;
+    data.volumeOffset = volumeResult.value;
   }
 
   const [updatedSong] = await db
@@ -336,7 +373,43 @@ router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
     .returning();
 
   emitSongUpdated(formatSong(updatedSong));
-  res.json(formatSong(updatedSong));
-});
+  return json(formatSong(updatedSong));
+}
 
-export default router;
+// ---------------------------------------------------------------------------
+// Dispatcher
+// ---------------------------------------------------------------------------
+
+export async function handleSongs(ctx: RouteContext, request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // POST /api/songs/import-playlist
+  if (request.method === 'POST' && pathname === '/api/songs/import-playlist') {
+    return await handleImportPlaylist(ctx, request);
+  }
+
+  // GET /api/songs
+  if (request.method === 'GET' && pathname === '/api/songs') {
+    return await handleGetSongs(ctx, request);
+  }
+
+  // POST /api/songs
+  if (request.method === 'POST' && pathname === '/api/songs') {
+    return await handlePostSong(ctx, request);
+  }
+
+  // DELETE /api/songs/:id
+  if (request.method === 'DELETE' && pathname.startsWith('/api/songs/')) {
+    const id = pathname.slice('/api/songs/'.length);
+    return await handleDeleteSong(ctx, request, id);
+  }
+
+  // PATCH /api/songs/:id
+  if (request.method === 'PATCH' && pathname.startsWith('/api/songs/')) {
+    const id = pathname.slice('/api/songs/'.length);
+    return await handlePatchSong(ctx, request, id);
+  }
+
+  return json({ error: 'Not Found' }, 404);
+}

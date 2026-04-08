@@ -1,22 +1,36 @@
 import type { GuildPlayer } from '@alfira-bot/bot';
 import { getPlayer } from '@alfira-bot/bot';
-import type { Response } from 'express';
 import { GUILD_ID } from './config';
 
-export function requirePlaying(res: Response): GuildPlayer | null {
-  const player = getPlayer(GUILD_ID);
-  if (!player?.getCurrentSong()) {
-    res.status(409).json({ error: 'Nothing is currently playing.' });
-    return null;
-  }
-  return player;
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
-export function requirePlayer(res: Response): GuildPlayer | null {
+export function requirePlaying():
+  | { ok: true; player: GuildPlayer }
+  | { ok: false; response: Response } {
+  const player = getPlayer(GUILD_ID);
+  if (!player?.getCurrentSong()) {
+    return {
+      ok: false,
+      response: json({ error: 'Nothing is currently playing.' }, 409),
+    };
+  }
+  return { ok: true, player };
+}
+
+export function requirePlayer():
+  | { ok: true; player: GuildPlayer }
+  | { ok: false; response: Response } {
   const player = getPlayer(GUILD_ID);
   if (!player) {
-    res.status(409).json({ error: 'The bot is not connected.' });
-    return null;
+    return {
+      ok: false,
+      response: json({ error: 'The bot is not connected.' }, 409),
+    };
   }
-  return player;
+  return { ok: true, player };
 }

@@ -112,9 +112,18 @@
   },
   "overrides": [
     {
-      "includes": ["packages/api/**", "packages/bot/**"],
+      "includes": ["packages/api/**", "packages/bot/**", "packages/web/src/server.ts"],
       "javascript": {
-        "globals": ["process", "console", "__dirname", "__filename", "module", "require"]
+        "globals": [
+          "process",
+          "console",
+          "__dirname",
+          "__filename",
+          "module",
+          "require",
+          "Bun",
+          "WebSocketPair"
+        ]
       }
     },
     {

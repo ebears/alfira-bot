@@ -8,10 +8,9 @@
 | **Language** | TypeScript |
 | **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
 | **Audio** | `yt-dlp`, `ffmpeg` |
-| **API** | Express.js 5 |
-| **Real-time** | Socket.io |
+| **API** | Bun native HTTP + WebSocket |
 | **Database** | PostgreSQL 16 + Drizzle ORM |
-| **Frontend** | React 19 + Vite 8 + Tailwind CSS 4 |
+| **Frontend** | React 19 + Bun + Tailwind CSS 4 |
 | **Logging** | Pino |
 
 ## Architecture
@@ -19,14 +18,13 @@
 ```mermaid
 flowchart TB
     subgraph User
-        WEB[Web UI<br/>React + Vite]
+        WEB[Web UI<br/>React + Bun]
         DISC[Discord Client]
     end
 
     subgraph Server["Node.js Server"]
-        API[Express API<br/>:3001]
+        API[Bun API<br/>:3001]
         BOT[Discord Bot<br/>discord.js Voice]
-        SOCKET[Socket.io<br/>Real-time Events]
     end
 
     subgraph Audio["Audio Pipeline"]
@@ -50,7 +48,6 @@ flowchart TB
     %% Server internal
     API <--> DRIZZLE
     BOT <--> SOCKET
-    API <--> SOCKET
 
     %% Audio pipeline
     YTDLP -->|Metadata| BOT
@@ -62,7 +59,7 @@ flowchart TB
     DRIZZLE --> PG
 ```
 
-The bot and API run in a **single Node.js process**, sharing the same memory for the player state. This allows Socket.io to broadcast real-time updates directly from the bot's playback events without any additional infrastructure.
+The bot and API run in a **single Node.js process**, sharing the same memory for the player state. This allows real-time updates to be broadcast directly from the bot's playback events without any additional infrastructure.
 
 ## Project Structure
 
@@ -72,8 +69,8 @@ The project is a Bun workspaces monorepo:
 packages/
 ├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
 ├── bot       # Discord bot (GuildPlayer, yt-dlp wrapper)
-├── api       # Express API, Drizzle ORM, Socket.io server
-└── web       # Vite + React + Tailwind web UI
+├── api       # Bun API, Drizzle ORM
+└── web       # React + Tailwind web UI
 ```
 
 ## Development Scripts
@@ -83,7 +80,7 @@ Top-level scripts:
 | Script | Description |
 |--------|-------------|
 | `bun run dev` | Start the API + bot |
-| `bun run web:dev` | Start the Vite dev server for the web UI |
+| `bun run web:dev` | Start the Bun dev server for the web UI |
 | `bun run db:generate` | Generate Drizzle migration files |
 | `bun run db:migrate` | Run Drizzle migrations |
 | `bun run check` | Lint and format with auto-fix (Biome) |
@@ -101,7 +98,7 @@ Top-level scripts:
 | `Song` | Database song model (id, title, youtubeUrl, duration, thumbnailUrl, etc.) |
 | `QueuedSong` | Song with `requestedBy` display name (runtime queue property) |
 | `LoopMode` | `'off'` \| `'song'` \| `'queue'` |
-| `QueueState` | Full player state snapshot for Socket.io broadcasts |
+| `QueueState` | Full player state snapshot for real-time broadcasts |
 | `Playlist` | Database playlist model with optional song count |
 | `PlaylistSong` | Join table entry linking a song to a playlist at a position |
 | `PlaylistDetail` | Playlist with fully populated songs array |

@@ -21,18 +21,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build API + bot image (validate only)
+      - name: Build API + bot image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.api
-          push: false
-
-      - name: Build web image (validate only)
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./Dockerfile.web
           push: false
 
   publish:
@@ -62,13 +55,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/alfira-bot-api:latest
             ghcr.io/${{ github.repository_owner }}/alfira-bot-api:${{ github.sha }}
-
-      - name: Build and push web image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./Dockerfile.web
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/alfira-bot-web:latest
-            ghcr.io/${{ github.repository_owner }}/alfira-bot-web:${{ github.sha }}

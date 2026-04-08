@@ -49,7 +49,7 @@ services:
       WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:8080}
       TRUSTED_PROXY_IP: ${TRUSTED_PROXY_IP}
     ports:
-      - "${DOCKER_HOST_IP:-0.0.0.0}:3001:3001"
+      - "${DOCKER_HOST_IP:-0.0.0.0}:8180:3001"
     healthcheck:
       test:
         [
@@ -62,21 +62,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  web:
-    image: ghcr.io/ebears/alfira-bot-web:latest
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "8080:80"
-    healthcheck:
-      test:
-        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
 
 volumes:
   pgdata:

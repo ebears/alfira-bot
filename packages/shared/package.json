@@ -3,33 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "source": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
-    "./api": {
-      "types": "./dist/api.d.ts",
-      "source": "./src/api.ts",
-      "default": "./dist/api.js"
-    },
-    "./format": {
-      "types": "./dist/format.d.ts",
-      "source": "./src/format.ts",
-      "default": "./dist/format.js"
-    },
-    "./logger": {
-      "types": "./dist/logger.d.ts",
-      "source": "./src/logger.ts",
-      "default": "./dist/logger.js"
-    },
-    "./db": {
-      "types": "./dist/db/index.d.ts",
-      "source": "./src/db/index.ts",
-      "default": "./dist/db/index.js"
-    }
+    ".": "./dist/index.js",
+    "./api": "./dist/api.js",
+    "./format": "./dist/format.js",
+    "./logger": "./dist/logger.js",
+    "./db": "./dist/db/index.js"
   },
   "scripts": {
     "build": "tsc",

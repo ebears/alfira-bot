@@ -1,27 +1,20 @@
 import { tables } from '@alfira-bot/shared/db';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
-import type { Response } from 'express';
-import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import type { RouteContext } from '../index';
 import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
-import { canAccessPlaylist, type UserContext } from '../lib/playlistAccess';
+import { canAccessPlaylist } from '../lib/playlistAccess';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { validatePlaylistName } from '../lib/validation';
-import { requireAuth } from '../middleware/requireAuth';
 
 const { playlist: playlistTable, playlistSong: playlistSongTable } = tables;
 
-const router = Router();
-
-// Rate limit playlist mutations to prevent abuse.
-const playlistLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests. Please slow down.' },
-});
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 type PlaylistRow = {
   id: string;
@@ -32,11 +25,7 @@ type PlaylistRow = {
   _count?: { songs: number };
 };
 
-async function findPlaylistOr404(
-  id: string,
-  res: Response,
-  withCount = false
-): Promise<PlaylistRow | null> {
+async function findPlaylistOr404(id: string, withCount = false): Promise<PlaylistRow | null> {
   const [row] = await db
     .select({
       id: playlistTable.id,
@@ -48,38 +37,15 @@ async function findPlaylistOr404(
     .from(playlistTable)
     .where(eq(playlistTable.id, id))
     .limit(1);
-  if (!row) {
-    res.status(404).json({ error: 'Playlist not found.' });
-    return null;
-  }
+  if (!row) return null;
   if (withCount) {
     const [{ value }] = await db
       .select({ value: count() })
       .from(playlistSongTable)
       .where(eq(playlistSongTable.playlistId, id));
-    return {
-      ...row,
-      _count: { songs: value },
-    };
+    return { ...row, _count: { songs: value } };
   }
   return row;
-}
-
-/** Finds a playlist by ID and checks owner/admin access. Sends 404 or 403 and returns null if access denied. */
-async function requirePlaylistAccess(
-  id: string,
-  user: UserContext | undefined,
-  res: Response,
-  action: string,
-  withCount = false
-) {
-  const playlist = await findPlaylistOr404(id, res, withCount);
-  if (!playlist) return null;
-  if (!canAccessPlaylist(playlist, user, undefined, true)) {
-    res.status(403).json({ error: `Only the playlist owner or admins can ${action}.` });
-    return null;
-  }
-  return playlist;
 }
 
 function formatPlaylist(pl: typeof playlistTable.$inferSelect, songCount?: number) {
@@ -111,15 +77,20 @@ function formatPlaylistSongWithSong(
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/playlists
-//
-// Returns paginated playlists with a count of songs in each. Member accessible.
-// Query params: page (default 1), limit (default 30), adminView (default false).
+// GET /api/playlists — paginated list of playlists
 // ---------------------------------------------------------------------------
-router.get('/', requireAuth, async (req, res) => {
-  const adminView = req.query.adminView === 'true';
-  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
+async function handleGetPlaylists(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+
+  const url = new URL(request.url);
+  const adminView = url.searchParams.get('adminView') === 'true';
+  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(url.searchParams.get('limit') ?? '30', 10) || 30)
+  );
   const skip = (page - 1) * limit;
 
   const [playlists, [{ count: total }]] = await Promise.all([
@@ -139,8 +110,8 @@ router.get('/', requireAuth, async (req, res) => {
   );
 
   // Filter private playlists: only visible to creator and admins (in Admin View)
-  const filteredPlaylists = playlistsWithCounts.filter((pl) =>
-    canAccessPlaylist(pl, req.user, undefined, adminView)
+  const filteredPlaylists = playlistsWithCounts.filter(
+    (pl) => canAccessPlaylist(pl, ctx.user ?? undefined, adminView).ok
   );
 
   // Fetch creator display names for each playlist
@@ -151,7 +122,7 @@ router.get('/', requireAuth, async (req, res) => {
     }))
   );
 
-  res.json({
+  return json({
     items: playlistsWithCreator,
     pagination: {
       page,
@@ -160,49 +131,69 @@ router.get('/', requireAuth, async (req, res) => {
       totalPages: Math.ceil(total / limit),
     },
   });
-});
+}
 
 // ---------------------------------------------------------------------------
-// POST /api/playlists
-//
-// Creates a new empty playlist. All authenticated users can create playlists.
+// POST /api/playlists — create a new empty playlist
 // ---------------------------------------------------------------------------
-router.post('/', requireAuth, playlistLimiter, async (req, res) => {
-  const { name } = req.body as { name?: string };
-  const trimmedName = validatePlaylistName(name, res);
-  if (!trimmedName) return;
+async function handlePostPlaylist(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+
+  let body: { name?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
+
+  const nameResult = validatePlaylistName(body.name);
+  if (!nameResult.ok) return nameResult.response;
+  const trimmedName = nameResult.value;
 
   const [playlist] = await db
     .insert(playlistTable)
     .values({
       name: trimmedName,
-      createdBy: req.user?.discordId ?? '',
+      createdBy: ctx.user.discordId ?? '',
     })
     .returning();
 
   emitPlaylistUpdated(formatPlaylist(playlist, 0));
-  res.status(201).json(playlist);
-});
+  return json(playlist, 201);
+}
 
 // ---------------------------------------------------------------------------
-// GET /api/playlists/:id
-//
-// Returns a single playlist with paginated songs. Member accessible.
-// Query params: page (default 1), limit (default 30), adminView (default false).
+// GET /api/playlists/:id — single playlist with paginated songs
 // ---------------------------------------------------------------------------
-router.get('/:id', requireAuth, async (req, res) => {
-  const adminView = req.query.adminView === 'true';
-  const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '30'), 10) || 30));
+async function handleGetPlaylist(
+  ctx: RouteContext,
+  request: Request,
+  id: string
+): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+
+  const url = new URL(request.url);
+  const adminView = url.searchParams.get('adminView') === 'true';
+  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(url.searchParams.get('limit') ?? '30', 10) || 30)
+  );
   const skip = (page - 1) * limit;
 
-  const id = req.params.id as string;
+  const playlist = await findPlaylistOr404(id, true);
+  if (!playlist) {
+    return json({ error: 'Playlist not found.' }, 404);
+  }
 
-  // Fetch playlist metadata and total song count
-  const playlist = await findPlaylistOr404(id, res, true);
-  if (!playlist) return;
-
-  if (!canAccessPlaylist(playlist, req.user, res, adminView)) return;
+  const accessResult = canAccessPlaylist(playlist, ctx.user ?? undefined, adminView);
+  if (!accessResult.ok) {
+    return json({ error: accessResult.error }, 403);
+  }
 
   // Fetch paginated songs
   const [playlistSongs, [{ count: total }]] = await Promise.all([
@@ -230,7 +221,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     songMap.set(s.id, s);
   }
 
-  res.json({
+  return json({
     ...playlist,
     createdAt:
       playlist.createdAt instanceof Date ? playlist.createdAt.toISOString() : playlist.createdAt,
@@ -248,55 +239,89 @@ router.get('/:id', requireAuth, async (req, res) => {
       totalPages: Math.ceil(total / limit),
     },
   });
-});
+}
 
 // ---------------------------------------------------------------------------
-// PATCH /api/playlists/:id/visibility
-//
-// Toggles playlist visibility (public/private).
-// Creator always, admins in Admin View.
+// PATCH /api/playlists/:id/visibility — toggle playlist visibility
 // ---------------------------------------------------------------------------
-router.patch('/:id/visibility', requireAuth, async (req, res) => {
-  const { isPrivate, adminView } = req.body as { isPrivate?: boolean; adminView?: boolean };
-  if (typeof isPrivate !== 'boolean') {
-    res.status(400).json({ error: 'isPrivate (boolean) is required.' });
-    return;
+async function handlePatchVisibility(
+  ctx: RouteContext,
+  request: Request,
+  id: string
+): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
   }
 
-  const existing = await findPlaylistOr404(req.params.id as string, res);
-  if (!existing) return;
+  let body: { isPrivate?: unknown; adminView?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  // Check permissions: creator or admin (in Admin View)
-  if (!canAccessPlaylist(existing, req.user, res, adminView)) return;
+  if (typeof body.isPrivate !== 'boolean') {
+    return json({ error: 'isPrivate (boolean) is required.' }, 400);
+  }
+
+  const existing = await findPlaylistOr404(id);
+  if (!existing) {
+    return json({ error: 'Playlist not found.' }, 404);
+  }
+
+  const adminView = body.adminView === true;
+  const accessResult = canAccessPlaylist(existing, ctx.user ?? undefined, adminView);
+  if (!accessResult.ok) {
+    return json({ error: accessResult.error }, 403);
+  }
 
   const [updatedPlaylist] = await db
     .update(playlistTable)
-    .set({ isPrivate })
-    .where(eq(playlistTable.id, req.params.id as string))
+    .set({ isPrivate: body.isPrivate })
+    .where(eq(playlistTable.id, id))
     .returning();
 
   const [{ value }] = await db
     .select({ value: count() })
     .from(playlistSongTable)
     .where(eq(playlistSongTable.playlistId, updatedPlaylist.id));
+
   emitPlaylistUpdated(formatPlaylist(updatedPlaylist, value));
-  res.json(updatedPlaylist);
-});
+  return json(updatedPlaylist);
+}
 
 // ---------------------------------------------------------------------------
-// PATCH /api/playlists/:id
-//
-// Renames a playlist. Playlist owner or admin.
+// PATCH /api/playlists/:id — rename a playlist
 // ---------------------------------------------------------------------------
-router.patch('/:id', requireAuth, async (req, res) => {
-  const { name } = req.body as { name?: string };
-  const trimmedName = validatePlaylistName(name, res);
-  if (!trimmedName) return;
+async function handlePatchPlaylist(
+  ctx: RouteContext,
+  request: Request,
+  id: string
+): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-  const id = req.params.id as string;
+  let body: { name?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  const existing = await requirePlaylistAccess(id, req.user, res, 'rename this playlist');
-  if (!existing) return;
+  const nameResult = validatePlaylistName(body.name);
+  if (!nameResult.ok) return nameResult.response;
+  const trimmedName = nameResult.value;
+
+  const existing = await findPlaylistOr404(id);
+  if (!existing) {
+    return json({ error: 'Playlist not found.' }, 404);
+  }
+
+  const accessResult = canAccessPlaylist(existing, ctx.user ?? undefined, undefined);
+  if (!accessResult.ok) {
+    return json({ error: `Only the playlist owner or admins can rename this playlist.` }, 403);
+  }
 
   const [updatedPlaylist] = await db
     .update(playlistTable)
@@ -308,50 +333,77 @@ router.patch('/:id', requireAuth, async (req, res) => {
     .select({ value: count() })
     .from(playlistSongTable)
     .where(eq(playlistSongTable.playlistId, updatedPlaylist.id));
+
   emitPlaylistUpdated(formatPlaylist(updatedPlaylist, value));
-  res.json(updatedPlaylist);
-});
+  return json(updatedPlaylist);
+}
 
 // ---------------------------------------------------------------------------
-// DELETE /api/playlists/:id
-//
-// Deletes a playlist. Songs in the library are NOT deleted — only the
-// PlaylistSong associations are removed (via cascade). Playlist owner or admin.
+// DELETE /api/playlists/:id — delete a playlist
 // ---------------------------------------------------------------------------
-router.delete('/:id', requireAuth, async (req, res) => {
-  const id = req.params.id as string;
+async function handleDeletePlaylist(
+  ctx: RouteContext,
+  _request: Request,
+  id: string
+): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-  const existing = await requirePlaylistAccess(id, req.user, res, 'delete this playlist');
-  if (!existing) return;
+  const existing = await findPlaylistOr404(id);
+  if (!existing) {
+    return json({ error: 'Playlist not found.' }, 404);
+  }
+
+  const accessResult = canAccessPlaylist(existing, ctx.user ?? undefined, undefined);
+  if (!accessResult.ok) {
+    return json({ error: `Only the playlist owner or admins can delete this playlist.` }, 403);
+  }
 
   await db.delete(playlistTable).where(eq(playlistTable.id, id));
 
-  res.status(204).send();
-});
+  return new Response(null, { status: 204 });
+}
 
 // ---------------------------------------------------------------------------
-// POST /api/playlists/:id/songs
-//
-// Adds a song to a playlist. The song must already exist in the library.
-// It is appended at the end (highest existing position + 1). Playlist owner or admin.
+// POST /api/playlists/:id/songs — add a song to a playlist
 // ---------------------------------------------------------------------------
-router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
-  const { songId } = req.body as { songId?: string };
-
-  if (!songId) {
-    res.status(400).json({ error: 'songId is required.' });
-    return;
+async function handleAddSong(ctx: RouteContext, request: Request, id: string): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
   }
 
-  const id = req.params.id as string;
+  let body: { songId?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
 
-  const playlist = await requirePlaylistAccess(id, req.user, res, 'add songs to this playlist');
-  if (!playlist) return;
+  if (!body.songId) {
+    return json({ error: 'songId is required.' }, 400);
+  }
 
-  const [song] = await db.select().from(tables.song).where(eq(tables.song.id, songId)).limit(1);
+  const playlist = await findPlaylistOr404(id);
+  if (!playlist) {
+    return json({ error: 'Playlist not found.' }, 404);
+  }
+
+  const accessResult = canAccessPlaylist(playlist, ctx.user ?? undefined, undefined);
+  if (!accessResult.ok) {
+    return json(
+      { error: `Only the playlist owner or admins can add songs to this playlist.` },
+      403
+    );
+  }
+
+  const [song] = await db
+    .select()
+    .from(tables.song)
+    .where(eq(tables.song.id, body.songId as string))
+    .limit(1);
   if (!song) {
-    res.status(404).json({ error: 'Song not found.' });
-    return;
+    return json({ error: 'Song not found.' }, 404);
   }
 
   // Check for duplicate.
@@ -359,23 +411,19 @@ router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
     .select()
     .from(playlistSongTable)
     .where(
-      and(
-        eq(playlistSongTable.playlistId, playlist.id as string),
-        eq(playlistSongTable.songId, song.id)
-      )
+      and(eq(playlistSongTable.playlistId, playlist.id), eq(playlistSongTable.songId, song.id))
     )
     .limit(1);
 
   if (existing) {
-    res.status(409).json({ error: 'This song is already in the playlist.' });
-    return;
+    return json({ error: 'This song is already in the playlist.' }, 409);
   }
 
   // Find the current highest position so we can append.
   const [lastEntry] = await db
     .select()
     .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, playlist.id as string))
+    .where(eq(playlistSongTable.playlistId, playlist.id))
     .orderBy(desc(playlistSongTable.position))
     .limit(1);
 
@@ -384,7 +432,7 @@ router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
   const [ps] = await db
     .insert(playlistSongTable)
     .values({
-      playlistId: playlist.id as string,
+      playlistId: playlist.id,
       songId: song.id,
       position: nextPosition,
     })
@@ -394,52 +442,65 @@ router.post('/:id/songs', requireAuth, playlistLimiter, async (req, res) => {
   const [countRow] = await db
     .select({ value: count() })
     .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, playlist.id as string));
+    .where(eq(playlistSongTable.playlistId, playlist.id));
+
   emitPlaylistUpdated(formatPlaylist(playlist, countRow.value));
 
-  res.status(201).json({
-    ...ps,
-    song: songData,
-  });
-});
+  return json(
+    {
+      ...ps,
+      song: songData,
+    },
+    201
+  );
+}
 
 // ---------------------------------------------------------------------------
-// DELETE /api/playlists/:id/songs/:songId
-//
-// Removes a song from a playlist. Does not delete the song from the library.
-// Playlist owner or admin.
+// DELETE /api/playlists/:id/songs/:songId — remove a song from a playlist
 // ---------------------------------------------------------------------------
-router.delete('/:id/songs/:songId', requireAuth, playlistLimiter, async (req, res) => {
-  const { id: playlistId, songId } = req.params;
-  const pid = playlistId as string;
-  const sid = songId as string;
+async function handleRemoveSong(
+  ctx: RouteContext,
+  _request: Request,
+  playlistId: string,
+  songId: string
+): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
 
-  // Fetch the playlist and check ownership
-  const playlist = await requirePlaylistAccess(pid, req.user, res, 'remove songs');
-  if (!playlist) return;
+  const playlist = await findPlaylistOr404(playlistId);
+  if (!playlist) {
+    return json({ error: 'Playlist not found.' }, 404);
+  }
+
+  const accessResult = canAccessPlaylist(playlist, ctx.user ?? undefined, undefined);
+  if (!accessResult.ok) {
+    return json({ error: `Only the playlist owner or admins can remove songs.` }, 403);
+  }
 
   const [entry] = await db
     .select()
     .from(playlistSongTable)
-    .where(and(eq(playlistSongTable.playlistId, pid), eq(playlistSongTable.songId, sid)))
+    .where(and(eq(playlistSongTable.playlistId, playlistId), eq(playlistSongTable.songId, songId)))
     .limit(1);
 
   if (!entry) {
-    res.status(404).json({ error: 'Song not found in playlist.' });
-    return;
+    return json({ error: 'Song not found in playlist.' }, 404);
   }
 
   // Delete and re-index in a transaction to prevent inconsistent positions.
   await db.transaction(async (tx) => {
     await tx
       .delete(playlistSongTable)
-      .where(and(eq(playlistSongTable.playlistId, pid), eq(playlistSongTable.songId, sid)));
+      .where(
+        and(eq(playlistSongTable.playlistId, playlistId), eq(playlistSongTable.songId, songId))
+      );
 
     // Re-index remaining songs to close the gap in positions.
     const remaining = await tx
       .select()
       .from(playlistSongTable)
-      .where(eq(playlistSongTable.playlistId, pid))
+      .where(eq(playlistSongTable.playlistId, playlistId))
       .orderBy(playlistSongTable.position);
 
     await Promise.all(
@@ -452,11 +513,56 @@ router.delete('/:id/songs/:songId', requireAuth, playlistLimiter, async (req, re
   const [{ value }] = await db
     .select({ value: count() })
     .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, pid));
+    .where(eq(playlistSongTable.playlistId, playlistId));
+
   const updatedPlaylist = formatPlaylist(playlist, value);
   emitPlaylistUpdated(updatedPlaylist);
 
-  res.status(204).send();
-});
+  return new Response(null, { status: 204 });
+}
 
-export default router;
+// ---------------------------------------------------------------------------
+// Dispatcher
+// ---------------------------------------------------------------------------
+
+export async function handlePlaylists(ctx: RouteContext, request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // Strip /api/playlists prefix
+  const path = pathname.slice('/api/playlists'.length);
+  if (!path) {
+    if (request.method === 'GET') return await handleGetPlaylists(ctx, request);
+    if (request.method === 'POST') return await handlePostPlaylist(ctx, request);
+    return json({ error: 'Not Found' }, 404);
+  }
+
+  // /api/playlists/:id/songs/:songId DELETE
+  const songsMatch = path.match(/^\/([^/]+)\/songs\/([^/]+)$/);
+  if (songsMatch && request.method === 'DELETE') {
+    return await handleRemoveSong(ctx, request, songsMatch[1], songsMatch[2]);
+  }
+
+  // /api/playlists/:id/songs POST
+  const addSongMatch = path.match(/^\/([^/]+)\/songs$/);
+  if (addSongMatch && request.method === 'POST') {
+    return await handleAddSong(ctx, request, addSongMatch[1]);
+  }
+
+  // /api/playlists/:id/visibility PATCH
+  const visibilityMatch = path.match(/^\/([^/]+)\/visibility$/);
+  if (visibilityMatch && request.method === 'PATCH') {
+    return await handlePatchVisibility(ctx, request, visibilityMatch[1]);
+  }
+
+  // /api/playlists/:id GET, PATCH, DELETE
+  const idMatch = path.match(/^\/([^/]+)$/);
+  if (idMatch) {
+    const id = idMatch[1];
+    if (request.method === 'GET') return await handleGetPlaylist(ctx, request, id);
+    if (request.method === 'PATCH') return await handlePatchPlaylist(ctx, request, id);
+    if (request.method === 'DELETE') return await handleDeletePlaylist(ctx, request, id);
+  }
+
+  return json({ error: 'Not Found' }, 404);
+}
