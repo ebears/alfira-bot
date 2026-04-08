@@ -5,7 +5,7 @@
 # Source files are mounted as volumes so you can edit code without rebuilding:
 #
 # API + bot — edit packages/api/src, then `docker compose restart api`.
-# Web — edit packages/web/src; Vite HMR applies changes instantly.
+# Web — edit packages/web/src, run `bun run web:build` locally to rebuild, then restart the API container.
 #
 # The bot package is pre-compiled during the API image build. If you change
 # code inside packages/bot, rebuild the image first:
@@ -49,7 +49,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: Dockerfile
       target: dev
     restart: unless-stopped
     depends_on:
@@ -72,6 +72,8 @@ services:
       - ./packages/api/src:/app/packages/api/src
       # Mount shared source so hot-reload picks up DB changes.
       - ./packages/shared/src:/app/packages/shared/src
+      # Mount web dist so API can serve the React app (run `bun run web:build` locally after web source changes)
+      - ./packages/web/dist:/app/packages/web/dist
     healthcheck:
       test:
         [
@@ -84,26 +86,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-      target: dev
-    command: bun run --filter @alfira-bot/web dev
-    restart: unless-stopped
-    depends_on:
-      - api
-    environment:
-      # Vite proxy target — must use the Docker service name, not localhost.
-      API_URL: http://api:3001
-    ports:
-      - "5173:5173"
-    volumes:
-      # Live-mount web source files — Vite HMR picks up changes automatically.
-      - ./packages/web/src:/app/packages/web/src
-      - ./packages/web/index.html:/app/packages/web/index.html
-      - ./packages/shared/src:/app/packages/shared/src
 
 volumes:
   pgdata:

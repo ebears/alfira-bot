@@ -36,13 +36,10 @@ packages/api/src/generated/
 npm-debug.log*
 
 # -----------------------------------------------
-# OS and editor clutter
+# OS clutter
 # -----------------------------------------------
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
-.zed/
 
 # -----------------------------------------------
 # Git worktrees

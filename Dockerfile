@@ -36,7 +36,8 @@ COPY packages ./packages
 RUN bun install
 RUN bun run --filter @alfira-bot/shared build && \
     bun run --filter @alfira-bot/bot build && \
-    bun run --filter @alfira-bot/api build
+    bun run --filter @alfira-bot/api build && \
+    bun run --filter @alfira-bot/web build
 
 # Use real Node.js from Alpine apk (bun's node shim resolves .d.ts incorrectly)
 RUN apk add --no-cache nodejs npm && \
@@ -46,10 +47,10 @@ ENV NODE_ENV=development
 
 EXPOSE 3001
 
-CMD ["node", "packages/api/dist/index.js"]
+CMD ["bun", "run", "packages/api/src/index.ts"]
 
 # ---------------------------------------------------------------------------
-# Builder stage
+# Builder stage — builds all packages but does NOT generate a runtime image.
 # ---------------------------------------------------------------------------
 FROM build AS builder
 COPY package.json bun.lock ./
@@ -58,25 +59,13 @@ COPY packages ./packages
 RUN bun install
 RUN bun run --filter @alfira-bot/shared build && \
     bun run --filter @alfira-bot/bot build && \
-    bun run --filter @alfira-bot/api build
+    bun run --filter @alfira-bot/api build && \
+    bun run --filter @alfira-bot/web build
 
 # ---------------------------------------------------------------------------
-# Production deps stage
+# Runtime stage — use bun as the runtime
 # ---------------------------------------------------------------------------
-FROM oven/bun:1-alpine AS prod-deps
-WORKDIR /app
-COPY package.json bun.lock ./
-COPY packages/api/package.json packages/api/package.json
-COPY packages/bot/package.json packages/bot/package.json
-COPY packages/shared/package.json packages/shared/package.json
-COPY packages/web/package.json packages/web/package.json
-
-RUN bun install --production
-
-# ---------------------------------------------------------------------------
-# Runtime stage — use node:24-alpine so `node` is the real binary
-# ---------------------------------------------------------------------------
-FROM node:24-alpine AS runtime
+FROM oven/bun:1-alpine AS runtime
 
 RUN apk add --no-cache \
     ffmpeg \
@@ -92,22 +81,14 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy production node_modules
-COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/api/node_modules ./packages/api/node_modules
-COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/bot/node_modules ./packages/bot/node_modules
-COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/shared/node_modules ./packages/shared/node_modules
-
-# Copy built applications
+# Copy built files and production node_modules from builder
+COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nodejs:nodejs /app/bun.lock ./bun.lock
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
-
-# Copy package.json files for runtime
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/api/package.json ./packages/api/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/package.json ./packages/bot/package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
 # Switch to non-root user
 USER nodejs
@@ -120,4 +101,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3001/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
 
-CMD ["node", "packages/api/dist/index.js"]
+CMD ["bun", "run", "packages/api/dist/index.js"]

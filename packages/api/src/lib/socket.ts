@@ -1,96 +1,98 @@
-import type { Server as HTTPServer } from 'node:http';
-import type { Playlist, QueueState, Song } from '@alfira-bot/shared';
-import { parse } from 'cookie';
-import { Server as SocketIOServer } from 'socket.io';
-import { verifySessionToken } from '../middleware/requireAuth';
-import { logger, WEB_UI_ORIGIN } from './config';
+import type { Playlist, QueueState, Song, User } from '@alfira-bot/shared';
+import { logger } from './config';
 
 // Accept both Date and string createdAt — Drizzle uses Date at the DB level,
-// but we serialize to ISO string for Socket.io JSON serialization.
+// but we serialize to ISO string for JSON serialization.
 type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
 type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Date };
 
-// Socket.io server singleton. Call initSocket(httpServer) once at startup.
+// ---------------------------------------------------------------------------
+// WebSocket client registry
+// ---------------------------------------------------------------------------
 
-let _io: SocketIOServer | null = null;
+// biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket type is incompatible with global WebSocket
+const clients = new Set<any>();
+const userBySocketId = new Map<string, User | null>();
 
 /**
- * Attach Socket.io to the HTTP server and store the instance.
+ * Registers a newly connected WebSocket client after auth in fetch().
  */
-export function initSocket(httpServer: HTTPServer): SocketIOServer {
-  _io = new SocketIOServer(httpServer, {
-    cors: {
-      origin: WEB_UI_ORIGIN,
-      credentials: true,
-    },
-  });
+export function registerClient(
+  // biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket type is incompatible with global WebSocket
+  ws: any,
+  user: User
+): void {
+  clients.add(ws);
+  userBySocketId.set(ws.id, user);
+  logger.info({ socketId: ws.id, username: user.username }, 'WebSocket client connected');
+}
 
-  _io.use((socket, next) => {
-    const cookies = parse(socket.handshake.headers.cookie || '');
-    const token = cookies.session;
-
-    if (!token) {
-      next(new Error('Authentication required. Please log in.'));
-      return;
-    }
-
-    const payload = verifySessionToken(token);
-    if (!payload) {
-      next(new Error('Session expired or invalid. Please log in again.'));
-      return;
-    }
-
-    socket.data.user = payload;
-    next();
-  });
-
-  _io.on('connection', (socket) => {
-    logger.info({ socketId: socket.id, username: socket.data.user?.username }, 'Socket connected');
-    socket.on('disconnect', (reason) => {
-      logger.info({ socketId: socket.id, reason }, 'Socket disconnected');
-    });
-  });
-
-  logger.info({ corsOrigin: WEB_UI_ORIGIN }, 'Socket.io initialised');
-  return _io;
+/**
+ * Removes a disconnected WebSocket client.
+ */
+export function unregisterClient(
+  // biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket type is incompatible with global WebSocket
+  ws: any
+): void {
+  clients.delete(ws);
+  userBySocketId.delete(ws.id);
+  logger.info({ socketId: ws.id }, 'WebSocket client disconnected');
 }
 
 // ---------------------------------------------------------------------------
 // Broadcast helpers
 // ---------------------------------------------------------------------------
 
+function serializeMessage(event: string, data: unknown): string {
+  return JSON.stringify({ event, data });
+}
+
 /**
  * Emit the full queue state to all connected clients.
  */
 export function emitPlayerUpdate(state: QueueState): void {
-  _io?.emit('player:update', state);
+  const message = serializeMessage('player:update', state);
+  for (const client of clients) {
+    client.send(message);
+  }
 }
 
 /**
  * Emit a newly added song to all connected clients.
  */
 export function emitSongAdded(song: SerializedSong): void {
-  _io?.emit('songs:added', {
+  const payload = {
     ...song,
     createdAt: song.createdAt instanceof Date ? song.createdAt.toISOString() : song.createdAt,
-  });
+  };
+  const message = serializeMessage('songs:added', payload);
+  for (const client of clients) {
+    client.send(message);
+  }
 }
 
 /**
  * Emit the deleted song's ID to all connected clients.
  */
 export function emitSongDeleted(id: string): void {
-  _io?.emit('songs:deleted', id);
+  const message = serializeMessage('songs:deleted', id);
+  for (const client of clients) {
+    client.send(message);
+  }
 }
 
 /**
  * Emit an updated song to all connected clients.
  */
 export function emitSongUpdated(song: SerializedSong): void {
-  _io?.emit('songs:updated', {
+  const payload = {
     ...song,
     createdAt: song.createdAt instanceof Date ? song.createdAt.toISOString() : song.createdAt,
-  });
+  };
+  const message = serializeMessage('songs:updated', payload);
+  for (const client of clients) {
+    client.send(message);
+  }
 }
 
 /**
@@ -98,16 +100,24 @@ export function emitSongUpdated(song: SerializedSong): void {
  * Covers: create, rename, song added, song removed.
  */
 export function emitPlaylistUpdated(playlist: SerializedPlaylist): void {
-  _io?.emit('playlists:updated', {
+  const payload = {
     ...playlist,
     createdAt:
       playlist.createdAt instanceof Date ? playlist.createdAt.toISOString() : playlist.createdAt,
-  });
+  };
+  const message = serializeMessage('playlists:updated', payload);
+  for (const client of clients) {
+    client.send(message);
+  }
 }
 
 /**
- * Get the Socket.io server instance (for graceful shutdown).
+ * Close all connected WebSocket clients gracefully.
  */
-export function getIo(): SocketIOServer | null {
-  return _io;
+export function closeAllClients(): void {
+  for (const client of clients) {
+    client.close();
+  }
+  clients.clear();
+  userBySocketId.clear();
 }

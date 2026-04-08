@@ -59,8 +59,8 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 1. Navigate to **OAuth2** → **General**.
 2. Copy the **Client secret** — this is your `DISCORD_CLIENT_SECRET`.
 3. Add your redirect URL:
-   - Local development: `http://localhost:3001/auth/callback`
-   - Docker development: `http://localhost:3001/auth/callback`
+   - Local development: `http://localhost:8180/auth/callback`
+   - Docker development: `http://localhost:8180/auth/callback`
    - Production: `https://your-domain.com/auth/callback`
 4. Click **"Save Changes"**.
 
@@ -122,8 +122,8 @@ cp packages/bot/.env.example packages/bot/.env
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Set by Docker Compose |
-| `WEB_UI_ORIGIN` | Public URL of the web UI | `http://localhost:5173` |
-| `DISCORD_REDIRECT_URI` | OAuth2 redirect URI | `http://localhost:3001/auth/callback` |
+| `WEB_UI_ORIGIN` | Public URL of the web UI | `http://localhost:8180` |
+| `DISCORD_REDIRECT_URI` | OAuth2 redirect URI | `http://localhost:8180/auth/callback` |
 | `PORT` | API server port | `3001` |
 
 > **Note:** `DATABASE_URL` is set automatically by Docker Compose in development. You typically don't need to set it manually.
@@ -155,14 +155,13 @@ This starts:
 | Service | URL | Description |
 |---------|-----|-------------|
 | `db` | `localhost:5432` | PostgreSQL 16 |
-| `api` | `localhost:3001` | Express API + Socket.io + Discord bot |
-| `web` | `localhost:5173` | Vite dev server with HMR |
+| `api` | `localhost:8180` | Bun API + Discord bot + Static Web UI |
 
 ### Development Workflow
 
 | What Changed | Action |
 |--------------|--------|
-| `packages/web/src/**` | Nothing — Vite HMR applies changes automatically |
+| `packages/web/src/**` | Run `bun run web:build` locally to rebuild the UI, then `docker compose restart api` |
 | `packages/api/src/**` | `docker compose restart api` |
 | `packages/bot/src/**` | `docker compose build api && docker compose up -d api` |
 
@@ -221,8 +220,7 @@ That's it! The stack will pull the pre-built images and start:
 |---------|-------------|
 | `db` | PostgreSQL 16 with healthcheck |
 | `migrate` | Runs database migrations on startup |
-| `api` | API + Discord bot from GHCR image |
-| `web` | Static web UI served by nginx on port 80 |
+| `api` | API + Discord bot + Static Web UI from GHCR image |
 
 ### Environment Variables
 
@@ -255,18 +253,14 @@ Create a `Caddyfile`:
 
 ```Caddy
 your-domain.com {
-    reverse_proxy /api* api:3001
-    reverse_proxy /auth* api:3001
-    reverse_proxy /socket.io* api:3001
-    reverse_proxy /* web:80
+    reverse_proxy /* <host-ip>:8180
 }
 ```
 
-Then run both stacks:
+Then run the stack:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.caddy.yml up -d
 ```
 
 For internal-only access, you can remove the port mappings from `docker-compose.prod.yml` so only your reverse proxy exposes ports.

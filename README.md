@@ -4,13 +4,12 @@
   <br>
   <img src="https://img.shields.io/badge/status-experimental%20%7C%20pre--release-orange" alt="Status: Experimental | Pre-release">
   <br>
-  <img src="https://img.shields.io/badge/Node.js%2024-339933?logo=node.js&logoColor=white" alt="Node.js v24">
-  <img src="https://img.shields.io/badge/TypeScript%205.4-3178C6?logo=typescript&logoColor=white" alt="TypeScript v5.4">
-  <img src="https://img.shields.io/badge/Discord.js%2014-5865F2?logo=discord&logoColor=white" alt="Discord.js v14">
+  <img src="https://img.shields.io/badge/Bun%20-elysium?logo=bun&logoColor=white" alt="Bun">
+  <img src="https://img.shields.io/badge/TypeScript%205.4-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Discord.js%2014-5865F2?logo=discord&logoColor=white" alt="Discord.js">
   <br>
-  <img src="https://img.shields.io/badge/React%2019-61DAFB?logo=react&logoColor=black" alt="React v19">
-  <img src="https://img.shields.io/badge/Tailwind%20CSS%204-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4">
-  <img src="https://img.shields.io/badge/Vite%208-646CFF?logo=vite&logoColor=white" alt="Vite v8">
+  <img src="https://img.shields.io/badge/React%2019-61DAFB?logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/Tailwind%20CSS%204-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
   <br>
   <img src="https://img.shields.io/badge/Claude%20Code-5B4B8A?logo=claude&logoColor=orange" alt="Claude Code">
   <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -34,7 +33,7 @@
   - Player page + global Now Playing bar with live progress, queue view, and admin controls.
   - Progressive Web App (PWA) support with offline capabilities and caching.
 - **Real-time sync**
-  - `Socket.io` events keep the UI in sync with the in-memory player state and library changes (no polling).
+  - Real-time events keep the UI in sync with the in-memory player state and library changes (no polling).
 - **Single-guild focus**
   - Scoped to a single Discord server (guild), with admin status determined by Discord role IDs.
 
@@ -48,7 +47,7 @@
 
 ## Tech Stack
 
-Built with Node.js, TypeScript, Discord.js, React, PostgreSQL, and more. See the **[Tech Stack Documentation](docs/tech-stack.md)** for details.
+Built with Bun, TypeScript, Discord.js, React, PostgreSQL, and more. See the **[Tech Stack Documentation](docs/tech-stack.md)** for details.
 
 <p align="center">
   <img width="250" src="https://raw.githubusercontent.com/ebears/alfira-bot/main/.github/icon.png">

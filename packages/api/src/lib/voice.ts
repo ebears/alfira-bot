@@ -1,43 +1,75 @@
 import { createPlayer, getClient, getPlayer, VOICE_CONNECTION_TIMEOUT_MS } from '@alfira-bot/bot';
 import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
 import type { TextChannel } from 'discord.js';
-import type { Request, Response } from 'express';
 import { GUILD_ID, logger } from './config';
 
-// ---------------------------------------------------------------------------
-// Voice channel helpers
-//
-// Handles auto-joining the user's voice channel when the bot isn't already
-// connected. Extracted from the player route to keep HTTP handling separate
-// from Discord voice connection logic.
-// ---------------------------------------------------------------------------
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
-/** Returns existing player or auto-joins the user's voice channel. */
+/**
+ * Verifies the requesting user is in a voice channel.
+ * Returns true if in voice, error Response otherwise.
+ */
+export async function requireUserInVoice(discordId: string): Promise<true | Response> {
+  const client = getClient();
+  if (!client) {
+    return json({ error: 'Discord bot is not ready yet.' }, 503);
+  }
+
+  try {
+    const guild = await client.guilds.fetch(GUILD_ID);
+    const member = await guild.members.fetch(discordId);
+
+    if (!member.voice.channel) {
+      return json({ error: 'You must be in a voice channel to control playback.' }, 403);
+    }
+
+    return true;
+  } catch (error) {
+    logger.error({ err: error as Error }, 'Failed to verify voice channel membership');
+    return json({ error: 'Could not verify voice channel membership.' }, 503);
+  }
+}
+
+/**
+ * Returns existing player or auto-joins the user's voice channel.
+ * Returns the player on success, error Response on failure.
+ */
 export async function resolveOrAutoJoinPlayer(
-  req: Request,
-  res: Response
-): Promise<ReturnType<typeof getPlayer> | null> {
+  discordId: string
+): Promise<
+  | { ok: true; player: NonNullable<ReturnType<typeof getPlayer>> }
+  | { ok: false; response: Response }
+> {
   const existingPlayer = getPlayer(GUILD_ID);
   if (existingPlayer) {
-    return existingPlayer;
+    return { ok: true, player: existingPlayer };
   }
 
   const discordClient = getClient();
   if (!discordClient) {
-    res.status(503).json({ error: 'Discord bot is not ready yet.' });
-    return null;
+    return { ok: false, response: json({ error: 'Discord bot is not ready yet.' }, 503) };
   }
 
   try {
     const guild = await discordClient.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(req.user?.discordId ?? '');
+    const member = await guild.members.fetch(discordId);
     const voiceChannel = member.voice.channel;
 
     if (!voiceChannel) {
-      res.status(409).json({
-        error: 'You are not in a voice channel. Join a voice channel in Discord first.',
-      });
-      return null;
+      return {
+        ok: false,
+        response: json(
+          {
+            error: 'You are not in a voice channel. Join a voice channel in Discord first.',
+          },
+          409
+        ),
+      };
     }
 
     const connection = joinVoiceChannel({
@@ -54,47 +86,29 @@ export async function resolveOrAutoJoinPlayer(
       : (guild.systemChannel as TextChannel | null);
 
     if (!textChannel) {
-      res.status(503).json({
-        error:
-          'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
-      });
-      return null;
+      return {
+        ok: false,
+        response: json(
+          {
+            error:
+              'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
+          },
+          503
+        ),
+      };
     }
 
-    return createPlayer(GUILD_ID, connection, textChannel);
+    return { ok: true, player: createPlayer(GUILD_ID, connection, textChannel) };
   } catch (error) {
     logger.error({ err: error as Error }, 'Failed to auto-join voice channel');
-    res.status(503).json({
-      error: 'Could not connect to your voice channel. Try using /join in Discord first.',
-    });
-    return null;
-  }
-}
-
-/**
- * Middleware that verifies the requesting user is in a voice channel.
- * Sends 403 and returns false if not in voice, true otherwise.
- */
-export async function requireUserInVoice(req: Request, res: Response): Promise<boolean> {
-  const client = getClient();
-  if (!client) {
-    res.status(503).json({ error: 'Discord bot is not ready yet.' });
-    return false;
-  }
-
-  try {
-    const guild = await client.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(req.user?.discordId ?? '');
-
-    if (!member.voice.channel) {
-      res.status(403).json({ error: 'You must be in a voice channel to control playback.' });
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    logger.error({ err: error as Error }, 'Failed to verify voice channel membership');
-    res.status(503).json({ error: 'Could not verify voice channel membership.' });
-    return false;
+    return {
+      ok: false,
+      response: json(
+        {
+          error: 'Could not connect to your voice channel. Try using /join in Discord first.',
+        },
+        503
+      ),
+    };
   }
 }

@@ -12,12 +12,11 @@ import { useAdminView } from '../context/AdminViewContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
-import { useSocket } from '../hooks/useSocket';
+import { onSocketEvent } from '../hooks/useSocket';
 
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
   const navigate = useNavigate();
-  const socket = useSocket();
   const [items, setItems] = useState<Playlist[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,12 +78,12 @@ export default function PlaylistsPage() {
       }
     };
 
-    socket.on('playlists:updated', handlePlaylistUpdated);
+    const offUpdated = onSocketEvent('playlists:updated', handlePlaylistUpdated);
 
     return () => {
-      socket.off('playlists:updated', handlePlaylistUpdated);
+      offUpdated();
     };
-  }, [socket, currentPage]);
+  }, [currentPage]);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {

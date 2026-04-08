@@ -1,35 +1,77 @@
 import { useSyncExternalStore } from 'react';
-import { io, type Socket } from 'socket.io-client';
 
 // ---------------------------------------------------------------------------
 // useSocket
 //
-// Returns the shared Socket.io client connection. A module-level singleton
-// is used deliberately — there should only ever be one WebSocket connection
-// for the whole app, and a per-hook instance causes a race condition in
-// React StrictMode:
+// Returns a shared WebSocket connection. A module-level singleton is used
+// deliberately — there should only ever be one WebSocket connection for the
+// whole app, and a per-hook instance causes issues with reconnection logic.
 //
-//   1. Hook runs during render → creates socket, stores in ref
-//   2. StrictMode unmounts the component → cleanup disconnects + nulls ref
-//   3. Re-render fires before the next effect → ref is null → crash
-//
-// A module-level socket sidesteps this entirely. The socket is created once
-// on first import and reused across all renders and remounts. Socket.io
-// handles reconnection automatically if the connection drops.
+// Bun's native WebSocket has no built-in reconnection, so we implement
+// exponential backoff manually.
 // ---------------------------------------------------------------------------
 
-let _socket: Socket | null = null;
-
-// Connection status store for useSyncExternalStore
 type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting';
+
+let ws: WebSocket | null = null;
 let connectionStatus: ConnectionStatus = 'disconnected';
+let reconnectAttempt = 0;
+// biome-ignore lint: internal storage must hold callbacks of varying types
+const eventListeners = new Map<string, Set<any>>();
 const statusListeners = new Set<() => void>();
+
+const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
 
 function setStatus(status: ConnectionStatus) {
   if (connectionStatus !== status) {
     connectionStatus = status;
     for (const listener of statusListeners) listener();
   }
+}
+
+function scheduleReconnect() {
+  const delay = RECONNECT_DELAYS[Math.min(reconnectAttempt, RECONNECT_DELAYS.length - 1)];
+  reconnectAttempt++;
+  setStatus('reconnecting');
+  setTimeout(() => {
+    connect();
+  }, delay);
+}
+
+function connect() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+  ws.addEventListener('open', () => {
+    setStatus('connected');
+    reconnectAttempt = 0;
+  });
+
+  ws.addEventListener('close', () => {
+    setStatus('disconnected');
+    scheduleReconnect();
+  });
+
+  ws.addEventListener('error', () => {
+    // error always precedes close, so we just let close handle reconnect
+  });
+
+  ws.addEventListener('message', (event) => {
+    try {
+      const { event: eventName, data } = JSON.parse(event.data as string) as {
+        event: string;
+        data: unknown;
+      };
+      const listeners = eventListeners.get(eventName);
+      if (listeners) {
+        for (const callback of listeners) {
+          callback(data);
+        }
+      }
+    } catch {
+      // Ignore malformed messages
+    }
+  });
 }
 
 function subscribeStatus(listener: () => void) {
@@ -41,37 +83,45 @@ function getStatus() {
   return connectionStatus;
 }
 
-export function useSocket(): Socket {
-  if (!_socket) {
-    _socket = io({
-      withCredentials: true,
-      // Start with long-polling; Socket.io will upgrade to WebSocket once
-      // connected. This ordering is more reliable when WebSocket upgrades
-      // through Vite's proxy fail (e.g. in Docker dev environments).
-      transports: ['polling', 'websocket'],
-    });
-
-    _socket.on('connect', () => setStatus('connected'));
-    _socket.on('disconnect', () => setStatus('disconnected'));
-    _socket.io.on('reconnect_attempt', () => setStatus('reconnecting'));
-
-    // Set initial status
-    if (_socket.connected) {
-      setStatus('connected');
-    }
+export function useSocket(): WebSocket {
+  if (!ws) {
+    connect();
   }
-  return _socket;
+  return ws as WebSocket;
 }
 
 export function useConnectionStatus(): ConnectionStatus {
-  // Ensure socket is initialized
   useSocket();
   return useSyncExternalStore(subscribeStatus, getStatus, getStatus);
 }
 
 export function disposeSocket(): void {
-  if (_socket) {
-    _socket.disconnect();
-    _socket = null;
+  if (ws) {
+    ws.close();
+    ws = null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Event registration (mirrors the native WebSocket event API)
+// ---------------------------------------------------------------------------
+
+// biome-ignore lint/suspicious/noExplicitAny: must return Set<any> to hold varying callback types
+function ensureListeners(event: string): Set<any> {
+  let listeners = eventListeners.get(event);
+  if (!listeners) {
+    listeners = new Set();
+    eventListeners.set(event, listeners);
+  }
+  return listeners;
+}
+
+/**
+ * Register a callback for a WebSocket event.
+ * Events: 'player:update', 'playlists:updated', 'songs:added', 'songs:deleted', 'songs:updated'
+ */
+export function onSocketEvent<T>(event: string, callback: (data: T) => void): () => void {
+  const listeners = ensureListeners(event);
+  listeners.add(callback);
+  return () => listeners.delete(callback);
 }

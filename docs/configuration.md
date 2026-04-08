@@ -39,8 +39,8 @@ cp packages/bot/.env.example packages/bot/.env
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Set by Docker Compose |
 | `PORT` | API server port | `3001` |
-| `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | `http://localhost:5173` |
-| `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:3001/auth/callback` |
+| `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | `http://localhost:8180` |
+| `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:8180/auth/callback` |
 | `JWT_EXPIRES_IN` | JWT refresh token expiry duration (supports `d`, `h`, `m`, `s` suffixes) | `7d` |
 | `DEFAULT_TEXT_CHANNEL_ID` | Text channel for "Now playing" embeds when auto-joining via web UI | Guild's system channel |
 | `TRUSTED_PROXY_IP` | IP address of reverse proxy (for rate limiting and `X-Forwarded-For` trust) | — |

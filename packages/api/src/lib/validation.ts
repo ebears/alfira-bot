@@ -4,94 +4,127 @@ import {
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
 } from '@alfira-bot/bot';
-import type { Response } from 'express';
 
 const MAX_URL_LENGTH = 2000;
+
+type ValidationSuccess<T> = { ok: true; value: T };
+type ValidationError = { ok: false; response: Response };
+type ValidationResult<T> = ValidationSuccess<T> | ValidationError;
+
+function jsonResponse(data: unknown, status: number): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 /**
  * Validates and trims a URL input. Returns null if validation fails.
  * Used by YouTube URL validators to avoid duplication.
  */
-function validateUrlInput(youtubeUrl: unknown, res: Response): string | null {
+function validateUrlInput(youtubeUrl: unknown): ValidationResult<string> {
   if (!youtubeUrl || typeof youtubeUrl !== 'string') {
-    res.status(400).json({ error: 'youtubeUrl is required.' });
-    return null;
+    return { ok: false, response: jsonResponse({ error: 'youtubeUrl is required.' }, 400) };
   }
 
   const url = youtubeUrl.trim();
 
   if (url.length > MAX_URL_LENGTH) {
-    res.status(400).json({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` });
-    return null;
+    return {
+      ok: false,
+      response: jsonResponse({ error: `URL must be ${MAX_URL_LENGTH} characters or less.` }, 400),
+    };
   }
 
-  return url;
+  return { ok: true, value: url };
 }
 
 /** Validates a YouTube URL for single video endpoints. */
-export function validateYouTubeUrl(youtubeUrl: unknown, res: Response): string | null {
-  const url = validateUrlInput(youtubeUrl, res);
-  if (!url) return null;
+export function validateYouTubeUrl(youtubeUrl: unknown): ValidationResult<string> {
+  const result = validateUrlInput(youtubeUrl);
+  if (!result.ok) return result;
 
-  if (!isValidYouTubeUrl(url)) {
-    res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
-    return null;
+  if (!isValidYouTubeUrl(result.value)) {
+    return {
+      ok: false,
+      response: jsonResponse({ error: 'That does not look like a valid YouTube URL.' }, 400),
+    };
   }
 
-  return url;
+  return result;
 }
 
 /** Validates a YouTube playlist URL. */
-export function validateYouTubePlaylistUrl(youtubeUrl: unknown, res: Response): string | null {
-  const url = validateUrlInput(youtubeUrl, res);
-  if (!url) return null;
+export function validateYouTubePlaylistUrl(youtubeUrl: unknown): ValidationResult<string> {
+  const result = validateUrlInput(youtubeUrl);
+  if (!result.ok) return result;
 
-  if (!isYouTubePlaylistUrl(url)) {
-    res.status(400).json({
-      error:
-        'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
-    });
-    return null;
+  if (!isYouTubePlaylistUrl(result.value)) {
+    return {
+      ok: false,
+      response: jsonResponse(
+        {
+          error:
+            'That does not look like a valid YouTube playlist URL. It should contain a "list" parameter.',
+        },
+        400
+      ),
+    };
   }
 
-  return url;
+  return result;
 }
 
 /**
  * Fetches YouTube metadata for a single video URL.
- * Sends error response and returns null if fetch fails.
+ * Returns error Response if fetch fails.
  */
 export async function fetchYouTubeMetadata(
-  url: string,
-  res: Response
-): Promise<Awaited<ReturnType<typeof getMetadata>> | null> {
+  url: string
+): Promise<
+  { ok: true; value: Awaited<ReturnType<typeof getMetadata>> } | { ok: false; response: Response }
+> {
   try {
-    return await getMetadata(url);
+    const value = await getMetadata(url);
+    return { ok: true, value };
   } catch {
-    res.status(422).json({
-      error:
-        'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
-    });
-    return null;
+    return {
+      ok: false,
+      response: jsonResponse(
+        {
+          error:
+            'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
+        },
+        422
+      ),
+    };
   }
 }
 
 /**
  * Fetches YouTube playlist metadata with videos.
- * Sends error response and returns null if fetch fails.
+ * Returns error Response if fetch fails.
  */
 export async function fetchPlaylistMetadata(
   url: string,
-  res: Response,
   maxVideos?: number
-): Promise<Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> | null> {
+): Promise<
+  | { ok: true; value: Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> }
+  | { ok: false; response: Response }
+> {
   try {
-    return await getPlaylistMetadataWithVideos(url, maxVideos);
+    const value = await getPlaylistMetadataWithVideos(url, maxVideos);
+    return { ok: true, value };
   } catch {
-    res.status(422).json({
-      error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
-    });
-    return null;
+    return {
+      ok: false,
+      response: jsonResponse(
+        {
+          error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
+        },
+        422
+      ),
+    };
   }
 }
 
@@ -106,32 +139,37 @@ export function youTubeUrl(videoId: string): string {
 }
 
 /** Validates and trims a playlist name. */
-export function validatePlaylistName(name: unknown, res: Response): string | null {
+export function validatePlaylistName(name: unknown): ValidationResult<string> {
   const MAX_NAME_LENGTH = 200;
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    res.status(400).json({ error: 'name is required.' });
-    return null;
+    return { ok: false, response: jsonResponse({ error: 'name is required.' }, 400) };
   }
   if (name.length > MAX_NAME_LENGTH) {
-    res.status(400).json({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` });
-    return null;
+    return {
+      ok: false,
+      response: jsonResponse({ error: `name must be ${MAX_NAME_LENGTH} characters or less.` }, 400),
+    };
   }
-  return name.trim();
+  return { ok: true, value: name.trim() };
 }
 
-/** Validates and trims a nickname. Returns null if invalid, otherwise the trimmed value or null. */
-export function validateNickname(nickname: unknown, res: Response): string | null | false {
+/** Validates and trims a nickname. Returns null for empty/missing, error Response for invalid type/length. */
+export function validateNickname(nickname: unknown): ValidationResult<string | null> {
   const MAX_NICKNAME_LENGTH = 50;
   if (nickname !== undefined && nickname !== null && typeof nickname !== 'string') {
-    res.status(400).json({ error: 'nickname must be a string.' });
-    return false;
+    return { ok: false, response: jsonResponse({ error: 'nickname must be a string.' }, 400) };
   }
   const trimmed = nickname ? String(nickname).trim() || null : null;
   if (trimmed && trimmed.length > MAX_NICKNAME_LENGTH) {
-    res.status(400).json({ error: `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer.` });
-    return false;
+    return {
+      ok: false,
+      response: jsonResponse(
+        { error: `Nickname must be ${MAX_NICKNAME_LENGTH} characters or fewer.` },
+        400
+      ),
+    };
   }
-  return trimmed;
+  return { ok: true, value: trimmed };
 }
 
 /** Validates an optional string field. Trims and returns null if empty. */
@@ -143,28 +181,31 @@ export function validateOptionalString(value: unknown): string | null {
 }
 
 /** Validates an artwork URL. Trims and checks it's a valid URL if non-empty. */
-export function validateArtworkUrl(value: unknown): string | null | false {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== 'string') return false;
+export function validateArtworkUrl(value: unknown): ValidationResult<string | null> {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (typeof value !== 'string')
+    return { ok: false, response: jsonResponse({ error: 'artwork must be a string.' }, 400) };
   const trimmed = value.trim();
-  if (trimmed.length === 0) return null;
-  if (trimmed.length > MAX_URL_LENGTH) return false;
+  if (trimmed.length === 0) return { ok: true, value: null };
+  if (trimmed.length > MAX_URL_LENGTH)
+    return { ok: false, response: jsonResponse({ error: 'artwork URL is too long.' }, 400) };
   try {
     new URL(trimmed);
   } catch {
-    return false;
+    return { ok: false, response: jsonResponse({ error: 'artwork must be a valid URL.' }, 400) };
   }
-  return trimmed;
+  return { ok: true, value: trimmed };
 }
 
 /** Validates tags: ensure string[], trim each, deduplicate */
-export function validateTags(value: unknown): string[] | false {
-  if (value === undefined || value === null) return [];
-  if (!Array.isArray(value)) return false;
+export function validateTags(value: unknown): ValidationResult<string[]> {
+  if (value === undefined || value === null) return { ok: true, value: [] };
+  if (!Array.isArray(value))
+    return { ok: false, response: jsonResponse({ error: 'tags must be an array.' }, 400) };
   const trimmed = value
     .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
     .map((t) => t.trim());
-  return [...new Set(trimmed)];
+  return { ok: true, value: [...new Set(trimmed)] };
 }
 
 /**
@@ -172,12 +213,24 @@ export function validateTags(value: unknown): string[] | false {
  * Returns `undefined` when absent (PATCH skips it),
  * `null` when explicitly cleared,
  * the integer when valid (-12 to +12),
- * `false` when invalid.
+ * error Response when invalid.
  */
-export function validateVolumeOffset(value: unknown): number | null | false | undefined {
-  if (value === undefined) return undefined;
-  if (value === null) return null;
-  if (typeof value !== 'number' || !Number.isInteger(value)) return false;
-  if (value < -12 || value > 12) return false;
-  return value;
+export function validateVolumeOffset(
+  value: unknown
+): { ok: true; value: number | null | undefined } | { ok: false; response: Response } {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (value === null) return { ok: true, value: null };
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    return {
+      ok: false,
+      response: jsonResponse({ error: 'volumeOffset must be an integer.' }, 400),
+    };
+  }
+  if (value < -12 || value > 12) {
+    return {
+      ok: false,
+      response: jsonResponse({ error: 'volumeOffset must be between -12 and +12.' }, 400),
+    };
+  }
+  return { ok: true, value };
 }

@@ -36,7 +36,7 @@ import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
-import { useSocket } from '../hooks/useSocket';
+import { onSocketEvent } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
 
 export default function PlaylistDetailPage() {
@@ -44,7 +44,6 @@ export default function PlaylistDetailPage() {
   const { isAdminView } = useAdminView();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const socket = useSocket();
 
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
@@ -111,12 +110,12 @@ export default function PlaylistDetailPage() {
       load(currentPage);
     };
 
-    socket.on('playlists:updated', handlePlaylistUpdated);
+    const offUpdated = onSocketEvent('playlists:updated', handlePlaylistUpdated);
 
     return () => {
-      socket.off('playlists:updated', handlePlaylistUpdated);
+      offUpdated();
     };
-  }, [socket, id, load, currentPage]);
+  }, [id, load, currentPage]);
 
   const handleRenameSave = async () => {
     if (!playlist || !renameValue.trim() || renameValue.trim() === playlist.name) {

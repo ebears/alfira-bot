@@ -49,17 +49,6 @@ Common issues and solutions for Alfira.
 3. Wait for the healthcheck to pass before starting API.
 4. Verify `DATABASE_URL` format: `postgresql://user:pass@host:5432/dbname`
 
-## Web UI Issues
-
-### WebSocket connection fails
-
-**Symptoms:** Web UI shows "Connecting..." indefinitely.
-
-**Solutions:**
-1. Check that `/socket.io` is properly proxied by your reverse proxy.
-2. Ensure WebSocket upgrade headers are passed through.
-3. Verify `WEB_UI_ORIGIN` matches the domain users access.
-
 ## Resetting Everything
 
 **Warning:** This will delete all your data (playlists, songs, etc.).

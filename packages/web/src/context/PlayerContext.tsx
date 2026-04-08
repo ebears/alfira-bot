@@ -12,7 +12,7 @@ import {
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useProgressBar } from '../hooks/useProgressBar';
-import { disposeSocket, useSocket } from '../hooks/useSocket';
+import { disposeSocket, onSocketEvent, useConnectionStatus, useSocket } from '../hooks/useSocket';
 
 // ---------------------------------------------------------------------------
 // Default empty state — used before the first fetch completes.
@@ -36,7 +36,7 @@ interface PlayerContextValue {
   elapsed: number;
   // Register a progress bar DOM element for direct rAF-driven updates.
   registerProgress: (ref: HTMLDivElement | null) => void;
-  // Actions — each calls the API; state updates arrive via Socket.io.
+  // Actions — each calls the API; state updates arrive via real-time events.
   skip: () => Promise<void>;
   /** Stop playback, clear the queue, and disconnect the bot from voice. */
   leave: () => Promise<void>;
@@ -67,7 +67,8 @@ const PlayerProgressContext = createContext<(ref: HTMLDivElement | null) => void
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
-  const socket = useSocket();
+  // Initialize the WebSocket connection (singleton, safe to call on every render).
+  useSocket();
 
   // Use the progress bar hook (rAF + 1-sec interval)
   const { elapsed, registerProgress } = useProgressBar(state);
@@ -88,7 +89,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Socket.io — primary state update mechanism.
+  // Real-time events — primary state update mechanism.
   //
   // On connect (and reconnect), always fetch the current state via REST to
   // avoid a stale snapshot for users who open the page mid-song. After that,
@@ -105,19 +106,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     };
 
-    const handleReconnect = () => {
-      // Re-sync after a dropped connection so we don't show stale state.
-      refetch();
-    };
-
-    socket.on('player:update', handlePlayerUpdate);
-    socket.on('connect', handleReconnect);
+    const offPlayerUpdate = onSocketEvent('player:update', handlePlayerUpdate);
 
     return () => {
-      socket.off('player:update', handlePlayerUpdate);
-      socket.off('connect', handleReconnect);
+      offPlayerUpdate();
     };
-  }, [socket, refetch]);
+  }, [refetch]);
+
+  // Re-sync via REST whenever the WebSocket reconnects.
+  const connectionStatus = useConnectionStatus();
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      refetch();
+    }
+  }, [connectionStatus, refetch]);
 
   // ---------------------------------------------------------------------------
   // Cleanup — disconnect the socket when the provider unmounts.

@@ -1,7 +1,7 @@
 import { logger } from '@alfira-bot/shared/logger';
 
 export { logger };
-export const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:5173';
+export const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:3001';
 
 const _GUILD_ID = process.env.GUILD_ID;
 if (!_GUILD_ID) {

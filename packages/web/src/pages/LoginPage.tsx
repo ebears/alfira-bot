@@ -53,7 +53,7 @@ export default function LoginPage() {
             Log in with your Discord account to access the music library and controls.
           </p>
 
-          {/* Login button — redirects to Express OAuth handler */}
+          {/* Login button */}
           <a
             href="/auth/login"
             className="btn-discord flex items-center justify-center gap-3 w-full"

@@ -14,7 +14,7 @@ The key thing to understand: **Bot + API run in the same process**, and bot code
 
 | What Changed | Action Required |
 |--------------|-----------------|
-| `packages/web/src/**` | **Nothing** — Vite HMR applies changes automatically |
+| `packages/web/src/**` | **Nothing** — Bun serve with live reload applies changes automatically |
 | `packages/api/src/**` | `docker compose restart api` |
 | `packages/bot/src/**` | `docker compose build api && docker compose up -d api` |
 | `packages/shared/src/**` | Depends on consumer (see below) |
@@ -33,7 +33,7 @@ The `shared` package is consumed by all other packages:
 
 The bot package is pre-compiled during the Docker image build:
 
-1. `Dockerfile.api` runs `npm run -w packages/bot build`
+1. `Dockerfile` runs `bun run --filter @alfira-bot/bot build`
 2. Compiled output is baked into the image at `packages/bot/dist/`
 3. API source files are mounted as volumes, but bot's `dist/` stays in the image
 
