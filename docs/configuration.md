@@ -119,8 +119,8 @@ Generate a secure random string:
 # Using openssl
 openssl rand -hex 32
 
-# Using Node.js
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Using Bun
+bun -e "console.log(crypto.randomBytes(32).toString('hex'))"
 ```
 
 ### Discord Tokens

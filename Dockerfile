@@ -39,10 +39,6 @@ RUN bun run --filter @alfira-bot/shared build && \
     bun run --filter @alfira-bot/api build && \
     bun run --filter @alfira-bot/web build
 
-# Use real Node.js from Alpine apk (bun's node shim resolves .d.ts incorrectly)
-RUN apk add --no-cache nodejs npm && \
-    rm -f /usr/local/bun-node-fallback-bin/node || true
-
 ENV NODE_ENV=development
 
 EXPOSE 3001
@@ -99,6 +95,6 @@ EXPOSE 3001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3001/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
+    CMD bun -e "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["bun", "run", "packages/api/dist/index.js"]
