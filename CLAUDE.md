@@ -7,7 +7,7 @@ Guidance for Claude Code when working with this codebase.
 Alfira is a self-hosted Discord music bot with a web UI as the primary interface. It's a Bun workspaces monorepo with four packages:
 
 - `packages/shared` — Shared types and utilities (formatDuration, fisherYatesShuffle)
-- `packages/bot` — Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
+- `packages/bot` — Discord bot (GuildPlayer, yt-dlp wrapper)
 - `packages/api` — Express API, Drizzle ORM, Socket.io server
 - `packages/web` — Vite + React + Tailwind web UI
 
@@ -67,16 +67,6 @@ The bot package is pre-compiled during Docker image build:
 - **Used by web:** HMR picks up changes automatically
 - **Used by api:** Restart required (`docker compose restart api`)
 - **Used by bot:** Rebuild required
-
-### Slash Commands
-
-Commands must be registered with Discord:
-
-```bash
-docker compose exec api bun run bot:deploy
-```
-
-Commands are auto-registered on startup by default (configurable via `AUTO_DEPLOY_COMMANDS`).
 
 ## Code Style
 

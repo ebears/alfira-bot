@@ -71,7 +71,7 @@ The project is a Bun workspaces monorepo:
 ```
 packages/
 ├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
-├── bot       # Discord bot (slash commands, GuildPlayer, yt-dlp wrapper)
+├── bot       # Discord bot (GuildPlayer, yt-dlp wrapper)
 ├── api       # Express API, Drizzle ORM, Socket.io server
 └── web       # Vite + React + Tailwind web UI
 ```

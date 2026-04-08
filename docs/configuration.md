@@ -68,10 +68,6 @@ cp packages/bot/.env.example packages/bot/.env
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `AUTO_DEPLOY_COMMANDS` | Auto-register slash commands on startup | `true` |
-
-> **Note:** Set `AUTO_DEPLOY_COMMANDS=false` if you want to manually control when slash commands are registered. This is useful for advanced use cases where you want to test command changes before deploying them.
-
 ---
 
 ## Database Configuration
