@@ -4,7 +4,7 @@
 
 | Component | Technology |
 |-----------|------------|
-| **Runtime** | Node.js 24 |
+| **Runtime** | Bun |
 | **Language** | TypeScript |
 | **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
 | **Audio** | `yt-dlp`, `ffmpeg` |
@@ -22,7 +22,7 @@ flowchart TB
         DISC[Discord Client]
     end
 
-    subgraph Server["Node.js Server"]
+    subgraph Server["Bun Server"]
         API[Bun API<br/>:3001]
         BOT[Discord Bot<br/>discord.js Voice]
     end
@@ -59,7 +59,7 @@ flowchart TB
     DRIZZLE --> PG
 ```
 
-The bot and API run in a **single Node.js process**, sharing the same memory for the player state. This allows real-time updates to be broadcast directly from the bot's playback events without any additional infrastructure.
+The bot and API run in a **single Bun process**, sharing the same memory for the player state. This allows real-time updates to be broadcast directly from the bot's playback events without any additional infrastructure.
 
 ## Project Structure
 

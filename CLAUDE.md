@@ -11,11 +11,11 @@ Alfira is a self-hosted Discord music bot with a web UI as the primary interface
 - `packages/api` — Bun API, Drizzle ORM
 - `packages/web` — React + Tailwind web UI
 
-The bot and API run in a **single Node.js process**, sharing memory for player state. This allows real-time updates to be broadcast directly from playback events.
+The bot and API run in a **single Bun process**, sharing memory for player state. This allows real-time updates to be broadcast directly from playback events.
 
 ## Tech Stack
 
-- **Runtime:** Node.js 24
+- **Runtime:** Bun
 - **Language:** TypeScript
 - **Discord:** discord.js v14, @discordjs/voice
 - **Audio:** yt-dlp + ffmpeg

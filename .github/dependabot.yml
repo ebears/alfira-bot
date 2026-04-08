@@ -20,9 +20,6 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
-    ignore:
-      - dependency-name: "node"
-        versions: ["25.x"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
