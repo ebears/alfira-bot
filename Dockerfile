@@ -63,19 +63,6 @@ RUN bun run --filter @alfira-bot/shared build && \
     bun run --filter @alfira-bot/web build
 
 # ---------------------------------------------------------------------------
-# Production deps stage
-# ---------------------------------------------------------------------------
-FROM oven/bun:1-alpine AS prod-deps
-WORKDIR /app
-COPY package.json bun.lock ./
-COPY packages/api/package.json packages/api/package.json
-COPY packages/bot/package.json packages/bot/package.json
-COPY packages/shared/package.json packages/shared/package.json
-COPY packages/web/package.json packages/web/package.json
-
-RUN bun install --production
-
-# ---------------------------------------------------------------------------
 # Runtime stage — use bun as the runtime
 # ---------------------------------------------------------------------------
 FROM oven/bun:1-alpine AS runtime
@@ -94,23 +81,14 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy root package.json and bun.lock for workspace resolution
+# Copy built files and production node_modules from builder
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nodejs:nodejs /app/bun.lock ./bun.lock
-
-# Copy package.json files for all packages
-COPY --from=builder --chown=nodejs:nodejs /app/packages/api/package.json ./packages/api/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/package.json ./packages/bot/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/package.json
-
-# Copy built dist folders
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
-
-# Install production dependencies (workspace packages will be symlinked)
-RUN bun install --production
 
 # Switch to non-root user
 USER nodejs
