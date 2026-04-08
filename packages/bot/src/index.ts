@@ -1,18 +1,8 @@
 import { logger } from '@alfira-bot/shared/logger';
 import { getVoiceConnection } from '@discordjs/voice';
-import {
-  Client,
-  Collection,
-  GatewayIntentBits,
-  type Interaction,
-  type InteractionReplyOptions,
-  REST,
-  Routes,
-} from 'discord.js';
-import { commands } from './commands';
+import { Client, GatewayIntentBits } from 'discord.js';
 import { setClient } from './lib/client';
 import { getPlayer } from './player/manager';
-import type { Command } from './types';
 
 // ---------------------------------------------------------------------------
 // Public API re-exports
@@ -43,37 +33,12 @@ export {
   type PlaylistMetadata,
 } from './utils/ytdlp';
 
-export async function deployCommands(
-  clientId: string,
-  guildId: string,
-  token: string,
-  commands: Command[]
-): Promise<void> {
-  const rest = new REST().setToken(token);
-  const commandData = commands.map((c) => c.data.toJSON());
-
-  try {
-    logger.info(`Auto-registering ${commandData.length} slash command(s)...`);
-    await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commandData });
-    logger.info('Slash commands registered successfully.');
-  } catch (error) {
-    logger.error(error, 'Failed to register commands');
-    // Don't throw - the bot can still function, commands just won't work until deployed
-  }
-}
-
 /** Initializes and connects the Discord bot. Called by the API entry point. */
 export async function startBot(): Promise<void> {
-  const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, GUILD_ID, AUTO_DEPLOY_COMMANDS } = process.env;
+  const { DISCORD_BOT_TOKEN } = process.env;
 
   if (!DISCORD_BOT_TOKEN) {
     throw new Error('DISCORD_BOT_TOKEN is not set.');
-  }
-  if (!DISCORD_CLIENT_ID) {
-    throw new Error('DISCORD_CLIENT_ID is not set.');
-  }
-  if (!GUILD_ID) {
-    throw new Error('GUILD_ID is not set.');
   }
 
   const client = new Client({
@@ -82,23 +47,8 @@ export async function startBot(): Promise<void> {
 
   setClient(client);
 
-  client.commands = new Collection<string, Command>();
-
-  for (const command of commands) {
-    client.commands.set(command.data.name, command);
-  }
-
-  client.once('clientReady', async (readyClient) => {
+  client.once('clientReady', (readyClient) => {
     logger.info(`Bot logged in as ${readyClient.user.tag}`);
-
-    const shouldAutoDeploy = AUTO_DEPLOY_COMMANDS !== 'false';
-    if (shouldAutoDeploy) {
-      await deployCommands(DISCORD_CLIENT_ID, GUILD_ID, DISCORD_BOT_TOKEN, commands);
-    } else {
-      logger.info(
-        'Auto-deploy disabled (AUTO_DEPLOY_COMMANDS=false). Run `npm run bot:deploy` manually if needed.'
-      );
-    }
   });
 
   client.on('voiceStateUpdate', (oldState, newState) => {
@@ -128,33 +78,6 @@ export async function startBot(): Promise<void> {
       if (player?.getCurrentSong() && player.isPlaying()) {
         player.togglePause();
         logger.info({ guildId }, "Auto-paused: no humans left in the bot's voice channel.");
-      }
-    }
-  });
-
-  client.on('interactionCreate', async (interaction: Interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) {
-      logger.warn(`No handler found for command: ${interaction.commandName}`);
-      return;
-    }
-
-    try {
-      await command.execute(interaction);
-    } catch (error) {
-      logger.error(error, `Error executing /${interaction.commandName}`);
-
-      const errorMessage: InteractionReplyOptions = {
-        content: 'Something went wrong.',
-        flags: 'Ephemeral',
-      };
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(errorMessage);
-      } else {
-        await interaction.reply(errorMessage);
       }
     }
   });

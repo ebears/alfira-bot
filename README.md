@@ -90,19 +90,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 This pulls the pre-built images and starts PostgreSQL, the API + bot, and the web UI.
 
-### 4. Register Slash Commands
-
-Slash commands are automatically registered with Discord on startup. By default, this happens every time the bot starts (configurable via `AUTO_DEPLOY_COMMANDS`).
-
-If you need to manually register or re-register commands (e.g., after adding or modifying commands while the bot is running):
-
-```bash
-docker compose -f docker-compose.prod.yml exec api npm run bot:deploy
-```
-
-> **Note:** Commands are registered as guild commands, which update instantly. You must re-run this after adding, removing, or renaming commands if auto-deploy is disabled.
-
-### 5. Access the Web UI
+### 4. Access the Web UI
 
 - **Web UI:** `http://localhost:8080`
 - **API:** `http://localhost:3001`

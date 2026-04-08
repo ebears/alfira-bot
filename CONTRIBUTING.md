@@ -58,19 +58,6 @@ docker compose up --build
 
 ---
 
-## Slash Commands
-
-Commands must be registered with Discord before they appear in the client.
-
-```bash
-# Register commands manually
-docker compose exec api bun run bot:deploy
-```
-
-Commands are auto-registered on startup by default. Set `AUTO_DEPLOY_COMMANDS=false` to disable. See [Configuration Reference](docs/configuration.md) for details.
-
----
-
 ## Documentation
 
 | Document | Description |
