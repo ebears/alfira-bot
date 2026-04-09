@@ -42,7 +42,7 @@ flowchart TB
     WEB -->|OAuth2 Login| API
     WEB -->|REST API| API
     WEB <-->|WebSocket| SOCKET
-    DISC -->|Slash Commands| BOT
+    DISC <-->|Voice Channel| VOICE
     DISC <-->|Voice Channel| VOICE
 
     %% Server internal

@@ -189,7 +189,7 @@ export class GuildPlayer {
         this.queue.clear();
         this.currentSong = null;
         this.sendToTextChannel(
-          '⚠️ Lost the voice connection unexpectedly. Use **/play** or **/join** to reconnect.'
+          '⚠️ Lost the voice connection unexpectedly. Use the Play button in the web UI to reconnect.'
         );
       }
 
@@ -498,7 +498,7 @@ export class GuildPlayer {
     this.consecutiveFailures++;
     if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
       this.sendToTextChannel(
-        `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use **/play** to try again.`
+        `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use the Play button in the web UI to try again.`
       );
       this.stop();
       return;

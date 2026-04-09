@@ -4,12 +4,12 @@
 # Runs PostgreSQL, the API + bot, and the web front-end all inside Docker.
 # Source files are mounted as volumes so you can edit code without rebuilding:
 #
-# API + bot — edit packages/api/src, then `docker compose restart api`.
-# Web — edit packages/web/src, run `bun run web:build` locally to rebuild, then restart the API container.
+# API + bot — edit packages/api/src, then `docker compose restart alfira`.
+# Web — edit packages/web/src, run `bun run web:build` locally to rebuild, then restart the alfira container.
 #
-# The bot package is pre-compiled during the API image build. If you change
+# The bot package is pre-compiled during the alfira image build. If you change
 # code inside packages/bot, rebuild the image first:
-#   docker compose build api
+#   docker compose build alfira
 #
 # First-time setup:
 #   cp .env.example .env
@@ -20,8 +20,8 @@
 #   docker compose up -d               — start in the background (after first build)
 #   docker compose down                — stop and remove containers
 #   docker compose down -v             — stop and wipe all data (clean slate)
-#   docker compose restart api         — reload the API after TypeScript changes
-#   docker compose build api           — rebuild the API image (e.g. after bot changes)
+#   docker compose restart alfira       — reload the API after TypeScript changes
+#   docker compose build alfira         — rebuild the alfira image (e.g. after bot changes)
 # ---------------------------------------------------------------------------
 
 services:
@@ -44,7 +44,7 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
+  alfira:
     build:
       context: .
       dockerfile: Dockerfile

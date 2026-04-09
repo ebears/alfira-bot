@@ -29,8 +29,8 @@ services:
     # expose:
     #   - 5432
 
-  api:
-    image: ghcr.io/ebears/alfira-bot-api:latest
+  alfira:
+    image: ghcr.io/ebears/alfira:latest
     restart: unless-stopped
     depends_on:
       db:
