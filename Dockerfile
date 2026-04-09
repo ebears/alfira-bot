@@ -77,14 +77,17 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy built files and production node_modules from builder
+# Copy lockfile and package structure (needed for bun install)
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nodejs:nodejs /app/bun.lock ./bun.lock
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./packages/api/dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
+
+# Let Bun install workspace dependencies in the runtime image
+RUN bun install --production
+
+# bot and shared are workspace:* deps - copy their built output
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
 # Switch to non-root user
 USER nodejs
