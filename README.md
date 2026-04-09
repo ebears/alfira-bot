@@ -4,15 +4,14 @@
   <br>
   <img src="https://img.shields.io/badge/status-experimental%20%7C%20pre--release-orange" alt="Status: Experimental | Pre-release">
   <br>
-  <img src="https://img.shields.io/badge/Bun%20-elysium?logo=bun&logoColor=white" alt="Bun">
-  <img src="https://img.shields.io/badge/TypeScript%205.4-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/Discord.js%2014-5865F2?logo=discord&logoColor=white" alt="Discord.js">
-  <br>
-  <img src="https://img.shields.io/badge/React%2019-61DAFB?logo=react&logoColor=black" alt="React">
-  <img src="https://img.shields.io/badge/Tailwind%20CSS%204-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
-  <br>
-  <img src="https://img.shields.io/badge/Claude%20Code-5B4B8A?logo=claude&logoColor=orange" alt="Claude Code">
   <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/TypeScript%20-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Bun%20-F472B6?logo=bun&logoColor=white" alt="Bun">
+  <br>
+  <img src="https://img.shields.io/badge/Discord.js%20-5865F2?logo=discord&logoColor=white" alt="Discord.js">
+  <img src="https://img.shields.io/badge/React%20-61DAFB?logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/Tailwind%20CSS%20-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <br>
   <a href="https://github.com/ebears/alfira-bot/actions/workflows/docker-build.yml"><img src="https://github.com/ebears/alfira-bot/actions/workflows/docker-build.yml/badge.svg" alt="GitHub Actions"></a>
 </p>
 

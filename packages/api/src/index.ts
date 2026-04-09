@@ -27,7 +27,7 @@ const missing = requiredVars.filter((v) => !process.env[v]);
 
 if (missing.length > 0) {
   logger.error(`Missing required environment variables: ${missing.join(', ')}`);
-  logger.error('Copy packages/api/.env.example to packages/api/.env and fill in all values.');
+  logger.error('Copy .env.example to .env and fill in all values.');
   process.exit(1);
 }
 

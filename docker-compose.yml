@@ -12,9 +12,7 @@
 #   docker compose build api
 #
 # First-time setup:
-#   cp packages/api/.env.example packages/api/.env
-#   fill in all values
-#   cp packages/bot/.env.example packages/bot/.env
+#   cp .env.example .env
 #   fill in all values
 #
 # Usage:
@@ -56,10 +54,9 @@ services:
       db:
         condition: service_healthy
     env_file:
-      # Local .env files provide Discord tokens, OAuth secrets, JWT secret, etc.
-      # Copy the .env.example files and fill in real values before first run.
-      - packages/api/.env
-      - packages/bot/.env
+      # Local .env file provides Discord tokens, OAuth secrets, JWT secret, etc.
+      # Copy .env.example to .env and fill in real values before first run.
+      - .env
     environment:
       # Override DATABASE_URL so it resolves to the 'db' service, not localhost.
       DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
