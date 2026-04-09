@@ -19,7 +19,6 @@ let reconnectAttempt = 0;
 // biome-ignore lint: internal storage must hold callbacks of varying types
 const eventListeners = new Map<string, Set<any>>();
 const statusListeners = new Set<() => void>();
-let isClosing = false;
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
 
@@ -40,17 +39,6 @@ function scheduleReconnect() {
 }
 
 function connect() {
-  // Skip if already connecting, connected, or closing
-  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
-    return;
-  }
-  if (isClosing) return;
-
-  // Cancel any in-flight connection before creating a new one
-  if (ws && ws.readyState === WebSocket.CONNECTING) {
-    ws.close();
-  }
-
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
@@ -60,23 +48,12 @@ function connect() {
   });
 
   ws.addEventListener('close', () => {
-    if (isClosing) return;
     setStatus('disconnected');
     scheduleReconnect();
   });
 
-  ws.addEventListener('error', async () => {
+  ws.addEventListener('error', () => {
     // error always precedes close, so we just let close handle reconnect
-    // But first try to refresh the session if auth failed
-    try {
-      const res = await fetch('/auth/refresh', { method: 'POST', credentials: 'include' });
-      if (!res.ok) {
-        // Session expired and refresh failed — let close handle reconnect
-        return;
-      }
-    } catch {
-      // Network error — let close handle reconnect
-    }
   });
 
   ws.addEventListener('message', (event) => {
@@ -120,10 +97,8 @@ export function useConnectionStatus(): ConnectionStatus {
 
 export function disposeSocket(): void {
   if (ws) {
-    isClosing = true;
     ws.close();
     ws = null;
-    isClosing = false;
   }
 }
 
