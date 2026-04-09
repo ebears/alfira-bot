@@ -155,20 +155,22 @@ This starts:
 
 ### Development Workflow
 
+The main dev command is `bun run dev`, which builds the shared and bot packages locally (for editor LSP support) and then starts all services with Docker.
+
 | What Changed | Action |
 |--------------|--------|
+| Any of the above | `bun run dev` — builds changed packages and restarts Docker |
 | `packages/web/src/**` | Run `bun run web:build` locally to rebuild the UI, then `docker compose restart api` |
 | `packages/api/src/**` | `docker compose restart api` |
-| `packages/bot/src/**` | `docker compose build api && docker compose up -d api` |
 
 ### Useful Commands
 
 ```bash
-# Start services in detached mode
+# Start services in detached mode (after first build)
 docker compose up -d
 
 # View logs
-docker compose logs -f api
+docker compose logs -f alfira
 
 # Stop all services
 docker compose down
@@ -177,12 +179,11 @@ docker compose down
 docker compose down -v
 
 # Restart a specific service
-docker compose restart api
+docker compose restart alfira
 
 # Rebuild a specific service
-docker compose build api
-docker compose up -d api
-
+docker compose build alfira
+docker compose up -d alfira
 ```
 
 ## Production Setup

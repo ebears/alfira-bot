@@ -79,8 +79,8 @@ Top-level scripts:
 
 | Script | Description |
 |--------|-------------|
-| `bun run dev` | Start the API + bot |
-| `bun run web:dev` | Start the Bun dev server for the web UI |
+| `bun run dev` | Build shared + bot locally, then start all services with Docker |
+| `bun run web:build` | Build the web UI (used by Docker) |
 | `bun run db:generate` | Generate Drizzle migration files |
 | `bun run db:migrate` | Run Drizzle migrations |
 | `bun run check` | Lint and format with auto-fix (Biome) |

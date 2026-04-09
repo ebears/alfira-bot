@@ -5,7 +5,7 @@
 # Source files are mounted as volumes so you can edit code without rebuilding:
 #
 # API + bot — edit packages/api/src, then `docker compose restart alfira`.
-# Web — edit packages/web/src, run `bun run web:build` locally to rebuild, then restart the alfira container.
+# Web — edit packages/web/src, rebuild the image to see changes.
 #
 # The bot package is pre-compiled during the alfira image build. If you change
 # code inside packages/bot, rebuild the image first:
@@ -69,8 +69,6 @@ services:
       - ./packages/api/src:/app/packages/api/src
       # Mount shared source so hot-reload picks up DB changes.
       - ./packages/shared/src:/app/packages/shared/src
-      # Mount web dist so API can serve the React app (run `bun run web:build` locally after web source changes)
-      - ./packages/web/dist:/app/packages/web/dist
     healthcheck:
       test:
         [

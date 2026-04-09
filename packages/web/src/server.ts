@@ -35,26 +35,6 @@ Bun.serve({
       });
     }
 
-    // Proxy WebSocket upgrade for /ws
-    if (pathname.startsWith('/ws')) {
-      const target = `${apiUrl}${pathname}${url.search}`.replace('http', 'ws');
-      try {
-        // biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket upgrade requires Bun's WebSocket type
-        const ws = await (WebSocket as any).upgrade(req, {
-          headers: Object.fromEntries(req.headers),
-        });
-        // biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket constructor requires Bun's WebSocket type
-        const remote = new (WebSocket as any)(target);
-        ws.onopen = () => remote.close();
-        ws.onclose = () => remote.close();
-        ws.onmessage = (event: MessageEvent) => remote.send(event.data);
-        remote.onmessage = (event: MessageEvent) => ws.send(event.data);
-        return new Response(null, { status: 200 });
-      } catch {
-        return new Response('WebSocket upgrade failed', { status: 502 });
-      }
-    }
-
     // Serve static files
     if (pathname === '/' || !pathname.includes('.')) {
       const index = Bun.file('./index.html');
@@ -97,4 +77,4 @@ Bun.serve({
 });
 
 console.log(`[Dev] Server running on http://localhost:${PORT}`);
-console.log(`[Dev] Proxying /api, /auth, /ws to ${apiUrl}`);
+console.log(`[Dev] Proxying /api, /auth to ${apiUrl}`);

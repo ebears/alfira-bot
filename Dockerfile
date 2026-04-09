@@ -53,6 +53,7 @@ COPY package.json bun.lock ./
 COPY packages ./packages
 
 RUN bun install
+ENV NODE_ENV=production
 RUN bun run --filter @alfira-bot/shared build && \
     bun run --filter @alfira-bot/bot build && \
     bun run --filter @alfira-bot/api build && \

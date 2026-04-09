@@ -264,7 +264,10 @@ async function runMigrations(): Promise<void> {
       } catch (err) {
         // Skip "already exists" errors — the table/index is already there
         if ((err as { code?: string }).code === '42P07') {
-          logger.info({ file, stmt: trimmed.substring(0, 50) }, 'Skipping already-exists statement');
+          logger.info(
+            { file, stmt: trimmed.substring(0, 50) },
+            'Skipping already-exists statement'
+          );
           continue;
         }
         throw err;
