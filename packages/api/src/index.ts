@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { destroyAllPlayers, setBroadcastQueueUpdate, startBot } from '@alfira-bot/bot';
 import { $client, db } from '@alfira-bot/shared/db';
 import { parse } from 'cookie';
@@ -224,8 +227,58 @@ logger.info({ port: PORT }, 'Bun server listening');
 // ---------------------------------------------------------------------------
 // Startup sequence
 // ---------------------------------------------------------------------------
+async function runMigrations(): Promise<void> {
+  const MIGRATIONS_DIR = join(__dirname, '../../shared/dist/db/migrations');
+
+  // Ensure the drizzle migrations tracking table exists
+  await $client.unsafe(`
+    CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+      id SERIAL PRIMARY KEY,
+      hash text NOT NULL,
+      created_at bigint NOT NULL
+    )
+  `);
+
+  const migrationFiles = readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql'))
+    .sort();
+
+  for (const file of migrationFiles) {
+    const filePath = join(MIGRATIONS_DIR, file);
+    const hash = createHash('sha256').update(readFileSync(filePath)).digest('hex');
+
+    // Check if already applied
+    const result = await $client.unsafe(
+      `SELECT hash FROM "__drizzle_migrations" WHERE hash = '${hash}'`
+    );
+    if (result.count > 0) continue;
+
+    // Apply migration
+    const rawSql = readFileSync(filePath, 'utf-8');
+    const statements = rawSql.split(/-->\s*statement-breakpoint/);
+    for (const stmt of statements) {
+      const trimmed = stmt.trim();
+      if (trimmed) await $client.unsafe(trimmed);
+    }
+
+    await $client.unsafe(
+      `INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES ('${hash}', ${Date.now()})`
+    );
+    logger.info({ file }, 'Applied migration');
+  }
+}
+
 async function main(): Promise<void> {
-  // 1. Verify database connectivity.
+  // 1. Run migrations.
+  try {
+    await runMigrations();
+    logger.info('Migrations complete');
+  } catch (error) {
+    logger.error(error, 'Migration failed');
+    process.exit(1);
+  }
+
+  // 2. Verify database connectivity.
   try {
     await db.execute(sql`SELECT 1`);
     logger.info('Connected to database');
