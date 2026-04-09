@@ -10,7 +10,7 @@
 | **Audio** | `yt-dlp`, `ffmpeg` |
 | **API** | Bun native HTTP + WebSocket |
 | **Database** | PostgreSQL 16 + Drizzle ORM |
-| **Frontend** | React 19 + Bun + Tailwind CSS 4 |
+| **Frontend** | React 19 + Bun + Vanilla CSS |
 | **Logging** | Pino |
 
 ## Architecture
@@ -70,7 +70,7 @@ packages/
 ├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
 ├── bot       # Discord bot (GuildPlayer, yt-dlp wrapper)
 ├── api       # Bun API, Drizzle ORM
-└── web       # React + Tailwind web UI
+└── web       # React web UI
 ```
 
 ## Development Scripts
