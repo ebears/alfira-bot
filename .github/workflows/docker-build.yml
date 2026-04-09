@@ -36,5 +36,5 @@ jobs:
           file: ./Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/alfira-bot-api:latest
-            ghcr.io/${{ github.repository_owner }}/alfira-bot-api:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/alfira:latest
+            ghcr.io/${{ github.repository_owner }}/alfira:${{ github.sha }}

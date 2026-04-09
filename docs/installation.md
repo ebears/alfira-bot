@@ -69,7 +69,6 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 1. Navigate to **OAuth2** → **URL Generator**.
 2. Under **Scopes**, check:
    - `bot`
-   - `applications.commands`
 3. Under **Bot Permissions**, check:
    - `Connect`
    - `Speak`
@@ -77,7 +76,6 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
    - `View Channels`
    - `Send Messages`
    - `Embed Links`
-   - `Use Slash Commands`
 4. Copy the generated URL at the bottom, open it in your browser, and authorize the bot for your server.
 
 ### 5. Get Your Guild and Role IDs
@@ -137,8 +135,8 @@ For a complete configuration reference, see the **[Configuration Guide](configur
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/ebears/alfira-bot.git
-cd alfira-bot
+git clone https://github.com/ebears/alfira.git
+cd alfira
 
 # 2. Configure environment variables
 cp .env.example .env
@@ -195,8 +193,8 @@ Alfira uses pre-built Docker images from GitHub Container Registry (GHCR), makin
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/ebears/alfira-bot.git
-cd alfira-bot
+git clone https://github.com/ebears/alfira.git
+cd alfira
 
 # 2. Create your environment file
 cp .env.example .env

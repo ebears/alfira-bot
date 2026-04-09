@@ -4,7 +4,7 @@
 
 Please do not open a public GitHub issue for security vulnerabilities.
 
-Instead, report them by emailing the maintainer or opening a [GitHub private security advisory](https://github.com/ebears/alfira-bot/security/advisories/new).
+Instead, report them by emailing the maintainer or opening a [GitHub private security advisory](https://github.com/ebears/alfira/security/advisories/new).
 
 Include:
 - A description of the vulnerability

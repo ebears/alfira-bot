@@ -6,7 +6,7 @@ Common issues and solutions for Alfira.
 
 ### Bot not joining voice channels
 
-**Symptoms:** `/join` command times out or bot doesn't appear in voice channel.
+**Symptoms:** Bot doesn't appear in voice channel when using the Play button.
 
 **Solutions:**
 1. Ensure the bot has the required permissions (Connect, Speak).
@@ -64,7 +64,7 @@ docker compose up --build
 ## Getting Help
 
 1. Check the logs: `docker compose logs -f api`
-2. Search existing [GitHub Issues](https://github.com/ebears/alfira-bot/issues).
+2. Search existing [GitHub Issues](https://github.com/ebears/alfira/issues).
 3. Open a new issue with:
    - Docker version
    - Relevant log output
