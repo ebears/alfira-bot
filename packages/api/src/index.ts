@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { destroyAllPlayers, setBroadcastQueueUpdate, startBot } from '@alfira-bot/bot';
 import { $client, db } from '@alfira-bot/shared/db';
 import { parse } from 'cookie';

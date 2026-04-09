@@ -1,19 +1,25 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-
 // ---------------------------------------------------------------------------
-// Axios instance
+// Fetch client for API calls
 //
 // Uses relative URLs. In development, Bun's dev server proxies /api and /auth
 // to the API server on :3001. In production, configure a reverse proxy
 // (Caddy, etc.) to do the same thing.
 //
-// withCredentials is set globally so the HttpOnly session cookie is sent on
-// every request automatically.
+// credentials: 'include' is set globally so the HttpOnly session cookie is
+// sent on every request automatically.
 // ---------------------------------------------------------------------------
-const client = axios.create({
-  withCredentials: true,
-  timeout: 10_000, // 10 seconds — prevents indefinite hangs on slow/unresponsive servers
-});
+
+const TIMEOUT_MS = 10_000;
+
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Token refresh state
@@ -28,13 +34,7 @@ let failedQueue: Array<{
   reject: (error: unknown) => void;
 }> = [];
 
-// ---------------------------------------------------------------------------
-// Process the failed queue
-//
-// After a refresh attempt (success or failure), resolve or reject all
-// queued requests that were waiting for the refresh.
-// ---------------------------------------------------------------------------
-function processQueue(error: AxiosError | null): void {
+function processQueue(error: Error | null): void {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -51,76 +51,92 @@ function redirectToLogin(): void {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Response interceptor for automatic token refresh
-//
-// When a request fails with 401:
-// 1. If we're not already refreshing, attempt to refresh the token
-// 2. If refresh succeeds, retry the original request
-// 3. If refresh fails, redirect to login
-//
-// Multiple concurrent 401s will all wait for the same refresh promise,
-// preventing multiple refresh calls.
-// ---------------------------------------------------------------------------
-client.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & {
-      _retry?: boolean;
-    };
+async function refreshToken(): Promise<boolean> {
+  try {
+    const res = await fetchWithTimeout('/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
-    // Only handle 401 errors
-    if (error.response?.status !== 401) {
-      return Promise.reject(error);
-    }
+async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unknown> {
+  const makeRequest = async (): Promise<Response> =>
+    fetchWithTimeout(url, { ...options, credentials: 'include' });
 
-    // Don't retry if this is already a retry
-    if (originalRequest._retry) {
-      // Refresh failed, redirect to login
+  let response = await makeRequest();
+
+  // Handle 401 with token refresh retry
+  if (response.status === 401) {
+    // Don't retry if this is already a refresh request
+    if (url === '/auth/refresh') {
       redirectToLogin();
-      return Promise.reject(error);
+      throw new Error('Unauthorized');
     }
 
-    // If this is a refresh request that failed, don't try to refresh again
-    if (originalRequest.url === '/auth/refresh') {
-      redirectToLogin();
-      return Promise.reject(error);
-    }
-
-    // If we're already refreshing, queue this request
+    // If already refreshing, queue this request
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      }).then(() => {
-        // Retry the original request after refresh completes
-        return client(originalRequest);
-      });
+      }).then(() => makeRequest());
     }
 
     // Start refreshing
     isRefreshing = true;
-    originalRequest._retry = true;
 
-    try {
-      // Attempt to refresh the token
-      await client.post('/auth/refresh');
+    const ok = await refreshToken();
 
-      // Refresh succeeded, process queued requests
+    if (ok) {
+      // Refresh succeeded, process queue and retry
       processQueue(null);
-
-      // Retry the original request
-      return client(originalRequest);
-    } catch (refreshError) {
-      // Refresh failed, reject queued requests and redirect to login
-      processQueue(refreshError as AxiosError);
-
-      redirectToLogin();
-
-      return Promise.reject(refreshError);
-    } finally {
       isRefreshing = false;
+      response = await makeRequest();
+    } else {
+      // Refresh failed, reject queue and redirect
+      processQueue(new Error('Token refresh failed'));
+      isRefreshing = false;
+      redirectToLogin();
+      throw new Error('Unauthorized');
     }
   }
-);
 
-export default client;
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ---------------------------------------------------------------------------
+// API client matching @alfira-bot/shared/api interface
+// ---------------------------------------------------------------------------
+export const client = {
+  async get<T>(url: string): Promise<{ data: T }> {
+    const data = await wrappedFetch(url);
+    return { data: data as T };
+  },
+  async post<T>(url: string, data?: unknown): Promise<{ data: T }> {
+    const body = data !== undefined ? JSON.stringify(data) : undefined;
+    const result = await wrappedFetch(url, {
+      method: 'POST',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body,
+    });
+    return { data: result as T };
+  },
+  async patch<T>(url: string, data: unknown): Promise<{ data: T }> {
+    const result = await wrappedFetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return { data: result as T };
+  },
+  async delete<T>(url: string): Promise<{ data: T }> {
+    const result = await wrappedFetch(url, { method: 'DELETE' });
+    return { data: result as T };
+  },
+};

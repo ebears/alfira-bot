@@ -1,5 +1,5 @@
 import { configureApiClient } from '@alfira-bot/shared/api';
-import client from './client';
+import { client } from './client';
 
 // Configure the shared API service with the web client
 configureApiClient(client);

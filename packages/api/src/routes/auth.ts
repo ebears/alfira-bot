@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import { tables } from '@alfira-bot/shared/db';
-import axios, { isAxiosError } from 'axios';
 import { and, eq, lt } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import type { RouteContext } from '../index';
@@ -126,15 +125,19 @@ function authRateLimit(ip: string): boolean {
 /** Fetches guild member roles. Returns 'not-in-guild' on 404, null on other errors. */
 async function fetchGuildMemberRoles(discordId: string): Promise<string[] | null | 'not-in-guild'> {
   try {
-    const memberRes = await axios.get(
+    const memberRes = await fetch(
       `https://discord.com/api/guilds/${GUILD_ID}/members/${discordId}`,
       { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` } }
     );
-    return memberRes.data.roles ?? [];
-  } catch (err: unknown) {
-    if (isAxiosError(err) && err.response?.status === 404) {
+    if (memberRes.status === 404) {
       return 'not-in-guild';
     }
+    if (!memberRes.ok) {
+      throw new Error(`Discord API error: ${memberRes.status}`);
+    }
+    const data = (await memberRes.json()) as { roles?: string[] };
+    return data.roles ?? [];
+  } catch (err: unknown) {
     logger.error(
       { err: err instanceof Error ? err.message : String(err) },
       'Failed to fetch guild member roles'
@@ -148,10 +151,14 @@ async function fetchUserAdminStatus(
   discordId: string
 ): Promise<{ isAdmin: boolean; username: string; avatar: string | null } | null> {
   try {
-    const userRes = await axios.get(`https://discord.com/api/users/${discordId}`, {
+    const userRes = await fetch(`https://discord.com/api/users/${discordId}`, {
       headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` },
     });
-    const { username, avatar } = userRes.data;
+    if (!userRes.ok) {
+      throw new Error(`Discord API error: ${userRes.status}`);
+    }
+    const userData = (await userRes.json()) as { username: string; avatar: string | null };
+    const { username, avatar } = userData;
 
     const roles = await fetchGuildMemberRoles(discordId);
     if (roles === null || roles === 'not-in-guild') return null;
@@ -176,18 +183,22 @@ async function fetchUserAdminStatus(
  */
 async function exchangeAuthorizationCode(code: string): Promise<string | null> {
   try {
-    const tokenRes = await axios.post(
-      'https://discord.com/api/oauth2/token',
-      new URLSearchParams({
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code',
         code,
         redirect_uri: DISCORD_REDIRECT_URI,
       }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-    return tokenRes.data.access_token;
+    });
+    if (!tokenRes.ok) {
+      return null;
+    }
+    const data = (await tokenRes.json()) as { access_token?: string };
+    return data.access_token ?? null;
   } catch {
     return null;
   }
@@ -201,10 +212,13 @@ async function fetchDiscordIdentity(
   discordToken: string
 ): Promise<{ id: string; username: string; avatar: string | null } | null> {
   try {
-    const userRes = await axios.get('https://discord.com/api/users/@me', {
+    const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${discordToken}` },
     });
-    return userRes.data;
+    if (!userRes.ok) {
+      return null;
+    }
+    return (await userRes.json()) as { id: string; username: string; avatar: string | null };
   } catch {
     return null;
   }
