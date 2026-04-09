@@ -90,11 +90,10 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 
 ## Configuration
 
-Alfira uses environment variables for configuration. Copy the example files and fill in your values:
+Alfira uses environment variables for configuration. Copy the example file and fill in your values:
 
 ```bash
-cp packages/api/.env.example packages/api/.env
-cp packages/bot/.env.example packages/bot/.env
+cp .env.example .env
 ```
 
 ### Environment Variables Reference
@@ -142,9 +141,8 @@ git clone https://github.com/ebears/alfira-bot.git
 cd alfira-bot
 
 # 2. Configure environment variables
-cp packages/api/.env.example packages/api/.env
-cp packages/bot/.env.example packages/bot/.env
-# Edit both .env files with your values
+cp .env.example .env
+# Edit .env with your values
 
 # 3. Build and start all services
 docker compose up --build
