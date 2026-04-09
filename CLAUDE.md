@@ -11,7 +11,7 @@ Alfira is a self-hosted Discord music bot with a web UI as the primary interface
 - `packages/api` — Bun API, Drizzle ORM
 - `packages/web` — React + Tailwind web UI
 
-The bot and API run in a **single Bun process**, sharing memory for player state. This allows real-time updates to be broadcast directly from playback events.
+The bot and API run in a **single Bun process**, sharing memory for player state. This allows real-time updates to be broadcast directly from playback events via Bun's native WebSocket.
 
 ## Tech Stack
 
@@ -19,19 +19,19 @@ The bot and API run in a **single Bun process**, sharing memory for player state
 - **Language:** TypeScript
 - **Discord:** discord.js v14, @discordjs/voice
 - **Audio:** yt-dlp + ffmpeg
-- **API:** Bun HTTP
+- **API:** Bun native HTTP + WebSocket
 - **Database:** PostgreSQL 16 + Drizzle ORM
-- **Frontend:** React 19 + Tailwind CSS 4
+- **Frontend:** React 19 + Tailwind CSS 4 (built with Bun)
 - **Linting:** Biome
 
 ## Development Commands
 
 ```bash
-# Start the API + bot (Docker)
+# Build shared + bot locally (for editor LSP), then start everything with Docker
 bun run dev
 
-# Start the web dev server for the UI
-bun run web:dev
+# Build the web UI (used by Docker)
+bun run web:build
 
 # Generate Drizzle migration files
 bun run db:generate
@@ -53,19 +53,11 @@ bun run format
 
 ### Bot Changes Require Rebuild
 
-The bot package is pre-compiled during Docker image build:
+The bot package is pre-compiled during Docker image build. If you change `packages/bot/src/**`, run `bun run dev` again — it rebuilds the local `dist/` and then starts Docker with a fresh image.
 
-1. `Dockerfile` runs `bun run --filter @alfira-bot/bot build`
-2. Compiled output is baked into the image at `packages/bot/dist/`
-3. API source files are mounted as volumes, but bot's `dist/` stays in the image
+### Environment Configuration
 
-**If you change `packages/bot/src/**`:** Rebuild required (`docker compose build api && docker compose up -d api`)
-
-### Shared Package Changes
-
-- **Used by web:** HMR picks up changes automatically
-- **Used by api:** Restart required (`docker compose restart api`)
-- **Used by bot:** Rebuild required
+A single `.env` file at the project root is used for all configuration. Copy `.env.example` to `.env` and fill in all values before running the application.
 
 ## Code Style
 
