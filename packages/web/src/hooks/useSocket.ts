@@ -65,18 +65,8 @@ function connect() {
     scheduleReconnect();
   });
 
-  ws.addEventListener('error', async () => {
+  ws.addEventListener('error', () => {
     // error always precedes close, so we just let close handle reconnect
-    // But first try to refresh the session if auth failed
-    try {
-      const res = await fetch('/auth/refresh', { method: 'POST', credentials: 'include' });
-      if (!res.ok) {
-        // Session expired and refresh failed — let close handle reconnect
-        return;
-      }
-    } catch {
-      // Network error — let close handle reconnect
-    }
   });
 
   ws.addEventListener('message', (event) => {
