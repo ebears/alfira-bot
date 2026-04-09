@@ -43,7 +43,7 @@ ENV NODE_ENV=development
 
 EXPOSE 3001
 
-CMD ["bun", "run", "packages/api/src/index.ts"]
+CMD ["bun", "--env-file=.env", "run", "packages/api/src/index.ts"]
 
 # ---------------------------------------------------------------------------
 # Builder stage — builds all packages but does NOT generate a runtime image.
