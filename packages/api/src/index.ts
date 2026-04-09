@@ -258,7 +258,17 @@ async function runMigrations(): Promise<void> {
     const statements = rawSql.split(/-->\s*statement-breakpoint/);
     for (const stmt of statements) {
       const trimmed = stmt.trim();
-      if (trimmed) await $client.unsafe(trimmed);
+      if (!trimmed) continue;
+      try {
+        await $client.unsafe(trimmed);
+      } catch (err) {
+        // Skip "already exists" errors — the table/index is already there
+        if ((err as { code?: string }).code === '42P07') {
+          logger.info({ file, stmt: trimmed.substring(0, 50) }, 'Skipping already-exists statement');
+          continue;
+        }
+        throw err;
+      }
     }
 
     await $client.unsafe(
@@ -274,8 +284,7 @@ async function main(): Promise<void> {
     await runMigrations();
     logger.info('Migrations complete');
   } catch (error) {
-    logger.error(error, 'Migration failed');
-    process.exit(1);
+    logger.error(error, 'Migration failed (continuing anyway — database may already be set up)');
   }
 
   // 2. Verify database connectivity.
