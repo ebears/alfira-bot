@@ -9,8 +9,8 @@
 | **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
 | **Audio** | `yt-dlp`, `ffmpeg` |
 | **API** | Bun native HTTP + WebSocket |
-| **Database** | PostgreSQL 16 + Drizzle ORM |
-| **Frontend** | React 19 + Bun + Vanilla CSS |
+| **Database** | PostgreSQL + Drizzle ORM |
+| **Frontend** | React + Bun + Tailwind |
 | **Logging** | Pino |
 
 ## Architecture
@@ -70,7 +70,7 @@ packages/
 ├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
 ├── bot       # Discord bot (GuildPlayer, yt-dlp wrapper)
 ├── api       # Bun API, Drizzle ORM
-└── web       # React web UI
+└── web       # React + Tailwind web UI
 ```
 
 ## Development Scripts

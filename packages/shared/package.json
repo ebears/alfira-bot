@@ -11,7 +11,7 @@
     "./db": "./dist/db/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r src/db/migrations dist/db/",
     "db:generate": "cd ../.. && drizzle-kit generate",
     "db:migrate": "cd ../.. && drizzle-kit migrate",
     "db:migrate:deploy": "cd ../.. && drizzle-kit migrate",

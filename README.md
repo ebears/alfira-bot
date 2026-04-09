@@ -10,7 +10,7 @@
   <br>
   <img src="https://img.shields.io/badge/Discord.js%20-5865F2?logo=discord&logoColor=white" alt="Discord.js">
   <img src="https://img.shields.io/badge/React%20-61DAFB?logo=react&logoColor=black" alt="React">
-  <img src="https://img.shields.io/badge/React%20-61DAFB?logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/Tailwind%20-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
   <br>
   <a href="https://github.com/ebears/alfira/actions/workflows/docker-build.yml"><img src="https://github.com/ebears/alfira/actions/workflows/docker-build.yml/badge.svg" alt="GitHub Actions"></a>
 </p>
