@@ -862,7 +862,6 @@
         color: var(--color-fg);
         font-family: var(--font-body);
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
         font-variant-ligatures: common-ligatures;
         transition:
