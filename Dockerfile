@@ -89,6 +89,7 @@ RUN bun install --production
 # bot and shared are workspace:* deps - copy their built output
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
 # Switch to non-root user
 USER nodejs
