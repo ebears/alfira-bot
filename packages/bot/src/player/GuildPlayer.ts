@@ -1,29 +1,16 @@
-import type { Readable } from 'node:stream';
 import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
 import { logger } from '@alfira-bot/shared/logger';
-import {
-  type AudioPlayer,
-  AudioPlayerStatus,
-  createAudioPlayer,
-  createAudioResource,
-  entersState,
-  StreamType,
-  type VoiceConnection,
-  VoiceConnectionStatus,
-} from '@discordjs/voice';
 import type { EmbedBuilder, TextChannel } from 'discord.js';
+import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
 import { broadcastQueueUpdate } from '../lib/broadcast';
+import { getHoshimi } from '../lib/client';
 import { buildNowPlayingEmbed } from '../utils/format';
-import { createAudioStream, getStreamFormat } from '../utils/ytdlp';
 import { PlaybackCursor } from './PlaybackCursor';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
-  private static readonly VOICE_RECONNECT_TIMEOUT_MS = 5_000;
-  private static readonly MAX_MISSED_FRAMES = 50;
   private static readonly STREAM_RETRY_ATTEMPTS = 3;
   private static readonly STREAM_RETRY_DELAY_MS = 1_000;
-  private static readonly AUDIO_PLAYER_READY_TIMEOUT_MS = 5_000;
 
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
   private priorityQueue: QueuedSong[] = [];
@@ -34,11 +21,6 @@ export class GuildPlayer {
   private trackStartedAt: number | null = null;
   private pausedAt: number | null = null;
   private consecutiveFailures = 0;
-
-  // Set by stop() so Destroyed handler can distinguish intentional vs unexpected teardown.
-  private intentionallyStopped = false;
-
-  private isReconnecting = false;
 
   // Auto-leave idle timer.
   private idleLeaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -78,141 +60,65 @@ export class GuildPlayer {
     );
     const phrase = this.LEAVE_PHRASES[Math.floor(Math.random() * this.LEAVE_PHRASES.length)];
     this.sendToTextChannel(`${phrase} (Left the voice channel due to inactivity.)`);
-    this.stop();
-    this.connection.destroy();
+    this.destroyPlayer();
   }
 
-  // FFmpeg kill function, stored to prevent zombie processes on skip/stop.
-  private killCurrentFfmpeg: (() => void) | null = null;
-
-  private readonly connection: VoiceConnection;
-  private readonly audioPlayer: AudioPlayer;
   private readonly guildId: string;
   private readonly textChannel: TextChannel;
-  private readonly onDestroyed: () => void;
 
   private unpause(): void {
-    this.audioPlayer.unpause();
+    const hoshimi = getHoshimi();
+    if (!hoshimi) return;
+    const player = hoshimi.players.get(this.guildId);
+    if (player) {
+      player.setPaused(false);
+    }
     this.paused = false;
   }
 
-  /**
-   * Setup audio player event listeners.
-   */
-  private setupAudioPlayerListeners(): void {
-    this.audioPlayer.on(AudioPlayerStatus.Idle, () => this.onTrackEnd());
-
-    this.audioPlayer.on('error', (error) => {
-      logger.error(
-        { guildId: this.guildId, track: this.currentSong?.title ?? 'unknown' },
-        `AudioPlayer error: ${error.message}`
-      );
-      this.onTrackEnd();
-    });
-
-    this.audioPlayer.on(AudioPlayerStatus.AutoPaused, () => {
-      logger.warn(
-        { guildId: this.guildId },
-        'AudioPlayer AutoPaused — voice connection may be temporarily unavailable.'
-      );
-    });
-  }
-
-  /**
-   * Setup voice connection event listeners.
-   */
-  private setupConnectionListeners(): void {
-    // Clear UDP keepAlive to prevent periodic stutters.
-    this.connection.on('stateChange', (oldState, newState) => {
-      const oldNetworking = Reflect.get(oldState, 'networking');
-      const newNetworking = Reflect.get(newState, 'networking');
-
-      const networkStateChangeHandler = (_: unknown, newNetworkState: object) => {
-        const newUdp = Reflect.get(newNetworkState, 'udp');
-        clearInterval(newUdp?.keepAliveInterval);
-      };
-
-      oldNetworking?.off('stateChange', networkStateChangeHandler);
-      newNetworking?.on('stateChange', networkStateChangeHandler);
-    });
-
-    // Give Discord 5s to reconnect before destroying.
-    this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
-      if (this.isReconnecting) return;
-      this.isReconnecting = true;
-
-      logger.warn(
-        { guildId: this.guildId },
-        'Voice connection disconnected — attempting recovery.'
-      );
-
-      try {
-        await Promise.race([
-          entersState(
-            this.connection,
-            VoiceConnectionStatus.Signalling,
-            GuildPlayer.VOICE_RECONNECT_TIMEOUT_MS
-          ),
-          entersState(
-            this.connection,
-            VoiceConnectionStatus.Connecting,
-            GuildPlayer.VOICE_RECONNECT_TIMEOUT_MS
-          ),
-        ]);
-        logger.info({ guildId: this.guildId }, 'Voice connection is reconnecting.');
-      } catch {
-        if (this.connection.state.status !== VoiceConnectionStatus.Destroyed) {
-          logger.error(
-            { guildId: this.guildId },
-            'Voice connection could not recover — destroying.'
-          );
-          this.connection.destroy();
-        }
-      } finally {
-        this.isReconnecting = false;
-      }
-    });
-
-    this.connection.on(VoiceConnectionStatus.Destroyed, () => {
-      logger.info({ guildId: this.guildId }, 'Voice connection destroyed.');
-
-      this.cancelIdleLeave();
-
-      if (!this.intentionallyStopped) {
-        this.audioPlayer.stop(true);
-        this.killCurrentFfmpeg?.();
-        this.killCurrentFfmpeg = null;
-        this.queue.clear();
-        this.currentSong = null;
-        this.sendToTextChannel(
-          '⚠️ Lost the voice connection unexpectedly. Use the Play button in the web UI to reconnect.'
-        );
-      }
-
-      this.broadcast();
-      this.onDestroyed();
-    });
-  }
-
-  constructor(
-    connection: VoiceConnection,
-    textChannel: TextChannel,
-    guildId: string,
-    onDestroyed: () => void
-  ) {
-    this.connection = connection;
+  constructor(textChannel: TextChannel, guildId: string, _onDestroyed: () => void) {
     this.textChannel = textChannel;
     this.guildId = guildId;
-    this.onDestroyed = onDestroyed;
 
-    // MAX_MISSED_FRAMES frames (~1s) before auto-pause — avoids choppiness from brief network jitter.
-    this.audioPlayer = createAudioPlayer({
-      behaviors: { maxMissedFrames: GuildPlayer.MAX_MISSED_FRAMES },
-    });
-    this.connection.subscribe(this.audioPlayer);
+    // Register event handlers on the Hoshimi manager for this player's events.
+    const hoshimi = getHoshimi();
+    if (hoshimi) {
+      hoshimi.on('playerUpdate', (newPlayer: Player, oldPlayer: unknown, payload: unknown) => {
+        if (newPlayer.guildId !== this.guildId) return;
+        void oldPlayer;
+        void payload;
+      });
+      hoshimi.on('trackEnd', (player: Player, track: unknown, payload: TrackEndEvent) => {
+        if (player.guildId !== this.guildId) return;
+        if (payload.reason === 'replaced') return;
+        void track;
+        this.onTrackEnd().catch(() => {
+          // swallow errors — they are logged in handlePlaybackFailure
+        });
+      });
+      hoshimi.on('trackError', (player: Player, track: unknown, exception: unknown) => {
+        if (player.guildId !== this.guildId) return;
+        const exc = exception as { exception?: { message?: string } };
+        logger.error(
+          { guildId: this.guildId, track: this.currentSong?.title ?? 'unknown' },
+          `Player error: ${exc.exception?.message ?? 'unknown'}`
+        );
+        void track;
+      });
+    }
+  }
 
-    this.setupAudioPlayerListeners();
-    this.setupConnectionListeners();
+  private hoshimiPlayer() {
+    return getHoshimi()?.players.get(this.guildId);
+  }
+
+  private destroyPlayer(): void {
+    const hoshimi = getHoshimi();
+    if (!hoshimi) return;
+    const player = hoshimi.players.get(this.guildId);
+    if (player) {
+      player.destroy(DestroyReasons.Requested);
+    }
   }
 
   async addToQueue(songs: QueuedSong | QueuedSong[]): Promise<void> {
@@ -237,14 +143,17 @@ export class GuildPlayer {
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
     this.queue.clear();
     this.priorityQueue = [];
-    this.killCurrentFfmpeg?.();
-    this.killCurrentFfmpeg = null;
     this.currentSong = null;
     this.paused = false;
-    this.audioPlayer.stop(true);
     this.consecutiveFailures = 0;
     this.queue.replace(songs);
     this.cancelIdleLeave();
+
+    const player = this.hoshimiPlayer();
+    if (player) {
+      await player.stop(true);
+    }
+
     await this.playNext();
     this.broadcast();
   }
@@ -252,26 +161,31 @@ export class GuildPlayer {
   skip(): void {
     if (this.currentSong === null) return;
 
-    // Unpause first — .stop() on a paused player doesn't trigger Idle.
+    // Unpause first — stop() on a paused player might not trigger TrackEnd.
     if (this.paused) {
       this.unpause();
     }
 
-    this.audioPlayer.stop();
+    const player = this.hoshimiPlayer();
+    if (player) {
+      player.stop();
+    }
   }
 
   stop(): void {
-    this.intentionallyStopped = true;
     this.stopping = true;
     this.cancelIdleLeave();
-    this.killCurrentFfmpeg = null;
     this.currentSong = null;
     this.queue.clear();
     this.priorityQueue = [];
-    this.audioPlayer.stop(true);
     this.paused = false;
     this.trackStartedAt = null;
     this.broadcast();
+
+    const player = this.hoshimiPlayer();
+    if (player) {
+      player.stop(true);
+    }
   }
 
   clearQueue(): void {
@@ -291,11 +205,19 @@ export class GuildPlayer {
 
   setLoopMode(mode: LoopMode): void {
     this.loopMode = mode;
+    const player = this.hoshimiPlayer();
+    if (player) {
+      // Hoshimi uses LoopMode enum (Track=1, Queue=2, Off=3)
+      player.setLoop(mode === 'song' ? 1 : mode === 'queue' ? 2 : 3);
+    }
     this.broadcast();
   }
 
   togglePause(): boolean {
     if (!this.currentSong) return false;
+
+    const player = this.hoshimiPlayer();
+    if (!player) return false;
 
     if (this.paused) {
       this.cancelIdleLeave();
@@ -306,10 +228,11 @@ export class GuildPlayer {
         }
         this.pausedAt = null;
       }
-      this.unpause();
+      player.setPaused(false);
+      this.paused = false;
     } else {
       this.pausedAt = Date.now();
-      this.audioPlayer.pause(true);
+      player.setPaused(true);
       this.paused = true;
       this.scheduleIdleLeave();
     }
@@ -331,14 +254,16 @@ export class GuildPlayer {
   }
 
   isPlaying(): boolean {
-    return this.audioPlayer.state.status === AudioPlayerStatus.Playing;
+    const player = this.hoshimiPlayer();
+    return player?.playing ?? false;
   }
 
   getQueueState(): QueueState {
+    const player = this.hoshimiPlayer();
     return {
       isPlaying: this.isPlaying(),
       isPaused: this.paused,
-      isConnectedToVoice: this.connection.state.status !== VoiceConnectionStatus.Destroyed,
+      isConnectedToVoice: player?.connected ?? false,
       loopMode: this.loopMode,
       isShuffled: this.queue.isShuffled,
       currentSong: this.currentSong,
@@ -369,7 +294,8 @@ export class GuildPlayer {
   }
 
   private async playNext(): Promise<void> {
-    if (this.connection.state.status === VoiceConnectionStatus.Destroyed) return;
+    const player = this.hoshimiPlayer();
+    if (player && !player.connected) return;
 
     const prioritySong = this.priorityQueue.shift();
     if (prioritySong) {
@@ -419,71 +345,71 @@ export class GuildPlayer {
     this.cancelIdleLeave();
     this.paused = false;
 
-    let streamUrl: string;
-    let isWebmOpus: boolean;
-    try {
-      let lastError: unknown;
-      let result: { url: string; isWebmOpus: boolean } | undefined;
-      for (let attempt = 0; attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS; attempt++) {
-        try {
-          result = await getStreamFormat(next.youtubeUrl);
-          break;
-        } catch (error) {
-          lastError = error;
-          if (attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS - 1) {
-            await new Promise((resolve) => setTimeout(resolve, GuildPlayer.STREAM_RETRY_DELAY_MS));
-          }
+    const hoshimi = getHoshimi();
+    if (!hoshimi) {
+      await this.handlePlaybackFailure('Hoshimi not available');
+      return;
+    }
+
+    let lastError: unknown;
+    let trackData: { track: string; isWebmOpus: boolean } | undefined;
+
+    for (let attempt = 0; attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS; attempt++) {
+      try {
+        const { getStreamFormat } = await import('../utils/nodelink');
+        trackData = await getStreamFormat(next.youtubeUrl);
+        break;
+      } catch (error) {
+        lastError = error;
+        if (attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, GuildPlayer.STREAM_RETRY_DELAY_MS));
         }
       }
-      if (!result) throw lastError;
-      ({ url: streamUrl, isWebmOpus } = result);
-    } catch (error) {
+    }
+
+    if (!trackData) {
       logger.error(
-        { guildId: this.guildId, track: next.title, error },
+        { guildId: this.guildId, track: next.title, error: lastError },
         `Failed to get stream URL after ${GuildPlayer.STREAM_RETRY_ATTEMPTS} attempts`
       );
-      await this.handlePlaybackFailure('could not resolve the audio stream');
+      await this.handlePlaybackFailure('could not load the track from NodeLink');
       return;
     }
 
-    this.killCurrentFfmpeg?.();
-    this.killCurrentFfmpeg = null;
-
-    let stream: Readable;
-    let kill: () => void;
-    let actualIsWebmOpus: boolean;
-    try {
-      const handle = createAudioStream(streamUrl, isWebmOpus, next.volumeOffset);
-      stream = handle.stream;
-      kill = handle.kill;
-      actualIsWebmOpus = handle.isOutputWebmOpus;
-    } catch (error) {
-      logger.error({ guildId: this.guildId, track: next.title, error }, 'Failed to spawn FFmpeg');
-      await this.handlePlaybackFailure('FFmpeg failed to start');
-      return;
+    let player = hoshimi.players.get(this.guildId);
+    if (!player) {
+      player = hoshimi.createPlayer({ guildId: this.guildId, voiceId: '' });
     }
-    this.killCurrentFfmpeg = kill;
 
-    const resource = createAudioResource(stream, {
-      inputType: actualIsWebmOpus ? StreamType.WebmOpus : StreamType.OggOpus,
+    // Apply volume via NodeLink volume filter.
+    const volume =
+      next.volumeOffset != null && next.volumeOffset !== 0
+        ? 10 ** (next.volumeOffset / 20) * 100
+        : 100;
+
+    await player.play({
+      track: new Track(
+        {
+          encoded: trackData.track,
+          info: {
+            title: next.title,
+            identifier: next.youtubeId,
+            author: '',
+            length: next.duration * 1000,
+            artworkUrl: '',
+            uri: next.youtubeUrl,
+            isStream: false,
+            isSeekable: true,
+            position: 0,
+            sourceName: SourceNames.Youtube,
+            isrc: null,
+          },
+          pluginInfo: {},
+        },
+        {}
+      ),
+      volume,
     });
-
-    this.audioPlayer.play(resource);
-
-    try {
-      await entersState(
-        this.audioPlayer,
-        AudioPlayerStatus.Playing,
-        GuildPlayer.AUDIO_PLAYER_READY_TIMEOUT_MS
-      );
-    } catch {
-      logger.error(
-        { guildId: this.guildId, track: next.title },
-        'AudioPlayer failed to enter Playing state'
-      );
-      await this.handlePlaybackFailure('audio failed to start');
-      return;
-    }
 
     this.consecutiveFailures = 0;
     this.trackStartedAt = Date.now();
