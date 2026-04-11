@@ -12,7 +12,6 @@ type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Da
 
 // biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket type is incompatible with global WebSocket
 const clients = new Set<any>();
-const userBySocketId = new Map<string, User | null>();
 
 /**
  * Registers a newly connected WebSocket client after auth in fetch().
@@ -23,7 +22,6 @@ export function registerClient(
   user: User
 ): void {
   clients.add(ws);
-  userBySocketId.set(ws.id, user);
   logger.info({ socketId: ws.id, username: user.username }, 'WebSocket client connected');
 }
 
@@ -35,7 +33,6 @@ export function unregisterClient(
   ws: any
 ): void {
   clients.delete(ws);
-  userBySocketId.delete(ws.id);
   logger.info({ socketId: ws.id }, 'WebSocket client disconnected');
 }
 
@@ -119,5 +116,4 @@ export function closeAllClients(): void {
     client.close();
   }
   clients.clear();
-  userBySocketId.clear();
 }

@@ -96,28 +96,3 @@ export async function findPlaylistWithCount(playlistId: string) {
 
   return { ...pl, _count: { songs: value } };
 }
-
-/** Fetch playlists with song counts. Returns items and total count. */
-export async function findPlaylistsWithCount(opts: { offset: number; limit: number }) {
-  const [totalRows] = await db.select({ count: count() }).from(schema.playlist);
-  const items = await db
-    .select()
-    .from(schema.playlist)
-    .orderBy(schema.playlist.createdAt)
-    .limit(opts.limit)
-    .offset(opts.offset);
-
-  const counts = await Promise.all(
-    items.map(async (pl) => {
-      const [{ value }] = await db
-        .select({ value: count() })
-        .from(schema.playlistSong)
-        .where(eq(schema.playlistSong.playlistId, pl.id));
-      return { ...pl, _count: { songs: value } };
-    })
-  );
-
-  return { items: counts, total: totalRows.count };
-}
-
-export default db;
