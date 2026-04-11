@@ -2,13 +2,7 @@ import { createPlayer, getClient, getPlayer, VOICE_CONNECTION_TIMEOUT_MS } from 
 import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
 import type { TextChannel } from 'discord.js';
 import { GUILD_ID, logger } from './config';
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
+import { json } from './json';
 
 /**
  * Verifies the requesting user is in a voice channel.

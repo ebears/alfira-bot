@@ -8,6 +8,7 @@ import { db, eq, findPlaylistWithSongs, tables } from '@alfira-bot/shared/db';
 import { getVoiceConnection } from '@discordjs/voice';
 import type { RouteContext } from '../index';
 import { GUILD_ID } from '../lib/config';
+import { json } from '../lib/json';
 import { requirePlayer, requirePlaying } from '../lib/player';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import {
@@ -21,13 +22,6 @@ import {
 import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
 
 const { song: songTable } = tables;
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
 
 // ---------------------------------------------------------------------------
 // GET /api/player/queue — returns current queue state
