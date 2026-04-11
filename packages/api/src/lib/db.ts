@@ -1,1 +1,1 @@
-export { db, default } from '@alfira-bot/shared/db';
+export { db } from '@alfira-bot/shared/db';
