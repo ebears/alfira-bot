@@ -116,10 +116,6 @@ export function deleteSong(id: string): Promise<void> {
   return remove(`/api/songs/${id}`);
 }
 
-export function updateSongNickname(id: string, nickname: string | null): Promise<Song> {
-  return patch(`/api/songs/${id}`, { nickname });
-}
-
 /**
  * Data for updating a song. Only provide fields you want to change.
  */

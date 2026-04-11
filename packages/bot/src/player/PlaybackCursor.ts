@@ -159,19 +159,6 @@ export class PlaybackCursor<T> {
   // ---------------------------------------------------------------------------
 
   /**
-   * Convert remaining items to an array (for API responses).
-   * Returns items in current playback order, starting from current position.
-   */
-  toArray(): T[] {
-    const result: T[] = [];
-    for (let i = this.readIndex; i < this.buffer.length; i++) {
-      const idx = this.playbackOrder ? this.playbackOrder[i] : i;
-      result.push(this.buffer[idx]);
-    }
-    return result;
-  }
-
-  /**
    * Convert remaining items after the current one to an array.
    * Excludes the item at the current read position (for "queue" display
    * that should not include the currently-playing song).

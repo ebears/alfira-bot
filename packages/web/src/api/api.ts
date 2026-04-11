@@ -40,5 +40,4 @@ export {
   togglePause,
   togglePlaylistVisibility,
   unshuffleQueue,
-  updateSongNickname,
 } from '@alfira-bot/shared/api';

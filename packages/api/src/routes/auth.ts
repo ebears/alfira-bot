@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import type { RouteContext } from '../index';
 import { logger, WEB_UI_ORIGIN } from '../lib/config';
 import { db } from '../lib/db';
+import { json } from '../lib/json';
 
 const { refreshToken: refreshTokenTable } = tables;
 
@@ -90,13 +91,6 @@ function buildCookieHeader(
 
 function buildClearCookieHeader(name: string): string {
   return buildCookieHeader(name, '', { maxAge: 0, httpOnly: true, secure: isProduction });
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -225,21 +219,6 @@ async function fetchDiscordIdentity(
 }
 
 /**
- * Verify guild membership and get member roles.
- * Returns null and sends error response on failure.
- */
-async function verifyGuildMembership(discordId: string): Promise<string[] | null> {
-  const rolesResult = await fetchGuildMemberRoles(discordId);
-  if (rolesResult === 'not-in-guild') {
-    return null;
-  }
-  if (rolesResult === null) {
-    return null;
-  }
-  return rolesResult;
-}
-
-/**
  * Generate and store authentication tokens.
  */
 async function generateAndStoreTokens(
@@ -329,10 +308,11 @@ export async function handleAuth(ctx: RouteContext, request: Request): Promise<R
     }
 
     // 3. Verify guild membership and get member roles.
-    const memberRoles = await verifyGuildMembership(discordUser.id);
-    if (!memberRoles) {
+    const rolesResult = await fetchGuildMemberRoles(discordUser.id);
+    if (rolesResult === null || rolesResult === 'not-in-guild') {
       return json({ error: 'You must be a member of the server to use this app.' }, 403);
     }
+    const memberRoles = rolesResult;
 
     // 4. Determine admin status.
     const isAdmin = isAdminUser(memberRoles);
