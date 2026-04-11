@@ -83,16 +83,3 @@ export async function findPlaylistWithSongs(playlistId: string) {
 
   return { ...result[0].Playlist, songs };
 }
-
-/** Fetch a single playlist with its song count. */
-export async function findPlaylistWithCount(playlistId: string) {
-  const [pl] = await db.select().from(schema.playlist).where(eq(schema.playlist.id, playlistId));
-  if (!pl) return null;
-
-  const [{ value }] = await db
-    .select({ value: count() })
-    .from(schema.playlistSong)
-    .where(eq(schema.playlistSong.playlistId, pl.id));
-
-  return { ...pl, _count: { songs: value } };
-}

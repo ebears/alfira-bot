@@ -18,7 +18,6 @@ export {
   fetchLogout as logout,
   // Auth
   fetchMe as getMe,
-  fetchPlaylist as getPlaylist,
   fetchPlaylistPage as getPlaylistPage,
   // Playlists
   fetchPlaylists as getPlaylists,

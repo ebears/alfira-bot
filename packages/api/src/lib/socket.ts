@@ -3,8 +3,23 @@ import { logger } from './config';
 
 // Accept both Date and string createdAt — Drizzle uses Date at the DB level,
 // but we serialize to ISO string for JSON serialization.
-type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
+export type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
 type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Date };
+
+// ---------------------------------------------------------------------------
+// Serialization helpers
+// ---------------------------------------------------------------------------
+
+export function formatSong(s: {
+  createdAt: Date | string;
+  tags?: string[] | null;
+}): SerializedSong {
+  return {
+    ...s,
+    createdAt: s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt,
+    tags: s.tags ?? [],
+  } as SerializedSong;
+}
 
 // ---------------------------------------------------------------------------
 // WebSocket client registry
