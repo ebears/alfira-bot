@@ -20,7 +20,7 @@ export { getClient } from './lib/client';
 
 // Constants
 export { VOICE_CONNECTION_TIMEOUT_MS } from './lib/constants';
-export { GuildPlayer } from './player/GuildPlayer';
+export type { GuildPlayer } from './player/GuildPlayer';
 // Player manager (guild-level player lifecycle)
 export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
 

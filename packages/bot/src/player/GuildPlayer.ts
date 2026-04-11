@@ -91,11 +91,6 @@ export class GuildPlayer {
   private readonly textChannel: TextChannel;
   private readonly onDestroyed: () => void;
 
-  private killFfmpeg(): void {
-    this.killCurrentFfmpeg?.();
-    this.killCurrentFfmpeg = null;
-  }
-
   private unpause(): void {
     this.audioPlayer.unpause();
     this.paused = false;
@@ -185,7 +180,8 @@ export class GuildPlayer {
 
       if (!this.intentionallyStopped) {
         this.audioPlayer.stop(true);
-        this.killFfmpeg();
+        this.killCurrentFfmpeg?.();
+        this.killCurrentFfmpeg = null;
         this.queue.clear();
         this.currentSong = null;
         this.sendToTextChannel(
@@ -241,7 +237,8 @@ export class GuildPlayer {
   async replaceQueueAndPlay(songs: QueuedSong[]): Promise<void> {
     this.queue.clear();
     this.priorityQueue = [];
-    this.killFfmpeg();
+    this.killCurrentFfmpeg?.();
+    this.killCurrentFfmpeg = null;
     this.currentSong = null;
     this.paused = false;
     this.audioPlayer.stop(true);
@@ -449,7 +446,8 @@ export class GuildPlayer {
       return;
     }
 
-    this.killFfmpeg();
+    this.killCurrentFfmpeg?.();
+    this.killCurrentFfmpeg = null;
 
     let stream: Readable;
     let kill: () => void;

@@ -3,18 +3,12 @@ import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
+import { json } from '../lib/json';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { validatePlaylistName } from '../lib/validation';
 
 const { playlist: playlistTable, playlistSong: playlistSongTable } = tables;
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
 
 type PlaylistRow = {
   id: string;
@@ -49,21 +43,11 @@ async function findPlaylistOr404(id: string, withCount = false): Promise<Playlis
 }
 
 function formatPlaylist(pl: typeof playlistTable.$inferSelect, songCount?: number) {
-  const result: {
-    id: string;
-    name: string;
-    createdBy: string;
-    isPrivate: boolean;
-    createdAt: string;
-    _count?: { songs: number };
-  } = {
+  return {
     ...pl,
     createdAt: pl.createdAt.toISOString(),
+    ...(songCount !== undefined && { _count: { songs: songCount } }),
   };
-  if (songCount !== undefined) {
-    result._count = { songs: songCount };
-  }
-  return result;
 }
 
 function formatPlaylistSongWithSong(

@@ -6,6 +6,7 @@ import { $client, db } from '@alfira-bot/shared/db';
 import { parse } from 'cookie';
 import { sql } from 'drizzle-orm';
 import { logger } from './lib/config';
+import { json } from './lib/json';
 import { closeAllClients, emitPlayerUpdate, registerClient, unregisterClient } from './lib/socket';
 import { verifySessionToken } from './middleware/requireAuth';
 import { handleAuth } from './routes/auth';
@@ -38,7 +39,7 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10);
 // ---------------------------------------------------------------------------
 // Security headers
 // ---------------------------------------------------------------------------
-const SECURITY_HEADERS = {
+export const SECURITY_HEADERS = {
   'Content-Security-Policy': "default-src 'none'",
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
@@ -58,13 +59,6 @@ export type RouteContext = {
 // ---------------------------------------------------------------------------
 // Response helpers
 // ---------------------------------------------------------------------------
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...SECURITY_HEADERS },
-  });
-}
 
 function setSecurityHeaders(response: Response): Response {
   const newHeaders = new Headers(response.headers);

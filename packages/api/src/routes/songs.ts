@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
+import { json } from '../lib/json';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
   clampMaxVideos,
@@ -19,13 +20,6 @@ import {
 } from '../lib/validation';
 
 const { song: songTable } = tables;
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
 
 // Helper: convert Drizzle row (with Date) to wire format (with string).
 function formatSong(s: typeof songTable.$inferSelect) {
