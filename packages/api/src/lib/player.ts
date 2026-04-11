@@ -1,13 +1,7 @@
 import type { GuildPlayer } from '@alfira-bot/bot';
 import { getPlayer } from '@alfira-bot/bot';
 import { GUILD_ID } from './config';
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
+import { json } from './json';
 
 export function requirePlaying():
   | { ok: true; player: GuildPlayer }

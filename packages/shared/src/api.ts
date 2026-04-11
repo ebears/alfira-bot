@@ -150,11 +150,6 @@ export function createPlaylist(name: string): Promise<Playlist> {
   return post('/api/playlists', { name });
 }
 
-export function fetchPlaylist(id: string, adminView = false): Promise<PlaylistDetail> {
-  const params = adminView ? '?adminView=true' : '';
-  return get(`/api/playlists/${id}${params}`);
-}
-
 export function fetchPlaylistsPage(
   adminView = false,
   page: number,
