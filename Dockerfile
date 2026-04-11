@@ -1,28 +1,10 @@
 # ---------------------------------------------------------------------------
-# yt-dlp stage - download and verify yt-dlp (shared between deps and runtime)
-# ---------------------------------------------------------------------------
-FROM alpine AS ytdlp
-ARG YTDLP_VERSION=2026.03.17
-RUN apk add --no-cache curl && \
-    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
-      -o /yt-dlp && \
-    curl -fL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/SHA2-256SUMS" \
-      -o /tmp/yt-dlp-sums && \
-    grep " yt-dlp$" /tmp/yt-dlp-sums | sed 's| yt-dlp$| /yt-dlp|' | sha256sum -c - && \
-    rm /tmp/yt-dlp-sums && \
-    chmod a+rx /yt-dlp
-
-# ---------------------------------------------------------------------------
 # Build: system deps + bun (used for install/compile stages)
 # ---------------------------------------------------------------------------
 FROM oven/bun:1-alpine AS build
 
 RUN apk add --no-cache \
-    ffmpeg \
-    python3 \
     ca-certificates
-
-COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
 
 WORKDIR /app
 
@@ -67,12 +49,7 @@ RUN bun run --filter @alfira-bot/shared build && \
 FROM oven/bun:1-alpine AS runtime
 
 RUN apk add --no-cache \
-    ffmpeg \
-    python3 \
     ca-certificates
-
-# Copy yt-dlp from shared stage (no re-download needed)
-COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
 
 WORKDIR /app
 

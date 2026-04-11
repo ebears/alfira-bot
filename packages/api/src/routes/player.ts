@@ -1,11 +1,10 @@
-import { getPlayer } from '@alfira-bot/bot';
+import { getHoshimi, getPlayer } from '@alfira-bot/bot';
 import {
   fisherYatesShuffle as fisherYatesShuffleImpl,
   type LoopMode,
   toQueuedSong,
 } from '@alfira-bot/shared';
 import { db, eq, findPlaylistWithSongs, tables } from '@alfira-bot/shared/db';
-import { getVoiceConnection } from '@discordjs/voice';
 import type { RouteContext } from '../index';
 import { GUILD_ID } from '../lib/config';
 import { json } from '../lib/json';
@@ -31,14 +30,15 @@ function handleGetQueue(ctx: RouteContext): Response {
     return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
   }
 
+  const hoshimi = getHoshimi();
   const player = getPlayer(GUILD_ID);
-  const connection = getVoiceConnection(GUILD_ID);
+  const hoshimiPlayer = hoshimi?.players.get(GUILD_ID);
 
   if (!player) {
     return json({
       isPlaying: false,
       isPaused: false,
-      isConnectedToVoice: !!connection,
+      isConnectedToVoice: !!hoshimiPlayer?.connected,
       loopMode: 'off',
       isShuffled: false,
       currentSong: null,
@@ -164,14 +164,15 @@ async function handleLeave(ctx: RouteContext): Promise<Response> {
   if (inVoice instanceof Response) return inVoice;
 
   const player = getPlayer(GUILD_ID);
-  const connection = getVoiceConnection(GUILD_ID);
+  const hoshimi = getHoshimi();
+  const hoshimiPlayer = hoshimi?.players.get(GUILD_ID);
 
-  if (!player && !connection) {
+  if (!player && !hoshimiPlayer) {
     return json({ error: 'The bot is not in a voice channel.' }, 409);
   }
 
   if (player) player.stop();
-  if (connection) connection.destroy();
+  if (hoshimi) hoshimi.deletePlayer(GUILD_ID);
 
   return json({ message: 'Left the voice channel.' });
 }

@@ -1,7 +1,6 @@
 import { logger } from '@alfira-bot/shared/logger';
-import { getVoiceConnection } from '@discordjs/voice';
 import { Client, GatewayIntentBits } from 'discord.js';
-import { setClient } from './lib/client';
+import { getHoshimi, setClient, setHoshimi } from './lib/client';
 import { getPlayer } from './player/manager';
 
 // ---------------------------------------------------------------------------
@@ -12,18 +11,18 @@ import { getPlayer } from './player/manager';
 // into internal paths like '@alfira-bot/bot/src/lib/client'.
 // ---------------------------------------------------------------------------
 
+// Hoshimi types re-exported for API package
+export type { DestroyReasons } from 'hoshimi';
 // Broadcast indirection (API injects emit function at boot)
 export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
-
 // Discord client singleton
-export { getClient } from './lib/client';
-
+// Hoshimi manager (for API package to access player state)
+export { getClient, getHoshimi } from './lib/client';
 // Constants
 export { VOICE_CONNECTION_TIMEOUT_MS } from './lib/constants';
 export type { GuildPlayer } from './player/GuildPlayer';
 // Player manager (guild-level player lifecycle)
 export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
-
 // YouTube utilities (URL validation, metadata fetching)
 export {
   getMetadata,
@@ -31,7 +30,19 @@ export {
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
   type PlaylistMetadata,
-} from './utils/ytdlp';
+} from './utils/nodelink';
+
+const NODELINK_URL = process.env.NODELINK_URL ?? 'http://localhost:2333';
+const NODELINK_AUTH = process.env.NODELINK_AUTHORIZATION ?? '';
+
+function parseNodeLinkUrl(url: string): { host: string; port: number; secure: boolean } {
+  const parsed = new URL(url);
+  return {
+    host: parsed.hostname,
+    port: Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 2333),
+    secure: parsed.protocol === 'https:',
+  };
+}
 
 /** Initializes and connects the Discord bot. Called by the API entry point. */
 export async function startBot(): Promise<void> {
@@ -47,8 +58,41 @@ export async function startBot(): Promise<void> {
 
   setClient(client);
 
-  client.once('clientReady', (readyClient) => {
+  // Initialize Hoshimi manager for audio.
+  const { Hoshimi } = await import('hoshimi');
+  const nodeConfig = parseNodeLinkUrl(NODELINK_URL);
+
+  const hoshimi = new Hoshimi({
+    sendPayload: (guildId, payload) => {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) return;
+      guild.shard.send(payload);
+    },
+    nodes: [
+      {
+        host: nodeConfig.host,
+        port: nodeConfig.port,
+        password: NODELINK_AUTH,
+        secure: nodeConfig.secure,
+      },
+    ],
+    client: {
+      id: '',
+      username: '',
+    },
+  });
+
+  client.once('ready', (readyClient) => {
+    hoshimi.init({ id: readyClient.user.id, username: readyClient.user.username });
     logger.info(`Bot logged in as ${readyClient.user.tag}`);
+  });
+
+  setHoshimi(hoshimi);
+
+  // Forward all raw gateway packets to hoshimi so it can handle voice server updates.
+  // This is required for NodeLink to receive Discord's voice connection details.
+  client.on('raw', (packet) => {
+    hoshimi.updateVoiceState(packet);
   });
 
   client.on('voiceStateUpdate', (oldState, newState) => {
@@ -56,10 +100,14 @@ export async function startBot(): Promise<void> {
     if (newState.member?.user.bot && oldState.member?.user.bot) return;
 
     const guildId = oldState.guild.id;
-    const connection = getVoiceConnection(guildId);
-    if (!connection) return;
+    const manager = getHoshimi();
+    if (!manager) return;
 
-    const connectionChannelId = connection.joinConfig.channelId;
+    // Get the player's voice channel for this guild.
+    const player = manager.players.get(guildId);
+    if (!player) return;
+
+    const connectionChannelId = player.voiceId;
     if (!connectionChannelId) return;
 
     // Only act when a user left the bot's voice channel.
@@ -74,9 +122,9 @@ export async function startBot(): Promise<void> {
     const humanCount = voiceChannel.members.filter((m) => !m.user.bot).size;
 
     if (humanCount === 0) {
-      const player = getPlayer(guildId);
-      if (player?.getCurrentSong() && player.isPlaying()) {
-        player.togglePause();
+      const guildPlayer = getPlayer(guildId);
+      if (guildPlayer?.getCurrentSong() && guildPlayer.isPlaying()) {
+        guildPlayer.togglePause();
         logger.info({ guildId }, "Auto-paused: no humans left in the bot's voice channel.");
       }
     }

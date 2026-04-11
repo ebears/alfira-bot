@@ -1,4 +1,5 @@
 import type { Client } from 'discord.js';
+import type { Hoshimi } from 'hoshimi';
 
 // ---------------------------------------------------------------------------
 // Client Singleton
@@ -13,6 +14,7 @@ import type { Client } from 'discord.js';
 // ---------------------------------------------------------------------------
 
 let _client: Client | null = null;
+let _hoshimi: Hoshimi | null = null;
 
 /**
  * Store the Discord client reference.
@@ -28,4 +30,28 @@ export function setClient(client: Client): void {
  */
 export function getClient(): Client | null {
   return _client;
+}
+
+/**
+ * Store the Hoshimi manager reference.
+ * Called once during bot startup in packages/bot/src/index.ts.
+ */
+export function setHoshimi(hoshimi: Hoshimi): void {
+  _hoshimi = hoshimi;
+}
+
+/**
+ * Retrieve the Hoshimi manager instance.
+ * Returns null if the bot hasn't started yet.
+ */
+export function getHoshimi(): Hoshimi | null {
+  return _hoshimi;
+}
+
+/**
+ * @deprecated Use getHoshimi() instead. This alias is here for backwards
+ * compatibility while migrating from @discordjs/voice.
+ */
+export function getNodeManager(): Hoshimi | null {
+  return _hoshimi;
 }

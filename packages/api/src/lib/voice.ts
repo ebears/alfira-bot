@@ -1,5 +1,4 @@
-import { createPlayer, getClient, getPlayer, VOICE_CONNECTION_TIMEOUT_MS } from '@alfira-bot/bot';
-import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
+import { createPlayer, getClient, getHoshimi, getPlayer } from '@alfira-bot/bot';
 import type { TextChannel } from 'discord.js';
 import { GUILD_ID, logger } from './config';
 import { json } from './json';
@@ -49,6 +48,11 @@ export async function resolveOrAutoJoinPlayer(
     return { ok: false, response: json({ error: 'Discord bot is not ready yet.' }, 503) };
   }
 
+  const hoshimi = getHoshimi();
+  if (!hoshimi) {
+    return { ok: false, response: json({ error: 'Audio node is not ready yet.' }, 503) };
+  }
+
   try {
     const guild = await discordClient.guilds.fetch(GUILD_ID);
     const member = await guild.members.fetch(discordId);
@@ -66,13 +70,13 @@ export async function resolveOrAutoJoinPlayer(
       };
     }
 
-    const connection = joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: GUILD_ID,
-      adapterCreator: guild.voiceAdapterCreator,
-    });
+    // Create Hoshimi player and connect to the voice channel.
+    const player = hoshimi.createPlayer({ guildId: GUILD_ID, voiceId: voiceChannel.id });
+    await player.connect();
+    player.setVoice({ voiceId: voiceChannel.id });
 
-    await entersState(connection, VoiceConnectionStatus.Ready, VOICE_CONNECTION_TIMEOUT_MS);
+    // Wait briefly for connection to establish.
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
     const textChannel = textChannelId
@@ -80,6 +84,7 @@ export async function resolveOrAutoJoinPlayer(
       : (guild.systemChannel as TextChannel | null);
 
     if (!textChannel) {
+      hoshimi.deletePlayer(GUILD_ID);
       return {
         ok: false,
         response: json(
@@ -92,7 +97,7 @@ export async function resolveOrAutoJoinPlayer(
       };
     }
 
-    return { ok: true, player: createPlayer(GUILD_ID, connection, textChannel) };
+    return { ok: true, player: createPlayer(GUILD_ID, textChannel) };
   } catch (error) {
     logger.error({ err: error as Error }, 'Failed to auto-join voice channel');
     return {

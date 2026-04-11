@@ -1,6 +1,6 @@
-import type { VoiceConnection } from '@discordjs/voice';
-import { getVoiceConnection } from '@discordjs/voice';
 import type { TextChannel } from 'discord.js';
+import { DestroyReasons } from 'hoshimi';
+import { getHoshimi } from '../lib/client';
 import { GuildPlayer } from './GuildPlayer';
 
 // ---------------------------------------------------------------------------
@@ -33,15 +33,11 @@ export function getPlayer(guildId: string): GuildPlayer | undefined {
  * intentionally (stop/leave commands) or unexpectedly (network drop, bot
  * kicked). This avoids a circular import between GuildPlayer and this module.
  */
-export function createPlayer(
-  guildId: string,
-  connection: VoiceConnection,
-  textChannel: TextChannel
-): GuildPlayer {
+export function createPlayer(guildId: string, textChannel: TextChannel): GuildPlayer {
   const existing = players.get(guildId);
   if (existing) return existing;
 
-  const player = new GuildPlayer(connection, textChannel, guildId, () => {
+  const player = new GuildPlayer(textChannel, guildId, () => {
     players.delete(guildId);
   });
 
@@ -51,13 +47,16 @@ export function createPlayer(
 
 /**
  * Stop all active players and destroy their voice connections.
- * Used during graceful shutdown to clean up FFmpeg processes and voice connections.
+ * Used during graceful shutdown to clean up players and voice connections.
  */
 export function destroyAllPlayers(): void {
+  const hoshimi = getHoshimi();
   for (const [guildId, player] of players) {
     player.stop();
-    const connection = getVoiceConnection(guildId);
-    if (connection) connection.destroy();
+    const p = hoshimi?.players.get(guildId);
+    if (p) {
+      p.destroy(DestroyReasons.Requested);
+    }
   }
   players.clear();
 }

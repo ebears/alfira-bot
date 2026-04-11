@@ -13,7 +13,6 @@
   "dependencies": {
     "@alfira-bot/bot": "workspace:*",
     "@alfira-bot/shared": "workspace:*",
-    "@discordjs/voice": "^0.19.2",
     "cookie": "^1.1.1",
     "discord.js": "^14.14.1",
     "drizzle-orm": "^0.45.2",
