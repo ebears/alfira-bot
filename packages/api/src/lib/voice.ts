@@ -97,7 +97,7 @@ export async function resolveOrAutoJoinPlayer(
       };
     }
 
-    return { ok: true, player: createPlayer(GUILD_ID, textChannel) };
+    return { ok: true, player: createPlayer(GUILD_ID, textChannel, voiceChannel.id) };
   } catch (error) {
     logger.error({ err: error as Error }, 'Failed to auto-join voice channel');
     return {

@@ -65,6 +65,7 @@ export class GuildPlayer {
 
   private readonly guildId: string;
   private readonly textChannel: TextChannel;
+  private readonly voiceId: string;
 
   private unpause(): void {
     const hoshimi = getHoshimi();
@@ -76,18 +77,19 @@ export class GuildPlayer {
     this.paused = false;
   }
 
-  constructor(textChannel: TextChannel, guildId: string, _onDestroyed: () => void) {
+  constructor(
+    textChannel: TextChannel,
+    guildId: string,
+    voiceId: string,
+    _onDestroyed: () => void
+  ) {
     this.textChannel = textChannel;
     this.guildId = guildId;
+    this.voiceId = voiceId;
 
     // Register event handlers on the Hoshimi manager for this player's events.
     const hoshimi = getHoshimi();
     if (hoshimi) {
-      hoshimi.on('playerUpdate', (newPlayer: Player, oldPlayer: unknown, payload: unknown) => {
-        if (newPlayer.guildId !== this.guildId) return;
-        void oldPlayer;
-        void payload;
-      });
       hoshimi.on('trackEnd', (player: Player, track: unknown, payload: TrackEndEvent) => {
         if (player.guildId !== this.guildId) return;
         if (payload.reason === 'replaced') return;
@@ -149,10 +151,13 @@ export class GuildPlayer {
     this.queue.replace(songs);
     this.cancelIdleLeave();
 
-    const player = this.hoshimiPlayer();
-    if (player) {
-      await player.stop(true);
-    }
+    // Note: we intentionally do NOT call player.stop() here. Calling stop(true)
+    // destroys the Hoshimi player, which sends a DELETE to NodeLink and clears its
+    // stored voice session (endpoint/sessionId/token). When the subsequent
+    // play() call then tries to play a new track, NodeLink has no voice state and
+    // logs "No voice state, track is enqueued". Instead, let playNext() call
+    // playSong() which will call play() on the existing player, replacing the
+    // track without destroying the voice session.
 
     await this.playNext();
     this.broadcast();
@@ -168,7 +173,9 @@ export class GuildPlayer {
 
     const player = this.hoshimiPlayer();
     if (player) {
-      player.stop();
+      // stop(false) stops playback without destroying the player or clearing
+      // its voice state, so the next track can play without reconnecting.
+      player.stop(false);
     }
   }
 
@@ -295,7 +302,10 @@ export class GuildPlayer {
 
   private async playNext(): Promise<void> {
     const player = this.hoshimiPlayer();
-    if (player && !player.connected) return;
+    if (player && !player.connected) {
+      // Re-establish the voice connection so playSong() can use it.
+      await player.connect();
+    }
 
     const prioritySong = this.priorityQueue.shift();
     if (prioritySong) {
@@ -378,7 +388,19 @@ export class GuildPlayer {
 
     let player = hoshimi.players.get(this.guildId);
     if (!player) {
-      player = hoshimi.createPlayer({ guildId: this.guildId, voiceId: '' });
+      if (!this.voiceId) {
+        logger.error(
+          { guildId: this.guildId },
+          'Cannot play: no voiceId set and no existing player'
+        );
+        await this.handlePlaybackFailure('not connected to a voice channel');
+        return;
+      }
+      player = hoshimi.createPlayer({ guildId: this.guildId, voiceId: this.voiceId });
+    } else if (!player.connected) {
+      // Player exists but was disconnected (e.g. after stop()). Reconnect first so
+      // NodeLink receives the voice server update and can begin streaming.
+      await player.connect();
     }
 
     // Apply volume via NodeLink volume filter.
