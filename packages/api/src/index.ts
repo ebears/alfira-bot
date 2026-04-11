@@ -150,19 +150,10 @@ const server = Bun.serve({
     }
 
     // Serve built web assets statically (SPA fallback for client-side routing)
-    const ASSET_EXTENSIONS = [
-      '.js',
-      '.css',
-      '.png',
-      '.jpg',
-      '.jpeg',
-      '.svg',
-      '.ico',
-      '.webmanifest',
-      '.woff2',
-    ];
+    const pathname = url.pathname;
+    const ext = pathname.includes('.') ? `.${pathname.split('.').pop()}` : '.html';
     const isAsset =
-      ASSET_EXTENSIONS.some((ext) => url.pathname.endsWith(ext)) ||
+      Object.hasOwn(STATIC_EXTENSIONS, ext) ||
       url.pathname.startsWith('/assets/') ||
       url.pathname === '/sw.js' ||
       url.pathname === '/registerSW.js';

@@ -73,10 +73,7 @@ export function emitPlayerUpdate(state: QueueState): void {
  * Emit a newly added song to all connected clients.
  */
 export function emitSongAdded(song: SerializedSong): void {
-  const payload = {
-    ...song,
-    createdAt: song.createdAt instanceof Date ? song.createdAt.toISOString() : song.createdAt,
-  };
+  const payload = formatSong(song);
   const message = serializeMessage('songs:added', payload);
   for (const client of clients) {
     client.send(message);
@@ -97,10 +94,7 @@ export function emitSongDeleted(id: string): void {
  * Emit an updated song to all connected clients.
  */
 export function emitSongUpdated(song: SerializedSong): void {
-  const payload = {
-    ...song,
-    createdAt: song.createdAt instanceof Date ? song.createdAt.toISOString() : song.createdAt,
-  };
+  const payload = formatSong(song);
   const message = serializeMessage('songs:updated', payload);
   for (const client of clients) {
     client.send(message);
@@ -112,12 +106,7 @@ export function emitSongUpdated(song: SerializedSong): void {
  * Covers: create, rename, song added, song removed.
  */
 export function emitPlaylistUpdated(playlist: SerializedPlaylist): void {
-  const payload = {
-    ...playlist,
-    createdAt:
-      playlist.createdAt instanceof Date ? playlist.createdAt.toISOString() : playlist.createdAt,
-  };
-  const message = serializeMessage('playlists:updated', payload);
+  const message = serializeMessage('playlists:updated', playlist);
   for (const client of clients) {
     client.send(message);
   }
