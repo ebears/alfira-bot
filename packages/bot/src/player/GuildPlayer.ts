@@ -98,6 +98,10 @@ export class GuildPlayer {
         );
         void track;
       });
+      hoshimi.on('playerDestroy', (player: Player) => {
+        if (player.guildId !== this.guildId) return;
+        this.broadcast();
+      });
     }
   }
 
@@ -182,12 +186,9 @@ export class GuildPlayer {
     this.priorityQueue = [];
     this.paused = false;
     this.trackStartedAt = null;
-    this.broadcast();
 
-    const player = this.hoshimiPlayer();
-    if (player) {
-      player.stop(true);
-    }
+    this.destroyPlayer();
+    // Don't call broadcast() here — let playerDestroy event handler do it
   }
 
   clearQueue(): void {
