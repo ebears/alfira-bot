@@ -1,10 +1,9 @@
 import crypto from 'node:crypto';
-import { tables } from '@alfira-bot/shared/db';
+import { db, tables } from '@alfira-bot/shared/db';
 import { and, eq, lt } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import type { RouteContext } from '../index';
 import { logger, WEB_UI_ORIGIN } from '../lib/config';
-import { db } from '../lib/db';
 import { json } from '../lib/json';
 
 const { refreshToken: refreshTokenTable } = tables;

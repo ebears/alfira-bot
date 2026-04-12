@@ -7,8 +7,6 @@ import { PlaybackCursor } from './PlaybackCursor';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
-  private static readonly STREAM_RETRY_ATTEMPTS = 3;
-  private static readonly STREAM_RETRY_DELAY_MS = 1_000;
 
   private queue: PlaybackCursor<QueuedSong> = new PlaybackCursor();
   private priorityQueue: QueuedSong[] = [];
@@ -359,7 +357,7 @@ export class GuildPlayer {
     } catch (error) {
       logger.error(
         { guildId: this.guildId, track: next.title, error },
-        `Failed to get stream URL after ${GuildPlayer.STREAM_RETRY_ATTEMPTS} attempts`
+        `Failed to get stream URL after 3 attempts`
       );
       await this.handlePlaybackFailure('could not load the track from NodeLink');
       return;
@@ -421,15 +419,17 @@ export class GuildPlayer {
   private async fetchStreamWithRetry(
     youtubeUrl: string
   ): Promise<{ track: string; isWebmOpus: boolean }> {
+    const RETRY_ATTEMPTS = 3;
+    const RETRY_DELAY_MS = 1_000;
     let lastError: unknown;
-    for (let attempt = 0; attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS; attempt++) {
+    for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
       try {
         const { getStreamFormat } = await import('../utils/nodelink');
         return await getStreamFormat(youtubeUrl);
       } catch (error) {
         lastError = error;
-        if (attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS - 1) {
-          await new Promise((resolve) => setTimeout(resolve, GuildPlayer.STREAM_RETRY_DELAY_MS));
+        if (attempt < RETRY_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         }
       }
     }

@@ -9,7 +9,6 @@ import type { QueuedSong, Song } from './types';
 export function toQueuedSong(song: Song, requestedBy: string): QueuedSong {
   return {
     ...song,
-    createdAt: song.createdAt, // already ISO string in Song type
     requestedBy,
   };
 }

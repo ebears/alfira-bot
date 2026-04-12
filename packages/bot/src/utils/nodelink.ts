@@ -15,22 +15,14 @@ export interface PlaylistMetadata {
 const NODELINK_URL = process.env.NODELINK_URL ?? 'http://localhost:2333';
 const NODELINK_AUTH = process.env.NODELINK_AUTHORIZATION ?? '';
 
-function nodelinkHeaders(): { 'Content-Type': string; Authorization?: string } {
+async function restRequest<T>(path: string): Promise<T> {
   const headers: { 'Content-Type': string; Authorization?: string } = {
     'Content-Type': 'application/json',
   };
-  if (NODELINK_AUTH) {
-    headers.Authorization = NODELINK_AUTH;
-  }
-  return headers;
-}
+  if (NODELINK_AUTH) headers.Authorization = NODELINK_AUTH;
 
-async function restRequest<T>(path: string): Promise<T> {
   const url = `${NODELINK_URL}${path}`;
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: nodelinkHeaders(),
-  });
+  const response = await fetch(url, { method: 'GET', headers });
 
   if (!response.ok) {
     throw new Error(`NodeLink REST ${response.status}: ${await response.text()}`);
@@ -78,16 +70,18 @@ export function isYouTubePlaylistUrl(url: string): boolean {
   }
 }
 
-export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
+async function loadTrack(url: string): Promise<LoadTrackResponse> {
   const response = await restRequest<LoadTrackResponse>(
-    `/v4/loadtracks?identifier=${encodeURIComponent(youtubeUrl)}`
+    `/v4/loadtracks?identifier=${encodeURIComponent(url)}`
   );
-
   if (response.loadType === 'error' || response.exception) {
-    throw new Error(
-      `NodeLink failed to load track: ${response.exception?.message ?? 'unknown error'}`
-    );
+    throw new Error(`NodeLink failed to load: ${response.exception?.message ?? 'unknown error'}`);
   }
+  return response;
+}
+
+export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
+  const response = await loadTrack(youtubeUrl);
 
   const data = response.data;
   if (!data?.encoded || !data.info) {
@@ -109,15 +103,7 @@ export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
 export async function getStreamFormat(
   youtubeUrl: string
 ): Promise<{ track: string; isWebmOpus: boolean }> {
-  const response = await restRequest<LoadTrackResponse>(
-    `/v4/loadtracks?identifier=${encodeURIComponent(youtubeUrl)}`
-  );
-
-  if (response.loadType === 'error' || response.exception) {
-    throw new Error(
-      `NodeLink failed to load track: ${response.exception?.message ?? 'unknown error'}`
-    );
-  }
+  const response = await loadTrack(youtubeUrl);
 
   const data = response.data;
   if (!data?.encoded) {
@@ -134,15 +120,7 @@ export async function getPlaylistMetadataWithVideos(
 ): Promise<PlaylistMetadata> {
   // NodeLink v4 uses /v4/loadtracks with YouTube playlist URL.
   // It returns a "playlist" loadType with track array.
-  const response = await restRequest<LoadTrackResponse>(
-    `/v4/loadtracks?identifier=${encodeURIComponent(playlistUrl)}`
-  );
-
-  if (response.loadType === 'error' || response.exception) {
-    throw new Error(
-      `NodeLink failed to load playlist: ${response.exception?.message ?? 'unknown error'}`
-    );
-  }
+  const response = await loadTrack(playlistUrl);
 
   const tracks = response.tracks ?? [];
   const limited = maxVideos ? tracks.slice(0, maxVideos) : tracks;
