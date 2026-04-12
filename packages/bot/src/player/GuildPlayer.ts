@@ -163,7 +163,7 @@ export class GuildPlayer {
     this.broadcast();
   }
 
-  skip(): void {
+  async skip(): Promise<void> {
     if (this.currentSong === null) return;
 
     // Unpause first — stop() on a paused player might not trigger TrackEnd.
@@ -177,6 +177,10 @@ export class GuildPlayer {
       // its voice state, so the next track can play without reconnecting.
       player.stop(false);
     }
+
+    // Directly advance to the next track instead of relying on the async
+    // trackEnd event chain, which clears queue.current before play() is called.
+    await this.playNext();
   }
 
   stop(): void {
@@ -261,8 +265,11 @@ export class GuildPlayer {
   }
 
   isPlaying(): boolean {
-    const player = this.hoshimiPlayer();
-    return player?.playing ?? false;
+    // Don't wait for NodeLink's playing flag — it's false during the buffering
+    // window after play() is called. We know we're playing if we have a song
+    // loaded and we're not paused.
+    if (this.currentSong === null || this.paused) return false;
+    return true;
   }
 
   getQueueState(): QueueState {

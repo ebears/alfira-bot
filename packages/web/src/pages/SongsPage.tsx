@@ -181,9 +181,6 @@ export default function SongsPage() {
           startFromSongId: songId,
         });
         notify('Started playback', 'success');
-        // Await the real-time player:update before marking done, so the
-        // NowPlayingBar metadata is fresh before we clear the playingId spinner.
-        await new Promise((resolve) => setTimeout(resolve, 300));
       } catch (err: unknown) {
         notify(
           apiErrorMessage(err, 'Could not start playback. Is the bot in a voice channel?'),
