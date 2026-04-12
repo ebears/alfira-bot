@@ -11,6 +11,7 @@
   <img src="https://img.shields.io/badge/Discord.js%20-5865F2?logo=discord&logoColor=white" alt="Discord.js">
   <img src="https://img.shields.io/badge/React%20-61DAFB?logo=react&logoColor=black" alt="React">
   <img src="https://img.shields.io/badge/Tailwind%20-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL">
   <br>
   <a href="https://github.com/ebears/alfira/actions/workflows/docker-build.yml"><img src="https://github.com/ebears/alfira/actions/workflows/docker-build.yml/badge.svg" alt="GitHub Actions"></a>
 </p>
@@ -74,7 +75,7 @@ This starts Alfira and PostgreSQL.
 
 ### 3. Access the Web UI
 
-- **Web UI:** `http://localhost:8080`
+- **Web UI:** `http://localhost:3001`
 - **API:** `http://localhost:3001`
 
 For production deployment with a reverse proxy and HTTPS, see the **[Full Installation Guide](docs/installation.md)**.
@@ -88,13 +89,8 @@ For production deployment with a reverse proxy and HTTPS, see the **[Full Instal
 | **[Installation Guide](docs/installation.md)** | Development and production setup, Discord configuration, reverse proxy setup |
 | **[Configuration Reference](docs/configuration.md)** | Complete environment variables reference |
 | **[Tech Stack](docs/tech-stack.md)** | Technology stack and project structure |
+| **[Biome Setup](docs/biome-setup.md)** | Editor setup for Biome linting and formatting |
 | **[Troubleshooting](docs/troubleshooting.md)** | Common issues and solutions |
-
----
-
-## Acknowledgements
-
-The use of `fs-capacitor` for audio streaming was inspired by [Muse](https://github.com/museofficial/muse).
 
 ---
 

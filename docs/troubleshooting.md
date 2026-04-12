@@ -19,10 +19,9 @@ Common issues and solutions for Alfira.
 **Symptoms:** Bot joins but no audio is heard.
 
 **Solutions:**
-1. Check if yt-dlp can access the video (may be region-locked).
-2. Ensure ffmpeg is installed (handled by Docker image).
-3. Check API logs for yt-dlp errors.
-4. Try a different video/URL to isolate the issue.
+1. Ensure the NodeLink service is running and accessible.
+2. Check API logs for NodeLink connection errors.
+3. Try a different video/URL to isolate the issue.
 
 ## Authentication Issues
 
