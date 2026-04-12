@@ -1,6 +1,6 @@
 <h1 align="center">Alfira</h1>
 <p align="center">
-  <a href="https://github.com/ebears/alfira"><img width="250" height="250" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/logo.png" alt="Alfira Logo"></a>
+  <a href="https://github.com/ebears/alfira"><img width="299" height="299" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/logo.png" alt="Alfira Logo"></a>
   <br>
   <a href="https://github.com/ebears/alfira"><img src="https://img.shields.io/badge/status-experimental%20%7C%20pre--release-orange" alt="Status: Experimental | Pre-release"></a>
   <br>
@@ -19,20 +19,11 @@
   <a href="https://github.com/Ganyu-Studios/Hoshimi"><img src="https://img.shields.io/badge/Hoshimi%20-353139?logo=typescript&logoColor=white" alt="Hoshimi"></a>
 </p>
 
-> **Status:** This project is actively maintained but considered **experimental** and **pre-release**. Expect rough edges and potential breaking changes. Built primarily for personal use — YMMV.
+> **Status:** This project is actively maintained but considered **experimental** and **pre-release**. Expect rough edges and potential breaking changes.
 
 ## Features
 
-**Alfira** is a self-hosted Discord music bot with a web UI for library management and real-time playback control. It's intended to be scoped to one Discord server.
-
-- **Song library** — add via YouTube URL, search, edit metadata (nickname, artist, album, tags, volume offset).
-- **Playback control** — play/pause, skip, stop, loop mode, shuffle, instant queue via "Up Next".
-- **Playlist management** — create, rename, toggle visibility (public/private), add/remove songs.
-- **Admin controls** — quick-add YouTube URL, load playlist into queue, override with direct URL, clear queue.
-- **Now Playing bar** — live progress bar, album art, playback controls, loop/shuffle toggles.
-- **Queue panel** — prioritized queue view with drag-free reordering via Up Next.
-- **Real-time sync** — WebSocket-driven — UI stays in sync without polling.
-- **In-memory player** — bot and API share memory for zero-latency real-time updates.
+**Alfira** is a self-hosted Discord music bot with a web UI for library management and real-time playback control. Although built for scale, it's scope is currently to a single small or medium-sized Discord server.
 
 ## Screenshots
 
@@ -42,43 +33,37 @@
 ![Playlists Page Preview](.github/screenshots/playlists.png)
 ![Queue Preview](.github/screenshots/queue.png)
 
-## Tech Stack
-
-Built with Bun, TypeScript, Seyfert, React, PostgreSQL, and more. See the **[Tech Stack Documentation](docs/tech-stack.md)** for details.
+---
 
 <p align="center">
-  <img width="250" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/icon.png">
+  <img width="256" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/icon.png">
 </p>
 
-<h2 align="center">Quick Start (Docker)</h2>
+<h2 align="center">Quick Start</h2>
 
-### 1. Set Required Environment Variables
+Setup mostly just requires Docker:
 
-Copy the `docker-compose.prod.yml` and `.env.example` from this repo. Rename `.env.example` to `.env` and to your liking. Some values require the [Discord Developer Portal](https://discord.com/developers/applications).
+### 1. Copy and Configure Required Files
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DISCORD_CLIENT_ID` | ✅ | Discord application client ID |
-| `DISCORD_CLIENT_SECRET` | ✅ | Discord application client secret |
-| `DISCORD_BOT_TOKEN` | ✅ | Discord bot token |
-| `GUILD_ID` | ✅ | Your Discord server ID |
-| `ADMIN_ROLE_IDS` | ✅ | Role ID(s) for admin permissions |
-| `JWT_SECRET` | ✅ | Random secret string for JWT signing |
+- Copy `docker-compose.prod.yml` and `.env.example` from this repo to the folder you want the bot to live.
+- Rename `docker-compose.prod.yml` to `docker-compose.yml` and `.env.example` to `.env`.
+- Configure `.env` - [Configuration Reference](docs/configuration.md).
 
 ### 2. Start the Stack
 
+From that same folder:
+
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+docker compose up -d
 ```
 
-This starts Alfira and PostgreSQL.
+This starts a stack with PostgreSQL, NodeLink, and Alfira.
 
 ### 3. Access the Web UI
 
-- **Web UI:** `http://localhost:3001`
-- **API:** `http://localhost:3001`
+The bot should now be online. The web UI can be accessed at `http://localhost:3001`.
 
-For production deployment with a reverse proxy and HTTPS, see the **[Full Installation Guide](docs/installation.md)**.
+For public deployment with a reverse proxy and HTTPS, see the **[Full Installation Guide](docs/installation.md)**.
 
 ---
 
