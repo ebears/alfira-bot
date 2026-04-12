@@ -172,7 +172,6 @@ async function handleLeave(ctx: RouteContext): Promise<Response> {
   }
 
   if (player) player.stop();
-  if (hoshimi) hoshimi.deletePlayer(GUILD_ID);
 
   return json({ message: 'Left the voice channel.' });
 }

@@ -44,7 +44,11 @@ export async function resolveOrAutoJoinPlayer(
 > {
   const existingPlayer = getPlayer(GUILD_ID);
   if (existingPlayer) {
-    return { ok: true, player: existingPlayer };
+    const hoshimi = getHoshimi();
+    const hoshimiPlayer = hoshimi?.players.get(GUILD_ID);
+    if (hoshimiPlayer?.connected) {
+      return { ok: true, player: existingPlayer };
+    }
   }
 
   const discordClient = getClient();
