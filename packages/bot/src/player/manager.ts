@@ -33,11 +33,15 @@ export function getPlayer(guildId: string): GuildPlayer | undefined {
  * intentionally (stop/leave commands) or unexpectedly (network drop, bot
  * kicked). This avoids a circular import between GuildPlayer and this module.
  */
-export function createPlayer(guildId: string, textChannel: TextChannel): GuildPlayer {
+export function createPlayer(
+  guildId: string,
+  textChannel: TextChannel,
+  voiceId: string
+): GuildPlayer {
   const existing = players.get(guildId);
   if (existing) return existing;
 
-  const player = new GuildPlayer(textChannel, guildId, () => {
+  const player = new GuildPlayer(textChannel, guildId, voiceId, () => {
     players.delete(guildId);
   });
 

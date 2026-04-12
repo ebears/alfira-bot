@@ -148,7 +148,7 @@ async function handleSkip(ctx: RouteContext): Promise<Response> {
   const playingResult = requirePlaying();
   if (!playingResult.ok) return playingResult.response;
 
-  playingResult.player.skip();
+  await playingResult.player.skip();
   return json({ message: 'Skipped.' });
 }
 
