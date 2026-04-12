@@ -263,190 +263,201 @@ export async function handleAuth(ctx: RouteContext, request: Request): Promise<R
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  // GET /auth/login
   if (request.method === 'GET' && pathname === '/auth/login') {
-    const ip = getClientIp(request);
-    if (!authRateLimit(ip)) {
-      return json(
-        { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
-        429
-      );
-    }
-    const params = new URLSearchParams({
-      client_id: DISCORD_CLIENT_ID,
-      redirect_uri: DISCORD_REDIRECT_URI,
-      response_type: 'code',
-      scope: 'identify',
-    });
-    return Response.redirect(`https://discord.com/oauth2/authorize?${params}`, 302);
+    return handleLogin(request);
   }
-
-  // GET /auth/callback
   if (request.method === 'GET' && pathname === '/auth/callback') {
-    const ip = getClientIp(request);
-    if (!authRateLimit(ip)) {
-      return json(
-        { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
-        429
-      );
-    }
-    const code = url.searchParams.get('code');
-    if (!code) {
-      return json({ error: 'Missing authorization code.' }, 400);
-    }
-
-    // 1. Exchange code for Discord access token.
-    const discordToken = await exchangeAuthorizationCode(code);
-    if (!discordToken) {
-      return json({ error: 'Failed to exchange authorization code with Discord.' }, 502);
-    }
-
-    // 2. Fetch Discord identity.
-    const discordUser = await fetchDiscordIdentity(discordToken);
-    if (!discordUser) {
-      return json({ error: 'Failed to fetch Discord user info.' }, 502);
-    }
-
-    // 3. Verify guild membership and get member roles.
-    const rolesResult = await fetchGuildMemberRoles(discordUser.id);
-    if (rolesResult === null || rolesResult === 'not-in-guild') {
-      return json({ error: 'You must be a member of the server to use this app.' }, 403);
-    }
-    const memberRoles = rolesResult;
-
-    // 4. Determine admin status.
-    const isAdmin = isAdminUser(memberRoles);
-
-    // 5. Generate and store tokens.
-    const { accessToken, refreshToken } = await generateAndStoreTokens(discordUser, isAdmin);
-
-    // 6. Set cookies and redirect.
-    const headers = new Headers();
-    headers.append(
-      'Set-Cookie',
-      buildCookieHeader(ACCESS_COOKIE_NAME, accessToken, { maxAge: 60 * 60 * 1000 })
-    );
-    headers.append(
-      'Set-Cookie',
-      buildCookieHeader(REFRESH_COOKIE_NAME, refreshToken, { maxAge: REFRESH_TOKEN_MAX_AGE })
-    );
-    headers.append('Location', WEB_UI_ORIGIN);
-    return new Response(null, { status: 302, headers });
+    return await handleCallback(request, url);
   }
-
-  // POST /auth/refresh
   if (request.method === 'POST' && pathname === '/auth/refresh') {
-    const refreshToken = ctx.cookies[REFRESH_COOKIE_NAME];
-    if (!refreshToken) {
-      return json({ error: 'No refresh token provided.' }, 401);
-    }
-
-    // 1. Verify the refresh token signature and expiration.
-    let decoded: { discordId: string; type: string };
-    try {
-      decoded = jwt.verify(refreshToken, JWT_SECRET) as { discordId: string; type: string };
-      if (decoded.type !== 'refresh') {
-        return json({ error: 'Invalid token type.' }, 401);
-      }
-    } catch {
-      return json({ error: 'Invalid or expired refresh token.' }, 401);
-    }
-
-    // 2. Check if the refresh token exists in the database (not revoked).
-    const tokenHash = hashToken(refreshToken);
-    const [storedToken] = await db
-      .select()
-      .from(refreshTokenTable)
-      .where(eq(refreshTokenTable.tokenHash, tokenHash))
-      .limit(1);
-    if (!storedToken) {
-      return json({ error: 'Refresh token has been revoked.' }, 401);
-    }
-
-    // 3. Check if the refresh token has expired.
-    if (storedToken.expiresAt < new Date()) {
-      await db.delete(refreshTokenTable).where(eq(refreshTokenTable.id, storedToken.id));
-      return json({ error: 'Refresh token has expired.' }, 401);
-    }
-
-    // 4. Delete the used refresh token (single-use for security).
-    await db.delete(refreshTokenTable).where(eq(refreshTokenTable.id, storedToken.id));
-
-    // 5. Clean up expired tokens for this user (lazy cleanup).
-    await db
-      .delete(refreshTokenTable)
-      .where(
-        and(
-          eq(refreshTokenTable.discordId, decoded.discordId),
-          lt(refreshTokenTable.expiresAt, new Date())
-        )
-      );
-
-    // 6. Re-fetch user info from Discord (including admin status).
-    const userInfo = await fetchUserAdminStatus(decoded.discordId);
-    if (!userInfo) {
-      await db.delete(refreshTokenTable).where(eq(refreshTokenTable.discordId, decoded.discordId));
-      return json({ error: 'Unable to verify user membership. Please log in again.' }, 401);
-    }
-
-    // 7. Generate new tokens.
-    const payload = {
-      discordId: decoded.discordId,
-      username: userInfo.username,
-      avatar: userInfo.avatar,
-      isAdmin: userInfo.isAdmin,
-    };
-    const newAccessToken = generateAccessToken(payload);
-    const newRefreshToken = generateRefreshToken(decoded.discordId);
-
-    // 8. Store new refresh token.
-    const newTokenHash = hashToken(newRefreshToken);
-    const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
-    await db.insert(refreshTokenTable).values({
-      tokenHash: newTokenHash,
-      discordId: decoded.discordId,
-      expiresAt: newExpiry,
-    });
-
-    // 9. Set cookies and return user info.
-    const headers = new Headers();
-    headers.append(
-      'Set-Cookie',
-      buildCookieHeader(ACCESS_COOKIE_NAME, newAccessToken, { maxAge: 60 * 60 * 1000 })
-    );
-    headers.append(
-      'Set-Cookie',
-      buildCookieHeader(REFRESH_COOKIE_NAME, newRefreshToken, { maxAge: REFRESH_TOKEN_MAX_AGE })
-    );
-    headers.set('Content-Type', 'application/json');
-    return new Response(JSON.stringify({ user: payload }), { status: 200, headers });
+    return await handleRefresh(ctx);
   }
-
-  // GET /auth/me
   if (request.method === 'GET' && pathname === '/auth/me') {
-    if (!ctx.user) {
-      return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
-    }
-    return json({ user: ctx.user });
+    return handleMe(ctx);
   }
-
-  // POST /auth/logout
   if (request.method === 'POST' && pathname === '/auth/logout') {
-    const refreshToken = ctx.cookies[REFRESH_COOKIE_NAME];
-    if (refreshToken) {
-      try {
-        const tokenHash = hashToken(refreshToken);
-        await db.delete(refreshTokenTable).where(eq(refreshTokenTable.tokenHash, tokenHash));
-      } catch {
-        logger.warn('Failed to revoke refresh token on logout');
-      }
-    }
-    const headers = new Headers();
-    headers.append('Set-Cookie', buildClearCookieHeader(ACCESS_COOKIE_NAME));
-    headers.append('Set-Cookie', buildClearCookieHeader(REFRESH_COOKIE_NAME));
-    headers.set('Content-Type', 'application/json');
-    return new Response(JSON.stringify({ message: 'Logged out.' }), { status: 200, headers });
+    return await handleLogout(ctx);
   }
 
   return json({ error: 'Not Found' }, 404);
+}
+
+function handleLogin(request: Request): Response {
+  const ip = getClientIp(request);
+  if (!authRateLimit(ip)) {
+    return json(
+      { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+      429
+    );
+  }
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: DISCORD_REDIRECT_URI,
+    response_type: 'code',
+    scope: 'identify',
+  });
+  return Response.redirect(`https://discord.com/oauth2/authorize?${params}`, 302);
+}
+
+async function handleCallback(request: Request, url: URL): Promise<Response> {
+  const ip = getClientIp(request);
+  if (!authRateLimit(ip)) {
+    return json(
+      { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+      429
+    );
+  }
+  const code = url.searchParams.get('code');
+  if (!code) {
+    return json({ error: 'Missing authorization code.' }, 400);
+  }
+
+  // 1. Exchange code for Discord access token.
+  const discordToken = await exchangeAuthorizationCode(code);
+  if (!discordToken) {
+    return json({ error: 'Failed to exchange authorization code with Discord.' }, 502);
+  }
+
+  // 2. Fetch Discord identity.
+  const discordUser = await fetchDiscordIdentity(discordToken);
+  if (!discordUser) {
+    return json({ error: 'Failed to fetch Discord user info.' }, 502);
+  }
+
+  // 3. Verify guild membership and get member roles.
+  const rolesResult = await fetchGuildMemberRoles(discordUser.id);
+  if (rolesResult === null || rolesResult === 'not-in-guild') {
+    return json({ error: 'You must be a member of the server to use this app.' }, 403);
+  }
+  const memberRoles = rolesResult;
+
+  // 4. Determine admin status.
+  const isAdmin = isAdminUser(memberRoles);
+
+  // 5. Generate and store tokens.
+  const { accessToken, refreshToken } = await generateAndStoreTokens(discordUser, isAdmin);
+
+  // 6. Set cookies and redirect.
+  const headers = new Headers();
+  headers.append(
+    'Set-Cookie',
+    buildCookieHeader(ACCESS_COOKIE_NAME, accessToken, { maxAge: 60 * 60 * 1000 })
+  );
+  headers.append(
+    'Set-Cookie',
+    buildCookieHeader(REFRESH_COOKIE_NAME, refreshToken, { maxAge: REFRESH_TOKEN_MAX_AGE })
+  );
+  headers.append('Location', WEB_UI_ORIGIN);
+  return new Response(null, { status: 302, headers });
+}
+
+async function handleRefresh(ctx: RouteContext): Promise<Response> {
+  const refreshToken = ctx.cookies[REFRESH_COOKIE_NAME];
+  if (!refreshToken) {
+    return json({ error: 'No refresh token provided.' }, 401);
+  }
+
+  // 1. Verify the refresh token signature and expiration.
+  let decoded: { discordId: string; type: string };
+  try {
+    decoded = jwt.verify(refreshToken, JWT_SECRET) as { discordId: string; type: string };
+    if (decoded.type !== 'refresh') {
+      return json({ error: 'Invalid token type.' }, 401);
+    }
+  } catch {
+    return json({ error: 'Invalid or expired refresh token.' }, 401);
+  }
+
+  // 2. Check if the refresh token exists in the database (not revoked).
+  const tokenHash = hashToken(refreshToken);
+  const [storedToken] = await db
+    .select()
+    .from(refreshTokenTable)
+    .where(eq(refreshTokenTable.tokenHash, tokenHash))
+    .limit(1);
+  if (!storedToken) {
+    return json({ error: 'Refresh token has been revoked.' }, 401);
+  }
+
+  // 3. Check if the refresh token has expired.
+  if (storedToken.expiresAt < new Date()) {
+    await db.delete(refreshTokenTable).where(eq(refreshTokenTable.id, storedToken.id));
+    return json({ error: 'Refresh token has expired.' }, 401);
+  }
+
+  // 4. Delete the used refresh token (single-use for security).
+  await db.delete(refreshTokenTable).where(eq(refreshTokenTable.id, storedToken.id));
+
+  // 5. Clean up expired tokens for this user (lazy cleanup).
+  await db
+    .delete(refreshTokenTable)
+    .where(
+      and(
+        eq(refreshTokenTable.discordId, decoded.discordId),
+        lt(refreshTokenTable.expiresAt, new Date())
+      )
+    );
+
+  // 6. Re-fetch user info from Discord (including admin status).
+  const userInfo = await fetchUserAdminStatus(decoded.discordId);
+  if (!userInfo) {
+    await db.delete(refreshTokenTable).where(eq(refreshTokenTable.discordId, decoded.discordId));
+    return json({ error: 'Unable to verify user membership. Please log in again.' }, 401);
+  }
+
+  // 7. Generate new tokens.
+  const payload = {
+    discordId: decoded.discordId,
+    username: userInfo.username,
+    avatar: userInfo.avatar,
+    isAdmin: userInfo.isAdmin,
+  };
+  const newAccessToken = generateAccessToken(payload);
+  const newRefreshToken = generateRefreshToken(decoded.discordId);
+
+  // 8. Store new refresh token.
+  const newTokenHash = hashToken(newRefreshToken);
+  const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE);
+  await db.insert(refreshTokenTable).values({
+    tokenHash: newTokenHash,
+    discordId: decoded.discordId,
+    expiresAt: newExpiry,
+  });
+
+  // 9. Set cookies and return user info.
+  const headers = new Headers();
+  headers.append(
+    'Set-Cookie',
+    buildCookieHeader(ACCESS_COOKIE_NAME, newAccessToken, { maxAge: 60 * 60 * 1000 })
+  );
+  headers.append(
+    'Set-Cookie',
+    buildCookieHeader(REFRESH_COOKIE_NAME, newRefreshToken, { maxAge: REFRESH_TOKEN_MAX_AGE })
+  );
+  headers.set('Content-Type', 'application/json');
+  return new Response(JSON.stringify({ user: payload }), { status: 200, headers });
+}
+
+function handleMe(ctx: RouteContext): Response {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+  return json({ user: ctx.user });
+}
+
+async function handleLogout(ctx: RouteContext): Promise<Response> {
+  const refreshToken = ctx.cookies[REFRESH_COOKIE_NAME];
+  if (refreshToken) {
+    try {
+      const tokenHash = hashToken(refreshToken);
+      await db.delete(refreshTokenTable).where(eq(refreshTokenTable.tokenHash, tokenHash));
+    } catch {
+      logger.warn('Failed to revoke refresh token on logout');
+    }
+  }
+  const headers = new Headers();
+  headers.append('Set-Cookie', buildClearCookieHeader(ACCESS_COOKIE_NAME));
+  headers.append('Set-Cookie', buildClearCookieHeader(REFRESH_COOKIE_NAME));
+  headers.set('Content-Type', 'application/json');
+  return new Response(JSON.stringify({ message: 'Logged out.' }), { status: 200, headers });
 }

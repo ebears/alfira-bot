@@ -20,15 +20,6 @@ export {
 const NODELINK_URL = process.env.NODELINK_URL ?? 'http://localhost:2333';
 const NODELINK_AUTH = process.env.NODELINK_AUTHORIZATION ?? '';
 
-function parseNodeLinkUrl(url: string): { host: string; port: number; secure: boolean } {
-  const parsed = new URL(url);
-  return {
-    host: parsed.hostname,
-    port: Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 2333),
-    secure: parsed.protocol === 'https:',
-  };
-}
-
 // Voice channel membership tracking for auto-pause.
 // Maps voiceChannelId -> Set of human userIds currently in that channel.
 const humanVoiceMembers = new Map<string, Set<string>>();
@@ -174,7 +165,7 @@ export async function startBot(): Promise<void> {
 
   // Initialize Hoshimi manager for audio.
   const { Hoshimi } = await import('hoshimi');
-  const nodeConfig = parseNodeLinkUrl(NODELINK_URL);
+  const nodelinkParsed = new URL(NODELINK_URL);
 
   const hoshimi = new Hoshimi({
     sendPayload: (guildId: string, payload: unknown) => {
@@ -184,10 +175,10 @@ export async function startBot(): Promise<void> {
     },
     nodes: [
       {
-        host: nodeConfig.host,
-        port: nodeConfig.port,
+        host: nodelinkParsed.hostname,
+        port: Number(nodelinkParsed.port) || (nodelinkParsed.protocol === 'https:' ? 443 : 2333),
         password: NODELINK_AUTH,
-        secure: nodeConfig.secure,
+        secure: nodelinkParsed.protocol === 'https:',
       },
     ],
     client: {

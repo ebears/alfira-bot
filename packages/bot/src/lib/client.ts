@@ -47,8 +47,3 @@ export function setHoshimi(hoshimi: Hoshimi): void {
 export function getHoshimi(): Hoshimi | null {
   return _hoshimi;
 }
-
-/** @deprecated Use getHoshimi() instead. */
-export function getNodeManager(): Hoshimi | null {
-  return _hoshimi;
-}
