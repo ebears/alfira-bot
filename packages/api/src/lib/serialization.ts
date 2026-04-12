@@ -1,0 +1,20 @@
+import type { Song } from '@alfira-bot/shared';
+
+// Accept both Date and string createdAt — Drizzle uses Date at the DB level,
+// but we serialize to ISO string for JSON serialization.
+type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
+
+// ---------------------------------------------------------------------------
+// Serialization helpers
+// ---------------------------------------------------------------------------
+
+export function formatSong(s: {
+  createdAt: Date | string;
+  tags?: string[] | null;
+}): SerializedSong {
+  return {
+    ...s,
+    createdAt: s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt,
+    tags: s.tags ?? [],
+  } as SerializedSong;
+}

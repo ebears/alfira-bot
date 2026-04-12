@@ -6,7 +6,6 @@ import { getPlayer } from './player/manager';
 export type { DestroyReasons } from 'hoshimi';
 export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
 export { getClient, getHoshimi } from './lib/client';
-export { VOICE_CONNECTION_TIMEOUT_MS } from './lib/constants';
 export type { GuildPlayer } from './player/GuildPlayer';
 export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
 export {
