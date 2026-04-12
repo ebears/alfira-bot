@@ -6,7 +6,7 @@
 |-----------|------------|
 | **Runtime** | Bun |
 | **Language** | TypeScript |
-| **Discord** | `discord.js` v14 |
+| **Discord** | `Seyfert` v4 |
 | **Audio** | NodeLink (Lavalink v4) via `hoshimi` |
 | **API** | Bun native HTTP + WebSocket |
 | **Database** | PostgreSQL + Drizzle ORM |
@@ -24,7 +24,7 @@ flowchart TB
 
     subgraph Server["Bun Server"]
         API[Bun API<br/>:3001]
-        BOT[Discord Bot<br/>discord.js + Hoshimi]
+        BOT[Discord Bot<br/>Seyfert + Hoshimi]
     end
 
     subgraph Audio["Audio Pipeline"]

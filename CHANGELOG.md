@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real-time sync via Socket.io for player state and library changes
 - Web UI player with progress bar and queue view
 - Queue management with loop modes (`off`, `song`, `queue`) and shuffle
-- Audio playback via `yt-dlp` + `ffmpeg` + `@discordjs/voice`
+- Audio playback via NodeLink (Lavalink v4-compatible) via `hoshimi`
 - Short-lived JWT tokens with refresh token flow
 - Rate limiting on authentication endpoints
 - Helmet middleware for HTTP security headers

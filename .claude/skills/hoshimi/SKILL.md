@@ -1,6 +1,6 @@
 ---
 name: hoshimi
-description: Use when working with Hoshimi TypeScript Lavalink v4 client, player queue management, Discord.js voice integration, or audio filters.
+description: Use when working with Hoshimi TypeScript Lavalink v4 client, player queue management, Seyfert voice integration, or audio filters.
 ---
 
 # Hoshimi Expert Reference (Alfira Integration)
@@ -272,7 +272,7 @@ await player.play({ track, volume: 100 });
 
 ---
 
-## Discord.js Integration (Alfira)
+## Seyfert Integration (Alfira)
 
 Alfira uses a **two-phase voice state handling**:
 

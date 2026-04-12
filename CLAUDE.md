@@ -17,7 +17,7 @@ The bot and API run in a **single Bun process** started from `packages/api/src/i
 
 - **Runtime:** Bun
 - **Language:** TypeScript
-- **Discord:** discord.js v14
+- **Discord:** Seyfert v4
 - **Audio:** NodeLink (Lavalink v4-compatible) via `hoshimi` v0.3
 - **API:** Bun native HTTP + WebSocket
 - **Database:** PostgreSQL 16 + Drizzle ORM
@@ -56,7 +56,7 @@ bun run format
 1. Run database migrations (homegrown, reads `packages/shared/dist/db/migrations/*.sql`)
 2. Verify database connectivity
 3. Call `setBroadcastQueueUpdate(emitPlayerUpdate)` — injects the WebSocket broadcaster into the bot package
-4. Call `startBot()` — initializes Discord client + Hoshimi + NodeLink connection
+4. Call `startBot()` — initializes Seyfert Discord client + Hoshimi + NodeLink connection
 5. Start Bun HTTP server on port 3001 (serves API routes, WebSocket at `/ws`, and static web assets from `packages/web/dist/`)
 
 ### Real-Time Updates (WebSocket Pipeline)

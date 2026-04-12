@@ -14,7 +14,6 @@
     "@alfira-bot/bot": "workspace:*",
     "@alfira-bot/shared": "workspace:*",
     "cookie": "^1.1.1",
-    "discord.js": "^14.14.1",
     "drizzle-orm": "^0.45.2",
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.0.0"
