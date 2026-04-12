@@ -57,7 +57,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: ${DATABASE_URL}
       NODELINK_URL: http://nodelink:3000
       NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
@@ -68,7 +68,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_ROLE_IDS: ${ADMIN_ROLE_IDS}
       WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:3001}
-      TRUSTED_PROXY_IP: ${TRUSTED_PROXY_IP}
     ports:
       - "${DOCKER_HOST_IP:-0.0.0.0}:3001:3001"
     healthcheck:

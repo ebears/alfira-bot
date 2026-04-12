@@ -65,9 +65,6 @@ Copy the `docker-compose.prod.yml` and `.env.example` from this repo. Rename `.e
 | `GUILD_ID` | ✅ | Your Discord server ID |
 | `ADMIN_ROLE_IDS` | ✅ | Role ID(s) for admin permissions |
 | `JWT_SECRET` | ✅ | Random secret string for JWT signing |
-| `POSTGRES_USER` | ✅ | Database username |
-| `POSTGRES_PASSWORD` | ✅ | Database password |
-| `POSTGRES_DB` | ✅ | Database name |
 
 ### 2. Start the Stack
 

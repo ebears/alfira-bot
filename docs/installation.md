@@ -205,7 +205,6 @@ cp .env.example .env
 #    - Discord credentials (from Developer Portal)
 #    - Your Guild ID and Admin Role ID
 #    - A secure JWT_SECRET (generate with: openssl rand -hex 32)
-#    - Database credentials (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
 #    - Your domain for WEB_UI_ORIGIN and DISCORD_REDIRECT_URI
 
 # 4. Start all services
@@ -232,14 +231,13 @@ All configuration is handled through a single `.env` file in the project root. C
 | `GUILD_ID` | ✅ | Your Discord server ID |
 | `ADMIN_ROLE_IDS` | ✅ | Admin role ID(s), comma-separated |
 | `JWT_SECRET` | ✅ | Secret for signing JWT tokens |
-| `POSTGRES_USER` | ✅ | Database username |
-| `POSTGRES_PASSWORD` | ✅ | Database password |
-| `POSTGRES_DB` | ✅ | Database name |
+| `POSTGRES_USER` | ✅ | PostgreSQL database user |
+| `POSTGRES_PASSWORD` | ✅ | PostgreSQL user password |
+| `POSTGRES_DB` | ✅ | PostgreSQL database name |
 | `WEB_UI_ORIGIN` | ⚪ | Public URL of the web UI |
 | `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
 | `NODELINK_URL` | ⚪ | NodeLink server URL (default: `http://nodelink:3000` in Docker) |
 | `NODELINK_AUTHORIZATION` | ⚪ | NodeLink password |
-| `TRUSTED_PROXY_IP` | ⚪ | IP of reverse proxy (for `X-Forwarded-For` trust) |
 
 > **Security:** Use a strong, random `JWT_SECRET`. Generate one with: `openssl rand -hex 32`
 
