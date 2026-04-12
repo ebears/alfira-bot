@@ -22,7 +22,7 @@ This guide covers everything you need to set up Alfira for both development and 
 | Docker | 20.10+ | With Docker Compose plugin |
 | Git | Any | For cloning the repository |
 
-No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles everything.
+No local Node.js installation needed — Docker handles everything.
 
 ### For Production
 
@@ -59,8 +59,8 @@ No local Node.js, ffmpeg, or yt-dlp installation needed — Docker handles every
 1. Navigate to **OAuth2** → **General**.
 2. Copy the **Client secret** — this is your `DISCORD_CLIENT_SECRET`.
 3. Add your redirect URL:
-   - Local development: `http://localhost:8180/auth/callback`
-   - Docker development: `http://localhost:8180/auth/callback`
+   - Local development: `http://localhost:3001/auth/callback`
+   - Docker development: `http://localhost:3001/auth/callback`
    - Production: `https://your-domain.com/auth/callback`
 4. Click **"Save Changes"**.
 
@@ -119,8 +119,8 @@ cp .env.example .env
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Set by Docker Compose |
-| `WEB_UI_ORIGIN` | Public URL of the web UI | `http://localhost:8180` |
-| `DISCORD_REDIRECT_URI` | OAuth2 redirect URI | `http://localhost:8180/auth/callback` |
+| `WEB_UI_ORIGIN` | Public URL of the web UI | `http://localhost:3001` |
+| `DISCORD_REDIRECT_URI` | OAuth2 redirect URI | `http://localhost:3001/auth/callback` |
 | `PORT` | API server port | `3001` |
 
 > **Note:** `DATABASE_URL` is set automatically by Docker Compose in development. You typically don't need to set it manually.
@@ -150,8 +150,9 @@ This starts:
 
 | Service | URL | Description |
 |---------|-----|-------------|
+| `nodelink` | `localhost:2333` | NodeLink audio server (internal: 3000) |
 | `db` | `localhost:5432` | PostgreSQL 16 |
-| `api` | `localhost:8180` | Bun API + Discord bot + Static Web UI |
+| `alfira` | `localhost:3001` | Bun API + Discord bot + Static Web UI |
 
 ### Development Workflow
 
@@ -160,8 +161,8 @@ The main dev command is `bun run dev`, which builds the shared and bot packages 
 | What Changed | Action |
 |--------------|--------|
 | Any of the above | `bun run dev` — builds changed packages and restarts Docker |
-| `packages/web/src/**` | Run `bun run web:build` locally to rebuild the UI, then `docker compose restart api` |
-| `packages/api/src/**` | `docker compose restart api` |
+| `packages/web/src/**` | Run `bun run web:build` locally to rebuild the UI, then `docker compose restart alfira` |
+| `packages/api/src/**` | `docker compose restart alfira` |
 
 ### Useful Commands
 
@@ -215,9 +216,9 @@ That's it! The stack will pull the pre-built images and start:
 
 | Service | Description |
 |---------|-------------|
+| `nodelink` | NodeLink audio server for bot audio streaming |
 | `db` | PostgreSQL 16 with healthcheck |
-| `migrate` | Runs database migrations on startup |
-| `api` | API + Discord bot + Static Web UI from GHCR image |
+| `alfira` | API + Discord bot + Static Web UI from GHCR image |
 
 ### Environment Variables
 
@@ -236,6 +237,8 @@ All configuration is handled through a single `.env` file in the project root. C
 | `POSTGRES_DB` | ✅ | Database name |
 | `WEB_UI_ORIGIN` | ⚪ | Public URL of the web UI |
 | `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
+| `NODELINK_URL` | ⚪ | NodeLink server URL (default: `http://nodelink:3000` in Docker) |
+| `NODELINK_AUTHORIZATION` | ⚪ | NodeLink password |
 | `TRUSTED_PROXY_IP` | ⚪ | IP of reverse proxy (for `X-Forwarded-For` trust) |
 
 > **Security:** Use a strong, random `JWT_SECRET`. Generate one with: `openssl rand -hex 32`
@@ -250,7 +253,7 @@ Create a `Caddyfile`:
 
 ```Caddy
 your-domain.com {
-    reverse_proxy /* <host-ip>:8180
+    reverse_proxy /* <host-ip>:3001
 }
 ```
 
@@ -276,7 +279,7 @@ docker compose -f docker-compose.prod.yml up -d
 Database migrations run automatically on startup. If you encounter issues:
 
 ```bash
-docker compose -f docker-compose.prod.yml logs -f migrate
+docker compose -f docker-compose.prod.yml logs -f alfira
 ```
 
 ---

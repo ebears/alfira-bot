@@ -6,8 +6,8 @@
 |-----------|------------|
 | **Runtime** | Bun |
 | **Language** | TypeScript |
-| **Discord** | `discord.js` v14, `@discordjs/voice`, `@snazzah/davey` |
-| **Audio** | `yt-dlp`, `ffmpeg` |
+| **Discord** | `discord.js` v14 |
+| **Audio** | NodeLink (Lavalink v4) via `hoshimi` |
 | **API** | Bun native HTTP + WebSocket |
 | **Database** | PostgreSQL + Drizzle ORM |
 | **Frontend** | React + Bun + Tailwind |
@@ -24,13 +24,11 @@ flowchart TB
 
     subgraph Server["Bun Server"]
         API[Bun API<br/>:3001]
-        BOT[Discord Bot<br/>discord.js Voice]
+        BOT[Discord Bot<br/>discord.js + Hoshimi]
     end
 
     subgraph Audio["Audio Pipeline"]
-        YTDLP[yt-dlp<br/>YouTube Metadata]
-        FF[FFmpeg<br/>Audio Transcode]
-        VOICE[discord.js Voice<br/>Voice Connection]
+        NL[NodeLink<br/>Lavalink v4]
     end
 
     subgraph Data["Data Layer"]
@@ -42,18 +40,14 @@ flowchart TB
     WEB -->|OAuth2 Login| API
     WEB -->|REST API| API
     WEB <-->|WebSocket| SOCKET
-    DISC <-->|Voice Channel| VOICE
-    DISC <-->|Voice Channel| VOICE
+    DISC <-->|Voice Channel| BOT
 
     %% Server internal
     API <--> DRIZZLE
     BOT <--> SOCKET
 
     %% Audio pipeline
-    YTDLP -->|Metadata| BOT
-    YTDLP -->|Audio URL| FF
-    FF -->|PCM Stream| VOICE
-    BOT --> YTDLP
+    BOT <-->|Player Control| NL
 
     %% Database
     DRIZZLE --> PG
@@ -68,7 +62,7 @@ The project is a Bun workspaces monorepo:
 ```
 packages/
 ├── shared    # Shared types and runtime utilities (formatDuration, fisherYatesShuffle)
-├── bot       # Discord bot (GuildPlayer, yt-dlp wrapper)
+├── bot       # Discord bot (GuildPlayer, NodeLink audio via hoshimi)
 ├── api       # Bun API, Drizzle ORM
 └── web       # React + Tailwind web UI
 ```
@@ -120,4 +114,3 @@ Three GitHub Actions workflows run on the repository:
 |----------|---------|---------|
 | **typecheck.yml** | PRs and pushes to `main` | Lint with Biome + typecheck all packages |
 | **docker-build.yml** | PRs and pushes to `main` (ignores `docs/`) | Build Docker images; publish to GHCR on `main` |
-| **ytdlp-update-check.yml** | Weekly (Monday 00:00 UTC) | Check for yt-dlp updates, auto-create issues |

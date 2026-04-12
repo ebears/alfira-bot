@@ -2,27 +2,19 @@
 
 This document provides a complete reference for all environment variables used by Alfira.
 
-## Environment Files
+## Environment File
 
-Alfira uses two environment files:
+Alfira uses a single environment file at the project root: `.env`.
 
-| File | Purpose |
-|------|---------|
-| `packages/api/.env` | API server, database, OAuth2, and web UI configuration |
-| `packages/bot/.env` | Discord bot configuration |
-
-Copy the example files to get started:
+Copy the example file to get started:
 
 ```bash
-cp packages/api/.env.example packages/api/.env
-cp packages/bot/.env.example packages/bot/.env
+cp .env.example .env
 ```
 
 ---
 
-## API Configuration (`packages/api/.env`)
-
-### Required Variables
+## Required Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -33,16 +25,28 @@ cp packages/bot/.env.example packages/bot/.env
 | `ADMIN_ROLE_IDS` | Discord role ID(s) for admin users (comma-separated) | `123456789012345678` |
 | `JWT_SECRET` | Secret key for signing JWT tokens | `your-secure-random-string` |
 
-### Optional Variables
+### Database
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `POSTGRES_USER` | Database username | `alfira` |
+| `POSTGRES_PASSWORD` | Database password | `change-this-to-a-secure-password` |
+| `POSTGRES_DB` | Database name | `alfira` |
+
+---
+
+## Optional Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | Set by Docker Compose |
 | `PORT` | API server port | `3001` |
-| `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | `http://localhost:8180` |
-| `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:8180/auth/callback` |
+| `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | `http://localhost:3001` |
+| `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:3001/auth/callback` |
 | `JWT_EXPIRES_IN` | JWT refresh token expiry duration (supports `d`, `h`, `m`, `s` suffixes) | `7d` |
 | `DEFAULT_TEXT_CHANNEL_ID` | Text channel for "Now playing" embeds when auto-joining via web UI | Guild's system channel |
+| `NODELINK_URL` | NodeLink server URL | `http://localhost:2333` (dev) or `http://nodelink:3000` (Docker) |
+| `NODELINK_AUTHORIZATION` | NodeLink password | (empty by default) |
+| `VOICE_IDLE_TIMEOUT_MINUTES` | Minutes before bot leaves voice channel when idle | `5` |
 | `TRUSTED_PROXY_IP` | IP address of reverse proxy (for rate limiting and `X-Forwarded-For` trust) | — |
 | `DOCKER_HOST_IP` | IP to bind the API port to (e.g., LAN interface) | `0.0.0.0` |
 
@@ -53,21 +57,6 @@ cp packages/bot/.env.example packages/bot/.env
 | `WEB_UI_ORIGIN` | Public domain of the web UI | `https://alfira.example.com` |
 | `DISCORD_REDIRECT_URI` | OAuth2 callback URL (must match Discord Developer Portal) | `https://alfira.example.com/auth/callback` |
 
----
-
-## Bot Configuration (`packages/bot/.env`)
-
-### Required Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DISCORD_BOT_TOKEN` | Discord bot token (same as API) | `MTAwMC4xMjM0NTY3ODkw...` |
-| `DISCORD_CLIENT_ID` | Discord application client ID (same as API) | `123456789012345678` |
-
-### Optional Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
 ---
 
 ## Database Configuration
@@ -88,20 +77,7 @@ DATABASE_URL=postgresql://botuser:botpass@db:5432/musicbot
 
 ### Production
 
-For production, you can either:
-
-1. **Let Docker Compose handle it** (recommended) — Docker Compose constructs `DATABASE_URL` automatically from the `POSTGRES_*` variables
-2. **Use an external database** — set `DATABASE_URL` to your external PostgreSQL instance
-
-When using Docker Compose, set these variables in your root `.env` file:
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `POSTGRES_USER` | Database username | `alfira` |
-| `POSTGRES_PASSWORD` | Database password | `change-this-to-a-secure-password` |
-| `POSTGRES_DB` | Database name | `alfira` |
-
-Example for external database:
+Docker Compose constructs `DATABASE_URL` automatically from the `POSTGRES_*` variables. For an external database, set `DATABASE_URL` directly:
 
 ```env
 DATABASE_URL=postgresql://alfira_user:secure_password@db.example.com:5432/alfira
@@ -137,7 +113,7 @@ Discord tokens are generated in the [Discord Developer Portal](https://discord.c
 
 ### Development
 
-`packages/api/.env`:
+`.env` (project root):
 
 ```env
 DISCORD_CLIENT_ID=123456789012345678
@@ -146,14 +122,10 @@ DISCORD_BOT_TOKEN=your-bot-token
 GUILD_ID=987654321098765432
 ADMIN_ROLE_IDS=123456789012345678
 JWT_SECRET=dev-secret-change-in-production
+POSTGRES_USER=alfira
+POSTGRES_PASSWORD=change-this-to-a-secure-password
+POSTGRES_DB=alfira
 # DATABASE_URL is set by Docker Compose
-```
-
-`packages/bot/.env`:
-
-```env
-DISCORD_BOT_TOKEN=your-bot-token
-DISCORD_CLIENT_ID=123456789012345678
 ```
 
 ### Production
