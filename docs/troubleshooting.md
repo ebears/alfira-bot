@@ -12,7 +12,7 @@ Common issues and solutions for Alfira.
 1. Ensure the bot has the required permissions (Connect, Speak).
 2. Check that the voice channel allows bot access.
 3. Verify `DISCORD_BOT_TOKEN` is correct.
-4. Check API logs: `docker compose logs api`
+4. Check API logs: `docker compose logs alfira`
 
 ### Audio not playing
 
@@ -62,7 +62,7 @@ docker compose up --build
 
 ## Getting Help
 
-1. Check the logs: `docker compose logs -f api`
+1. Check the logs: `docker compose logs -f alfira`
 2. Search existing [GitHub Issues](https://github.com/ebears/alfira/issues).
 3. Open a new issue with:
    - Docker version

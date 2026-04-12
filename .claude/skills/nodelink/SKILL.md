@@ -31,9 +31,12 @@ nodelink:
     HOST: 0.0.0.0
     PORT: 2333
     NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-}
+    NODELINK_SERVER_USE_BUN_SERVER: "true"
   ports:
     - "2333:3000"      # host:container
 ```
+
+> **Note on env var names:** The official NodeLink Docker docs use `NODELINK_SERVER_HOST`, `NODELINK_SERVER_PORT`, and `NODELINK_SERVER_PASSWORD`. This project's `docker-compose.yml` uses `HOST`, `PORT`, and `NODELINK_AUTHORIZATION` instead — these are the actual env vars the image respects in this configuration. The internal port is `3000` (not the documented `2333` default), which appears to be an effect of `NODELINK_SERVER_USE_BUN_SERVER: "true"`.
 
 **Prod compose (`docker-compose.prod.yml`):** Same, but no port exposure (container port only).
 
@@ -44,9 +47,8 @@ nodelink:
 | External port | 2333 |
 | Host binding | 0.0.0.0 |
 | Authorization | `NODELINK_AUTHORIZATION` env var (default: empty = `youshallnotpass` per image default) |
-| Config file | None — all defaults from Docker image |
-
-**Important:** When `NODELINK_AUTHORIZATION` is unset in the environment, NodeLink uses `youshallnotpass` as the default password.
+| Bun server mode | `NODELINK_SERVER_USE_BUN_SERVER: "true"` |
+| Config file | None — all settings via Docker env vars |
 
 ---
 
@@ -228,6 +230,9 @@ Only **YouTube** is used. The codebase passes YouTube URLs directly to `/v4/load
 |----------|-------------|
 | `NODELINK_URL` | Full URL to NodeLink (e.g., `http://nodelink:3000`) |
 | `NODELINK_AUTHORIZATION` | Password for NodeLink (default when unset: `youshallnotpass`) |
+| `HOST` | Listen interface for the NodeLink server (0.0.0.0) |
+| `PORT` | External port mapping (2333) |
+| `NODELINK_SERVER_USE_BUN_SERVER` | Use Bun HTTP server (`"true"`) — internal port becomes 3000 |
 
 ---
 

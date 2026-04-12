@@ -274,39 +274,72 @@ await player.play({ track, volume: 100 });
 
 ## Seyfert Integration (Alfira)
 
-Alfira uses a **two-phase voice state handling**:
+Alfira uses **two-phase voice state handling** via Seyfert `createEvent`:
 
-### Phase 1: Raw Packet Forwarding
-All raw gateway packets are forwarded to Hoshimi so NodeLink receives Discord's voice server details:
+### Phase 1: `raw` — Forward Packets to Hoshimi
 
 ```typescript
 // packages/bot/src/index.ts
-client.on('raw', (packet) => {
-    hoshimi.updateVoiceState(packet);
+const rawEvent = createEvent({
+  data: { name: 'raw' as const },
+  run(packet, _client) {
+    hoshimi.updateVoiceState(packet as Parameters<typeof hoshimi.updateVoiceState>[0]);
+
+    // Track human users in voice channels for auto-pause.
+    if (packet.t === 'VOICE_STATE_UPDATE') {
+      const d = packet.d as {
+        guild_id: string;
+        user_id: string;
+        channel_id: string | null;
+        member?: { user?: { bot?: boolean } };
+      };
+      // Human tracking: add/remove user from humanVoiceMembers map
+    }
+  },
 });
 ```
 
-### Phase 2: Human-Left Detection
-The `voiceStateUpdate` event detects when all humans leave the bot's channel:
+### Phase 2: `voiceStateUpdate` — Auto-Pause on Human Leave
 
 ```typescript
-client.on('voiceStateUpdate', (oldState, newState) => {
-    // Ignore bot-only voice changes
-    if (newState.member?.user.bot && oldState.member?.user.bot) return;
+// packages/bot/src/index.ts
+const voiceStateUpdateEvent = createEvent({
+  data: { name: 'voiceStateUpdate' as const },
+  run(state, oldState, _client) {
+    // Seyfert passes [state] or [state, oldState]; destructure appropriately.
+    const currentState = Array.isArray(state) ? state[0] : state;
+    const previousState = Array.isArray(state) ? state[1] : oldState;
 
-    const player = manager.players.get(guildId);
+    const oldChannelId = previousState?.channelId;
+    const newChannelId = currentState?.channelId;
+    if (oldChannelId === newChannelId) return;
+
+    const guildId = currentState?.guildId ?? previousState?.guildId;
+    if (!guildId) return;
+
+    const player = hoshimi.players.get(guildId);
     if (!player) return;
 
-    // Only act when someone left the bot's channel
-    if (oldState.channelId !== player.voiceId) return;
-    if (newState.channelId === player.voiceId) return; // joined, not left
+    const botChannelId = player.voiceId;
+    if (!botChannelId) return;
 
-    // Auto-pause when no humans remain
-    const humanCount = voiceChannel.members.filter((m) => !m.user.bot).size;
+    // Only act when someone left the bot's channel.
+    const leftBotChannel = oldChannelId === botChannelId && newChannelId !== botChannelId;
+    if (!leftBotChannel) return;
+
+    // Auto-pause when no humans remain in the bot's channel.
+    const channelMembers = humanVoiceMembers.get(botChannelId);
+    const humanCount = channelMembers?.size ?? 0;
     if (humanCount === 0) {
-        guildPlayer.togglePause();
+      guildPlayer.togglePause();
     }
+  },
 });
+```
+
+Events are registered after `client.start()`:
+```typescript
+client.events.set([readyEvent, rawEvent, voiceStateUpdateEvent] as any);
 ```
 
 ---
@@ -386,8 +419,10 @@ player.destroy(DestroyReasons.Requested);  // Used in GuildPlayer.destroyPlayer(
 ## Search (Hoshimi Built-in)
 
 ```typescript
+import { SearchEngines } from 'hoshimi';
+
 const result = await hoshimi.search('never gonna give you up', {
-    source: 'youtube',
+    source: 'youtube',           // or SearchEngines.Youtube = "ytsearch"
     limit: 10,
 });
 
@@ -395,6 +430,28 @@ if (result.tracks.length > 0) {
     // Use result.tracks[0] with getStreamFormat() then player.play()
 }
 ```
+
+### SearchEngines Values
+
+| Engine | Value | Plugin |
+|--------|-------|--------|
+| `SearchEngines.Youtube` | `"ytsearch"` | youtube-source |
+| `SearchEngines.YoutubeMusic` | `"ytmsearch"` | youtube-source |
+| `SearchEngines.Spotify` | `"spsearch"` | lava-src |
+| `SearchEngines.SpotifyRecommendations` | `"sprec"` | lava-src |
+| `SearchEngines.SpotifyArtistMix` | `"sprec:mix:artist"` | lava-src |
+| `SearchEngines.SpotifyAlbumMix` | `"sprec:mix:album"` | lava-src |
+| `SearchEngines.SpotifyTrackMix` | `"sprec:mix:track"` | lava-src |
+| `SearchEngines.SpotifyISRCMix` | `"sprec:mix:isrc"` | lava-src |
+| `SearchEngines.SoundCloud` | `"scsearch"` | lavalink |
+| `SearchEngines.AppleMusic` | `"amsearch"` | lava-src |
+| `SearchEngines.BandCamp` | `"bcsearch"` | lava-src |
+| `SearchEngines.Deezer` | `"dzsearch"` | lava-src |
+| `SearchEngines.DeezerISRC` | `"dzisrc"` | lava-src |
+| `SearchEngines.DeezerRecommendations` | `"dzrec"` | lava-src |
+| `SearchEngines.YandexMusic` | `"ymsearch"` | lava-src |
+
+The `source` parameter in `hoshimi.search()` accepts either a `SearchEngines` value or a `SourceNames` value.
 
 ---
 
