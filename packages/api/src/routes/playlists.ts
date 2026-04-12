@@ -1,7 +1,6 @@
-import { tables } from '@alfira-bot/shared/db';
+import { db, tables } from '@alfira-bot/shared/db';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import type { RouteContext } from '../index';
-import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
 import { canAccessPlaylist } from '../lib/playlistAccess';
@@ -202,10 +201,7 @@ async function handleGetPlaylist(
     songIds.length > 0
       ? await db.select().from(tables.song).where(inArray(tables.song.id, songIds))
       : [];
-  const songMap = new Map<string, typeof tables.song.$inferSelect>();
-  for (const s of songs) {
-    songMap.set(s.id, s);
-  }
+  const songMap = new Map(songs.map((s) => [s.id, s]));
 
   return json({
     ...playlist,

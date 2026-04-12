@@ -1,12 +1,10 @@
-import { tables } from '@alfira-bot/shared/db';
+import { db, tables } from '@alfira-bot/shared/db';
 import { eq, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
-import { db } from '../lib/db';
 import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
-
-import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import { formatSong } from '../lib/serialization';
+import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
 import {
   clampMaxVideos,
   fetchPlaylistMetadata,

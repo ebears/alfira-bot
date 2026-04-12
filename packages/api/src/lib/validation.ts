@@ -69,57 +69,47 @@ export function validateYouTubePlaylistUrl(youtubeUrl: unknown): ValidationResul
   return result;
 }
 
+async function wrapBotCall<T>(
+  fn: () => Promise<T>,
+  errorMsg: string
+): Promise<{ ok: true; value: T } | { ok: false; response: Response }> {
+  try {
+    return { ok: true, value: await fn() };
+  } catch {
+    return { ok: false, response: json({ error: errorMsg }, 422) };
+  }
+}
+
 /**
  * Fetches YouTube metadata for a single video URL.
  * Returns error Response if fetch fails.
  */
-export async function fetchYouTubeMetadata(
+export function fetchYouTubeMetadata(
   url: string
 ): Promise<
   { ok: true; value: Awaited<ReturnType<typeof getMetadata>> } | { ok: false; response: Response }
 > {
-  try {
-    const value = await getMetadata(url);
-    return { ok: true, value };
-  } catch {
-    return {
-      ok: false,
-      response: json(
-        {
-          error:
-            'Could not fetch video info. The video may be private, age-restricted, or unavailable.',
-        },
-        422
-      ),
-    };
-  }
+  return wrapBotCall(
+    () => getMetadata(url),
+    'Could not fetch video info. The video may be private, age-restricted, or unavailable.'
+  );
 }
 
 /**
  * Fetches YouTube playlist metadata with videos.
  * Returns error Response if fetch fails.
  */
-export async function fetchPlaylistMetadata(
+export function fetchPlaylistMetadata(
   url: string,
   maxVideos?: number
 ): Promise<
   | { ok: true; value: Awaited<ReturnType<typeof getPlaylistMetadataWithVideos>> }
   | { ok: false; response: Response }
 > {
-  try {
-    const value = await getPlaylistMetadataWithVideos(url, maxVideos);
-    return { ok: true, value };
-  } catch {
-    return {
-      ok: false,
-      response: json(
-        {
-          error: 'Could not fetch playlist info. The playlist may be private or unavailable.',
-        },
-        422
-      ),
-    };
-  }
+  return wrapBotCall(
+    () => getPlaylistMetadataWithVideos(url, maxVideos),
+    'Could not fetch playlist info. The playlist may be private or unavailable.'
+  );
 }
 
 /** Clamps maxVideos to the [1, 100] range, or returns undefined if not set. */
