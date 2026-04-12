@@ -48,10 +48,7 @@ export function getHoshimi(): Hoshimi | null {
   return _hoshimi;
 }
 
-/**
- * @deprecated Use getHoshimi() instead. This alias is here for backwards
- * compatibility while migrating from @discordjs/voice.
- */
+/** @deprecated Use getHoshimi() instead. */
 export function getNodeManager(): Hoshimi | null {
   return _hoshimi;
 }

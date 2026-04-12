@@ -12,8 +12,7 @@ updates:
     groups:
       discord:
         patterns:
-          - "discord.js"
-          - "@discordjs/*"
+          - "seyfert"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
