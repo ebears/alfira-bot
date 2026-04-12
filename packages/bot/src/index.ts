@@ -1,29 +1,14 @@
 import { logger } from '@alfira-bot/shared/logger';
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, createEvent } from 'seyfert';
 import { getHoshimi, setClient, setHoshimi } from './lib/client';
 import { getPlayer } from './player/manager';
 
-// ---------------------------------------------------------------------------
-// Public API re-exports
-//
-// These are the symbols the API package needs from the bot. By re-exporting
-// them here, consumers import from '@alfira-bot/bot' instead of reaching
-// into internal paths like '@alfira-bot/bot/src/lib/client'.
-// ---------------------------------------------------------------------------
-
-// Hoshimi types re-exported for API package
 export type { DestroyReasons } from 'hoshimi';
-// Broadcast indirection (API injects emit function at boot)
 export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
-// Discord client singleton
-// Hoshimi manager (for API package to access player state)
 export { getClient, getHoshimi } from './lib/client';
-// Constants
 export { VOICE_CONNECTION_TIMEOUT_MS } from './lib/constants';
 export type { GuildPlayer } from './player/GuildPlayer';
-// Player manager (guild-level player lifecycle)
 export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
-// YouTube utilities (URL validation, metadata fetching)
 export {
   getMetadata,
   getPlaylistMetadataWithVideos,
@@ -44,16 +29,145 @@ function parseNodeLinkUrl(url: string): { host: string; port: number; secure: bo
   };
 }
 
+// Voice channel membership tracking for auto-pause.
+// Maps voiceChannelId -> Set of human userIds currently in that channel.
+const humanVoiceMembers = new Map<string, Set<string>>();
+
+// Forward raw gateway packets to hoshimi so it can handle voice server updates.
+const rawEvent = createEvent({
+  data: { name: 'raw' as const },
+  run(packet, _client) {
+    const hoshimi = getHoshimi();
+    if (!hoshimi) return;
+    // hoshimi expects GatewayDispatchPayload but Seyfert passes it with extra wrapper;
+    // the raw packet has `t` and `d` properties that hoshimi reads directly
+    hoshimi.updateVoiceState(packet as Parameters<typeof hoshimi.updateVoiceState>[0]);
+
+    // Track human users in voice channels for auto-pause.
+    if (packet.t === 'VOICE_STATE_UPDATE') {
+      const d = packet.d as {
+        guild_id: string;
+        user_id: string;
+        channel_id: string | null;
+        member?: { user?: { bot?: boolean } };
+      };
+      const _guildId = d.guild_id;
+      const userId = d.user_id;
+      const channelId = d.channel_id;
+      const isBot = d.member?.user?.bot === true;
+
+      // Update human voice membership tracking.
+      // For disconnects (channelId === null), we rely on the member data being present
+      // in the raw payload before cache updates.
+      if (channelId === null) {
+        // User left a channel - remove from all channel tracking.
+        for (const [_chId, members] of humanVoiceMembers) {
+          members.delete(userId);
+        }
+      } else if (!isBot) {
+        // Non-bot user joined or stayed in a channel.
+        let members = humanVoiceMembers.get(channelId);
+        if (!members) {
+          members = new Set();
+          humanVoiceMembers.set(channelId, members);
+        }
+        members.add(userId);
+      }
+    }
+  },
+});
+
+// Auto-pause: when all humans leave the bot's voice channel.
+const voiceStateUpdateEvent = createEvent({
+  data: { name: 'voiceStateUpdate' as const },
+  run(state, oldState, _client) {
+    // Seyfert passes [state] or [state, oldState]; destructure appropriately.
+    const currentState = Array.isArray(state) ? state[0] : state;
+    const previousState = Array.isArray(state) ? state[1] : oldState;
+
+    // Ignore if both old and new state have no channel change.
+    const oldChannelId = (previousState as { channelId: string | null } | undefined)?.channelId;
+    const newChannelId = (currentState as { channelId: string | null }).channelId;
+    if (oldChannelId === newChannelId) return;
+
+    const guildId =
+      (currentState as { guildId: string }).guildId ??
+      (previousState as { guildId?: string })?.guildId;
+    if (!guildId) return;
+
+    const hoshimi = getHoshimi();
+    if (!hoshimi) return;
+
+    const player = hoshimi.players.get(guildId);
+    if (!player) return;
+
+    const botChannelId = player.voiceId;
+    if (!botChannelId) return;
+
+    // Check if someone left the bot's channel.
+    const leftBotChannel = oldChannelId === botChannelId && newChannelId !== botChannelId;
+    if (!leftBotChannel) return;
+
+    // Determine if the leaving user was a human.
+    // The raw event may have added them to humanVoiceMembers. If not found there,
+    // we check via the member's user object.
+    let wasHuman =
+      humanVoiceMembers.get(botChannelId)?.has((currentState as { userId: string }).userId) ??
+      false;
+    const previousStateWithMember = previousState as
+      | { member?: { user?: { bot?: boolean } } }
+      | undefined;
+    if (!wasHuman && previousStateWithMember?.member) {
+      wasHuman = !(previousStateWithMember.member?.user?.bot === true);
+    }
+
+    if (!wasHuman) return;
+
+    // Count remaining humans in the bot's voice channel.
+    const channelMembers = humanVoiceMembers.get(botChannelId);
+    const humanCount = channelMembers?.size ?? 0;
+
+    if (humanCount === 0) {
+      const guildPlayer = getPlayer(guildId);
+      if (guildPlayer?.getCurrentSong() && guildPlayer.isPlaying()) {
+        guildPlayer.togglePause();
+        logger.info({ guildId }, "Auto-paused: no humans left in the bot's voice channel.");
+      }
+    }
+  },
+});
+
+const readyEvent = createEvent({
+  data: { name: 'ready' as const, once: true },
+  run(user, _client) {
+    const hoshimi = getHoshimi();
+    if (hoshimi) {
+      hoshimi.init({ id: user.id, username: user.username });
+    }
+    logger.info(`Bot logged in as ${user.username}`);
+  },
+});
+
 /** Initializes and connects the Discord bot. Called by the API entry point. */
 export async function startBot(): Promise<void> {
-  const { DISCORD_BOT_TOKEN } = process.env;
+  const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
   if (!DISCORD_BOT_TOKEN) {
     throw new Error('DISCORD_BOT_TOKEN is not set.');
   }
 
+  // GatewayIntentBits.Guilds = 1, GuildVoiceStates = 128
+  const intents = 1 | 128;
+
   const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+    // Provide a minimal getRC to avoid needing a seyfert.config file.
+    // Locations are empty since we set events programmatically.
+    getRC: async () => ({
+      token: DISCORD_BOT_TOKEN,
+      locations: { base: '' },
+      intents,
+      debug: false,
+    }),
   });
 
   setClient(client);
@@ -63,10 +177,10 @@ export async function startBot(): Promise<void> {
   const nodeConfig = parseNodeLinkUrl(NODELINK_URL);
 
   const hoshimi = new Hoshimi({
-    sendPayload: (guildId, payload) => {
-      const guild = client.guilds.cache.get(guildId);
-      if (!guild) return;
-      guild.shard.send(payload);
+    sendPayload: (guildId: string, payload: unknown) => {
+      const shardId = client.gateway.calculateShardId(guildId);
+      // @ts-expect-error - hoshimi sends raw gateway payloads; gateway accepts them at runtime
+      client.gateway.send(shardId, payload);
     },
     nodes: [
       {
@@ -82,53 +196,11 @@ export async function startBot(): Promise<void> {
     },
   });
 
-  client.once('ready', (readyClient) => {
-    hoshimi.init({ id: readyClient.user.id, username: readyClient.user.username });
-    logger.info(`Bot logged in as ${readyClient.user.tag}`);
-  });
-
   setHoshimi(hoshimi);
 
-  // Forward all raw gateway packets to hoshimi so it can handle voice server updates.
-  // This is required for NodeLink to receive Discord's voice connection details.
-  client.on('raw', (packet) => {
-    hoshimi.updateVoiceState(packet);
-  });
+  await client.start();
 
-  client.on('voiceStateUpdate', (oldState, newState) => {
-    // Ignore the bot's own voice changes.
-    if (newState.member?.user.bot && oldState.member?.user.bot) return;
-
-    const guildId = oldState.guild.id;
-    const manager = getHoshimi();
-    if (!manager) return;
-
-    // Get the player's voice channel for this guild.
-    const player = manager.players.get(guildId);
-    if (!player) return;
-
-    const connectionChannelId = player.voiceId;
-    if (!connectionChannelId) return;
-
-    // Only act when a user left the bot's voice channel.
-    const leftBotChannel = oldState.channelId === connectionChannelId;
-    const joinedBotChannel = newState.channelId === connectionChannelId;
-    if (!leftBotChannel || joinedBotChannel) return;
-
-    // Count remaining non-bot members in the bot's voice channel.
-    const voiceChannel = oldState.channel;
-    if (!voiceChannel) return;
-
-    const humanCount = voiceChannel.members.filter((m) => !m.user.bot).size;
-
-    if (humanCount === 0) {
-      const guildPlayer = getPlayer(guildId);
-      if (guildPlayer?.getCurrentSong() && guildPlayer.isPlaying()) {
-        guildPlayer.togglePause();
-        logger.info({ guildId }, "Auto-paused: no humans left in the bot's voice channel.");
-      }
-    }
-  });
-
-  await client.login(DISCORD_BOT_TOKEN);
+  // Register events after start.
+  // biome-ignore lint/suspicious/noExplicitAny: createEvent return has `once?: boolean` but ClientEvent needs `once: boolean`; values are correct at runtime
+  client.events.set([readyEvent, rawEvent, voiceStateUpdateEvent] as any);
 }

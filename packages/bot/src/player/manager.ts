@@ -1,4 +1,3 @@
-import type { TextChannel } from 'discord.js';
 import { DestroyReasons } from 'hoshimi';
 import { getHoshimi } from '../lib/client';
 import { GuildPlayer } from './GuildPlayer';
@@ -33,15 +32,11 @@ export function getPlayer(guildId: string): GuildPlayer | undefined {
  * intentionally (stop/leave commands) or unexpectedly (network drop, bot
  * kicked). This avoids a circular import between GuildPlayer and this module.
  */
-export function createPlayer(
-  guildId: string,
-  textChannel: TextChannel,
-  voiceId: string
-): GuildPlayer {
+export function createPlayer(guildId: string, voiceId: string): GuildPlayer {
   const existing = players.get(guildId);
   if (existing) return existing;
 
-  const player = new GuildPlayer(textChannel, guildId, voiceId, () => {
+  const player = new GuildPlayer(guildId, voiceId, () => {
     players.delete(guildId);
   });
 

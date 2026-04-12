@@ -1,10 +1,8 @@
 import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
 import { logger } from '@alfira-bot/shared/logger';
-import type { EmbedBuilder, TextChannel } from 'discord.js';
 import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
 import { broadcastQueueUpdate } from '../lib/broadcast';
 import { getHoshimi } from '../lib/client';
-import { buildNowPlayingEmbed } from '../utils/format';
 import { PlaybackCursor } from './PlaybackCursor';
 
 export class GuildPlayer {
@@ -59,12 +57,11 @@ export class GuildPlayer {
       `Auto-leaving voice channel after idle (${this.getIdleTimeoutMinutes()} minutes).`
     );
     const phrase = this.LEAVE_PHRASES[Math.floor(Math.random() * this.LEAVE_PHRASES.length)];
-    this.sendToTextChannel(`${phrase} (Left the voice channel due to inactivity.)`);
+    logger.info({ guildId: this.guildId }, `${phrase} (Left the voice channel due to inactivity.)`);
     this.destroyPlayer();
   }
 
   private readonly guildId: string;
-  private readonly textChannel: TextChannel;
   private readonly voiceId: string;
 
   private unpause(): void {
@@ -77,13 +74,7 @@ export class GuildPlayer {
     this.paused = false;
   }
 
-  constructor(
-    textChannel: TextChannel,
-    guildId: string,
-    voiceId: string,
-    _onDestroyed: () => void
-  ) {
-    this.textChannel = textChannel;
+  constructor(guildId: string, voiceId: string, _onDestroyed: () => void) {
     this.guildId = guildId;
     this.voiceId = voiceId;
 
@@ -299,14 +290,6 @@ export class GuildPlayer {
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  private sendToTextChannel(message: string | { embeds: EmbedBuilder[] }): void {
-    this.textChannel
-      .send(message)
-      .catch((err) =>
-        logger.error({ guildId: this.guildId, err }, 'Failed to send message to text channel')
-      );
-  }
-
   private async playNext(): Promise<void> {
     const player = this.hoshimiPlayer();
     if (player && !player.connected) {
@@ -444,20 +427,21 @@ export class GuildPlayer {
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
     this.broadcast();
-    this.sendToTextChannel({ embeds: [buildNowPlayingEmbed(next, this.loopMode)] });
   }
 
   private async handlePlaybackFailure(skipMessage: string): Promise<void> {
     this.consecutiveFailures++;
     if (this.consecutiveFailures >= GuildPlayer.MAX_CONSECUTIVE_FAILURES) {
-      this.sendToTextChannel(
-        `⚠️ **${GuildPlayer.MAX_CONSECUTIVE_FAILURES}** consecutive failures — stopping playback. Use the Play button in the web UI to try again.`
+      logger.error(
+        { guildId: this.guildId, song: this.currentSong?.title },
+        `Max consecutive failures reached — stopping playback.`
       );
       this.stop();
       return;
     }
-    this.sendToTextChannel(
-      `⚠️ Skipping **${this.currentSong?.title ?? 'unknown'}** — ${skipMessage}`
+    logger.warn(
+      { guildId: this.guildId, song: this.currentSong?.title },
+      `Skipping song — ${skipMessage}`
     );
     await this.playNext();
   }

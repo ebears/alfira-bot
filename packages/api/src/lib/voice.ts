@@ -1,5 +1,4 @@
 import { createPlayer, getClient, getHoshimi, getPlayer } from '@alfira-bot/bot';
-import type { TextChannel } from 'discord.js';
 import { GUILD_ID, logger } from './config';
 import { json } from './json';
 
@@ -15,9 +14,14 @@ export async function requireUserInVoice(discordId: string): Promise<true | Resp
 
   try {
     const guild = await client.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(discordId);
+    const member = await guild.members.resolve(discordId);
 
-    if (!member.voice.channel) {
+    if (!member) {
+      return json({ error: 'Could not find member in guild.' }, 503);
+    }
+
+    const voiceState = await member.voice('rest');
+    if (!voiceState?.channelId) {
       return json({ error: 'You must be in a voice channel to control playback.' }, 403);
     }
 
@@ -55,10 +59,19 @@ export async function resolveOrAutoJoinPlayer(
 
   try {
     const guild = await discordClient.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(discordId);
-    const voiceChannel = member.voice.channel;
+    const member = await guild.members.resolve(discordId);
 
-    if (!voiceChannel) {
+    if (!member) {
+      return {
+        ok: false,
+        response: json({ error: 'Could not find member in guild.' }, 404),
+      };
+    }
+
+    const voiceState = await member.voice('rest');
+    const voiceChannelId = voiceState?.channelId;
+
+    if (!voiceChannelId) {
       return {
         ok: false,
         response: json(
@@ -71,33 +84,14 @@ export async function resolveOrAutoJoinPlayer(
     }
 
     // Create Hoshimi player and connect to the voice channel.
-    const player = hoshimi.createPlayer({ guildId: GUILD_ID, voiceId: voiceChannel.id });
+    const player = hoshimi.createPlayer({ guildId: GUILD_ID, voiceId: voiceChannelId });
     await player.connect();
-    player.setVoice({ voiceId: voiceChannel.id });
+    player.setVoice({ voiceId: voiceChannelId });
 
     // Wait briefly for connection to establish.
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const textChannelId = process.env.DEFAULT_TEXT_CHANNEL_ID;
-    const textChannel = textChannelId
-      ? (guild.channels.cache.get(textChannelId) as TextChannel | undefined)
-      : (guild.systemChannel as TextChannel | null);
-
-    if (!textChannel) {
-      hoshimi.deletePlayer(GUILD_ID);
-      return {
-        ok: false,
-        response: json(
-          {
-            error:
-              'Could not find a text channel for "Now playing" messages. Set DEFAULT_TEXT_CHANNEL_ID in your environment.',
-          },
-          503
-        ),
-      };
-    }
-
-    return { ok: true, player: createPlayer(GUILD_ID, textChannel, voiceChannel.id) };
+    return { ok: true, player: createPlayer(GUILD_ID, voiceChannelId) };
   } catch (error) {
     logger.error({ err: error as Error }, 'Failed to auto-join voice channel');
     return {
