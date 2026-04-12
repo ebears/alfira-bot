@@ -1,25 +1,12 @@
 import type { Playlist, QueueState, Song, User } from '@alfira-bot/shared';
 import { logger } from './config';
 
+import { formatSong } from './serialization';
+
 // Accept both Date and string createdAt — Drizzle uses Date at the DB level,
 // but we serialize to ISO string for JSON serialization.
-export type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
+type SerializedSong = Omit<Song, 'createdAt'> & { createdAt: string | Date };
 type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Date };
-
-// ---------------------------------------------------------------------------
-// Serialization helpers
-// ---------------------------------------------------------------------------
-
-export function formatSong(s: {
-  createdAt: Date | string;
-  tags?: string[] | null;
-}): SerializedSong {
-  return {
-    ...s,
-    createdAt: s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt,
-    tags: s.tags ?? [],
-  } as SerializedSong;
-}
 
 // ---------------------------------------------------------------------------
 // WebSocket client registry
