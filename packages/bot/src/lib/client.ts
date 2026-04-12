@@ -1,5 +1,5 @@
-import type { Client } from 'discord.js';
 import type { Hoshimi } from 'hoshimi';
+import type { Client } from 'seyfert';
 
 // ---------------------------------------------------------------------------
 // Client Singleton

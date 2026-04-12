@@ -7,8 +7,11 @@ export async function getUserDisplayName(discordId: string): Promise<string> {
 
   try {
     const guild = await client.guilds.fetch(GUILD_ID);
-    const member = await guild.members.fetch(discordId);
-    return member.displayName || member.user.username || discordId;
+    const member = await guild.members.resolve(discordId);
+    if (!member) return discordId;
+    // GuildMemberStructure has 'nick' (server nickname) and the user object
+    const user = member.user;
+    return member.displayName || user.username || discordId;
   } catch {
     return discordId;
   }
