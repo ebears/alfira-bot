@@ -55,15 +55,11 @@ export function unregisterClient(
 // Broadcast helpers
 // ---------------------------------------------------------------------------
 
-function serializeMessage(event: string, data: unknown): string {
-  return JSON.stringify({ event, data });
-}
-
 /**
  * Emit the full queue state to all connected clients.
  */
 export function emitPlayerUpdate(state: QueueState): void {
-  const message = serializeMessage('player:update', state);
+  const message = JSON.stringify({ event: 'player:update', data: state });
   for (const client of clients) {
     client.send(message);
   }
@@ -74,7 +70,7 @@ export function emitPlayerUpdate(state: QueueState): void {
  */
 export function emitSongAdded(song: SerializedSong): void {
   const payload = formatSong(song);
-  const message = serializeMessage('songs:added', payload);
+  const message = JSON.stringify({ event: 'songs:added', data: payload });
   for (const client of clients) {
     client.send(message);
   }
@@ -84,7 +80,7 @@ export function emitSongAdded(song: SerializedSong): void {
  * Emit the deleted song's ID to all connected clients.
  */
 export function emitSongDeleted(id: string): void {
-  const message = serializeMessage('songs:deleted', id);
+  const message = JSON.stringify({ event: 'songs:deleted', data: id });
   for (const client of clients) {
     client.send(message);
   }
@@ -95,7 +91,7 @@ export function emitSongDeleted(id: string): void {
  */
 export function emitSongUpdated(song: SerializedSong): void {
   const payload = formatSong(song);
-  const message = serializeMessage('songs:updated', payload);
+  const message = JSON.stringify({ event: 'songs:updated', data: payload });
   for (const client of clients) {
     client.send(message);
   }
@@ -106,7 +102,7 @@ export function emitSongUpdated(song: SerializedSong): void {
  * Covers: create, rename, song added, song removed.
  */
 export function emitPlaylistUpdated(playlist: SerializedPlaylist): void {
-  const message = serializeMessage('playlists:updated', playlist);
+  const message = JSON.stringify({ event: 'playlists:updated', data: playlist });
   for (const client of clients) {
     client.send(message);
   }

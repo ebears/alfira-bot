@@ -10,6 +10,14 @@ import { validatePlaylistName } from '../lib/validation';
 
 const { playlist: playlistTable, playlistSong: playlistSongTable } = tables;
 
+async function getPlaylistSongCount(playlistId: string): Promise<number> {
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(playlistSongTable)
+    .where(eq(playlistSongTable.playlistId, playlistId));
+  return value;
+}
+
 type PlaylistRow = {
   id: string;
   name: string;
@@ -33,10 +41,7 @@ async function findPlaylistOr404(id: string, withCount = false): Promise<Playlis
     .limit(1);
   if (!row) return null;
   if (withCount) {
-    const [{ value }] = await db
-      .select({ value: count() })
-      .from(playlistSongTable)
-      .where(eq(playlistSongTable.playlistId, id));
+    const value = await getPlaylistSongCount(id);
     return { ...row, _count: { songs: value } };
   }
   return row;
@@ -85,10 +90,7 @@ async function handleGetPlaylists(ctx: RouteContext, request: Request): Promise<
   // Fetch song counts for each playlist
   const playlistsWithCounts = await Promise.all(
     playlists.map(async (pl) => {
-      const [{ value }] = await db
-        .select({ value: count() })
-        .from(playlistSongTable)
-        .where(eq(playlistSongTable.playlistId, pl.id));
+      const value = await getPlaylistSongCount(pl.id);
       return formatPlaylist(pl, value);
     })
   );
@@ -265,10 +267,7 @@ async function handlePatchVisibility(
     .where(eq(playlistTable.id, id))
     .returning();
 
-  const [{ value }] = await db
-    .select({ value: count() })
-    .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, updatedPlaylist.id));
+  const value = await getPlaylistSongCount(updatedPlaylist.id);
 
   emitPlaylistUpdated(formatPlaylist(updatedPlaylist, value));
   return json(updatedPlaylist);
@@ -313,10 +312,7 @@ async function handlePatchPlaylist(
     .where(eq(playlistTable.id, id))
     .returning();
 
-  const [{ value }] = await db
-    .select({ value: count() })
-    .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, updatedPlaylist.id));
+  const value = await getPlaylistSongCount(updatedPlaylist.id);
 
   emitPlaylistUpdated(formatPlaylist(updatedPlaylist, value));
   return json(updatedPlaylist);
@@ -423,12 +419,9 @@ async function handleAddSong(ctx: RouteContext, request: Request, id: string): P
     .returning();
 
   const songData = { ...song, createdAt: song.createdAt.toISOString(), tags: song.tags ?? [] };
-  const [countRow] = await db
-    .select({ value: count() })
-    .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, playlist.id));
+  const value = await getPlaylistSongCount(playlist.id);
 
-  emitPlaylistUpdated(formatPlaylist(playlist, countRow.value));
+  emitPlaylistUpdated(formatPlaylist(playlist, value));
 
   return json(
     {
@@ -494,10 +487,7 @@ async function handleRemoveSong(
     );
   });
 
-  const [{ value }] = await db
-    .select({ value: count() })
-    .from(playlistSongTable)
-    .where(eq(playlistSongTable.playlistId, playlistId));
+  const value = await getPlaylistSongCount(playlistId);
 
   const updatedPlaylist = formatPlaylist(playlist, value);
   emitPlaylistUpdated(updatedPlaylist);

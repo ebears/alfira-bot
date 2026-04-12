@@ -22,6 +22,27 @@ import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
 
 const { song: songTable } = tables;
 
+type YouTubeMetadata = { title: string; youtubeId: string; duration: number; thumbnailUrl: string };
+
+function buildQueuedSong(
+  url: string,
+  metadata: YouTubeMetadata,
+  addedBy: string,
+  requestedBy: string
+) {
+  return {
+    id: `temp-${Date.now()}`,
+    title: metadata.title,
+    youtubeUrl: url,
+    youtubeId: metadata.youtubeId,
+    duration: metadata.duration,
+    thumbnailUrl: metadata.thumbnailUrl,
+    addedBy,
+    createdAt: new Date().toISOString(),
+    requestedBy,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/player/queue — returns current queue state
 // ---------------------------------------------------------------------------
@@ -287,17 +308,7 @@ async function handleQuickAdd(ctx: RouteContext, request: Request): Promise<Resp
 
   const requestedBy = ctx.user.username;
   const addedBy = ctx.user.discordId ?? '';
-  const queuedSong = {
-    id: `temp-${Date.now()}`,
-    title: metadata.title,
-    youtubeUrl: url,
-    youtubeId: metadata.youtubeId,
-    duration: metadata.duration,
-    thumbnailUrl: metadata.thumbnailUrl,
-    addedBy,
-    createdAt: new Date().toISOString(),
-    requestedBy,
-  };
+  const queuedSong = buildQueuedSong(url, metadata, addedBy, requestedBy);
 
   await player.addToPriorityQueue(queuedSong);
 
@@ -491,17 +502,7 @@ async function handleOverride(ctx: RouteContext, request: Request): Promise<Resp
 
   const requestedBy = ctx.user.username;
   const addedBy = ctx.user.discordId ?? '';
-  const queuedSong = {
-    id: `temp-${Date.now()}`,
-    title: metadata.title,
-    youtubeUrl: url,
-    youtubeId: metadata.youtubeId,
-    duration: metadata.duration,
-    thumbnailUrl: metadata.thumbnailUrl,
-    addedBy,
-    createdAt: new Date().toISOString(),
-    requestedBy,
-  };
+  const queuedSong = buildQueuedSong(url, metadata, addedBy, requestedBy);
 
   await player.replaceQueueAndPlay([queuedSong]);
 

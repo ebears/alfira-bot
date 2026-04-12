@@ -352,25 +352,13 @@ export class GuildPlayer {
       return;
     }
 
-    let lastError: unknown;
-    let trackData: { track: string; isWebmOpus: boolean } | undefined;
+    let trackData: { track: string; isWebmOpus: boolean };
 
-    for (let attempt = 0; attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS; attempt++) {
-      try {
-        const { getStreamFormat } = await import('../utils/nodelink');
-        trackData = await getStreamFormat(next.youtubeUrl);
-        break;
-      } catch (error) {
-        lastError = error;
-        if (attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS - 1) {
-          await new Promise((resolve) => setTimeout(resolve, GuildPlayer.STREAM_RETRY_DELAY_MS));
-        }
-      }
-    }
-
-    if (!trackData) {
+    try {
+      trackData = await this.fetchStreamWithRetry(next.youtubeUrl);
+    } catch (error) {
       logger.error(
-        { guildId: this.guildId, track: next.title, error: lastError },
+        { guildId: this.guildId, track: next.title, error },
         `Failed to get stream URL after ${GuildPlayer.STREAM_RETRY_ATTEMPTS} attempts`
       );
       await this.handlePlaybackFailure('could not load the track from NodeLink');
@@ -428,6 +416,24 @@ export class GuildPlayer {
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
     this.broadcast();
+  }
+
+  private async fetchStreamWithRetry(
+    youtubeUrl: string
+  ): Promise<{ track: string; isWebmOpus: boolean }> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS; attempt++) {
+      try {
+        const { getStreamFormat } = await import('../utils/nodelink');
+        return await getStreamFormat(youtubeUrl);
+      } catch (error) {
+        lastError = error;
+        if (attempt < GuildPlayer.STREAM_RETRY_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, GuildPlayer.STREAM_RETRY_DELAY_MS));
+        }
+      }
+    }
+    throw lastError;
   }
 
   private async handlePlaybackFailure(skipMessage: string): Promise<void> {

@@ -59,10 +59,6 @@ interface LoadTrackResponse {
   exception?: { message?: string };
 }
 
-function youtubeThumbnail(videoId: string): string {
-  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-}
-
 const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
 
 export function isValidYouTubeUrl(url: string): boolean {
@@ -106,7 +102,7 @@ export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
     title,
     youtubeId,
     duration: info.duration ?? 0,
-    thumbnailUrl: youtubeThumbnail(youtubeId),
+    thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
   };
 }
 
@@ -157,7 +153,7 @@ export async function getPlaylistMetadataWithVideos(
       id,
       title: t.info?.title ?? 'Unknown',
       duration: t.info?.duration ?? 0,
-      thumbnailUrl: youtubeThumbnail(id),
+      thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
     };
   });
 
