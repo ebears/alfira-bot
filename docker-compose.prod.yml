@@ -36,6 +36,7 @@ services:
       HOST: 0.0.0.0
       PORT: 2333
       NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-}
+      NODELINK_SERVER_USE_BUN_SERVER: "true"
     ports:
       - "2333:3000"
     healthcheck:
