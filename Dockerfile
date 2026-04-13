@@ -22,7 +22,6 @@ WORKDIR /app
 
 COPY package.json bun.lock ./
 COPY packages ./packages
-COPY scripts ./scripts
 
 RUN bun install
 RUN bun run --filter @alfira-bot/shared build && \
@@ -45,7 +44,6 @@ CMD ["bun", "--env-file=.env", "run", "packages/api/src/index.ts"]
 FROM build AS builder
 COPY package.json bun.lock ./
 COPY packages ./packages
-COPY scripts ./scripts
 
 RUN bun install
 # NOTE: NODE_ENV is not set here because bun build produces broken bundles
@@ -62,8 +60,7 @@ RUN bun run --filter @alfira-bot/shared build && \
 FROM oven/bun:1-alpine AS runtime
 
 RUN apk add --no-cache \
-    ca-certificates \
-    git
+    ca-certificates
 
 WORKDIR /app
 
@@ -75,12 +72,11 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nodejs:nodejs /app/bun.lock ./bun.lock
 COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
-COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
 
 # Let Bun install workspace dependencies in the runtime image
 RUN bun install --production
 
-# bot and shared are workspace:* deps - copy their built output
+# bot, shared, and web are workspace:* deps - copy their built output
 COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
