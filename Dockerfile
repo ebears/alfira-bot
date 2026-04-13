@@ -85,8 +85,9 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
-# Copy built NodeLink into the runtime image
+# Copy built NodeLink into the runtime image and make it writable by nodejs user
 COPY --from=dev /usr/local/nodelink /usr/local/nodelink
+RUN chown -R nodejs:nodejs /usr/local/nodelink
 
 # Switch to non-root user
 ENV PATH=/usr/local/bin:$PATH
