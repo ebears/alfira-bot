@@ -136,10 +136,9 @@ async function migrateTable<T extends Record<string, unknown>>(
     return 0;
   }
 
+  const cols = Object.keys(rows[0]);
   const stmt = sqlite.prepare(
-    `INSERT INTO ${sqliteTable} (${Object.keys(rows[0]).join(',')}) VALUES (${Object.keys(rows[0])
-      .map(() => '?')
-      .join(',')})`
+    `INSERT INTO ${sqliteTable} (${cols.join(',')}) VALUES (${cols.map((c) => `@${c}`).join(',')})`
   );
 
   let inserted = 0;
@@ -147,9 +146,8 @@ async function migrateTable<T extends Record<string, unknown>>(
     const batch = rows.slice(i, i + BATCH_SIZE);
     for (const row of batch) {
       const transformed = transform(row as T);
-      const values = Object.values(transformed);
       try {
-        stmt.run(values);
+        stmt.run(transformed);
         inserted++;
       } catch (err) {
         const tags = (row as Record<string, unknown>).tags;
