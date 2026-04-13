@@ -84,8 +84,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
-# Create NodeLink working directory (required for spawn cwd)
-RUN mkdir -p /usr/local/nodelink
+# Copy built NodeLink into the runtime image
+COPY --from=dev /usr/local/nodelink /usr/local/nodelink
 
 # Switch to non-root user
 ENV PATH=/usr/local/bin:$PATH
