@@ -1,4 +1,3 @@
-import { getHoshimi, getPlayer } from '@alfira-bot/bot';
 import {
   fisherYatesShuffle as fisherYatesShuffleImpl,
   type LoopMode,
@@ -19,6 +18,7 @@ import {
   youTubeUrl,
 } from '../lib/validation';
 import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
+import { getHoshimi, getPlayer } from '../startDiscord';
 
 const { song: songTable } = tables;
 

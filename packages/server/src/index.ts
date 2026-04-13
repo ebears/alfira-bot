@@ -2,18 +2,18 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { destroyAllPlayers, setBroadcastQueueUpdate, startBot } from '@alfira-bot/bot';
 import { $client, db } from '@alfira-bot/shared/db';
 import { parse } from 'cookie';
 import { sql } from 'drizzle-orm';
 import { logger } from './lib/config';
 import { json } from './lib/json';
-import { closeAllClients, emitPlayerUpdate, registerClient, unregisterClient } from './lib/socket';
+import { closeAllClients, registerClient, unregisterClient } from './lib/socket';
 import { verifySessionToken } from './middleware/requireAuth';
 import { handleAuth } from './routes/auth';
 import { handlePlayer } from './routes/player';
 import { handlePlaylists } from './routes/playlists';
 import { handleSongs } from './routes/songs';
+import { destroyAllPlayers, startDiscord } from './startDiscord';
 
 // ---------------------------------------------------------------------------
 // Validate required environment variables.
@@ -331,12 +331,9 @@ async function main(): Promise<void> {
     logger.error(error, 'Failed to start NodeLink');
   }
 
-  // 4. Inject the broadcast function into the bot package.
-  setBroadcastQueueUpdate(emitPlayerUpdate);
-
-  // 5. Start the Discord bot.
+  // 4. Start the Discord bot.
   try {
-    await startBot();
+    await startDiscord();
   } catch (error) {
     logger.error(error, 'Failed to start the Discord bot');
   }

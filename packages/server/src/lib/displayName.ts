@@ -1,4 +1,4 @@
-import { getClient } from '@alfira-bot/bot';
+import { getClient } from '../startDiscord';
 import { GUILD_ID } from './config';
 
 export async function getUserDisplayName(discordId: string): Promise<string> {

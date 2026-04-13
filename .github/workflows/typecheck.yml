@@ -21,17 +21,14 @@ jobs:
       - name: Build shared package
         run: bun run --filter @alfira-bot/shared build
 
-      - name: Build bot package
-        run: bun run --filter @alfira-bot/bot build
+      - name: Build server package
+        run: bun run --filter @alfira-bot/server build
 
       - name: Lint with Biome
         run: bun run lint
 
-      - name: Typecheck API
-        run: bunx tsc --noEmit -p packages/api/tsconfig.json
-
-      - name: Typecheck bot
-        run: bunx tsc --noEmit -p packages/bot/tsconfig.json
+      - name: Typecheck server
+        run: bunx tsc --noEmit -p packages/server/tsconfig.json
 
       - name: Typecheck web
         run: bunx tsc --noEmit -p packages/web/tsconfig.json
