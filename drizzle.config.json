@@ -1,8 +1,0 @@
-{
-  "schema": "./packages/shared/src/db/schema.ts",
-  "out": "./packages/shared/src/db/migrations",
-  "dialect": "sqlite",
-  "dbCredentials": {
-    "url": "./alfira.db"
-  }
-}
