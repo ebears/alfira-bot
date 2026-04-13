@@ -277,7 +277,8 @@ const AlbumArt = memo(function AlbumArt({ currentSong, isPlaying, isPaused }: Al
  * --------------------------------------------------------------------------- */
 
 export function NowPlayingBar() {
-  const { state, elapsed, registerProgress, skip, leave, pause, setLoop, shuffle, unshuffle } = usePlayer();
+  const { state, elapsed, registerProgress, skip, leave, pause, setLoop, shuffle, unshuffle } =
+    usePlayer();
   const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode, isShuffled } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
@@ -348,7 +349,12 @@ export function NowPlayingBar() {
   return (
     <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 z-10">
       {/* Mobile: progress bar on top */}
-      <ProgressBar currentSong={currentSong} registerProgress={registerProgress} elapsed={elapsed} variant="mobile" />
+      <ProgressBar
+        currentSong={currentSong}
+        registerProgress={registerProgress}
+        elapsed={elapsed}
+        variant="mobile"
+      />
 
       <div
         className={`h-22 md:h-20 flex flex-row items-center px-3 md:px-5 gap-1 md:gap-1.5 ${!currentSong ? 'justify-end md:justify-start' : ''}`}
