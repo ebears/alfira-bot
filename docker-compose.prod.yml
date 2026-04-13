@@ -19,6 +19,7 @@ services:
       PORT: 3001
       DATABASE_URL: /data/alfira.db
       NODELINK_URL: http://localhost:2333
+      NODELINK_CACHE_DIR: /data/nodelink-cache
       NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-nodelink-internal}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
