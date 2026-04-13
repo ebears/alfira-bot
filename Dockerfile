@@ -62,7 +62,8 @@ RUN bun run --filter @alfira-bot/shared build && \
 FROM oven/bun:1-alpine AS runtime
 
 RUN apk add --no-cache \
-    ca-certificates
+    ca-certificates \
+    git
 
 WORKDIR /app
 
