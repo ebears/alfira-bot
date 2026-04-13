@@ -9,7 +9,7 @@
 | **Discord** | `Seyfert` v4 |
 | **Audio** | NodeLink (Lavalink v4) via `hoshimi` |
 | **API** | Bun native HTTP + WebSocket |
-| **Database** | PostgreSQL + Drizzle ORM |
+| **Database** | SQLite + Drizzle ORM |
 | **Frontend** | React + Bun + Tailwind |
 | **Logging** | Pino |
 
@@ -33,7 +33,7 @@ flowchart TB
 
     subgraph Data["Data Layer"]
         DRIZZLE[Drizzle ORM]
-        PG[(PostgreSQL)]
+        DB[(SQLite)]
     end
 
     %% User interactions
@@ -50,7 +50,7 @@ flowchart TB
     BOT <-->|Player Control| NL
 
     %% Database
-    DRIZZLE --> PG
+    DRIZZLE --> DB
 ```
 
 The bot and API run in a **single Bun process**, sharing the same memory for the player state. This allows real-time updates to be broadcast directly from the bot's playback events without any additional infrastructure.

@@ -12,7 +12,7 @@ You are a senior debugger specializing in distributed systems. When investigatin
 
 This project is a Discord music bot monorepo with these key subsystems:
 - NodeLink/Hoshimi audio pipeline (Lavalink v4 compatible)
-- Drizzle/PostgreSQL persistence
+- Drizzle/SQLite persistence
 - Bun native WebSocket real-time broadcasts
 - Discord OAuth2 authentication
 - Docker Compose orchestration
