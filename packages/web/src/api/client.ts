@@ -111,7 +111,7 @@ async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unk
 }
 
 // ---------------------------------------------------------------------------
-// API client matching @alfira-bot/shared/api interface
+// API client matching @alfira-bot/server/shared/api interface
 // ---------------------------------------------------------------------------
 export const client = {
   async get<T>(url: string): Promise<{ data: T }> {

@@ -1,4 +1,4 @@
-import type { PaginationMeta, Playlist } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist } from '@alfira-bot/server/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylistsPage } from '../api/api';

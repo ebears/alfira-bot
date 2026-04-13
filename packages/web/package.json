@@ -9,7 +9,7 @@
     "build": "tsc && bun run build:css && bun build ./src/main.tsx --outdir=./dist --minify && cp ./index.html ./dist/ && sed -i 's|/src/main.tsx|/main.js|g' ./dist/index.html && sed -i 's|/src/index.css|/index.css|g' ./dist/index.html && cp -r ./public/* ./dist/"
   },
   "dependencies": {
-    "@alfira-bot/shared": "workspace:*",
+    "@alfira-bot/server": "workspace:*",
     "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-virtual": "^3.13.23",
     "react": "^19.2.4",

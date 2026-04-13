@@ -1,4 +1,4 @@
-import type { PaginationMeta, Playlist, PlaylistDetail } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist, PlaylistDetail } from '@alfira-bot/server/shared';
 import {
   BombIcon,
   CaretLeftIcon,

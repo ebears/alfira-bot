@@ -1,5 +1,5 @@
-import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
-import { logger } from '@alfira-bot/shared/logger';
+import type { LoopMode, QueuedSong, QueueState } from './shared';
+import { logger } from './shared/logger';
 import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
 import { PlaybackCursor } from './PlaybackCursor';
 import { broadcastQueueUpdate, getHoshimi } from './startDiscord';

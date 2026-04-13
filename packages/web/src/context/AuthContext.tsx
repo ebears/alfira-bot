@@ -1,4 +1,4 @@
-import type { User } from '@alfira-bot/shared';
+import type { User } from '@alfira-bot/server/shared';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getMe, logout as logoutApi } from '../api/api';

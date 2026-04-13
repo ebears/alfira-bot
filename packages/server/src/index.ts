@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { $client, db } from '@alfira-bot/shared/db';
+import { $client, db } from './shared/db';
 import { parse } from 'cookie';
 import { sql } from 'drizzle-orm';
 import { logger } from './lib/config';

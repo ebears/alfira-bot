@@ -1,4 +1,4 @@
-import type { PaginationMeta } from '@alfira-bot/shared';
+import type { PaginationMeta } from '@alfira-bot/server/shared';
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { memo } from 'react';
 import { Button } from './ui/Button';

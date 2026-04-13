@@ -24,8 +24,7 @@ COPY package.json bun.lock ./
 COPY packages ./packages
 
 RUN bun install
-RUN bun run --filter @alfira-bot/shared build && \
-    bun run --filter @alfira-bot/server build && \
+RUN bun run --filter @alfira-bot/server build && \
     bun run --filter @alfira-bot/web build
 
 # Copy custom NodeLink config into the cloned repo
@@ -48,8 +47,7 @@ RUN bun install
 # NOTE: NODE_ENV is not set here because bun build produces broken bundles
 # with NODE_ENV=production due to how React 19's JSX runtime is bundled.
 # NODE_ENV=production is set in the runtime stage instead.
-RUN bun run --filter @alfira-bot/shared build && \
-    bun run --filter @alfira-bot/server build && \
+RUN bun run --filter @alfira-bot/server build && \
     bun run --filter @alfira-bot/web build
 
 # ---------------------------------------------------------------------------
@@ -74,9 +72,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
 # Let Bun install workspace dependencies in the runtime image
 RUN bun install --production
 
-# server, shared, and web are workspace:* deps - copy their built output
+# server and web are workspace:* deps - copy their built output
 COPY --from=builder --chown=nodejs:nodejs /app/packages/server/dist ./packages/server/dist
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
 # Copy built NodeLink into the runtime image and make it writable by nodejs user

@@ -1,4 +1,4 @@
-import { configureApiClient } from '@alfira-bot/shared/api';
+import { configureApiClient } from '@alfira-bot/server/shared/api';
 import { client } from './client';
 
 // Configure the shared API service with the web client
@@ -40,4 +40,4 @@ export {
   togglePause,
   togglePlaylistVisibility,
   unshuffleQueue,
-} from '@alfira-bot/shared/api';
+} from '@alfira-bot/server/shared/api';

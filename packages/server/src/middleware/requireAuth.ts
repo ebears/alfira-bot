@@ -1,4 +1,4 @@
-import type { User } from '@alfira-bot/shared';
+import type { User } from '../shared';
 import jwt from 'jsonwebtoken';
 
 /**

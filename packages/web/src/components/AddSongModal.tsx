@@ -1,4 +1,4 @@
-import type { Song } from '@alfira-bot/shared';
+import type { Song } from '@alfira-bot/server/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { addSong, importPlaylist } from '../api/api';
 import { apiErrorMessage } from '../utils/api';

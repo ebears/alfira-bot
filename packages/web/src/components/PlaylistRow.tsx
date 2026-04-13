@@ -1,4 +1,4 @@
-import type { Playlist } from '@alfira-bot/shared';
+import type { Playlist } from '@alfira-bot/server/shared';
 import { CaretRightIcon, GhostIcon, PlaylistIcon } from '@phosphor-icons/react';
 import { memo } from 'react';
 

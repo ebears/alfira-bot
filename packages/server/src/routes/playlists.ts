@@ -1,4 +1,4 @@
-import { db, tables } from '@alfira-bot/shared/db';
+import { db, tables } from '../shared/db';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { getUserDisplayName } from '../lib/displayName';

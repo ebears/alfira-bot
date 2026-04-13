@@ -1,4 +1,4 @@
-import type { Playlist } from '@alfira-bot/shared';
+import type { Playlist } from '@alfira-bot/server/shared';
 import { PlayCircleIcon } from '@phosphor-icons/react';
 import { useCallback, useEffect, useState } from 'react';
 import { getPlaylists, startPlayback } from '../../api/api';

@@ -4,14 +4,19 @@
   "private": true,
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./shared": "./dist/shared/index.js",
+    "./shared/*": "./dist/shared/*"
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "tsc --skipLibCheck"
+    "build": "tsc --skipLibCheck",
+    "db:generate": "cd ../.. && drizzle-kit generate",
+    "db:migrate": "cd ../.. && drizzle-kit migrate",
+    "db:migrate:deploy": "cd ../.. && drizzle-kit migrate",
+    "db:studio": "cd ../.. && drizzle-kit studio"
   },
   "dependencies": {
-    "@alfira-bot/shared": "workspace:*",
     "cookie": "^1.1.1",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.2",

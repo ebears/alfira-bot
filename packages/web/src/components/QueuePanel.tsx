@@ -1,5 +1,5 @@
-import type { QueuedSong } from '@alfira-bot/shared';
-import { formatDuration } from '@alfira-bot/shared';
+import type { QueuedSong } from '@alfira-bot/server/shared';
+import { formatDuration } from '@alfira-bot/server/shared';
 import {
   AlienIcon,
   BombIcon,
