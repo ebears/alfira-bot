@@ -1,4 +1,5 @@
 import type { QueuedSong } from '@alfira-bot/server/shared';
+import { formatDuration } from '@alfira-bot/server/shared';
 import {
   CircleNotchIcon,
   DoorOpenIcon,
@@ -91,6 +92,19 @@ const PlaybackControls = memo(function PlaybackControls({
   );
 });
 
+interface TimingDisplayProps {
+  elapsed: number;
+  duration: number;
+}
+
+const TimingDisplay = memo(function TimingDisplay({ elapsed, duration }: TimingDisplayProps) {
+  return (
+    <p className="font-mono text-xs text-muted self-start">
+      {formatDuration(elapsed)} / {formatDuration(duration)}
+    </p>
+  );
+});
+
 interface LoopShuffleControlsProps {
   currentSong: QueuedSong | null;
   loopMode: 'off' | 'queue' | 'song';
@@ -171,12 +185,14 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
 
 interface ProgressBarProps {
   currentSong: QueuedSong | null;
+  elapsed: number;
   registerProgress: (ref: HTMLDivElement | null) => void;
   variant: 'mobile' | 'desktop';
 }
 
 const ProgressBar = memo(function ProgressBar({
   currentSong,
+  elapsed,
   registerProgress,
   variant,
 }: ProgressBarProps) {
@@ -211,6 +227,7 @@ const ProgressBar = memo(function ProgressBar({
           <p className="font-body text-sm text-muted">Nothing playing</p>
         </div>
       )}
+      <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
       <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
         <div
           ref={currentSong != null ? registerProgress : null}
@@ -258,7 +275,7 @@ const AlbumArt = memo(function AlbumArt({ currentSong, isPlaying, isPaused }: Al
  * --------------------------------------------------------------------------- */
 
 export function NowPlayingBar() {
-  const { state, registerProgress, skip, leave, pause, setLoop, shuffle, unshuffle } = usePlayer();
+  const { state, elapsed, registerProgress, skip, leave, pause, setLoop, shuffle, unshuffle } = usePlayer();
   const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode, isShuffled } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
@@ -329,7 +346,7 @@ export function NowPlayingBar() {
   return (
     <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 z-10">
       {/* Mobile: progress bar on top */}
-      <ProgressBar currentSong={currentSong} registerProgress={registerProgress} variant="mobile" />
+      <ProgressBar currentSong={currentSong} registerProgress={registerProgress} elapsed={elapsed} variant="mobile" />
 
       <div
         className={`h-22 md:h-20 flex flex-row items-center px-3 md:px-5 gap-1 md:gap-1.5 ${!currentSong ? 'justify-end md:justify-start' : ''}`}
@@ -352,6 +369,7 @@ export function NowPlayingBar() {
         <ProgressBar
           currentSong={currentSong}
           registerProgress={registerProgress}
+          elapsed={elapsed}
           variant="desktop"
         />
 
