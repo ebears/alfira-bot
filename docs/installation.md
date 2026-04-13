@@ -150,9 +150,8 @@ This starts:
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| `nodelink` | `localhost:2333` | NodeLink audio server (internal: 3000) |
 | `db` | `localhost:5432` | PostgreSQL 16 |
-| `alfira` | `localhost:3001` | Bun API + Discord bot + Static Web UI |
+| `alfira` | `localhost:3001` | Bun API + Discord bot + Static Web UI + NodeLink audio |
 
 ### Development Workflow
 
@@ -215,9 +214,8 @@ That's it! The stack will pull the pre-built images and start:
 
 | Service | Description |
 |---------|-------------|
-| `nodelink` | NodeLink audio server for bot audio streaming |
 | `db` | PostgreSQL 16 with healthcheck |
-| `alfira` | API + Discord bot + Static Web UI from GHCR image |
+| `alfira` | API + Discord bot + Static Web UI + NodeLink audio from GHCR image |
 
 ### Environment Variables
 
