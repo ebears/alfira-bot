@@ -118,7 +118,7 @@ cp .env.example .env
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | Set by Docker Compose |
+| `DATABASE_URL` | SQLite database path | `/data/alfira.db` |
 | `WEB_UI_ORIGIN` | Public URL of the web UI | `http://localhost:3001` |
 | `DISCORD_REDIRECT_URI` | OAuth2 redirect URI | `http://localhost:3001/auth/callback` |
 | `PORT` | API server port | `3001` |
@@ -150,8 +150,7 @@ This starts:
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| `db` | `localhost:5432` | PostgreSQL 16 |
-| `alfira` | `localhost:3001` | Bun API + Discord bot + Static Web UI + NodeLink audio |
+| `alfira` | `localhost:3001` | Bun API + Discord bot + Static Web UI + NodeLink audio (includes SQLite) |
 
 ### Development Workflow
 
@@ -214,8 +213,7 @@ That's it! The stack will pull the pre-built images and start:
 
 | Service | Description |
 |---------|-------------|
-| `db` | PostgreSQL 16 with healthcheck |
-| `alfira` | API + Discord bot + Static Web UI + NodeLink audio from GHCR image |
+| `alfira` | API + Discord bot + Static Web UI + NodeLink audio from GHCR image (SQLite database included) |
 
 ### Environment Variables
 
@@ -229,9 +227,6 @@ All configuration is handled through a single `.env` file in the project root. C
 | `GUILD_ID` | ✅ | Your Discord server ID |
 | `ADMIN_ROLE_IDS` | ✅ | Admin role ID(s), comma-separated |
 | `JWT_SECRET` | ✅ | Secret for signing JWT tokens |
-| `POSTGRES_USER` | ✅ | PostgreSQL database user |
-| `POSTGRES_PASSWORD` | ✅ | PostgreSQL user password |
-| `POSTGRES_DB` | ✅ | PostgreSQL database name |
 | `WEB_UI_ORIGIN` | ⚪ | Public URL of the web UI |
 | `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
 | `NODELINK_URL` | ⚪ | NodeLink server URL (default: `http://nodelink:3000` in Docker) |

@@ -20,7 +20,7 @@ The bot and API run in a **single Bun process** started from `packages/api/src/i
 - **Discord:** Seyfert v4
 - **Audio:** NodeLink (Lavalink v4-compatible) via `hoshimi` v0.3
 - **API:** Bun native HTTP + WebSocket
-- **Database:** PostgreSQL 16 + Drizzle ORM
+- **Database:** SQLite + Drizzle ORM
 - **Frontend:** React 19 + Tailwind CSS 4
 - **Linting:** Biome
 

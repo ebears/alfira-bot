@@ -41,13 +41,13 @@ Common issues and solutions for Alfira.
 
 ### Connection errors
 
-**Symptoms:** API crashes with "Connection refused" or "database not found".
+**Symptoms:** API crashes with "database not found" or permission errors.
 
 **Solutions:**
-1. Ensure PostgreSQL is running: `docker compose ps`
-2. Check database logs: `docker compose logs db`
-3. Wait for the healthcheck to pass before starting API.
-4. Verify `DATABASE_URL` format: `postgresql://user:pass@host:5432/dbname`
+1. Ensure the alfira container is running: `docker compose ps`
+2. Check API logs: `docker compose logs alfira`
+3. Verify the `/data` volume is properly mounted and writable.
+4. For fresh database, delete the volume: `docker compose down -v` then `docker compose up --build`
 
 ## Resetting Everything
 

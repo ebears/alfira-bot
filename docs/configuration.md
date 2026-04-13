@@ -29,10 +29,7 @@ cp .env.example .env
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `POSTGRES_USER` | PostgreSQL database user (used by Docker Compose) | `alfira` |
-| `POSTGRES_PASSWORD` | PostgreSQL user password | `change-this-to-a-secure-password` |
-| `POSTGRES_DB` | PostgreSQL database name | `alfira` |
+| `DATABASE_URL` | SQLite database file path | `/data/alfira.db` |
 
 ---
 
@@ -58,27 +55,25 @@ cp .env.example .env
 
 ## Database Configuration
 
-The `DATABASE_URL` follows the PostgreSQL connection string format:
-
-```
-postgresql://[user]:[password]@[host]:[port]/[database]
-```
+Alfira uses SQLite for data persistence. The database is stored as a file inside the container.
 
 ### Development
 
 In development, Docker Compose sets this automatically. The default is:
 
 ```
-DATABASE_URL=postgresql://botuser:botpass@db:5432/musicbot
+DATABASE_URL=/data/alfira.db
 ```
 
 ### Production
 
-Docker Compose uses `DATABASE_URL` directly from your `.env` file. For an external database, set `DATABASE_URL` directly:
+Docker Compose uses `DATABASE_URL` directly from your `.env` file:
 
 ```env
-DATABASE_URL=postgresql://alfira_user:secure_password@db.example.com:5432/alfira
+DATABASE_URL=/data/alfira.db
 ```
+
+> **Note:** The `/data` directory is a Docker volume mount, so your database persists across container restarts.
 
 ---
 
@@ -133,7 +128,7 @@ DISCORD_BOT_TOKEN=your-bot-token
 GUILD_ID=987654321098765432
 ADMIN_ROLE_IDS=123456789012345678
 JWT_SECRET=a1b2c3d4e5f6...your-secure-64-char-hex-string
-DATABASE_URL=postgresql://alfira_user:secure_password@db.example.com:5432/alfira
+DATABASE_URL=/data/alfira.db
 WEB_UI_ORIGIN=https://alfira.example.com
 DISCORD_REDIRECT_URI=https://alfira.example.com/auth/callback
 ```
