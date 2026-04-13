@@ -25,8 +25,7 @@ COPY packages ./packages
 
 RUN bun install
 RUN bun run --filter @alfira-bot/shared build && \
-    bun run --filter @alfira-bot/bot build && \
-    bun run --filter @alfira-bot/api build && \
+    bun run --filter @alfira-bot/server build && \
     bun run --filter @alfira-bot/web build
 
 # Copy custom NodeLink config into the cloned repo
@@ -36,7 +35,7 @@ ENV NODE_ENV=development
 
 EXPOSE 3001
 
-CMD ["bun", "--env-file=.env", "run", "packages/api/src/index.ts"]
+CMD ["bun", "--env-file=.env", "run", "packages/server/src/index.ts"]
 
 # ---------------------------------------------------------------------------
 # Builder stage — builds all packages but does NOT generate a runtime image.
@@ -50,8 +49,7 @@ RUN bun install
 # with NODE_ENV=production due to how React 19's JSX runtime is bundled.
 # NODE_ENV=production is set in the runtime stage instead.
 RUN bun run --filter @alfira-bot/shared build && \
-    bun run --filter @alfira-bot/bot build && \
-    bun run --filter @alfira-bot/api build && \
+    bun run --filter @alfira-bot/server build && \
     bun run --filter @alfira-bot/web build
 
 # ---------------------------------------------------------------------------
@@ -76,8 +74,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
 # Let Bun install workspace dependencies in the runtime image
 RUN bun install --production
 
-# bot, shared, and web are workspace:* deps - copy their built output
-COPY --from=builder --chown=nodejs:nodejs /app/packages/bot/dist ./packages/bot/dist
+# server, shared, and web are workspace:* deps - copy their built output
+COPY --from=builder --chown=nodejs:nodejs /app/packages/server/dist ./packages/server/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
@@ -97,4 +95,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD bun -e "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["bun", "run", "packages/api/dist/index.js"]
+CMD ["bun", "run", "packages/server/dist/index.js"]

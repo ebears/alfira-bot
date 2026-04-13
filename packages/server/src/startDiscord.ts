@@ -1,13 +1,12 @@
+import type { QueueState } from '@alfira-bot/shared';
 import { logger } from '@alfira-bot/shared/logger';
 import { Client, createEvent } from 'seyfert';
-import { getHoshimi, setClient, setHoshimi } from './lib/client';
-import { getPlayer } from './player/manager';
+import { emitPlayerUpdate } from './lib/socket';
+import { getPlayer } from './manager';
 
 export type { DestroyReasons } from 'hoshimi';
-export { broadcastQueueUpdate, setBroadcastQueueUpdate } from './lib/broadcast';
-export { getClient, getHoshimi } from './lib/client';
-export type { GuildPlayer } from './player/GuildPlayer';
-export { createPlayer, destroyAllPlayers, getPlayer } from './player/manager';
+export type { GuildPlayer } from './GuildPlayer';
+export { createPlayer, destroyAllPlayers, getPlayer } from './manager';
 export {
   getMetadata,
   getPlaylistMetadataWithVideos,
@@ -18,6 +17,45 @@ export {
 
 const NODELINK_URL = process.env.NODELINK_URL ?? 'http://localhost:2333';
 const NODELINK_AUTH = process.env.NODELINK_AUTHORIZATION ?? '';
+
+// ---------------------------------------------------------------------------
+// Client singleton (inlined from former lib/client.ts)
+// ---------------------------------------------------------------------------
+import type { Hoshimi } from 'hoshimi';
+
+let _client: Client | null = null;
+let _hoshimi: Hoshimi | null = null;
+
+export function setClient(client: Client): void {
+  _client = client;
+}
+
+export function getClient(): Client | null {
+  return _client;
+}
+
+export function setHoshimi(hoshimi: Hoshimi): void {
+  _hoshimi = hoshimi;
+}
+
+export function getHoshimi(): Hoshimi | null {
+  return _hoshimi;
+}
+
+// ---------------------------------------------------------------------------
+// Broadcast (inlined — calls emitPlayerUpdate directly, no more indirection)
+// ---------------------------------------------------------------------------
+
+/**
+ * Called by GuildPlayer after every state-changing operation.
+ */
+export function broadcastQueueUpdate(state: QueueState): void {
+  emitPlayerUpdate(state);
+}
+
+// ---------------------------------------------------------------------------
+// Voice membership tracking
+// ---------------------------------------------------------------------------
 
 // Voice channel membership tracking for auto-pause.
 // Maps voiceChannelId -> Set of human userIds currently in that channel.
@@ -138,8 +176,8 @@ const readyEvent = createEvent({
   },
 });
 
-/** Initializes and connects the Discord bot. Called by the API entry point. */
-export async function startBot(): Promise<void> {
+/** Initializes and connects the Discord bot. Called by the server entry point. */
+export async function startDiscord(): Promise<void> {
   const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
   if (!DISCORD_BOT_TOKEN) {

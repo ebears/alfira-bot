@@ -1,9 +1,8 @@
 import type { LoopMode, QueuedSong, QueueState } from '@alfira-bot/shared';
 import { logger } from '@alfira-bot/shared/logger';
 import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
-import { broadcastQueueUpdate } from '../lib/broadcast';
-import { getHoshimi } from '../lib/client';
 import { PlaybackCursor } from './PlaybackCursor';
+import { broadcastQueueUpdate, getHoshimi } from './startDiscord';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
@@ -424,7 +423,7 @@ export class GuildPlayer {
     let lastError: unknown;
     for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
       try {
-        const { getStreamFormat } = await import('../utils/nodelink');
+        const { getStreamFormat } = await import('./utils/nodelink');
         return await getStreamFormat(youtubeUrl);
       } catch (error) {
         lastError = error;

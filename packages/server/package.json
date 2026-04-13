@@ -1,5 +1,5 @@
 {
-  "name": "@alfira-bot/api",
+  "name": "@alfira-bot/server",
   "version": "0.1.0",
   "private": true,
   "main": "./dist/index.js",
@@ -11,12 +11,14 @@
     "build": "tsc --skipLibCheck"
   },
   "dependencies": {
-    "@alfira-bot/bot": "workspace:*",
     "@alfira-bot/shared": "workspace:*",
     "cookie": "^1.1.1",
+    "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.2",
+    "hoshimi": "^0.3.9",
     "jsonwebtoken": "^9.0.3",
-    "pino": "^10.0.0"
+    "pino": "^10.0.0",
+    "seyfert": "^4.3.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",

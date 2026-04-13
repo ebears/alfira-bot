@@ -112,7 +112,7 @@
   },
   "overrides": [
     {
-      "includes": ["packages/api/**", "packages/bot/**", "packages/web/src/server.ts"],
+      "includes": ["packages/server/**", "packages/web/src/server.ts"],
       "javascript": {
         "globals": [
           "process",
@@ -127,7 +127,7 @@
       }
     },
     {
-      "includes": ["packages/api/src/middleware/requireAuth.ts"],
+      "includes": ["packages/server/src/middleware/requireAuth.ts"],
       "linter": {
         "rules": {
           "style": {

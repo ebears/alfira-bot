@@ -3,7 +3,7 @@ import {
   getPlaylistMetadataWithVideos,
   isValidYouTubeUrl,
   isYouTubePlaylistUrl,
-} from '@alfira-bot/bot';
+} from '../startDiscord';
 import { json } from './json';
 
 const MAX_URL_LENGTH = 2000;

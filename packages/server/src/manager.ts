@@ -1,6 +1,6 @@
 import { DestroyReasons } from 'hoshimi';
-import { getHoshimi } from '../lib/client';
 import { GuildPlayer } from './GuildPlayer';
+import { getHoshimi } from './startDiscord';
 
 // ---------------------------------------------------------------------------
 // PlayerManager

@@ -6,9 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run --filter @alfira-bot/shared build && bun run --filter @alfira-bot/bot build && docker compose up --build",
+    "dev": "bun run --filter @alfira-bot/shared build && bun run --filter @alfira-bot/server build && docker compose up --build",
     "web:build": "bun run --filter @alfira-bot/web build",
-    "bot:deploy": "bun run --filter @alfira-bot/bot deploy",
     "db:migrate": "bun run --filter @alfira-bot/shared db:migrate",
     "db:generate": "bun run --filter @alfira-bot/shared db:generate",
     "db:studio": "bun run --filter @alfira-bot/shared db:studio",

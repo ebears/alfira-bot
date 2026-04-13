@@ -8,36 +8,15 @@ For setup instructions, see the **[Installation Guide](docs/installation.md)**.
 
 ## Development Workflow
 
-The key thing to understand: **Bot + API run in the same process**, and bot code is compiled at image build time.
+The key thing to understand: **Bot + API run in the same process** (merged into `packages/server`), and server code is compiled at image build time.
 
 ### What Changed? → What Action?
 
 | What Changed | Action Required |
 |--------------|-----------------|
 | `packages/web/src/**` | **Nothing** — Bun serve with live reload applies changes automatically |
-| `packages/api/src/**` | `docker compose restart api` |
-| `packages/bot/src/**` | `docker compose build api && docker compose up -d api` |
-| `packages/shared/src/**` | Depends on consumer (see below) |
-
-### Shared Package Changes
-
-The `shared` package is consumed by all other packages:
-
-- **Used by web:** HMR picks up changes automatically
-- **Used by api:** Restart required (`docker compose restart api`)
-- **Used by bot:** Rebuild required (`docker compose build api`)
-
----
-
-## Why Bot Changes Require a Rebuild
-
-The bot package is pre-compiled during the Docker image build:
-
-1. `Dockerfile` runs `bun run --filter @alfira-bot/bot build`
-2. Compiled output is baked into the image at `packages/bot/dist/`
-3. API source files are mounted as volumes, but bot's `dist/` stays in the image
-
-This is intentional — it keeps the image lean and avoids needing TypeScript in the runtime container.
+| `packages/server/src/**` | `docker compose restart alfira` |
+| `packages/shared/src/**` | Rebuild required (`docker compose build`) |
 
 ---
 

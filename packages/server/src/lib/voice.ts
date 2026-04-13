@@ -1,4 +1,4 @@
-import { createPlayer, getClient, getHoshimi, getPlayer } from '@alfira-bot/bot';
+import { createPlayer, getClient, getHoshimi, getPlayer } from '../startDiscord';
 import { GUILD_ID, logger } from './config';
 import { json } from './json';
 

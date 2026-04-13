@@ -1,15 +1,11 @@
 # ---------------------------------------------------------------------------
 # Development docker-compose — full stack
 #
-# Runs the API + bot, and the web front-end all inside Docker.
+# Runs the server (API + bot merged) and the web front-end all inside Docker.
 # Source files are mounted as volumes so you can edit code without rebuilding:
 #
-# API + bot — edit packages/api/src, then `docker compose restart alfira`.
+# Server — edit packages/server/src, then `docker compose restart alfira`.
 # Web — edit packages/web/src, rebuild the image to see changes.
-#
-# The bot package is pre-compiled during the alfira image build. If you change
-# code inside packages/bot, rebuild the image first:
-#   docker compose build alfira
 #
 # First-time setup:
 #   cp .env.example .env
@@ -20,8 +16,7 @@
 #   docker compose up -d               — start in the background (after first build)
 #   docker compose down                — stop and remove containers
 #   docker compose down -v             — stop and wipe all data (clean slate)
-#   docker compose restart alfira       — reload the API after TypeScript changes
-#   docker compose build alfira         — rebuild the alfira image (e.g. after bot changes)
+#   docker compose restart alfira       — reload the server after TypeScript changes
 # ---------------------------------------------------------------------------
 
 services:
@@ -43,9 +38,8 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      # Live-mount API source files — restart the service to pick up changes.
-      # The bot's compiled dist/ is baked into the image and stays intact here.
-      - ./packages/api/src:/app/packages/api/src
+      # Live-mount server source files — restart the service to pick up changes.
+      - ./packages/server/src:/app/packages/server/src
       # Mount shared source so hot-reload picks up DB changes.
       - ./packages/shared/src:/app/packages/shared/src
       # Persistent SQLite database storage

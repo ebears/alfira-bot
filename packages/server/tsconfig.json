@@ -8,9 +8,7 @@
     "rootDir": "./src",
     "paths": {
       "@alfira-bot/shared": ["./node_modules/@alfira-bot/shared/dist/"],
-      "@alfira-bot/shared/*": ["./node_modules/@alfira-bot/shared/dist/*"],
-      "@alfira-bot/bot": ["./node_modules/@alfira-bot/bot/dist/"],
-      "@alfira-bot/bot/*": ["./node_modules/@alfira-bot/bot/dist/*"]
+      "@alfira-bot/shared/*": ["./node_modules/@alfira-bot/shared/dist/*"]
     },
     "lib": ["ES2022"],
     "types": ["bun-types", "node"],

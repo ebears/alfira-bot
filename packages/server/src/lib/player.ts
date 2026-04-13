@@ -1,5 +1,5 @@
-import type { GuildPlayer } from '@alfira-bot/bot';
-import { getPlayer } from '@alfira-bot/bot';
+import type { GuildPlayer } from '../startDiscord';
+import { getPlayer } from '../startDiscord';
 import { GUILD_ID } from './config';
 import { json } from './json';
 
