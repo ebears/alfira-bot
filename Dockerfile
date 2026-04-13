@@ -85,6 +85,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/s
 COPY --from=builder --chown=nodejs:nodejs /app/packages/web/dist ./packages/web/dist
 
 # Switch to non-root user
+ENV PATH=/usr/local/bin:$PATH
 USER nodejs
 
 ENV NODE_ENV=production
