@@ -12,6 +12,14 @@ WORKDIR /app
 # Development stage
 # ---------------------------------------------------------------------------
 FROM build AS dev
+RUN apk add --no-cache git
+WORKDIR /usr/local/nodelink
+ARG NODELINK_VERSION=v3
+RUN git clone --depth 1 --branch ${NODELINK_VERSION} https://github.com/PerformanC/NodeLink.git . && \
+    bun install && \
+    bun run build
+WORKDIR /app
+
 COPY package.json bun.lock ./
 COPY packages ./packages
 
@@ -20,6 +28,9 @@ RUN bun run --filter @alfira-bot/shared build && \
     bun run --filter @alfira-bot/bot build && \
     bun run --filter @alfira-bot/api build && \
     bun run --filter @alfira-bot/web build
+
+# Copy custom NodeLink config into the cloned repo
+COPY nodelink-config/config.js /usr/local/nodelink/config.js
 
 ENV NODE_ENV=development
 

@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -266,6 +267,44 @@ async function runMigrations(): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// NodeLink subprocess
+// ---------------------------------------------------------------------------
+function startNodeLink(): Promise<void> {
+  return new Promise((resolve) => {
+    nodelinkProcess = spawn('bun', ['src/index.ts'], {
+      cwd: '/usr/local/nodelink',
+      stdio: 'pipe',
+      env: { ...process.env, NODELINK_AUTHORIZATION: 'nodelink-internal' },
+    });
+
+    nodelinkProcess.stdout?.on('data', (data: Buffer) => {
+      console.log('[NodeLink]', data.toString().trimEnd());
+    });
+
+    nodelinkProcess.stderr?.on('data', (data: Buffer) => {
+      console.error('[NodeLink]', data.toString().trimEnd());
+    });
+
+    const checkReady = async () => {
+      try {
+        const res = await fetch('http://localhost:2333/v4/info', {
+          headers: { Authorization: 'nodelink-internal' },
+        });
+        if (res.ok) {
+          logger.info('NodeLink is ready');
+          resolve();
+          return;
+        }
+      } catch {
+        /* retry */
+      }
+      setTimeout(checkReady, 500);
+    };
+    checkReady();
+  });
+}
+
 async function main(): Promise<void> {
   // 1. Run migrations.
   try {
@@ -285,10 +324,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // 2. Inject the broadcast function into the bot package.
+  // 3. Start NodeLink in-process.
+  try {
+    await startNodeLink();
+  } catch (error) {
+    logger.error(error, 'Failed to start NodeLink');
+  }
+
+  // 4. Inject the broadcast function into the bot package.
   setBroadcastQueueUpdate(emitPlayerUpdate);
 
-  // 3. Start the Discord bot.
+  // 5. Start the Discord bot.
   try {
     await startBot();
   } catch (error) {
@@ -305,6 +351,7 @@ main().catch((err) => {
 // Graceful shutdown
 // ---------------------------------------------------------------------------
 let shuttingDown = false;
+let nodelinkProcess: ReturnType<typeof spawn> | undefined;
 
 async function shutdown(signal: string): Promise<void> {
   if (shuttingDown) return;
@@ -312,16 +359,20 @@ async function shutdown(signal: string): Promise<void> {
 
   logger.info({ signal }, 'Starting graceful shutdown');
 
-  // 1. Stop accepting connections and close all WebSocket clients.
+  // 1. Stop the NodeLink subprocess.
+  nodelinkProcess?.kill();
+  logger.info('NodeLink stopped');
+
+  // 2. Stop accepting connections and close all WebSocket clients.
   server.stop();
   closeAllClients();
   logger.info('Server stopped');
 
-  // 2. Destroy all players (FFmpeg + voice connections).
+  // 3. Destroy all players (FFmpeg + voice connections).
   destroyAllPlayers();
   logger.info('All players destroyed');
 
-  // 3. Close database connection.
+  // 4. Close database connection.
   await $client.end();
   logger.info('Database disconnected');
 

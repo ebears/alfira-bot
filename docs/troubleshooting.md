@@ -19,9 +19,10 @@ Common issues and solutions for Alfira.
 **Symptoms:** Bot joins but no audio is heard.
 
 **Solutions:**
-1. Ensure the NodeLink service is running and accessible.
-2. Check API logs for NodeLink connection errors.
-3. Try a different video/URL to isolate the issue.
+1. Ensure the NodeLink service is running (it starts automatically inside the alfira container).
+2. Check API logs for NodeLink connection errors: `docker compose logs alfira`
+3. Look for `[NodeLink]` prefix in logs to see NodeLink startup status.
+4. Try a different video/URL to isolate the issue.
 
 ## Authentication Issues
 

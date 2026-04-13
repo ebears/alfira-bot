@@ -25,23 +25,6 @@
 # ---------------------------------------------------------------------------
 
 services:
-  nodelink:
-    image: docker.io/performanc/nodelink:latest
-    restart: unless-stopped
-    environment:
-      HOST: 0.0.0.0
-      PORT: 2333
-      NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-}
-      NODELINK_SERVER_USE_BUN_SERVER: "true"
-    ports:
-      - "2333:3000"
-    healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/ || exit 0"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
-
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -70,8 +53,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      nodelink:
-        condition: service_healthy
     env_file:
       # Local .env file provides Discord tokens, OAuth secrets, JWT secret, etc.
       # Copy .env.example to .env and fill in real values before first run.
@@ -79,8 +60,8 @@ services:
     environment:
       # Override DATABASE_URL so it resolves to the 'db' service, not localhost.
       DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
-      NODELINK_URL: http://nodelink:3000
-      NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-}
+      NODELINK_URL: http://localhost:2333
+      NODELINK_AUTHORIZATION: nodelink-internal
       NODE_ENV: development
     ports:
       - "3001:3001"
