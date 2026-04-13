@@ -273,7 +273,7 @@ function runMigrations(): void {
 // ---------------------------------------------------------------------------
 function startNodeLink(): Promise<void> {
   return new Promise((resolve) => {
-    nodelinkProcess = spawn('bun', ['src/index.ts'], {
+    nodelinkProcess = spawn('/usr/local/bin/bun', ['src/index.ts'], {
       cwd: '/usr/local/nodelink',
       stdio: 'pipe',
       env: { ...process.env, NODELINK_AUTHORIZATION: 'nodelink-internal' },
