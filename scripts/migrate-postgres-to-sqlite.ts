@@ -214,8 +214,8 @@ totalRows += await migrateTable('RefreshToken', 'RefreshToken', (row) => ({
 console.log('\nVerification (row counts):');
 
 const pgCounts = await Promise.all([
-  pg`SELECT count(*) as c FROM song`,
-  pg`SELECT count(*) as c FROM playlist`,
+  pg`SELECT count(*) as c FROM "Song"`,
+  pg`SELECT count(*) as c FROM "Playlist"`,
   pg`SELECT count(*) as c FROM "PlaylistSong"`,
   pg`SELECT count(*) as c FROM "RefreshToken"`,
 ]);
