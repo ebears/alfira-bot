@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # Development docker-compose — full stack
 #
-# Runs PostgreSQL, the API + bot, and the web front-end all inside Docker.
+# Runs the API + bot, and the web front-end all inside Docker.
 # Source files are mounted as volumes so you can edit code without rebuilding:
 #
 # API + bot — edit packages/api/src, then `docker compose restart alfira`.
@@ -25,41 +25,18 @@
 # ---------------------------------------------------------------------------
 
 services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: botuser
-      POSTGRES_PASSWORD: botpass
-      POSTGRES_DB: musicbot
-    ports:
-      # Exposes PostgreSQL on localhost:5432 for tools like Drizzle Studio or
-      # any DB client running directly on the host.
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U botuser -d musicbot"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   alfira:
     build:
       context: .
       dockerfile: Dockerfile
       target: dev
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     env_file:
       # Local .env file provides Discord tokens, OAuth secrets, JWT secret, etc.
       # Copy .env.example to .env and fill in real values before first run.
       - .env
     environment:
-      # Override DATABASE_URL so it resolves to the 'db' service, not localhost.
-      DATABASE_URL: postgresql://botuser:botpass@db:5432/musicbot
+      DATABASE_URL: /data/alfira.db
       NODELINK_URL: http://localhost:2333
       NODELINK_AUTHORIZATION: nodelink-internal
       NODE_ENV: development
@@ -71,6 +48,8 @@ services:
       - ./packages/api/src:/app/packages/api/src
       # Mount shared source so hot-reload picks up DB changes.
       - ./packages/shared/src:/app/packages/shared/src
+      # Persistent SQLite database storage
+      - alfira-data:/data
     healthcheck:
       test:
         [
@@ -85,4 +64,4 @@ services:
       start_period: 40s
 
 volumes:
-  pgdata:
+  alfira-data:

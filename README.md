@@ -23,7 +23,7 @@
 
 ## Features
 
-**Alfira** is a self-hosted Discord music bot with a web UI for library management and real-time playback control. Although built for scale, it's scope is currently to a single small or medium-sized Discord server.
+**Alfira** is a self-hosted Discord music bot with a web UI for library management and real-time playback control. The intended scope of the bot is a single small to medium-sized Discord server.
 
 ## Screenshots
 

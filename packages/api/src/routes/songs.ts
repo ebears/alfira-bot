@@ -1,5 +1,5 @@
-import { db, tables } from '@alfira-bot/shared/db';
-import { eq, sql } from 'drizzle-orm';
+import { $client, db, tables } from '@alfira-bot/shared/db';
+import { eq, inArray, or, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
@@ -38,22 +38,22 @@ async function handleGetSongs(ctx: RouteContext, request: Request): Promise<Resp
   const skip = (page - 1) * limit;
   const search = url.searchParams.get('search')?.trim() ?? '';
 
-  // Build tag-matching IDs via raw SQL (case-insensitive substring on array elements).
+  // Build tag-matching IDs via raw SQL (case-insensitive substring on JSON text).
   const tagMatchingIds = search
     ? (
-        await db.execute<{ id: string }>(
-          sql`SELECT id FROM "Song" WHERE array_to_string(tags, ',') ILIKE ${`%${search}%`}`
-        )
+        (await $client
+          .query(`SELECT id FROM "Song" WHERE lower(tags) LIKE lower(?)`)
+          .all(`%${search}%`)) as { id: string }[]
       ).map((r) => r.id)
     : [];
 
   const where = search
     ? tagMatchingIds.length > 0
-      ? sql`(title ILIKE ${`%${search}%`} OR nickname ILIKE ${`%${search}%`} OR artist ILIKE ${`%${search}%`} OR album ILIKE ${`%${search}%`} OR id IN (${sql.join(
+      ? sql`(lower(title) LIKE lower(${`%${search}%`}) OR lower(nickname) LIKE lower(${`%${search}%`}) OR lower(artist) LIKE lower(${`%${search}%`}) OR lower(album) LIKE lower(${`%${search}%`}) OR id IN (${sql.join(
           tagMatchingIds.map((id) => sql.raw(`'${id}'`)),
           sql`,`
         )}))`
-      : sql`(title ILIKE ${`%${search}%`} OR nickname ILIKE ${`%${search}%`} OR artist ILIKE ${`%${search}%`} OR album ILIKE ${`%${search}%`})`
+      : sql`(lower(title) LIKE lower(${`%${search}%`}) OR lower(nickname) LIKE lower(${`%${search}%`}) OR lower(artist) LIKE lower(${`%${search}%`}) OR lower(album) LIKE lower(${`%${search}%`}))`
     : undefined;
 
   const [songs, [{ count }]] = await Promise.all([
@@ -197,13 +197,16 @@ async function handleImportPlaylist(ctx: RouteContext, request: Request): Promis
       .select({ youtubeId: songTable.youtubeId, youtubeUrl: songTable.youtubeUrl })
       .from(songTable)
       .where(
-        sql`"youtubeId" = ANY(ARRAY[${sql.join(
-          videosWithUrls.map((v) => v.id),
-          sql`,`
-        )}]::text[]) OR "youtubeUrl" = ANY(ARRAY[${sql.join(
-          videosWithUrls.map((v) => v.canonicalUrl),
-          sql`,`
-        )}]::text[])`
+        or(
+          inArray(
+            songTable.youtubeId,
+            videosWithUrls.map((v) => v.id)
+          ),
+          inArray(
+            songTable.youtubeUrl,
+            videosWithUrls.map((v) => v.canonicalUrl)
+          )
+        )
       );
   }
 

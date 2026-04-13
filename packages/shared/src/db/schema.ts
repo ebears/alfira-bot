@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { boolean, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 
-export const song = pgTable('Song', {
+export const song = sqliteTable('Song', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -15,22 +15,26 @@ export const song = pgTable('Song', {
   artist: text('artist'),
   album: text('album'),
   artwork: text('artwork'),
-  tags: text('tags').array().default([]).notNull(),
+  tags: text('tags', { mode: 'json' }).$type<string[]>().notNull().default([]),
   volumeOffset: integer('volumeOffset'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
-export const playlist = pgTable('Playlist', {
+export const playlist = sqliteTable('Playlist', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
   name: text('name').notNull(),
   createdBy: text('createdBy').notNull(),
-  isPrivate: boolean('isPrivate').default(false).notNull(),
-  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+  isPrivate: integer('isPrivate', { mode: 'boolean' }).default(false).notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
-export const playlistSong = pgTable(
+export const playlistSong = sqliteTable(
   'PlaylistSong',
   {
     id: text('id')
@@ -40,10 +44,13 @@ export const playlistSong = pgTable(
     songId: text('songId').notNull(),
     position: integer('position').notNull(),
   },
-  (t) => [unique().on(t.playlistId, t.songId), index().on(t.playlistId, t.position)]
+  (t) => [
+    unique().on(t.playlistId, t.songId),
+    index('PlaylistSong_playlistId_position_idx').on(t.playlistId, t.position),
+  ]
 );
 
-export const refreshToken = pgTable(
+export const refreshToken = sqliteTable(
   'RefreshToken',
   {
     id: text('id')
@@ -51,8 +58,10 @@ export const refreshToken = pgTable(
       .$defaultFn(() => randomUUID()),
     tokenHash: text('tokenHash').notNull().unique(),
     discordId: text('discordId').notNull(),
-    expiresAt: timestamp('expiresAt', { mode: 'date' }).notNull(),
-    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+    expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: integer('createdAt', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
   },
-  (t) => [index().on(t.discordId)]
+  (t) => [index('RefreshToken_discordId_idx').on(t.discordId)]
 );
