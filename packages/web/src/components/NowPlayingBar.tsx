@@ -227,7 +227,7 @@ const ProgressBar = memo(function ProgressBar({
           <p className="font-body text-sm text-muted">Nothing playing</p>
         </div>
       )}
-      <div className="absolute top-0 left-4">
+      <div className="absolute top-1/2 -translate-y-1/2 left-4">
         <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
       </div>
       <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
