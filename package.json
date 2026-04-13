@@ -25,6 +25,9 @@
     "undici": "6.24.0",
     "lodash": "4.17.23"
   },
+  "dependencies": {
+    "postgres": "^3.4.9"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.9",
     "typescript": "5.9.3"
