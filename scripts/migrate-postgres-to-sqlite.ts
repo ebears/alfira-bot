@@ -180,9 +180,9 @@ totalRows += await migrateTable('Song', 'Song', (row) => ({
   artist: row.artist ?? null,
   album: row.album ?? null,
   artwork: row.artwork ?? null,
-  tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : (row.tags ?? []),
+  tags: JSON.stringify(row.tags ?? []),
   volumeOffset: row.volumeOffset ?? null,
-  createdAt: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+  createdAt: row.createdAt ? Number(new Date(row.createdAt)) : Date.now(),
 }));
 
 totalRows += await migrateTable('Playlist', 'Playlist', (row) => ({
@@ -190,7 +190,7 @@ totalRows += await migrateTable('Playlist', 'Playlist', (row) => ({
   name: row.name,
   createdBy: row.createdBy,
   isPrivate: row.isPrivate ?? false,
-  createdAt: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+  createdAt: row.createdAt ? Number(new Date(row.createdAt)) : Date.now(),
 }));
 
 totalRows += await migrateTable('PlaylistSong', 'PlaylistSong', (row) => ({
@@ -204,8 +204,8 @@ totalRows += await migrateTable('RefreshToken', 'RefreshToken', (row) => ({
   id: row.id ?? randomUUID(),
   tokenHash: row.tokenHash,
   discordId: row.discordId,
-  expiresAt: row.expiresAt ? new Date(row.expiresAt).getTime() : Date.now(),
-  createdAt: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+  expiresAt: row.expiresAt ? Number(new Date(row.expiresAt)) : Date.now(),
+  createdAt: row.createdAt ? Number(new Date(row.createdAt)) : Date.now(),
 }));
 
 // ---------------------------------------------------------------------------
