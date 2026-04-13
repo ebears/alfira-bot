@@ -4,10 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Alfira is a self-hosted Discord music bot with a web UI as the primary interface. It's a Bun workspaces monorepo with three packages:
+Alfira is a self-hosted Discord music bot with a web UI as the primary interface. It's a Bun workspaces monorepo with two packages:
 
-- `packages/shared` — Shared types, utilities, DB schema, and logger
-- `packages/server` — Bun API server + Discord bot (`GuildPlayer`, NodeLink audio via `hoshimi`, Seyfert v4)
+- `packages/server` — Bun API server + Discord bot (`GuildPlayer`, NodeLink audio via `hoshimi`, Seyfert v4), plus shared types, utilities, DB schema, and logger
 - `packages/web` — React 19 + Tailwind CSS 4 web UI
 
 The bot and API run in a **single Bun process** started from `packages/server/src/index.ts`. They share memory for player state, enabling real-time WebSocket broadcasts directly from playback events.
@@ -26,7 +25,7 @@ The bot and API run in a **single Bun process** started from `packages/server/sr
 ## Development Commands
 
 ```bash
-# Build shared + server dist/, then start all services with Docker
+# Build server dist/, then start all services with Docker
 bun run dev
 
 # Build the web UI (needed after web/src changes before docker compose restart)
@@ -88,17 +87,17 @@ The bot streams audio from NodeLink (a Lavalink v4-compatible server). The `node
 
 ## Shared Package Exports
 
-`@alfira-bot/shared` provides:
+`@alfira-bot/server/shared` provides:
 
 **Types:** `Song`, `QueuedSong`, `LoopMode`, `QueueState`, `Playlist`, `PlaylistDetail`, `User`
 
 **Utilities:** `formatDuration(seconds)`, `fisherYatesShuffle(array)`
 
-**DB:** Schema defined in `packages/shared/src/db/schema.ts`
+**DB:** Schema defined in `packages/server/src/shared/db/schema.ts`
 
-**Logger:** `logger` export from `@alfira-bot/shared/logger`
+**Logger:** `logger` export from `@alfira-bot/server/shared/logger`
 
-**API Service:** `@alfira-bot/shared/api` provides centralized API functions (`fetchSongs`, `createSong`, `importPlaylist`, etc.) that should be used by all consumers.
+**API Service:** `@alfira-bot/server/shared/api` provides centralized API functions (`fetchSongs`, `createSong`, `importPlaylist`, etc.) that should be used by all consumers.
 
 ## Documentation
 

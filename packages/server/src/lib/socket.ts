@@ -1,4 +1,4 @@
-import type { Playlist, QueueState, Song, User } from '@alfira-bot/shared';
+import type { Playlist, QueueState, Song, User } from '../shared';
 import { logger } from './config';
 
 import { formatSong } from './serialization';

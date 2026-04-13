@@ -1,9 +1,5 @@
-import {
-  fisherYatesShuffle as fisherYatesShuffleImpl,
-  type LoopMode,
-  toQueuedSong,
-} from '@alfira-bot/shared';
-import { db, eq, findPlaylistWithSongs, tables } from '@alfira-bot/shared/db';
+import { fisherYatesShuffle as fisherYatesShuffleImpl, type LoopMode, toQueuedSong } from '../shared';
+import { db, eq, findPlaylistWithSongs, tables } from '../shared/db';
 import type { RouteContext } from '../index';
 import { GUILD_ID } from '../lib/config';
 import { json } from '../lib/json';

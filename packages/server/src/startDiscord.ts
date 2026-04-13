@@ -1,5 +1,5 @@
-import type { QueueState } from '@alfira-bot/shared';
-import { logger } from '@alfira-bot/shared/logger';
+import type { QueueState } from './shared';
+import { logger } from './shared/logger';
 import { Client, createEvent } from 'seyfert';
 import { emitPlayerUpdate } from './lib/socket';
 import { getPlayer } from './manager';

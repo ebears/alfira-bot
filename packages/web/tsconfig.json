@@ -15,7 +15,11 @@
     "types": ["bun-types"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@alfira-bot/server": ["../server/dist"],
+      "@alfira-bot/server/*": ["../server/dist/*"]
+    }
   },
   "include": ["src"]
 }

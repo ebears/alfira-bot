@@ -1,5 +1,5 @@
-import type { Playlist, Song } from '@alfira-bot/shared';
-import { formatDuration } from '@alfira-bot/shared';
+import type { Playlist, Song } from '@alfira-bot/server/shared';
+import { formatDuration } from '@alfira-bot/server/shared';
 import {
   CircleNotchIcon,
   ClockIcon,

@@ -1,4 +1,4 @@
-import { fisherYatesShuffle } from '@alfira-bot/shared';
+import { fisherYatesShuffle } from './shared';
 
 // ---------------------------------------------------------------------------
 // PlaybackCursor

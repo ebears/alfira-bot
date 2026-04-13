@@ -1,4 +1,4 @@
-import { logger } from '@alfira-bot/shared/logger';
+import { logger } from '../shared/logger';
 
 export { logger };
 export const WEB_UI_ORIGIN = process.env.WEB_UI_ORIGIN ?? 'http://localhost:3001';

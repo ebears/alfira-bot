@@ -1,6 +1,6 @@
-import type { Song } from '@alfira-bot/shared';
-import type { SongUpdateData } from '@alfira-bot/shared/api';
-import { updateSong } from '@alfira-bot/shared/api';
+import type { Song } from '@alfira-bot/server/shared';
+import type { SongUpdateData } from '@alfira-bot/server/shared/api';
+import { updateSong } from '@alfira-bot/server/shared/api';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getTagColorClasses } from '../utils/tagColors';
 

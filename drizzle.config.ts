@@ -6,8 +6,8 @@ if (!DATABASE_URL) {
 }
 
 export default defineConfig({
-  schema: './packages/shared/src/db/schema.ts',
-  out: './packages/shared/src/db/migrations',
+  schema: './packages/server/src/shared/db/schema.ts',
+  out: './packages/server/src/shared/db/migrations',
   dialect: 'sqlite',
   dbCredentials: {
     url: DATABASE_URL,

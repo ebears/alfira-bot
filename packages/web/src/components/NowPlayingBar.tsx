@@ -1,4 +1,4 @@
-import type { QueuedSong } from '@alfira-bot/shared';
+import type { QueuedSong } from '@alfira-bot/server/shared';
 import {
   CircleNotchIcon,
   DoorOpenIcon,

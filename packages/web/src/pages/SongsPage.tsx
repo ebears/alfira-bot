@@ -1,4 +1,4 @@
-import type { PaginationMeta, Playlist, Song } from '@alfira-bot/shared';
+import type { PaginationMeta, Playlist, Song } from '@alfira-bot/server/shared';
 import { ListIcon, MagnifyingGlassIcon, SquaresFourIcon } from '@phosphor-icons/react';
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';

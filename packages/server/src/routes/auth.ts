@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { db, tables } from '@alfira-bot/shared/db';
+import { db, tables } from '../shared/db';
 import { and, eq, lt } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import type { RouteContext } from '../index';
