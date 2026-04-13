@@ -152,7 +152,8 @@ async function migrateTable<T extends Record<string, unknown>>(
         stmt.run(values);
         inserted++;
       } catch (err) {
-        console.error(`    Error inserting row:`, err);
+        const tags = (row as Record<string, unknown>).tags;
+        console.error(`    Error inserting row (tags=${JSON.stringify(tags)}):`, err);
       }
     }
   }
