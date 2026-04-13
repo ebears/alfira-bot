@@ -180,7 +180,7 @@ totalRows += await migrateTable('Song', 'Song', (row) => ({
   artist: row.artist ?? null,
   album: row.album ?? null,
   artwork: row.artwork ?? null,
-  tags: JSON.stringify(row.tags ?? []),
+  tags: typeof row.tags === 'string' ? row.tags : JSON.stringify(row.tags ?? []),
   volumeOffset: row.volumeOffset ?? null,
   createdAt: row.createdAt ? Number(new Date(row.createdAt)) : Date.now(),
 }));
