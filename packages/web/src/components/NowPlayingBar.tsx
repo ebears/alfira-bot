@@ -99,7 +99,7 @@ interface TimingDisplayProps {
 
 const TimingDisplay = memo(function TimingDisplay({ elapsed, duration }: TimingDisplayProps) {
   return (
-    <p className="font-mono text-xs text-muted self-start">
+    <p className="font-mono text-xs text-muted">
       {formatDuration(elapsed)} / {formatDuration(duration)}
     </p>
   );
@@ -216,7 +216,7 @@ const ProgressBar = memo(function ProgressBar({
   const artist = currentSong?.artist || null;
 
   return (
-    <div className="hidden md:flex flex-col flex-1 items-center xl:items-end self-stretch px-4 min-h-0 gap-1">
+    <div className="hidden md:flex flex-col flex-1 items-center xl:items-end self-stretch px-4 min-h-0 gap-1 relative">
       {currentSong ? (
         <div className="text-center w-full truncate xl:text-right h-12 flex flex-col justify-center min-h-12">
           <p className="font-body text-sm font-semibold text-fg truncate">{displayName}</p>
@@ -227,7 +227,9 @@ const ProgressBar = memo(function ProgressBar({
           <p className="font-body text-sm text-muted">Nothing playing</p>
         </div>
       )}
-      <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
+      <div className="absolute top-0 left-0">
+        <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
+      </div>
       <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
         <div
           ref={currentSong != null ? registerProgress : null}
