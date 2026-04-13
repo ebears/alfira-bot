@@ -8,7 +8,7 @@ if (!DATABASE_URL) {
 export default defineConfig({
   schema: './packages/shared/src/db/schema.ts',
   out: './packages/shared/src/db/migrations',
-  dialect: 'postgresql',
+  dialect: 'sqlite',
   dbCredentials: {
     url: DATABASE_URL,
   },

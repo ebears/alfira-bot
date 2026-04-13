@@ -1,8 +1,8 @@
 {
   "schema": "./packages/shared/src/db/schema.ts",
   "out": "./packages/shared/src/db/migrations",
-  "dialect": "postgresql",
+  "dialect": "sqlite",
   "dbCredentials": {
-    "url": "postgresql://botuser:botpass@db:5432/musicbot"
+    "url": "./alfira.db"
   }
 }

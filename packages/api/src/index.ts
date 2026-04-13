@@ -114,7 +114,7 @@ function createContext(request: Request): RouteContext {
 
 async function handleHealth(): Promise<Response> {
   try {
-    await db.execute(sql`SELECT 1`);
+    await db.all(sql`SELECT 1`);
     return json({ status: 'ok' });
   } catch {
     return json({ status: 'degraded' }, 503);
@@ -213,15 +213,15 @@ logger.info({ port: PORT }, 'Bun server listening');
 // ---------------------------------------------------------------------------
 // Startup sequence
 // ---------------------------------------------------------------------------
-async function runMigrations(): Promise<void> {
+function runMigrations(): void {
   const MIGRATIONS_DIR = join(__dirname, '../../shared/dist/db/migrations');
 
-  // Ensure the drizzle migrations tracking table exists
-  await $client.unsafe(`
+  // Ensure the drizzle migrations tracking table exists (SQLite: INTEGER PRIMARY KEY AUTOINCREMENT)
+  $client.run(`
     CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
-      id SERIAL PRIMARY KEY,
-      hash text NOT NULL,
-      created_at bigint NOT NULL
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      hash TEXT NOT NULL,
+      created_at INTEGER NOT NULL
     )
   `);
 
@@ -234,10 +234,10 @@ async function runMigrations(): Promise<void> {
     const hash = createHash('sha256').update(readFileSync(filePath)).digest('hex');
 
     // Check if already applied
-    const result = await $client.unsafe(
-      `SELECT hash FROM "__drizzle_migrations" WHERE hash = '${hash}'`
-    );
-    if (result.count > 0) continue;
+    const existing = $client
+      .query('SELECT hash FROM "__drizzle_migrations" WHERE hash = ?')
+      .get(hash) as { hash: string } | undefined;
+    if (existing) continue;
 
     // Apply migration
     const rawSql = readFileSync(filePath, 'utf-8');
@@ -246,10 +246,10 @@ async function runMigrations(): Promise<void> {
       const trimmed = stmt.trim();
       if (!trimmed) continue;
       try {
-        await $client.unsafe(trimmed);
+        $client.run(trimmed);
       } catch (err) {
         // Skip "already exists" errors — the table/index is already there
-        if ((err as { code?: string }).code === '42P07') {
+        if ((err as Error).message.includes('already exists')) {
           logger.info(
             { file, stmt: trimmed.substring(0, 50) },
             'Skipping already-exists statement'
@@ -260,9 +260,10 @@ async function runMigrations(): Promise<void> {
       }
     }
 
-    await $client.unsafe(
-      `INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES ('${hash}', ${Date.now()})`
-    );
+    $client.run(`INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES (?, ?)`, [
+      hash,
+      Date.now(),
+    ]);
     logger.info({ file }, 'Applied migration');
   }
 }
@@ -308,7 +309,7 @@ function startNodeLink(): Promise<void> {
 async function main(): Promise<void> {
   // 1. Run migrations.
   try {
-    await runMigrations();
+    runMigrations();
     logger.info('Migrations complete');
   } catch (error) {
     logger.error(error, 'Migration failed (continuing anyway — database may already be set up)');
@@ -316,11 +317,10 @@ async function main(): Promise<void> {
 
   // 2. Verify database connectivity.
   try {
-    await db.execute(sql`SELECT 1`);
+    await db.all(sql`SELECT 1`);
     logger.info('Connected to database');
   } catch (error) {
     logger.error(error, 'Could not connect to the database');
-    logger.error('Is PostgreSQL running? Try: docker compose up -d');
     process.exit(1);
   }
 
@@ -353,7 +353,7 @@ main().catch((err) => {
 let shuttingDown = false;
 let nodelinkProcess: ReturnType<typeof spawn> | undefined;
 
-async function shutdown(signal: string): Promise<void> {
+function shutdown(signal: string): void {
   if (shuttingDown) return;
   shuttingDown = true;
 
@@ -373,7 +373,7 @@ async function shutdown(signal: string): Promise<void> {
   logger.info('All players destroyed');
 
   // 4. Close database connection.
-  await $client.end();
+  $client.close();
   logger.info('Database disconnected');
 
   logger.info('Graceful shutdown complete');

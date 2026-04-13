@@ -11,34 +11,13 @@
 #   docker compose -f docker-compose.prod.yml down
 # ---------------------------------------------------------------------------
 services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    # Don't expose ports in production unless needed
-    # expose:
-    #   - 5432
-
   alfira:
     image: ghcr.io/ebears/alfira:latest
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: /data/alfira.db
       NODELINK_URL: http://localhost:2333
       NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-nodelink-internal}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
@@ -51,6 +30,8 @@ services:
       WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:3001}
     ports:
       - "${DOCKER_HOST_IP:-0.0.0.0}:3001:3001"
+    volumes:
+      - alfira-data:/data
     healthcheck:
       test:
         [
@@ -65,4 +46,4 @@ services:
       start_period: 40s
 
 volumes:
-  pgdata:
+  alfira-data:
