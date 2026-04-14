@@ -37,11 +37,8 @@ cp .env.example .env
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | API server port | `3001` |
-| `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | `http://localhost:3001` |
+| `WEB_UI_ORIGIN` | Public URL of the web UI (for CORS and redirects) | (required in production) |
 | `DISCORD_REDIRECT_URI` | OAuth2 callback URL | `http://localhost:3001/auth/callback` |
-| `NODELINK_URL` | NodeLink server URL | `http://localhost:2333` (dev) or `http://nodelink:3000` (Docker) |
-| `NODELINK_AUTHORIZATION` | NodeLink password | (empty by default) |
 | `VOICE_IDLE_TIMEOUT_MINUTES` | Minutes before bot leaves voice channel when idle | `5` |
 
 ### Production-Specific
@@ -130,6 +127,7 @@ ADMIN_ROLE_IDS=123456789012345678
 JWT_SECRET=a1b2c3d4e5f6...your-secure-64-char-hex-string
 DATABASE_URL=/data/alfira.db
 WEB_UI_ORIGIN=https://alfira.example.com
+VOICE_IDLE_TIMEOUT_MINUTES=5
 DISCORD_REDIRECT_URI=https://alfira.example.com/auth/callback
 ```
 
