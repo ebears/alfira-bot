@@ -200,6 +200,7 @@ export default function SongsPage() {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
+              setDeleteId(null);
               reset();
             }}
           />
