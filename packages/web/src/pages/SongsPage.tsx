@@ -1,17 +1,17 @@
-import type { PaginationMeta, Playlist, Song } from '@alfira-bot/server/shared';
+import type { Playlist, Song } from '@alfira-bot/server/shared';
 import { ListIcon, MagnifyingGlassIcon, SquaresFourIcon } from '@phosphor-icons/react';
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
 import NotificationToast from '../components/NotificationToast';
-import { Pagination } from '../components/Pagination';
 import SongCard from '../components/SongCard';
 import SongRow from '../components/SongRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
@@ -20,11 +20,7 @@ import { apiErrorMessage } from '../utils/api';
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
   const { state: queueState } = usePlayerState();
-  const [items, setItems] = useState<Song[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -39,13 +35,14 @@ export default function SongsPage() {
   });
   const { itemsPerPage, setContainerRef } = useItemsPerPage();
 
-  // Ref to access itemsPerPage inside stale closures
-  const itemsPerPageRef = useRef(itemsPerPage);
-  itemsPerPageRef.current = itemsPerPage;
+  const { items, total, setItems, setTotal, loading, loadingMore, sentinelRef, reset } =
+    useInfiniteScroll((page) => getSongsPage(page, itemsPerPage, search), { enabled: !search });
 
-  // Track if initial load has completed, to avoid showing skeleton again when
-  // itemsPerPage calibrates after ResizeObserver measures the container
-  const hasLoadedRef = useRef(false);
+  // Ref to access items inside stale closures
+  const itemsRef = useRef(items);
+  const itemsPerPageRef = useRef(itemsPerPage);
+  itemsRef.current = items;
+  itemsPerPageRef.current = itemsPerPage;
 
   // Lazy playlists fetch — fetched separately so it doesn't block the main load
   useEffect(() => {
@@ -56,115 +53,42 @@ export default function SongsPage() {
       });
   }, [isAdminView]);
 
-  // Refs to track state for socket handlers without causing effect re-runs
-  const paginationRef = useRef(pagination);
-  const itemsLengthRef = useRef(items.length);
-  paginationRef.current = pagination;
-  itemsLengthRef.current = items.length;
-
-  const load = useCallback(
-    async (page: number, searchQuery?: string) => {
-      if (!hasLoadedRef.current) setLoading(true);
-      try {
-        const result = await getSongsPage(page, itemsPerPage, searchQuery);
-        setItems(result.items);
-        setPagination(result.pagination);
-        hasLoadedRef.current = true;
-      } finally {
-        setLoading((prev) => (hasLoadedRef.current ? false : prev));
-      }
-    },
-    [itemsPerPage]
-  );
-
-  useEffect(() => {
-    load(currentPage, search);
-  }, [load, currentPage, search]);
-
   useEffect(() => {
     const handleSongAdded = (song: Song) => {
-      // Only prepend on page 1; increment total count
-      if (currentPage !== 1) {
-        setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
-        return;
-      }
-      setItems((prev) => {
-        if (prev.some((s) => s.id === song.id)) return prev;
-        const next = [song, ...prev];
-        if (next.length > itemsPerPageRef.current) next.pop();
-        return next;
-      });
-      setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
-    };
-
-    const handleSongDeleted = (id: string) => {
-      setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
-
-      if (currentPage !== 1) {
-        setItems((prev) => prev.filter((s) => s.id !== id));
-        return;
-      }
-
-      // Capture length before filtering to determine if we need to refill
-      const prevLength = itemsLengthRef.current;
-      setItems((prev) => prev.filter((s) => s.id !== id));
-
-      if (
-        prevLength === itemsPerPageRef.current &&
-        paginationRef.current &&
-        paginationRef.current.total > itemsPerPageRef.current
-      ) {
-        getSongsPage(currentPage + 1, itemsPerPageRef.current).then((result) => {
-          setItems((prev) => [...prev, ...result.items].slice(0, itemsPerPageRef.current));
+      if (!search && itemsRef.current.length < itemsPerPageRef.current) {
+        setItems((prev) => {
+          if (prev.some((s) => s.id === song.id)) return prev;
+          return [song, ...prev];
         });
       }
+      setTotal((prev) => prev + 1);
     };
-
+    const handleSongDeleted = (id: string) => {
+      setItems((prev) => prev.filter((s) => s.id !== id));
+      setTotal((prev) => Math.max(0, prev - 1));
+    };
     const handleSongUpdated = (updatedSong: Song) => {
       setItems((prev) =>
         prev.map((s) =>
-          s.id === updatedSong.id
-            ? {
-                ...updatedSong,
-                addedByDisplayName: s.addedByDisplayName,
-              }
-            : s
+          s.id === updatedSong.id ? { ...updatedSong, addedByDisplayName: s.addedByDisplayName } : s
         )
       );
     };
-
     const offAdded = onSocketEvent('songs:added', handleSongAdded);
     const offDeleted = onSocketEvent('songs:deleted', handleSongDeleted);
     const offUpdated = onSocketEvent('songs:updated', handleSongUpdated);
-
     return () => {
       offAdded();
       offDeleted();
       offUpdated();
     };
-  }, [currentPage]);
+  }, [search, setItems, setTotal]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);
     setDeleteId(null);
     // Socket event will update the songs list
   };
-
-  const q = search.toLowerCase();
-  const filtered = useMemo(
-    () =>
-      search
-        ? items.filter(
-            (s) =>
-              s.title.toLowerCase().includes(q) ||
-              s.nickname?.toLowerCase().includes(q) ||
-              s.artist?.toLowerCase().includes(q) ||
-              s.album?.toLowerCase().includes(q) ||
-              s.tags?.some((t) => t.toLowerCase().includes(q))
-          )
-        : items,
-    [search, items, q]
-  );
 
   // ---------------------------------------------------------------------------
   // Play from song — replaces the queue with the full library starting from
@@ -202,14 +126,14 @@ export default function SongsPage() {
     ) : (
       <SkeletonList itemsPerPage={itemsPerPage} />
     )
-  ) : filtered.length === 0 ? (
+  ) : items.length === 0 ? (
     <div className="text-center py-24">
       <p className="font-display text-4xl text-faint tracking-wider mb-2">No Results</p>
       <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
     </div>
   ) : isGrid ? (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4 items-start">
-      {filtered.map((song, i) => (
+      {items.map((song, i) => (
         <SongCard
           key={song.id}
           song={song}
@@ -226,7 +150,7 @@ export default function SongsPage() {
     </div>
   ) : (
     <div className="flex flex-col gap-1">
-      {filtered.map((song) => (
+      {items.map((song) => (
         <SongRow
           key={song.id}
           song={song}
@@ -249,9 +173,7 @@ export default function SongsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Songs</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {loading
-              ? '—'
-              : `${pagination?.total ?? items.length} track${(pagination?.total ?? items.length) !== 1 ? 's' : ''}`}
+            {loading ? '—' : `${total} track${total !== 1 ? 's' : ''}`}
           </p>
         </div>
         {isAdminView && (
@@ -278,7 +200,7 @@ export default function SongsPage() {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setCurrentPage(1);
+              reset();
             }}
           />
         </div>
@@ -320,20 +242,26 @@ export default function SongsPage() {
       {/* Content */}
       {songContent}
 
-      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
+      {/* Loading more skeletons */}
+      {loadingMore &&
+        (isGrid ? (
+          <SkeletonGrid itemsPerPage={Math.max(4, Math.round(itemsPerPage / 2))} />
+        ) : (
+          <SkeletonList itemsPerPage={Math.max(4, Math.round(itemsPerPage / 2))} />
+        ))}
+
+      {!search && <div ref={sentinelRef} className="h-4" />}
 
       {/* Modals */}
       {showAddModal && (
         <AddSongModal
           onClose={() => setShowAddModal(false)}
           onAdded={(song) => {
-            if (currentPage === 1) {
-              setItems((prev) => {
-                if (prev.some((s) => s.id === song.id)) return prev;
-                return [song, ...prev];
-              });
-            }
-            setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
+            setItems((prev) => {
+              if (prev.some((s) => s.id === song.id)) return prev;
+              return [song, ...prev];
+            });
+            setTotal((prev) => prev + 1);
             setShowAddModal(false);
           }}
         />
