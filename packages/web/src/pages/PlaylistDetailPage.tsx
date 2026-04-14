@@ -90,18 +90,6 @@ export default function PlaylistDetailPage() {
     { enabled: !!id }
   );
 
-  // Refs to avoid stale closures in handleRemoveSong
-  const itemsRef = useRef(songs);
-  const songsLengthRef = useRef(0);
-  itemsRef.current = songs;
-  songsLengthRef.current = songs.length;
-
-  // Sync refs on songs changes
-  useEffect(() => {
-    itemsRef.current = songs;
-    songsLengthRef.current = songs.length;
-  }, [songs]);
-
   // Set playlist name from first page response (happens once on initial load)
   useEffect(() => {
     if (!id || songs.length === 0) return;
@@ -152,7 +140,6 @@ export default function PlaylistDetailPage() {
   const handleRemoveSong = async (songId: string) => {
     if (!playlist) return;
 
-    const _prevLength = playlist.songs.length;
     await removeSongFromPlaylist(playlist.id, songId);
 
     setSongs((prev) => prev.filter((ps) => ps.songId !== songId));
