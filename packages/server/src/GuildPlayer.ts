@@ -1,7 +1,7 @@
-import type { LoopMode, QueuedSong, QueueState } from './shared';
-import { logger } from './shared/logger';
 import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
 import { PlaybackCursor } from './PlaybackCursor';
+import type { LoopMode, QueuedSong, QueueState } from './shared';
+import { logger } from './shared/logger';
 import { broadcastQueueUpdate, getHoshimi } from './startDiscord';
 
 export class GuildPlayer {

@@ -1,8 +1,8 @@
-import type { QueueState } from './shared';
-import { logger } from './shared/logger';
 import { Client, createEvent } from 'seyfert';
 import { emitPlayerUpdate } from './lib/socket';
 import { getPlayer } from './manager';
+import type { QueueState } from './shared';
+import { logger } from './shared/logger';
 
 export type { DestroyReasons } from 'hoshimi';
 export type { GuildPlayer } from './GuildPlayer';
@@ -15,8 +15,8 @@ export {
   type PlaylistMetadata,
 } from './utils/nodelink';
 
-const NODELINK_URL = process.env.NODELINK_URL ?? 'http://localhost:2333';
-const NODELINK_AUTH = process.env.NODELINK_AUTHORIZATION ?? '';
+const NODELINK_URL = 'http://localhost:2333';
+const NODELINK_AUTH = 'nodelink-internal';
 
 // ---------------------------------------------------------------------------
 // Client singleton (inlined from former lib/client.ts)

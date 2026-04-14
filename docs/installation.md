@@ -119,9 +119,9 @@ cp .env.example .env
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | SQLite database path | `/data/alfira.db` |
-| `WEB_UI_ORIGIN` | Public URL of the web UI | `http://localhost:3001` |
+| `WEB_UI_ORIGIN` | Public URL of the web UI | (required in production) |
 | `DISCORD_REDIRECT_URI` | OAuth2 redirect URI | `http://localhost:3001/auth/callback` |
-| `PORT` | API server port | `3001` |
+| `VOICE_IDLE_TIMEOUT_MINUTES` | Minutes before bot leaves voice channel when idle | `5` |
 
 > **Note:** `DATABASE_URL` is set automatically by Docker Compose in development. You typically don't need to set it manually.
 
@@ -229,8 +229,7 @@ All configuration is handled through a single `.env` file in the project root. C
 | `JWT_SECRET` | ✅ | Secret for signing JWT tokens |
 | `WEB_UI_ORIGIN` | ⚪ | Public URL of the web UI |
 | `DISCORD_REDIRECT_URI` | ⚪ | OAuth2 callback URL |
-| `NODELINK_URL` | ⚪ | NodeLink server URL (default: `http://nodelink:3000` in Docker) |
-| `NODELINK_AUTHORIZATION` | ⚪ | NodeLink password |
+| `VOICE_IDLE_TIMEOUT_MINUTES` | ⚪ | Minutes before bot leaves voice channel when idle |
 
 > **Security:** Use a strong, random `JWT_SECRET`. Generate one with: `openssl rand -hex 32`
 

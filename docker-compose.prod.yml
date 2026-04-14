@@ -16,21 +16,18 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3001
       DATABASE_URL: /data/alfira.db
-      NODELINK_URL: http://localhost:2333
-      NODELINK_CACHE_DIR: /data/nodelink-cache
-      NODELINK_AUTHORIZATION: ${NODELINK_AUTHORIZATION:-nodelink-internal}
-      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
-      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-http://localhost:3001/auth/callback}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+      WEB_UI_ORIGIN: ${WEB_UI_ORIGIN}
+      VOICE_IDLE_TIMEOUT_MINUTES: ${VOICE_IDLE_TIMEOUT_MINUTES:-5}
       GUILD_ID: ${GUILD_ID}
-      JWT_SECRET: ${JWT_SECRET}
       ADMIN_ROLE_IDS: ${ADMIN_ROLE_IDS}
-      WEB_UI_ORIGIN: ${WEB_UI_ORIGIN:-http://localhost:3001}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
-      - "${DOCKER_HOST_IP:-0.0.0.0}:8180:3001"
+      - 8180:3001
     volumes:
       - ./data:/data
     healthcheck:
@@ -45,8 +42,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-networks:
-  default:
-    external: true
-    name: alfira_default
