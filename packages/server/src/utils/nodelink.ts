@@ -44,11 +44,33 @@ interface LoadTrackResponse {
       position?: number;
       author?: string;
       artworkUrl?: string;
+      name?: string; // playlist name when loadType is "playlist"
+      selectedTrack?: number;
     };
+    pluginInfo?: Record<string, unknown>;
+    tracks?: TrackInfo[]; // NodeLink v3/v4 embeds playlist tracks here
   };
-  tracks?: { info?: { identifier?: string; title?: string; length?: number } }[]; // length in milliseconds
+  tracks?: TrackInfo[]; // fallback path
   playlistInfo?: { name?: string; selectedTrack?: number };
   exception?: { message?: string };
+}
+
+interface TrackInfo {
+  encoded?: string;
+  info?: {
+    identifier?: string;
+    title?: string;
+    length?: number;
+    isSeekable?: boolean;
+    isStream?: boolean;
+    position?: number;
+    author?: string;
+    uri?: string;
+    artworkUrl?: string;
+    isrc?: string | null;
+    sourceName?: string;
+  };
+  pluginInfo?: Record<string, unknown>;
 }
 
 const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com'];
@@ -122,7 +144,10 @@ export async function getPlaylistMetadataWithVideos(
   // It returns a "playlist" loadType with track array.
   const response = await loadTrack(playlistUrl);
 
-  const tracks = response.tracks ?? [];
+  // NodeLink v3/v4 embeds playlist tracks inside response.data for playlist loadType
+  const tracks = response.data?.tracks ?? response.tracks ?? [];
+  const playlistName = response.data?.info?.name ?? response.playlistInfo?.name ?? 'Unknown Playlist';
+
   const limited = maxVideos ? tracks.slice(0, maxVideos) : tracks;
 
   const videos = limited.map((t) => {
@@ -136,7 +161,7 @@ export async function getPlaylistMetadataWithVideos(
   });
 
   return {
-    title: response.playlistInfo?.name ?? 'Unknown Playlist',
+    title: playlistName,
     playlistId: playlistUrl,
     videoCount: tracks.length,
     videos,
