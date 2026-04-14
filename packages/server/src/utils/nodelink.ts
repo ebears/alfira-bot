@@ -12,8 +12,8 @@ export interface PlaylistMetadata {
   videos: { id: string; title: string; duration: number; thumbnailUrl: string }[];
 }
 
-const NODELINK_URL = process.env.NODELINK_URL ?? 'http://localhost:2333';
-const NODELINK_AUTH = process.env.NODELINK_AUTHORIZATION ?? '';
+const NODELINK_URL = 'http://localhost:2333';
+const NODELINK_AUTH = 'nodelink-internal';
 
 async function restRequest<T>(path: string): Promise<T> {
   const headers: { 'Content-Type': string; Authorization?: string } = {

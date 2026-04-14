@@ -1,4 +1,3 @@
-import { $client, db, tables } from '../shared/db';
 import { eq, inArray, or, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { getUserDisplayName } from '../lib/displayName';
@@ -18,6 +17,7 @@ import {
   validateYouTubeUrl,
   youTubeUrl,
 } from '../lib/validation';
+import { $client, db, tables } from '../shared/db';
 
 const { song: songTable } = tables;
 

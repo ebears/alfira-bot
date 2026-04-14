@@ -31,8 +31,8 @@ services:
       # Copy .env.example to .env and fill in real values before first run.
       - .env
     environment:
-      DATABASE_URL: /data/alfira.db
       NODE_ENV: development
+      DATABASE_URL: /data/alfira.db
     ports:
       - "3001:3001"
     volumes:

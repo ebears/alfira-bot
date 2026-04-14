@@ -1,4 +1,3 @@
-import { db, tables } from '../shared/db';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { getUserDisplayName } from '../lib/displayName';
@@ -6,6 +5,7 @@ import { json } from '../lib/json';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { validatePlaylistName } from '../lib/validation';
+import { db, tables } from '../shared/db';
 
 const { playlist: playlistTable, playlistSong: playlistSongTable } = tables;
 

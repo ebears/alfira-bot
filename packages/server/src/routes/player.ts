@@ -1,5 +1,3 @@
-import { fisherYatesShuffle as fisherYatesShuffleImpl, type LoopMode, toQueuedSong } from '../shared';
-import { db, eq, findPlaylistWithSongs, tables } from '../shared/db';
 import type { RouteContext } from '../index';
 import { GUILD_ID } from '../lib/config';
 import { json } from '../lib/json';
@@ -14,6 +12,12 @@ import {
   youTubeUrl,
 } from '../lib/validation';
 import { requireUserInVoice, resolveOrAutoJoinPlayer } from '../lib/voice';
+import {
+  fisherYatesShuffle as fisherYatesShuffleImpl,
+  type LoopMode,
+  toQueuedSong,
+} from '../shared';
+import { db, eq, findPlaylistWithSongs, tables } from '../shared/db';
 import { getHoshimi, getPlayer } from '../startDiscord';
 
 const { song: songTable } = tables;

@@ -17,13 +17,15 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: /data/alfira.db
-      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
       DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+      WEB_UI_ORIGIN: ${WEB_UI_ORIGIN}
+      VOICE_IDLE_TIMEOUT_MINUTES: ${VOICE_IDLE_TIMEOUT_MINUTES:-5}
       GUILD_ID: ${GUILD_ID}
-      JWT_SECRET: ${JWT_SECRET}
       ADMIN_ROLE_IDS: ${ADMIN_ROLE_IDS}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - 8180:3001
     volumes:
@@ -40,8 +42,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-networks:
-  default:
-    external: true
-    name: alfira_default

@@ -73,7 +73,7 @@ The server is compiled to `packages/server/dist/` during Docker image build. If 
 
 ### Environment Configuration
 
-A single `.env` file at the project root is used for all configuration. Copy `.env.example` to `.env` and fill in all values before running. Required: `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `GUILD_ID`, `JWT_SECRET`, `ADMIN_ROLE_IDS`, `DATABASE_URL`, `NODELINK_URL`.
+A single `.env` file at the project root is used for all configuration. Copy `.env.example` to `.env` and fill in all values before running. Required: `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `GUILD_ID`, `JWT_SECRET`, `ADMIN_ROLE_IDS`, `DATABASE_URL`.
 
 ### NodeLink Audio Service
 
