@@ -1,6 +1,6 @@
 import type { Playlist, Song } from '@alfira-bot/server/shared';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import SongCard from './SongCard';
 import SongRow from './SongRow';
 
@@ -105,7 +105,7 @@ function SongGrid({
   );
 }
 
-// List view — virtualized with its own scroll container (no page scroll involvement).
+// List view — virtualized using page scroll (no inner scroll container).
 function SongList({
   items,
   isAdmin,
@@ -135,11 +135,9 @@ function SongList({
   hasMore: boolean;
   onRetry: () => void;
 }) {
-  const parentRef = useRef<HTMLDivElement>(null);
-
   const rowVirtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => document.documentElement,
     estimateSize: () => 72,
     overscan: 5,
     measureElement: (el) => el.getBoundingClientRect().height,
@@ -150,43 +148,37 @@ function SongList({
 
   return (
     <div className="relative">
-      <div
-        ref={parentRef}
-        className="overflow-y-auto"
-        style={{ height: 'calc(100vh - 300px)' }}
-      >
-        <div style={{ height: `${totalSize}px`, position: 'relative' }}>
-          {virtualItems.map((virtualRow) => {
-            const song = items[virtualRow.index];
-            if (!song) return null;
+      <div style={{ height: `${totalSize}px`, position: 'relative' }}>
+        {virtualItems.map((virtualRow) => {
+          const song = items[virtualRow.index];
+          if (!song) return null;
 
-            return (
-              <div
-                key={song.id}
-                data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <SongRow
-                  song={song}
-                  isAdmin={isAdmin}
-                  isAdminView={isAdminView}
-                  playlists={playlists}
-                  onDelete={onDelete}
-                  onPlay={() => onPlay(song.id)}
-                  isPlaying={playingId === song.id}
-                  onAddToQueue={() => onAddToQueue(song.id)}
-                />
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <div
+              key={song.id}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <SongRow
+                song={song}
+                isAdmin={isAdmin}
+                isAdminView={isAdminView}
+                playlists={playlists}
+                onDelete={onDelete}
+                onPlay={() => onPlay(song.id)}
+                isPlaying={playingId === song.id}
+                onAddToQueue={() => onAddToQueue(song.id)}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Sentinel + loading/error states at bottom */}

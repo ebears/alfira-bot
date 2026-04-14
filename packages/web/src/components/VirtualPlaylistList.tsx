@@ -1,6 +1,6 @@
 import type { Playlist } from '@alfira-bot/server/shared';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import PlaylistRow from './PlaylistRow';
 
 interface VirtualPlaylistListProps {
@@ -41,11 +41,9 @@ export const VirtualPlaylistList = memo(function VirtualPlaylistList({
   sentinelRef,
   onRowClick,
 }: VirtualPlaylistListProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
-
   const rowVirtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => document.documentElement,
     estimateSize: () => ROW_ESTIMATE,
     overscan: 5,
     measureElement: (el) => el.getBoundingClientRect().height,
@@ -64,44 +62,33 @@ export const VirtualPlaylistList = memo(function VirtualPlaylistList({
 
   return (
     <div className="relative">
-      <div
-        ref={parentRef}
-        className="overflow-y-auto"
-        style={{ height: 'calc(100vh - 300px)' }}
-      >
-        <div
-          style={{
-            height: `${totalSize}px`,
-            position: 'relative',
-          }}
-        >
-          {virtualItems.map((virtualRow) => {
-            const playlist = items[virtualRow.index];
-            if (!playlist) return null;
+      <div style={{ height: `${totalSize}px`, position: 'relative' }}>
+        {virtualItems.map((virtualRow) => {
+          const playlist = items[virtualRow.index];
+          if (!playlist) return null;
 
-            return (
-              <div
-                key={playlist.id}
-                data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <PlaylistRow
-                  playlist={playlist}
-                  animationDelay="0ms"
-                  onClick={onRowClick}
-                  data-playlist-id={playlist.id}
-                />
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <div
+              key={playlist.id}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <PlaylistRow
+                playlist={playlist}
+                animationDelay="0ms"
+                onClick={onRowClick}
+                data-playlist-id={playlist.id}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Sentinel + loading/error states at bottom */}
