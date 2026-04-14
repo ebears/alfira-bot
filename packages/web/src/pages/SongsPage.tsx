@@ -1,19 +1,18 @@
-import type { PaginationMeta, Playlist, Song } from '@alfira-bot/server/shared';
+import type { Playlist, Song } from '@alfira-bot/server/shared';
 import { ListIcon, MagnifyingGlassIcon, SquaresFourIcon } from '@phosphor-icons/react';
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
 import NotificationToast from '../components/NotificationToast';
-import { Pagination } from '../components/Pagination';
-import SongCard from '../components/SongCard';
-import SongRow from '../components/SongRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
+import { useVirtualizedInfiniteScroll } from '../hooks/useVirtualizedInfiniteScroll';
+import { VirtualSongList } from '../components/VirtualSongList';
 import { apiErrorMessage } from '../utils/api';
 
 const ITEMS_PER_PAGE = 24;
@@ -21,12 +20,11 @@ const ITEMS_PER_PAGE = 24;
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
   const { state: queueState } = usePlayerState();
-  const [items, setItems] = useState<Song[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('alfira-library-view');
+    return saved === 'list' ? 'list' : 'grid';
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -34,12 +32,8 @@ export default function SongsPage() {
   const { notify } = useNotification();
   const handleSetDeleteId = useCallback((id: string | null) => setDeleteId(id), []);
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
-    const saved = localStorage.getItem('alfira-library-view');
-    return saved === 'list' ? 'list' : 'grid';
-  });
-
-  // Lazy playlists fetch — fetched separately so it doesn't block the main load
+  // Lazy playlists fetch
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   useEffect(() => {
     void getPlaylistsPage(isAdminView, 1, 100)
       .then((p) => setPlaylists(p.items))
@@ -48,89 +42,34 @@ export default function SongsPage() {
       });
   }, [isAdminView]);
 
-  // Refs to track state for socket handlers without causing effect re-runs
-  const paginationRef = useRef(pagination);
-  const itemsLengthRef = useRef(items.length);
-  paginationRef.current = pagination;
-  itemsLengthRef.current = items.length;
+  // Infinite scroll hook
+  const { items, isLoading, isFetching, isError, hasMore, prepend, reset, retry, sentinelRef } =
+    useVirtualizedInfiniteScroll<Song, [string]>({
+      fetchPage: async (page, limit, searchQuery) => {
+        const result = await getSongsPage(page, limit, searchQuery);
+        return {
+          items: result.items,
+          hasMore: result.pagination.page < result.pagination.totalPages,
+        };
+      },
+      limit: ITEMS_PER_PAGE,
+      deps: [search],
+    });
 
-  const load = useCallback(async (page: number, searchQuery?: string) => {
-    setLoading(true);
-    try {
-      const result = await getSongsPage(page, ITEMS_PER_PAGE, searchQuery);
-      setItems(result.items);
-      setPagination(result.pagination);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load(currentPage, search);
-  }, [load, currentPage, search]);
-
+  // ---------------------------------------------------------------------------
+  // Real-time socket wiring
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     const handleSongAdded = (song: Song) => {
-      // Only prepend on page 1; increment total count
-      if (currentPage !== 1) {
-        setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
-        return;
-      }
-      setItems((prev) => {
-        if (prev.some((s) => s.id === song.id)) return prev;
-        const next = [song, ...prev];
-        if (next.length > ITEMS_PER_PAGE) next.pop();
-        return next;
-      });
-      setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
-    };
-
-    const handleSongDeleted = (id: string) => {
-      setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
-
-      if (currentPage !== 1) {
-        setItems((prev) => prev.filter((s) => s.id !== id));
-        return;
-      }
-
-      // Capture length before filtering to determine if we need to refill
-      const prevLength = itemsLengthRef.current;
-      setItems((prev) => prev.filter((s) => s.id !== id));
-
-      if (
-        prevLength === ITEMS_PER_PAGE &&
-        paginationRef.current &&
-        paginationRef.current.total > ITEMS_PER_PAGE
-      ) {
-        getSongsPage(currentPage + 1, ITEMS_PER_PAGE).then((result) => {
-          setItems((prev) => [...prev, ...result.items].slice(0, ITEMS_PER_PAGE));
-        });
-      }
-    };
-
-    const handleSongUpdated = (updatedSong: Song) => {
-      setItems((prev) =>
-        prev.map((s) =>
-          s.id === updatedSong.id
-            ? {
-                ...updatedSong,
-                addedByDisplayName: s.addedByDisplayName,
-              }
-            : s
-        )
-      );
+      prepend(song);
     };
 
     const offAdded = onSocketEvent('songs:added', handleSongAdded);
-    const offDeleted = onSocketEvent('songs:deleted', handleSongDeleted);
-    const offUpdated = onSocketEvent('songs:updated', handleSongUpdated);
 
     return () => {
       offAdded();
-      offDeleted();
-      offUpdated();
     };
-  }, [currentPage]);
+  }, [prepend]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);
@@ -138,27 +77,9 @@ export default function SongsPage() {
     // Socket event will update the songs list
   };
 
-  const q = search.toLowerCase();
-  const filtered = useMemo(
-    () =>
-      search
-        ? items.filter(
-            (s) =>
-              s.title.toLowerCase().includes(q) ||
-              s.nickname?.toLowerCase().includes(q) ||
-              s.artist?.toLowerCase().includes(q) ||
-              s.album?.toLowerCase().includes(q) ||
-              s.tags?.some((t) => t.toLowerCase().includes(q))
-          )
-        : items,
-    [search, items, q]
-  );
-
   // ---------------------------------------------------------------------------
-  // Play from song — replaces the queue with the full library starting from
-  // the clicked song, then continues sequentially through the rest.
+  // Play from song
   // ---------------------------------------------------------------------------
-
   const handlePlayFromSong = useCallback(
     async (songId: string) => {
       setPlayingId(songId);
@@ -184,52 +105,6 @@ export default function SongsPage() {
 
   const isGrid = viewMode === 'grid';
 
-  const songContent = loading ? (
-    isGrid ? (
-      <SkeletonGrid />
-    ) : (
-      <SkeletonList />
-    )
-  ) : filtered.length === 0 ? (
-    <div className="text-center py-24">
-      <p className="font-display text-4xl text-faint tracking-wider mb-2">No Results</p>
-      <p className="font-mono text-xs text-faint">no songs match "{search}"</p>
-    </div>
-  ) : isGrid ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4 items-start">
-      {filtered.map((song, i) => (
-        <SongCard
-          key={song.id}
-          song={song}
-          isAdmin={isAdminView}
-          isAdminView={isAdminView}
-          playlists={playlists}
-          delay={i}
-          onDelete={handleSetDeleteId}
-          onPlay={handlePlayFromSong}
-          isPlaying={playingId === song.id}
-          onAddToQueue={handleAddToQueue}
-        />
-      ))}
-    </div>
-  ) : (
-    <div className="flex flex-col gap-1">
-      {filtered.map((song) => (
-        <SongRow
-          key={song.id}
-          song={song}
-          isAdmin={isAdminView}
-          isAdminView={isAdminView}
-          playlists={playlists}
-          onDelete={handleSetDeleteId}
-          onPlay={() => handlePlayFromSong(song.id)}
-          isPlaying={playingId === song.id}
-          onAddToQueue={() => handleAddToQueue(song.id)}
-        />
-      ))}
-    </div>
-  );
-
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
@@ -237,9 +112,9 @@ export default function SongsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Songs</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {loading
+            {isLoading
               ? '—'
-              : `${pagination?.total ?? items.length} track${(pagination?.total ?? items.length) !== 1 ? 's' : ''}`}
+              : `${items.length} track${items.length !== 1 ? 's' : ''}`}
           </p>
         </div>
         {isAdminView && (
@@ -265,8 +140,10 @@ export default function SongsPage() {
             placeholder="Search by title, nickname, artist, album, or tag..."
             value={search}
             onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
+              startTransition(() => {
+                setSearch(e.target.value);
+                reset();
+              });
             }}
           />
         </div>
@@ -306,22 +183,30 @@ export default function SongsPage() {
       </div>
 
       {/* Content */}
-      {songContent}
-
-      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
+      <VirtualSongList
+        items={items}
+        viewMode={viewMode}
+        isAdmin={isAdminView}
+        isAdminView={isAdminView}
+        playlists={playlists}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        isError={isError}
+        hasMore={hasMore}
+        playingId={playingId}
+        onRetry={retry}
+        sentinelRef={sentinelRef}
+        onDelete={handleSetDeleteId}
+        onPlay={handlePlayFromSong}
+        onAddToQueue={handleAddToQueue}
+      />
 
       {/* Modals */}
       {showAddModal && (
         <AddSongModal
           onClose={() => setShowAddModal(false)}
           onAdded={(song) => {
-            if (currentPage === 1) {
-              setItems((prev) => {
-                if (prev.some((s) => s.id === song.id)) return prev;
-                return [song, ...prev];
-              });
-            }
-            setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
+            prepend(song);
             setShowAddModal(false);
           }}
         />
@@ -337,52 +222,6 @@ export default function SongsPage() {
 
       {/* Notification Toast */}
       {notification && <NotificationToast notification={notification} />}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Skeleton loading grid
-// ---------------------------------------------------------------------------
-function SkeletonGrid() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col bg-elevated rounded-xl clay-resting">
-          {/* Thumbnail */}
-          <div className="relative aspect-square bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
-            <div className="skeleton w-full h-full" />
-            {/* Duration badge placeholder */}
-            <div className="absolute bottom-2 right-2 z-20">
-              <div className="skeleton h-3 w-8" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Skeleton loading list
-// ---------------------------------------------------------------------------
-function SkeletonList() {
-  return (
-    <div className="flex flex-col gap-1">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg bg-elevated clay-resting"
-        >
-          <div className="skeleton w-12 h-12 md:w-10 md:h-10 rounded border border-border shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="skeleton h-3 w-3/4" />
-            <div className="skeleton h-2 w-1/2 mt-1" />
-          </div>
-          <div className="skeleton h-3 w-10 shrink-0" />
-          <div className="skeleton h-6 w-6 shrink-0" />
-        </div>
-      ))}
     </div>
   );
 }
