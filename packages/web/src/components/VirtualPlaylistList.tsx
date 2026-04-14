@@ -67,7 +67,7 @@ export const VirtualPlaylistList = memo(function VirtualPlaylistList({
       <div
         ref={parentRef}
         className="overflow-y-auto"
-        style={{ height: '100%' }}
+        style={{ height: 'calc(100vh - 300px)' }}
       >
         <div style={{ height: `${totalSize}px`, position: 'relative' }}>
           {virtualItems.map((virtualRow) => {
