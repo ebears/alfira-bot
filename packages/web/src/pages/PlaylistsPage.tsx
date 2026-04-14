@@ -24,7 +24,11 @@ export default function PlaylistsPage() {
   itemsPerPageRef.current = itemsPerPage;
 
   const { items, total, setItems, setTotal, loading, loadingMore, sentinelRef } = useInfiniteScroll(
-    (page) => getPlaylistsPage(isAdminView, page, itemsPerPage)
+    (page) =>
+      getPlaylistsPage(isAdminView, page, itemsPerPage).then((r) => ({
+        items: r.items,
+        total: r.pagination.total,
+      }))
   );
 
   const itemsRef = useRef(items);

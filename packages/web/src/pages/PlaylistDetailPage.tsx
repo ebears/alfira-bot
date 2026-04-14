@@ -111,8 +111,9 @@ export default function PlaylistDetailPage() {
     const handlePlaylistUpdated = (updated: Playlist) => {
       if (updated.id !== id) return;
       // The payload has the complete songs array — use it directly
-      setSongs(updated.songs as PlaylistDetail['songs']);
-      setTotal(updated.songs.length);
+      const songs = updated.songs ?? [];
+      setSongs(songs as PlaylistDetail['songs']);
+      setTotal(songs.length);
     };
 
     const offUpdated = onSocketEvent('playlists:updated', handlePlaylistUpdated);

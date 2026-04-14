@@ -36,7 +36,14 @@ export default function SongsPage() {
   const { itemsPerPage, setContainerRef } = useItemsPerPage();
 
   const { items, total, setItems, setTotal, loading, loadingMore, sentinelRef, reset } =
-    useInfiniteScroll((page) => getSongsPage(page, itemsPerPage, search), { enabled: !search });
+    useInfiniteScroll(
+      (page) =>
+        getSongsPage(page, itemsPerPage, search).then((r) => ({
+          items: r.items,
+          total: r.pagination.total,
+        })),
+      { enabled: !search }
+    );
 
   // Ref to access items inside stale closures
   const itemsRef = useRef(items);
