@@ -12,10 +12,11 @@ import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
-import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
+
+const ITEMS_PER_PAGE = 24;
 
 export default function SongsPage() {
   const { isAdminView } = useAdminView();
@@ -37,15 +38,6 @@ export default function SongsPage() {
     const saved = localStorage.getItem('alfira-library-view');
     return saved === 'list' ? 'list' : 'grid';
   });
-  const { itemsPerPage, setContainerRef } = useItemsPerPage();
-
-  // Ref to access itemsPerPage inside stale closures
-  const itemsPerPageRef = useRef(itemsPerPage);
-  itemsPerPageRef.current = itemsPerPage;
-
-  // Track if initial load has completed, to avoid showing skeleton again when
-  // itemsPerPage calibrates after ResizeObserver measures the container
-  const hasLoadedRef = useRef(false);
 
   // Lazy playlists fetch — fetched separately so it doesn't block the main load
   useEffect(() => {
@@ -62,20 +54,16 @@ export default function SongsPage() {
   paginationRef.current = pagination;
   itemsLengthRef.current = items.length;
 
-  const load = useCallback(
-    async (page: number, searchQuery?: string) => {
-      if (!hasLoadedRef.current) setLoading(true);
-      try {
-        const result = await getSongsPage(page, itemsPerPage, searchQuery);
-        setItems(result.items);
-        setPagination(result.pagination);
-        hasLoadedRef.current = true;
-      } finally {
-        setLoading((prev) => (hasLoadedRef.current ? false : prev));
-      }
-    },
-    [itemsPerPage]
-  );
+  const load = useCallback(async (page: number, searchQuery?: string) => {
+    setLoading(true);
+    try {
+      const result = await getSongsPage(page, ITEMS_PER_PAGE, searchQuery);
+      setItems(result.items);
+      setPagination(result.pagination);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     load(currentPage, search);
@@ -91,7 +79,7 @@ export default function SongsPage() {
       setItems((prev) => {
         if (prev.some((s) => s.id === song.id)) return prev;
         const next = [song, ...prev];
-        if (next.length > itemsPerPageRef.current) next.pop();
+        if (next.length > ITEMS_PER_PAGE) next.pop();
         return next;
       });
       setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
@@ -110,12 +98,12 @@ export default function SongsPage() {
       setItems((prev) => prev.filter((s) => s.id !== id));
 
       if (
-        prevLength === itemsPerPageRef.current &&
+        prevLength === ITEMS_PER_PAGE &&
         paginationRef.current &&
-        paginationRef.current.total > itemsPerPageRef.current
+        paginationRef.current.total > ITEMS_PER_PAGE
       ) {
-        getSongsPage(currentPage + 1, itemsPerPageRef.current).then((result) => {
-          setItems((prev) => [...prev, ...result.items].slice(0, itemsPerPageRef.current));
+        getSongsPage(currentPage + 1, ITEMS_PER_PAGE).then((result) => {
+          setItems((prev) => [...prev, ...result.items].slice(0, ITEMS_PER_PAGE));
         });
       }
     };
@@ -198,9 +186,9 @@ export default function SongsPage() {
 
   const songContent = loading ? (
     isGrid ? (
-      <SkeletonGrid itemsPerPage={itemsPerPage} />
+      <SkeletonGrid />
     ) : (
-      <SkeletonList itemsPerPage={itemsPerPage} />
+      <SkeletonList />
     )
   ) : filtered.length === 0 ? (
     <div className="text-center py-24">
@@ -243,7 +231,7 @@ export default function SongsPage() {
   );
 
   return (
-    <div ref={setContainerRef} className="p-4 md:p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
         <div>
@@ -356,10 +344,10 @@ export default function SongsPage() {
 // ---------------------------------------------------------------------------
 // Skeleton loading grid
 // ---------------------------------------------------------------------------
-function SkeletonGrid({ itemsPerPage }: { itemsPerPage: number }) {
+function SkeletonGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4">
-      {Array.from({ length: Math.max(4, Math.round(itemsPerPage / 2)) }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex flex-col bg-elevated rounded-xl clay-resting">
           {/* Thumbnail */}
           <div className="relative aspect-square bg-elevated overflow-hidden rounded-xl clay-flat m-3 mb-0">
@@ -378,10 +366,10 @@ function SkeletonGrid({ itemsPerPage }: { itemsPerPage: number }) {
 // ---------------------------------------------------------------------------
 // Skeleton loading list
 // ---------------------------------------------------------------------------
-function SkeletonList({ itemsPerPage }: { itemsPerPage: number }) {
+function SkeletonList() {
   return (
     <div className="flex flex-col gap-1">
-      {Array.from({ length: Math.max(4, Math.round(itemsPerPage / 2)) }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
           className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-3 rounded-lg bg-elevated clay-resting"

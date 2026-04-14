@@ -34,10 +34,11 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
-import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
 import { apiErrorMessage } from '../utils/api';
+
+const ITEMS_PER_PAGE = 24;
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -66,13 +67,6 @@ export default function PlaylistDetailPage() {
 
   const { state: queueState } = usePlayerState();
 
-  const { itemsPerPage, setContainerRef } = useItemsPerPage();
-  const itemsPerPageRef = useRef(itemsPerPage);
-  itemsPerPageRef.current = itemsPerPage;
-
-  // Avoid skeleton flash when itemsPerPage calibrates after initial ResizeObserver measurement
-  const hasLoadedRef = useRef(false);
-
   // Refs to avoid stale closures in handleRemoveSong
   const paginationRef = useRef(pagination);
   const songsLengthRef = useRef(0);
@@ -82,20 +76,19 @@ export default function PlaylistDetailPage() {
   const load = useCallback(
     async (page: number) => {
       if (!id) return;
-      if (!hasLoadedRef.current) setLoading(true);
+      setLoading(true);
       try {
-        const pl = await getPlaylistPage(id, isAdminView, page, itemsPerPage);
+        const pl = await getPlaylistPage(id, isAdminView, page, ITEMS_PER_PAGE);
         setPlaylist(pl);
         setPagination(pl.pagination);
         setRenameValue(pl.name);
-        hasLoadedRef.current = true;
       } catch {
         navigate('/playlists', { replace: true });
       } finally {
-        setLoading((prev) => (hasLoadedRef.current ? false : prev));
+        setLoading(false);
       }
     },
-    [id, navigate, isAdminView, itemsPerPage]
+    [id, navigate, isAdminView]
   );
 
   useEffect(() => {
@@ -148,19 +141,19 @@ export default function PlaylistDetailPage() {
     );
     setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
 
-    // Refill page 1 if we dropped below itemsPerPage
+    // Refill page 1 if we dropped below ITEMS_PER_PAGE
     if (
-      prevLength === itemsPerPageRef.current &&
+      prevLength === ITEMS_PER_PAGE &&
       paginationRef.current &&
-      paginationRef.current.total > itemsPerPageRef.current &&
+      paginationRef.current.total > ITEMS_PER_PAGE &&
       id
     ) {
-      getPlaylistPage(id, isAdminView, currentPage + 1, itemsPerPageRef.current).then((result) => {
+      getPlaylistPage(id, isAdminView, currentPage + 1, ITEMS_PER_PAGE).then((result) => {
         setPlaylist((p) =>
           p
             ? {
                 ...p,
-                songs: [...p.songs, ...result.songs].slice(0, itemsPerPageRef.current),
+                songs: [...p.songs, ...result.songs].slice(0, ITEMS_PER_PAGE),
               }
             : p
         );
@@ -283,7 +276,7 @@ export default function PlaylistDetailPage() {
   if (!playlist) return null;
 
   return (
-    <div ref={setContainerRef} className="p-4 md:p-8">
+    <div className="p-4 md:p-8">
       {/* Back */}
       <Button
         variant="inherit"
