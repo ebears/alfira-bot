@@ -1,15 +1,15 @@
-import type { PaginationMeta, Playlist } from '@alfira-bot/server/shared';
+import type { Playlist } from '@alfira-bot/server/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylistsPage } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
-import { Pagination } from '../components/Pagination';
 import PlaylistRow from '../components/PlaylistRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
@@ -17,56 +17,33 @@ import { onSocketEvent } from '../hooks/useSocket';
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
   const navigate = useNavigate();
-  const [items, setItems] = useState<Playlist[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const { notification } = useNotification();
   const { itemsPerPage, setContainerRef } = useItemsPerPage();
   const itemsPerPageRef = useRef(itemsPerPage);
   itemsPerPageRef.current = itemsPerPage;
 
-  // Avoid skeleton flash when itemsPerPage calibrates after initial ResizeObserver measurement
-  const hasLoadedRef = useRef(false);
-
-  const load = useCallback(
-    async (page: number) => {
-      if (!hasLoadedRef.current) setLoading(true);
-      try {
-        const result = await getPlaylistsPage(isAdminView, page, itemsPerPage);
-        setItems(result.items);
-        setPagination(result.pagination);
-        hasLoadedRef.current = true;
-      } finally {
-        setLoading((prev) => (hasLoadedRef.current ? false : prev));
-      }
-    },
-    [isAdminView, itemsPerPage]
+  const { items, total, setItems, setTotal, loading, loadingMore, sentinelRef } = useInfiniteScroll(
+    (page) => getPlaylistsPage(isAdminView, page, itemsPerPage)
   );
 
-  useEffect(() => {
-    load(currentPage);
-  }, [load, currentPage]);
-
-  // Keep a ref to all known item IDs so the socket handler can detect new items without subscribing to `items`
-  const itemIdsRef = useRef(new Set(items.map((p) => p.id)));
-  itemIdsRef.current = new Set(items.map((p) => p.id));
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   // ---------------------------------------------------------------------------
   // Real-time socket wiring
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
-      const isNew = !itemIdsRef.current.has(updated.id);
+      const isNew = !itemsRef.current.some((p) => p.id === updated.id);
 
       setItems((prev) => {
         if (prev.some((p) => p.id === updated.id)) {
           // Existing — replace (handles renames, song count changes)
           return prev.map((p) => (p.id === updated.id ? updated : p));
         }
-        // New — prepend if page 1 has room
-        if (currentPage === 1 && prev.length < itemsPerPageRef.current) {
+        // New — prepend if we have room (at least 1 slot showing)
+        if (prev.length < itemsPerPageRef.current) {
           return [updated, ...prev];
         }
         return prev;
@@ -74,7 +51,7 @@ export default function PlaylistsPage() {
 
       // Only increment total for genuinely new playlists
       if (isNew) {
-        setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
+        setTotal((prev) => prev + 1);
       }
     };
 
@@ -83,7 +60,7 @@ export default function PlaylistsPage() {
     return () => {
       offUpdated();
     };
-  }, [currentPage]);
+  }, [setItems, setTotal]);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
@@ -101,9 +78,7 @@ export default function PlaylistsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Playlists</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {loading
-              ? '—'
-              : `${pagination?.total ?? items.length} playlist${(pagination?.total ?? items.length) !== 1 ? 's' : ''}`}
+            {loading ? '—' : `${total} playlist${total !== 1 ? 's' : ''}`}
           </p>
         </div>
         <Button
@@ -139,7 +114,9 @@ export default function PlaylistsPage() {
         </div>
       )}
 
-      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
+      {loadingMore && <SkeletonList />}
+
+      <div ref={sentinelRef} className="h-4" />
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} />}
       {notification && <NotificationToast notification={notification} />}
