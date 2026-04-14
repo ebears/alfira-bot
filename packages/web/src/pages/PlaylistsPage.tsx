@@ -10,9 +10,10 @@ import PlaylistRow from '../components/PlaylistRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
-import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
+
+const ITEMS_PER_PAGE = 20;
 
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
@@ -23,26 +24,19 @@ export default function PlaylistsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const { notification } = useNotification();
-  const { itemsPerPage, setContainerRef } = useItemsPerPage();
-  const itemsPerPageRef = useRef(itemsPerPage);
-  itemsPerPageRef.current = itemsPerPage;
-
-  // Avoid skeleton flash when itemsPerPage calibrates after initial ResizeObserver measurement
-  const hasLoadedRef = useRef(false);
 
   const load = useCallback(
     async (page: number) => {
-      if (!hasLoadedRef.current) setLoading(true);
+      setLoading(true);
       try {
-        const result = await getPlaylistsPage(isAdminView, page, itemsPerPage);
+        const result = await getPlaylistsPage(isAdminView, page, ITEMS_PER_PAGE);
         setItems(result.items);
         setPagination(result.pagination);
-        hasLoadedRef.current = true;
       } finally {
-        setLoading((prev) => (hasLoadedRef.current ? false : prev));
+        setLoading(false);
       }
     },
-    [isAdminView, itemsPerPage]
+    [isAdminView]
   );
 
   useEffect(() => {
@@ -66,7 +60,7 @@ export default function PlaylistsPage() {
           return prev.map((p) => (p.id === updated.id ? updated : p));
         }
         // New — prepend if page 1 has room
-        if (currentPage === 1 && prev.length < itemsPerPageRef.current) {
+        if (currentPage === 1 && prev.length < ITEMS_PER_PAGE) {
           return [updated, ...prev];
         }
         return prev;
@@ -95,7 +89,7 @@ export default function PlaylistsPage() {
   );
 
   return (
-    <div ref={setContainerRef} className="p-4 md:p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
         <div>
