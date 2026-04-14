@@ -1,4 +1,4 @@
-import type { PaginationMeta, Playlist, PlaylistDetail } from '@alfira-bot/server/shared';
+import type { Playlist, PlaylistDetail } from '@alfira-bot/server/shared';
 import {
   BombIcon,
   CaretLeftIcon,
@@ -26,7 +26,6 @@ import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
-import { Pagination } from '../components/Pagination';
 import PlayModal from '../components/PlayModal';
 import SongRow from '../components/SongRow';
 import { Button } from '../components/ui/Button';
@@ -34,6 +33,7 @@ import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useItemsPerPage } from '../hooks/useItemsPerPage';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
@@ -46,9 +46,6 @@ export default function PlaylistDetailPage() {
   const navigate = useNavigate();
 
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [renameValue, setRenameValue] = useState('');
   const [renameSaving, setRenameSaving] = useState(false);
   const [showAddSongs, setShowAddSongs] = useState(false);
@@ -73,41 +70,61 @@ export default function PlaylistDetailPage() {
   // Avoid skeleton flash when itemsPerPage calibrates after initial ResizeObserver measurement
   const hasLoadedRef = useRef(false);
 
-  // Refs to avoid stale closures in handleRemoveSong
-  const paginationRef = useRef(pagination);
-  const songsLengthRef = useRef(0);
-  paginationRef.current = pagination;
-  songsLengthRef.current = playlist?.songs.length ?? 0;
-
-  const load = useCallback(
-    async (page: number) => {
-      if (!id) return;
-      if (!hasLoadedRef.current) setLoading(true);
-      try {
-        const pl = await getPlaylistPage(id, isAdminView, page, itemsPerPage);
-        setPlaylist(pl);
-        setPagination(pl.pagination);
-        setRenameValue(pl.name);
-        hasLoadedRef.current = true;
-      } catch {
-        navigate('/playlists', { replace: true });
-      } finally {
-        setLoading((prev) => (hasLoadedRef.current ? false : prev));
-      }
+  const {
+    items: songs,
+    total,
+    setItems: setSongs,
+    setTotal,
+    loading,
+    loadingMore,
+    sentinelRef,
+  } = useInfiniteScroll(
+    (page) => {
+      const playlistId = id;
+      if (!playlistId) return Promise.reject(new Error('No playlist id'));
+      return getPlaylistPage(playlistId, isAdminView, page, itemsPerPage).then((r) => ({
+        items: r.songs,
+        total: r.pagination.total,
+      }));
     },
-    [id, navigate, isAdminView, itemsPerPage]
+    { enabled: !!id }
   );
 
-  useEffect(() => {
-    load(currentPage);
-  }, [load, currentPage]);
+  // Refs to avoid stale closures in handleRemoveSong
+  const itemsRef = useRef(songs);
+  const songsLengthRef = useRef(0);
+  itemsRef.current = songs;
+  songsLengthRef.current = songs.length;
 
-  // Refetch on any playlist mutation from other clients (payload lacks full songs array)
+  // Sync refs on songs changes
+  useEffect(() => {
+    itemsRef.current = songs;
+    songsLengthRef.current = songs.length;
+  }, [songs]);
+
+  // Set playlist name from first page response (happens once on initial load)
+  useEffect(() => {
+    if (!id || songs.length === 0) return;
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+    // Fetch full playlist detail for metadata (name, visibility, etc.)
+    getPlaylistPage(id, isAdminView, 1, itemsPerPage)
+      .then((pl) => {
+        setPlaylist(pl);
+        setRenameValue(pl.name);
+      })
+      .catch(() => {
+        navigate('/playlists', { replace: true });
+      });
+  }, [id, isAdminView, itemsPerPage, navigate, songs.length]);
+
+  // Handle playlist updates from other clients
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
       if (updated.id !== id) return;
-      // Refetch to get the full PlaylistDetail including the updated songs array.
-      load(currentPage);
+      // The payload has the complete songs array — use it directly
+      setSongs(updated.songs as PlaylistDetail['songs']);
+      setTotal(updated.songs.length);
     };
 
     const offUpdated = onSocketEvent('playlists:updated', handlePlaylistUpdated);
@@ -115,7 +132,7 @@ export default function PlaylistDetailPage() {
     return () => {
       offUpdated();
     };
-  }, [id, load, currentPage]);
+  }, [id, setSongs, setTotal]);
 
   const handleRenameSave = async () => {
     if (!playlist || !renameValue.trim() || renameValue.trim() === playlist.name) {
@@ -135,37 +152,11 @@ export default function PlaylistDetailPage() {
   const handleRemoveSong = async (songId: string) => {
     if (!playlist) return;
 
-    const prevLength = playlist.songs.length;
+    const _prevLength = playlist.songs.length;
     await removeSongFromPlaylist(playlist.id, songId);
 
-    setPlaylist((p) =>
-      p
-        ? {
-            ...p,
-            songs: p.songs.filter((ps) => ps.songId !== songId),
-          }
-        : p
-    );
-    setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
-
-    // Refill page 1 if we dropped below itemsPerPage
-    if (
-      prevLength === itemsPerPageRef.current &&
-      paginationRef.current &&
-      paginationRef.current.total > itemsPerPageRef.current &&
-      id
-    ) {
-      getPlaylistPage(id, isAdminView, currentPage + 1, itemsPerPageRef.current).then((result) => {
-        setPlaylist((p) =>
-          p
-            ? {
-                ...p,
-                songs: [...p.songs, ...result.songs].slice(0, itemsPerPageRef.current),
-              }
-            : p
-        );
-      });
-    }
+    setSongs((prev) => prev.filter((ps) => ps.songId !== songId));
+    setTotal((prev) => Math.max(0, prev - 1));
 
     setRemoveId(null);
   };
@@ -233,7 +224,7 @@ export default function PlaylistDetailPage() {
       id: 'add-to-queue',
       label: 'Add to Queue',
       icon: <PlusCircleIcon size={14} weight="duotone" />,
-      disabled: playlist?.songs.length === 0,
+      disabled: songs.length === 0,
       onClick: handleAddPlaylistToQueue,
     },
     ...(isOwner || isAdminView
@@ -310,8 +301,7 @@ export default function PlaylistDetailPage() {
             )}
           </div>
           <p className="font-mono text-xs text-muted mt-1">
-            {pagination?.total ?? playlist.songs.length}{' '}
-            {playlist.songs.length === 1 ? 'track' : 'tracks'}
+            {total} {total === 1 ? 'track' : 'tracks'}
             {' • '}
             {isOwner
               ? 'Created by you'
@@ -324,7 +314,7 @@ export default function PlaylistDetailPage() {
             variant="primary"
             className={`text-xs flex items-center gap-1.5 ${showPlay ? 'pressed' : ''}`}
             onClick={() => setShowPlay(true)}
-            disabled={(pagination?.total ?? playlist.songs.length) === 0}
+            disabled={total === 0}
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </Button>
@@ -345,7 +335,7 @@ export default function PlaylistDetailPage() {
       </div>
 
       {/* Song list */}
-      {playlist.songs.length === 0 ? (
+      {songs.length === 0 ? (
         <EmptyState
           title="Empty Playlist"
           isAdmin={canEdit}
@@ -354,7 +344,7 @@ export default function PlaylistDetailPage() {
         />
       ) : (
         <div className="flex flex-col gap-1">
-          {playlist.songs.map((ps) => (
+          {songs.map((ps) => (
             <PlaylistSongRow
               key={ps.id}
               ps={ps}
@@ -369,7 +359,25 @@ export default function PlaylistDetailPage() {
         </div>
       )}
 
-      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
+      {loadingMore && (
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: Math.max(4, Math.round(itemsPerPage / 2)) }).map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className="flex items-center gap-4 px-3 md:px-4 py-3 rounded-lg bg-elevated clay-resting"
+            >
+              <div className="skeleton w-10 h-10 rounded border border-border shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="skeleton h-3 w-3/4" />
+                <div className="skeleton h-2 w-1/2 mt-1" />
+              </div>
+              <div className="skeleton h-3 w-10 shrink-0" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div ref={sentinelRef} className="h-4" />
 
       {/* Modals */}
       {showAddSongs && (
@@ -377,7 +385,6 @@ export default function PlaylistDetailPage() {
           playlist={playlist}
           onClose={() => setShowAddSongs(false)}
           onAdded={() => {
-            load(currentPage);
             setShowAddSongs(false);
           }}
         />
@@ -385,9 +392,7 @@ export default function PlaylistDetailPage() {
       {showPlay && (
         <PlayModal
           onClose={() => setShowPlay(false)}
-          onPlay={(mode) =>
-            handlePlayFromSong(playlist.songs[0]?.songId, mode, { throwErrors: true })
-          }
+          onPlay={(mode) => handlePlayFromSong(songs[0]?.songId, mode, { throwErrors: true })}
         />
       )}
 
@@ -400,7 +405,7 @@ export default function PlaylistDetailPage() {
             <>
               Remove{' '}
               <span className="text-fg font-semibold">
-                "{playlist.songs.find((ps) => ps.songId === removeId)?.song?.title}"
+                "{songs.find((ps) => ps.songId === removeId)?.song?.title}"
               </span>{' '}
               from this playlist? The song won't be deleted from the library.
             </>
