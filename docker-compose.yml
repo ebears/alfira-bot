@@ -32,8 +32,6 @@ services:
       - .env
     environment:
       DATABASE_URL: /data/alfira.db
-      NODELINK_URL: http://localhost:2333
-      NODELINK_AUTHORIZATION: nodelink-internal
       NODE_ENV: development
     ports:
       - "3001:3001"

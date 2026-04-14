@@ -2,7 +2,6 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { $client, db } from './shared/db';
 import { parse } from 'cookie';
 import { sql } from 'drizzle-orm';
 import { logger } from './lib/config';
@@ -13,6 +12,7 @@ import { handleAuth } from './routes/auth';
 import { handlePlayer } from './routes/player';
 import { handlePlaylists } from './routes/playlists';
 import { handleSongs } from './routes/songs';
+import { $client, db } from './shared/db';
 import { destroyAllPlayers, startDiscord } from './startDiscord';
 
 // ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-const PORT = parseInt(process.env.PORT ?? '3001', 10);
+const PORT = 3001;
 
 // ---------------------------------------------------------------------------
 // Security headers
