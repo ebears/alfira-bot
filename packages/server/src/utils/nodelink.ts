@@ -38,7 +38,7 @@ interface LoadTrackResponse {
     info?: {
       title?: string;
       identifier?: string;
-      duration?: number;
+      length?: number; // milliseconds
       isStream?: boolean;
       isSeekable?: boolean;
       position?: number;
@@ -46,7 +46,7 @@ interface LoadTrackResponse {
       artworkUrl?: string;
     };
   };
-  tracks?: { info?: { identifier?: string; title?: string; duration?: number } }[];
+  tracks?: { info?: { identifier?: string; title?: string; length?: number } }[]; // length in milliseconds
   playlistInfo?: { name?: string; selectedTrack?: number };
   exception?: { message?: string };
 }
@@ -95,7 +95,7 @@ export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
   return {
     title,
     youtubeId,
-    duration: info.duration ?? 0,
+    duration: (info.length ?? 0) / 1000,
     thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
   };
 }
@@ -130,7 +130,7 @@ export async function getPlaylistMetadataWithVideos(
     return {
       id,
       title: t.info?.title ?? 'Unknown',
-      duration: t.info?.duration ?? 0,
+      duration: (t.info?.length ?? 0) / 1000,
       thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
     };
   });
