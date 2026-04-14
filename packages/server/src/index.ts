@@ -214,7 +214,7 @@ logger.info({ port: PORT }, 'Bun server listening');
 // Startup sequence
 // ---------------------------------------------------------------------------
 function runMigrations(): void {
-  const MIGRATIONS_DIR = join(__dirname, '../../shared/dist/db/migrations');
+  const MIGRATIONS_DIR = join(__dirname, './shared/db/migrations');
 
   // Ensure the drizzle migrations tracking table exists (SQLite: INTEGER PRIMARY KEY AUTOINCREMENT)
   $client.run(`

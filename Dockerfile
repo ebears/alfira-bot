@@ -50,6 +50,8 @@ RUN bun install
 RUN bun run --filter @alfira-bot/server build && \
     bun run --filter @alfira-bot/web build
 
+COPY packages/server/src/shared/db/migrations packages/server/dist/shared/db/migrations
+
 # ---------------------------------------------------------------------------
 # Runtime stage — use bun as the runtime
 # ---------------------------------------------------------------------------
