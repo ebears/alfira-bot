@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import SettingsPage from './components/settings/SettingsPage';
 import { AdminViewProvider } from './context/AdminViewContext';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -36,6 +37,7 @@ export default function App() {
                   <Route path="songs" element={<SongsPage />} />
                   <Route path="playlists" element={<PlaylistsPage />} />
                   <Route path="playlists/:id" element={<PlaylistDetailPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

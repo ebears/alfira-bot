@@ -6,13 +6,13 @@ import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
 import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
+import { VirtualSongList } from '../components/VirtualSongList';
 import { useAdminView } from '../context/AdminViewContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
 import { useVirtualizedInfiniteScroll } from '../hooks/useVirtualizedInfiniteScroll';
-import { VirtualSongList } from '../components/VirtualSongList';
 import { apiErrorMessage } from '../utils/api';
 
 const ITEMS_PER_PAGE = 24;
@@ -43,18 +43,29 @@ export default function SongsPage() {
   }, [isAdminView]);
 
   // Infinite scroll hook
-  const { items, isLoading, isFetching, isError, hasMore, prepend, updateItem, removeItem, reset, retry, sentinelRef } =
-    useVirtualizedInfiniteScroll<Song, [string]>({
-      fetchPage: async (page, limit, searchQuery) => {
-        const result = await getSongsPage(page, limit, searchQuery);
-        return {
-          items: result.items,
-          hasMore: result.pagination.page < result.pagination.totalPages,
-        };
-      },
-      limit: ITEMS_PER_PAGE,
-      deps: [search],
-    });
+  const {
+    items,
+    isLoading,
+    isFetching,
+    isError,
+    hasMore,
+    prepend,
+    updateItem,
+    removeItem,
+    reset,
+    retry,
+    sentinelRef,
+  } = useVirtualizedInfiniteScroll<Song, [string]>({
+    fetchPage: async (page, limit, searchQuery) => {
+      const result = await getSongsPage(page, limit, searchQuery);
+      return {
+        items: result.items,
+        hasMore: result.pagination.page < result.pagination.totalPages,
+      };
+    },
+    limit: ITEMS_PER_PAGE,
+    deps: [search],
+  });
 
   // ---------------------------------------------------------------------------
   // Real-time socket wiring
@@ -124,9 +135,7 @@ export default function SongsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Songs</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {isLoading
-              ? '—'
-              : `${items.length} track${items.length !== 1 ? 's' : ''}`}
+            {isLoading ? '—' : `${items.length} track${items.length !== 1 ? 's' : ''}`}
           </p>
         </div>
         {isAdminView && (

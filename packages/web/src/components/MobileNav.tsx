@@ -172,7 +172,7 @@ export default function MobileNav() {
         {/* Bottom section: Settings, separator, user */}
         <div className="mt-auto">
           {/* Settings Menu */}
-          <SettingsMenu collapsed={false} />
+          <SettingsMenu collapsed={false} onClick={() => setIsOpen(false)} />
 
           {/* Separator above user section */}
           <div className="px-5">

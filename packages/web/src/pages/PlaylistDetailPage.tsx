@@ -28,13 +28,13 @@ import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
 import PlayModal from '../components/PlayModal';
 import { Button } from '../components/ui/Button';
+import { VirtualSongList } from '../components/VirtualSongList';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
 import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
-import { VirtualSongList } from '../components/VirtualSongList';
 import { apiErrorMessage } from '../utils/api';
 
 const ITEMS_PER_PAGE = 24;
@@ -82,45 +82,42 @@ export default function PlaylistDetailPage() {
   // IntersectionObserver ref for sentinel
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const loadPage = useCallback(
-    async (page: number, isInitial = false, isRefetch = false) => {
-      if (!idRef.current) return;
+  const loadPage = useCallback(async (page: number, isInitial = false, isRefetch = false) => {
+    if (!idRef.current) return;
+
+    if (isInitial) {
+      setIsLoading(true);
+      setSongs([]);
+    } else {
+      setIsFetching(true);
+    }
+    setIsError(false);
+
+    try {
+      const pl = await getPlaylistPage(idRef.current, isAdminViewRef.current, page, ITEMS_PER_PAGE);
 
       if (isInitial) {
-        setIsLoading(true);
-        setSongs([]);
+        setPlaylistDetail(pl);
+        setSongs(pl.songs);
+        setRenameValue(pl.name);
+      } else if (isRefetch) {
+        // Socket-triggered refetch: replace songs so we don't accumulate duplicates.
+        setSongs(pl.songs);
+        setPlaylistDetail(pl);
       } else {
-        setIsFetching(true);
+        // User scroll: accumulate songs from the new page.
+        setSongs((prev) => [...prev, ...pl.songs]);
+        // Keep latest playlist metadata
+        setPlaylistDetail(pl);
       }
-      setIsError(false);
-
-      try {
-        const pl = await getPlaylistPage(idRef.current, isAdminViewRef.current, page, ITEMS_PER_PAGE);
-
-        if (isInitial) {
-          setPlaylistDetail(pl);
-          setSongs(pl.songs);
-          setRenameValue(pl.name);
-        } else if (isRefetch) {
-          // Socket-triggered refetch: replace songs so we don't accumulate duplicates.
-          setSongs(pl.songs);
-          setPlaylistDetail(pl);
-        } else {
-          // User scroll: accumulate songs from the new page.
-          setSongs((prev) => [...prev, ...pl.songs]);
-          // Keep latest playlist metadata
-          setPlaylistDetail(pl);
-        }
-        setHasMore(pl.songs.length === ITEMS_PER_PAGE);
-      } catch {
-        setIsError(true);
-      } finally {
-        setIsLoading(false);
-        setIsFetching(false);
-      }
-    },
-    []
-  );
+      setHasMore(pl.songs.length === ITEMS_PER_PAGE);
+    } catch {
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+      setIsFetching(false);
+    }
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -145,9 +142,7 @@ export default function PlaylistDetailPage() {
   // Socket: song edited — update in real-time
   useEffect(() => {
     const handleSongUpdated = (song: Song) => {
-      setSongs((prev) =>
-        prev.map((ps) => (ps.songId === song.id ? { ...ps, song } : ps))
-      );
+      setSongs((prev) => prev.map((ps) => (ps.songId === song.id ? { ...ps, song } : ps)));
     };
 
     const offSongUpdated = onSocketEvent('songs:updated', handleSongUpdated);
@@ -182,11 +177,14 @@ export default function PlaylistDetailPage() {
 
       // Refill if we dropped below a page
       if (prevLength === ITEMS_PER_PAGE && hasMore && idRef.current) {
-        getPlaylistPage(idRef.current, isAdminViewRef.current, currentPage + 1, ITEMS_PER_PAGE).then(
-          (pl) => {
-            setSongs((prev) => [...prev, ...pl.songs].slice(0, ITEMS_PER_PAGE * currentPage));
-          }
-        );
+        getPlaylistPage(
+          idRef.current,
+          isAdminViewRef.current,
+          currentPage + 1,
+          ITEMS_PER_PAGE
+        ).then((pl) => {
+          setSongs((prev) => [...prev, ...pl.songs].slice(0, ITEMS_PER_PAGE * currentPage));
+        });
       }
     } finally {
       setRemoveId(null);
@@ -459,9 +457,7 @@ export default function PlaylistDetailPage() {
       {showPlay && (
         <PlayModal
           onClose={() => setShowPlay(false)}
-          onPlay={(mode) =>
-            handlePlayFromSong(songs[0]?.songId, mode, { throwErrors: true })
-          }
+          onPlay={(mode) => handlePlayFromSong(songs[0]?.songId, mode, { throwErrors: true })}
         />
       )}
 
