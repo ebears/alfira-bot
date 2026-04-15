@@ -34,7 +34,7 @@ export default function AppearanceTab() {
               key={t.name}
               variant="inherit"
               surface="base"
-              className={`flex items-center gap-2 ${colorTheme === t.name ? 'pressed' : ''}`}
+              className={`flex items-center gap-2 ${colorTheme === t.name ? 'border-2 border-accent' : ''}`}
               onClick={() => setColorTheme(t.name)}
             >
               <span
