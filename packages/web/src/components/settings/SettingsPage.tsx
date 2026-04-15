@@ -1,6 +1,6 @@
+import { XIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { XIcon } from '@phosphor-icons/react';
 import { Button } from '../ui/Button';
 import AppearanceTab from './AppearanceTab';
 import ServerTab from './ServerTab';
@@ -44,9 +44,7 @@ export default function SettingsPage() {
       <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        {renderTab()}
-      </div>
+      <div className="flex-1 overflow-y-auto px-6 py-5">{renderTab()}</div>
     </div>
   );
 }

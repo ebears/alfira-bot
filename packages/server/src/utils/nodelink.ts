@@ -146,7 +146,8 @@ export async function getPlaylistMetadataWithVideos(
 
   // NodeLink v3/v4 embeds playlist tracks inside response.data for playlist loadType
   const tracks = response.data?.tracks ?? response.tracks ?? [];
-  const playlistName = response.data?.info?.name ?? response.playlistInfo?.name ?? 'Unknown Playlist';
+  const playlistName =
+    response.data?.info?.name ?? response.playlistInfo?.name ?? 'Unknown Playlist';
 
   const limited = maxVideos ? tracks.slice(0, maxVideos) : tracks;
 

@@ -1,10 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
-import styles from './SettingsTabs.module.css';
 
 interface TabItem {
   id: string;
   label: string;
-  icon?: React.ComponentType<{ size?: number; weight?: 'duotone' | 'fill' | 'light' | 'regular' | 'bold' }>;
   adminOnly?: boolean;
 }
 
@@ -25,23 +23,26 @@ export default function SettingsTabs({ activeTab, onTabChange }: SettingsTabsPro
   const visibleTabs = TABS.filter((tab) => !tab.adminOnly || user?.isAdmin);
 
   return (
-    <div className={styles.tabList} role="tablist">
-      {visibleTabs.map((tab) => {
-        const Icon = tab.icon;
-        return (
-          <button
-            type="button"
-            key={tab.id}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
-            onClick={() => onTabChange(tab.id)}
-          >
-            {Icon && <Icon size={16} weight="duotone" />}
-            <span>{tab.label}</span>
-          </button>
-        );
-      })}
+    <div
+      role="tablist"
+      className="flex border-b border-border"
+    >
+      {visibleTabs.map((tab) => (
+        <button
+          type="button"
+          key={tab.id}
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={`px-4 py-2.5 font-body text-sm transition-colors duration-150 cursor-pointer border-b-2 -mb-px ${
+            activeTab === tab.id
+              ? 'text-accent border-accent'
+              : 'text-muted border-transparent hover:text-fg'
+          }`}
+        >
+          <span>{tab.label}</span>
+        </button>
+      ))}
     </div>
   );
 }

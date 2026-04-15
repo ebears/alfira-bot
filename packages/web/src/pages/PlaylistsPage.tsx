@@ -5,12 +5,12 @@ import { getPlaylistsPage } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
 import NotificationToast from '../components/NotificationToast';
 import { Button } from '../components/ui/Button';
+import { VirtualPlaylistList } from '../components/VirtualPlaylistList';
 import { useAdminView } from '../context/AdminViewContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
 import { useVirtualizedInfiniteScroll } from '../hooks/useVirtualizedInfiniteScroll';
-import { VirtualPlaylistList } from '../components/VirtualPlaylistList';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -71,9 +71,7 @@ export default function PlaylistsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Playlists</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {isLoading
-              ? '—'
-              : `${items.length} playlist${items.length !== 1 ? 's' : ''}`}
+            {isLoading ? '—' : `${items.length} playlist${items.length !== 1 ? 's' : ''}`}
           </p>
         </div>
         <Button

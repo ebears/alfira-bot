@@ -2,8 +2,8 @@ import { DesktopIcon, MoonIcon, SunIcon } from '@phosphor-icons/react';
 import { useAdminView } from '../../context/AdminViewContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import SettingsToggle from './SettingsToggle';
 import { Button } from '../ui/Button';
+import SettingsToggle from './SettingsToggle';
 
 export default function AppearanceTab() {
   const { user } = useAuth();

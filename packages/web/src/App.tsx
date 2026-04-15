@@ -1,13 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import SettingsPage from './components/settings/SettingsPage';
 import { AdminViewProvider } from './context/AdminViewContext';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { PlayerProvider } from './context/PlayerContext';
 import { SongEditProvider } from './context/SongEditContext';
 import { ThemeProvider } from './context/ThemeContext';
-import SettingsPage from './components/settings/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
 import PlaylistsPage from './pages/PlaylistsPage';
