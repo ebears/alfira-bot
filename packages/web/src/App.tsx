@@ -7,6 +7,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { PlayerProvider } from './context/PlayerContext';
 import { SongEditProvider } from './context/SongEditContext';
 import { ThemeProvider } from './context/ThemeContext';
+import SettingsPage from './components/settings/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
 import PlaylistsPage from './pages/PlaylistsPage';
@@ -36,6 +37,7 @@ export default function App() {
                   <Route path="songs" element={<SongsPage />} />
                   <Route path="playlists" element={<PlaylistsPage />} />
                   <Route path="playlists/:id" element={<PlaylistDetailPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
