@@ -19,7 +19,6 @@ export default function ServerTab() {
           />
         </div>
       )}
-      <p className="text-sm text-muted">Coming soon.</p>
     </div>
   );
 }
