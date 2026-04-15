@@ -122,6 +122,30 @@ function LayoutContent() {
           ))}
         </nav>
 
+        {/* Connection status */}
+        {connectionStatus !== 'connected' && (
+          <div className="px-3 pb-2">
+            <div
+              className={`flex items-center gap-2 text-sm font-mono px-2 py-1.5 rounded-lg ${
+                collapsed ? 'bg-warning/10 text-warning' : connectionStatus === 'reconnecting'
+                  ? 'bg-warning/10 text-warning'
+                  : 'bg-danger/10 text-danger'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  collapsed ? 'bg-warning animate-pulse' : connectionStatus === 'reconnecting' ? 'bg-warning animate-pulse' : 'bg-danger'
+                }`}
+              />
+              {collapsed
+                ? null
+                : connectionStatus === 'reconnecting'
+                  ? 'Reconnecting...'
+                  : 'Disconnected'}
+            </div>
+          </div>
+        )}
+
         {/* Settings Menu */}
         <SettingsMenu collapsed={collapsed} />
 
@@ -140,30 +164,6 @@ function LayoutContent() {
             <CaretLeftIcon size={18} weight="duotone" className={collapsed ? 'rotate-180' : ''} />
           </button>
         </div>
-
-        {/* Connection status */}
-        {connectionStatus !== 'connected' && (
-          <div className="px-3 pb-2">
-            <div
-              className={`flex items-center gap-2 text-sm font-mono px-2 py-1.5 rounded-lg ${
-                connectionStatus === 'reconnecting'
-                  ? 'bg-warning/10 text-warning'
-                  : 'bg-danger/10 text-danger'
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  connectionStatus === 'reconnecting' ? 'bg-warning animate-pulse' : 'bg-danger'
-                }`}
-              />
-              {collapsed
-                ? ''
-                : connectionStatus === 'reconnecting'
-                  ? 'Reconnecting...'
-                  : 'Disconnected'}
-            </div>
-          </div>
-        )}
 
         {/* Separator above user section */}
         {collapsed ? (
