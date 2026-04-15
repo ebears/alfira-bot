@@ -1,7 +1,7 @@
 import { WrenchIcon, XCircleIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Backdrop } from './Backdrop';
-import SettingsContent from './SettingsContent';
+import SettingsContent from './settings/AppearanceTab';
 import { Button } from './ui/Button';
 
 interface SettingsMenuProps {

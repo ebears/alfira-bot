@@ -1,11 +1,11 @@
 import { DesktopIcon, MoonIcon, SunIcon } from '@phosphor-icons/react';
-import { useAdminView } from '../context/AdminViewContext';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import SettingsToggle from './settings/SettingsToggle';
-import { Button } from './ui/Button';
+import { useAdminView } from '../../context/AdminViewContext';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import SettingsToggle from './SettingsToggle';
+import { Button } from '../ui/Button';
 
-export default function SettingsContent() {
+export default function AppearanceTab() {
   const { user } = useAuth();
   const { isAdminView, toggleAdminView } = useAdminView();
   const { colorTheme, mode, setColorTheme, setMode, colorThemes } = useTheme();
