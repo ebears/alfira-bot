@@ -1,74 +1,50 @@
-import type { PaginationMeta, Playlist } from '@alfira-bot/server/shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Playlist } from '@alfira-bot/server/shared';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlaylistsPage } from '../api/api';
 import { Backdrop } from '../components/Backdrop';
-import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
-import { Pagination } from '../components/Pagination';
-import PlaylistRow from '../components/PlaylistRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { CreatePlaylistSubmitButton, useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
+import { useVirtualizedInfiniteScroll } from '../hooks/useVirtualizedInfiniteScroll';
+import { VirtualPlaylistList } from '../components/VirtualPlaylistList';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function PlaylistsPage() {
   const { isAdminView } = useAdminView();
   const navigate = useNavigate();
-  const [items, setItems] = useState<Playlist[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const { notification } = useNotification();
 
-  const load = useCallback(
-    async (page: number) => {
-      setLoading(true);
-      try {
-        const result = await getPlaylistsPage(isAdminView, page, ITEMS_PER_PAGE);
-        setItems(result.items);
-        setPagination(result.pagination);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [isAdminView]
-  );
-
-  useEffect(() => {
-    load(currentPage);
-  }, [load, currentPage]);
-
-  // Keep a ref to all known item IDs so the socket handler can detect new items without subscribing to `items`
-  const itemIdsRef = useRef(new Set(items.map((p) => p.id)));
-  itemIdsRef.current = new Set(items.map((p) => p.id));
+  const { items, isLoading, isFetching, isError, prepend, retry, sentinelRef } =
+    useVirtualizedInfiniteScroll<Playlist, [boolean]>({
+      fetchPage: async (page, limit, admin) => {
+        const result = await getPlaylistsPage(admin, page, limit);
+        return {
+          items: result.items,
+          hasMore: result.pagination.page < result.pagination.totalPages,
+        };
+      },
+      limit: ITEMS_PER_PAGE,
+      deps: [isAdminView],
+    });
 
   // ---------------------------------------------------------------------------
   // Real-time socket wiring
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
-      const isNew = !itemIdsRef.current.has(updated.id);
-
-      setItems((prev) => {
-        if (prev.some((p) => p.id === updated.id)) {
-          // Existing — replace (handles renames, song count changes)
-          return prev.map((p) => (p.id === updated.id ? updated : p));
-        }
-        // New — prepend if page 1 has room
-        if (currentPage === 1 && prev.length < ITEMS_PER_PAGE) {
-          return [updated, ...prev];
-        }
-        return prev;
-      });
-
-      // Only increment total for genuinely new playlists
-      if (isNew) {
-        setPagination((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev));
+      // Check if this playlist is already in the list
+      if (items.some((p) => p.id === updated.id)) {
+        // Replace existing — but for simplicity in infinite scroll, just prepend
+        // since we can't easily find and replace without the full list
+        prepend(updated);
+      } else {
+        prepend(updated);
       }
     };
 
@@ -77,7 +53,7 @@ export default function PlaylistsPage() {
     return () => {
       offUpdated();
     };
-  }, [currentPage]);
+  }, [prepend, items]);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
@@ -95,9 +71,9 @@ export default function PlaylistsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Playlists</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {loading
+            {isLoading
               ? '—'
-              : `${pagination?.total ?? items.length} playlist${(pagination?.total ?? items.length) !== 1 ? 's' : ''}`}
+              : `${items.length} playlist${items.length !== 1 ? 's' : ''}`}
           </p>
         </div>
         <Button
@@ -110,30 +86,15 @@ export default function PlaylistsPage() {
       </div>
 
       {/* List */}
-      {loading ? (
-        <SkeletonList />
-      ) : items.length === 0 ? (
-        <EmptyState
-          title="No Playlists"
-          isAdmin={isAdminView}
-          onAdd={() => setShowCreate(true)}
-          addLabel="create the first playlist"
-        />
-      ) : (
-        <div className="grid gap-2 md:gap-3">
-          {items.map((pl, i) => (
-            <PlaylistRow
-              key={pl.id}
-              playlist={pl}
-              animationDelay={`${Math.min(i * 40, 400)}ms`}
-              data-playlist-id={pl.id}
-              onClick={handleRowClick}
-            />
-          ))}
-        </div>
-      )}
-
-      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
+      <VirtualPlaylistList
+        items={items}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        isError={isError}
+        onRetry={retry}
+        sentinelRef={sentinelRef}
+        onRowClick={handleRowClick}
+      />
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} />}
       {notification && <NotificationToast notification={notification} />}
@@ -187,24 +148,5 @@ function CreatePlaylistModal({ onClose }: { onClose: () => void }) {
         </div>
       </form>
     </Backdrop>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Skeleton / empty state
-// ---------------------------------------------------------------------------
-function SkeletonList() {
-  return (
-    <div className="grid gap-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={`skeleton-${i}`} className="card flex items-center gap-4 px-5 py-4">
-          <div className="skeleton w-10 h-10 rounded" />
-          <div className="flex-1 space-y-2">
-            <div className="skeleton h-3 w-48" />
-            <div className="skeleton h-2.5 w-24" />
-          </div>
-        </div>
-      ))}
-    </div>
   );
 }

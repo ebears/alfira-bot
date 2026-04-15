@@ -112,14 +112,24 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
         volumeOffset: vo,
       } = fieldsRef.current();
       const parsedOffset = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
-      const data: SongUpdateData = {
-        nickname: nk.trim() || null,
-        artist: ar.trim() || null,
-        album: al.trim() || null,
-        artwork: aw.trim() || null,
-        tags: t,
-        volumeOffset: Number.isNaN(parsedOffset) ? null : parsedOffset,
-      };
+
+      // Build a partial update — only include fields that actually changed.
+      // This prevents concurrent edits from clobbering each other (last-write-wins).
+      const data: SongUpdateData = {};
+      if (nk !== (originalNicknameRef.current ?? '')) data.nickname = nk.trim() || null;
+      if (ar !== (originalArtistRef.current ?? '')) data.artist = ar.trim() || null;
+      if (al !== (originalAlbumRef.current ?? '')) data.album = al.trim() || null;
+      if (aw !== (originalArtworkRef.current ?? '')) data.artwork = aw.trim() || null;
+      if (JSON.stringify(t) !== JSON.stringify(originalTagsRef.current)) data.tags = t;
+      if (parsedOffset !== originalVolumeOffsetRef.current)
+        data.volumeOffset = Number.isNaN(parsedOffset) ? null : parsedOffset;
+
+      // Skip if nothing changed
+      if (Object.keys(data).length === 0) {
+        onCloseRef.current();
+        return;
+      }
+
       await updateSong(songIdRef.current, data);
       onCloseRef.current();
     } finally {
@@ -139,14 +149,17 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
         volumeOffset: vo,
       } = fieldsRef.current();
       const parsedOffset = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
-      if (
-        nk !== (originalNicknameRef.current ?? '') ||
-        ar !== (originalArtistRef.current ?? '') ||
-        al !== (originalAlbumRef.current ?? '') ||
-        aw !== (originalArtworkRef.current ?? '') ||
-        JSON.stringify(t) !== JSON.stringify(originalTagsRef.current) ||
-        parsedOffset !== originalVolumeOffsetRef.current
-      ) {
+
+      const data: SongUpdateData = {};
+      if (nk !== (originalNicknameRef.current ?? '')) data.nickname = nk.trim() || null;
+      if (ar !== (originalArtistRef.current ?? '')) data.artist = ar.trim() || null;
+      if (al !== (originalAlbumRef.current ?? '')) data.album = al.trim() || null;
+      if (aw !== (originalArtworkRef.current ?? '')) data.artwork = aw.trim() || null;
+      if (JSON.stringify(t) !== JSON.stringify(originalTagsRef.current)) data.tags = t;
+      if (parsedOffset !== originalVolumeOffsetRef.current)
+        data.volumeOffset = Number.isNaN(parsedOffset) ? null : parsedOffset;
+
+      if (Object.keys(data).length > 0) {
         void doSave();
       }
     }

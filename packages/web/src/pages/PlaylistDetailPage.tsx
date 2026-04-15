@@ -1,4 +1,4 @@
-import type { PaginationMeta, Playlist, PlaylistDetail } from '@alfira-bot/server/shared';
+import type { Playlist, PlaylistDetail, Song } from '@alfira-bot/server/shared';
 import {
   BombIcon,
   CaretLeftIcon,
@@ -10,7 +10,7 @@ import {
   PlayIcon,
   PlusCircleIcon,
 } from '@phosphor-icons/react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   deletePlaylist,
@@ -26,9 +26,7 @@ import type { MenuItem } from '../components/ContextMenu';
 import { ContextMenu, ContextMenuTrigger } from '../components/ContextMenu';
 import EmptyState from '../components/EmptyState';
 import NotificationToast from '../components/NotificationToast';
-import { Pagination } from '../components/Pagination';
 import PlayModal from '../components/PlayModal';
-import SongRow from '../components/SongRow';
 import { Button } from '../components/ui/Button';
 import { useAdminView } from '../context/AdminViewContext';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +34,7 @@ import { usePlayerState } from '../context/PlayerContext';
 import { useAddToQueue } from '../hooks/useAddToQueue';
 import { useNotification } from '../hooks/useNotification';
 import { onSocketEvent } from '../hooks/useSocket';
+import { VirtualSongList } from '../components/VirtualSongList';
 import { apiErrorMessage } from '../utils/api';
 
 const ITEMS_PER_PAGE = 24;
@@ -46,10 +45,7 @@ export default function PlaylistDetailPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [playlistDetail, setPlaylistDetail] = useState<PlaylistDetail | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [renameSaving, setRenameSaving] = useState(false);
   const [showAddSongs, setShowAddSongs] = useState(false);
@@ -60,47 +56,79 @@ export default function PlaylistDetailPage() {
   const { handleAddToQueue, notification } = useAddToQueue();
   const { notify } = useNotification();
 
-  const isOwner = user?.discordId === playlist?.createdBy;
+  const isOwner = user?.discordId === playlistDetail?.createdBy;
   const canEdit = isAdminView || isOwner;
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { state: queueState } = usePlayerState();
 
-  // Refs to avoid stale closures in handleRemoveSong
-  const paginationRef = useRef(pagination);
-  const songsLengthRef = useRef(0);
-  paginationRef.current = pagination;
-  songsLengthRef.current = playlist?.songs.length ?? 0;
+  // Refs for socket handlers
+  const idRef = useRef(id);
+  const isAdminViewRef = useRef(isAdminView);
+  idRef.current = id;
+  isAdminViewRef.current = isAdminView;
 
-  const load = useCallback(
-    async (page: number) => {
-      if (!id) return;
-      setLoading(true);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  // Accumulated songs from all pages
+  const [songs, setSongs] = useState<PlaylistDetail['songs']>([]);
+
+  // IntersectionObserver ref for sentinel
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadPage = useCallback(
+    async (page: number, isInitial = false) => {
+      if (!idRef.current) return;
+
+      if (isInitial) {
+        setIsLoading(true);
+        setSongs([]);
+      } else {
+        setIsFetching(true);
+      }
+      setIsError(false);
+
       try {
-        const pl = await getPlaylistPage(id, isAdminView, page, ITEMS_PER_PAGE);
-        setPlaylist(pl);
-        setPagination(pl.pagination);
-        setRenameValue(pl.name);
+        const pl = await getPlaylistPage(idRef.current, isAdminViewRef.current, page, ITEMS_PER_PAGE);
+
+        if (isInitial) {
+          setPlaylistDetail(pl);
+          setSongs(pl.songs);
+          setRenameValue(pl.name);
+        } else {
+          // Accumulate songs from subsequent pages
+          setSongs((prev) => [...prev, ...pl.songs]);
+          // Keep latest playlist metadata
+          setPlaylistDetail(pl);
+        }
+        setHasMore(pl.songs.length === ITEMS_PER_PAGE);
       } catch {
-        navigate('/playlists', { replace: true });
+        setIsError(true);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
+        setIsFetching(false);
       }
     },
-    [id, navigate, isAdminView]
+    []
   );
 
+  // Initial load
   useEffect(() => {
-    load(currentPage);
-  }, [load, currentPage]);
+    void loadPage(1, true);
+  }, [loadPage]);
 
-  // Refetch on any playlist mutation from other clients (payload lacks full songs array)
+  // Socket: playlist updated (rename, visibility, song count changes)
   useEffect(() => {
     const handlePlaylistUpdated = (updated: Playlist) => {
-      if (updated.id !== id) return;
-      // Refetch to get the full PlaylistDetail including the updated songs array.
-      load(currentPage);
+      if (updated.id !== idRef.current) return;
+      // Refetch current page to get updated playlist + songs
+      void loadPage(currentPage, false);
     };
 
     const offUpdated = onSocketEvent('playlists:updated', handlePlaylistUpdated);
@@ -108,17 +136,32 @@ export default function PlaylistDetailPage() {
     return () => {
       offUpdated();
     };
-  }, [id, load, currentPage]);
+  }, [currentPage, loadPage]);
+
+  // Socket: song edited — update in real-time
+  useEffect(() => {
+    const handleSongUpdated = (song: Song) => {
+      setSongs((prev) =>
+        prev.map((ps) => (ps.songId === song.id ? { ...ps, song } : ps))
+      );
+    };
+
+    const offSongUpdated = onSocketEvent('songs:updated', handleSongUpdated);
+
+    return () => {
+      offSongUpdated();
+    };
+  }, []);
 
   const handleRenameSave = async () => {
-    if (!playlist || !renameValue.trim() || renameValue.trim() === playlist.name) {
+    if (!playlistDetail || !renameValue.trim() || renameValue.trim() === playlistDetail.name) {
       setRenameValue('');
       return;
     }
     setRenameSaving(true);
     try {
-      const updated = await renamePlaylist(playlist.id, renameValue.trim());
-      setPlaylist((p) => (p ? { ...p, name: updated.name } : p));
+      const updated = await renamePlaylist(playlistDetail.id, renameValue.trim());
+      setPlaylistDetail((p) => (p ? { ...p, name: updated.name } : p));
     } finally {
       setRenameSaving(false);
       setRenameValue('');
@@ -126,54 +169,40 @@ export default function PlaylistDetailPage() {
   };
 
   const handleRemoveSong = async (songId: string) => {
-    if (!playlist) return;
+    if (!playlistDetail) return;
 
-    const prevLength = playlist.songs.length;
-    await removeSongFromPlaylist(playlist.id, songId);
+    const prevLength = songs.length;
+    await removeSongFromPlaylist(playlistDetail.id, songId);
 
-    setPlaylist((p) =>
-      p
-        ? {
-            ...p,
-            songs: p.songs.filter((ps) => ps.songId !== songId),
-          }
-        : p
-    );
-    setPagination((prev) => (prev ? { ...prev, total: Math.max(0, prev.total - 1) } : prev));
+    setSongs((prev) => prev.filter((ps) => ps.songId !== songId));
 
-    // Refill page 1 if we dropped below ITEMS_PER_PAGE
-    if (
-      prevLength === ITEMS_PER_PAGE &&
-      paginationRef.current &&
-      paginationRef.current.total > ITEMS_PER_PAGE &&
-      id
-    ) {
-      getPlaylistPage(id, isAdminView, currentPage + 1, ITEMS_PER_PAGE).then((result) => {
-        setPlaylist((p) =>
-          p
-            ? {
-                ...p,
-                songs: [...p.songs, ...result.songs].slice(0, ITEMS_PER_PAGE),
-              }
-            : p
-        );
-      });
+    // Refill if we dropped below a page
+    if (prevLength === ITEMS_PER_PAGE && hasMore && idRef.current) {
+      getPlaylistPage(idRef.current, isAdminViewRef.current, currentPage + 1, ITEMS_PER_PAGE).then(
+        (pl) => {
+          setSongs((prev) => [...prev, ...pl.songs].slice(0, ITEMS_PER_PAGE * currentPage));
+        }
+      );
     }
 
     setRemoveId(null);
   };
 
   const handleDeletePlaylist = async () => {
-    if (!playlist) return;
-    await deletePlaylist(playlist.id);
+    if (!playlistDetail) return;
+    await deletePlaylist(playlistDetail.id);
     navigate('/playlists');
   };
 
   const handleToggleVisibility = async () => {
-    if (!playlist) return;
+    if (!playlistDetail) return;
     try {
-      const updated = await togglePlaylistVisibility(playlist.id, !playlist.isPrivate, isAdminView);
-      setPlaylist((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
+      const updated = await togglePlaylistVisibility(
+        playlistDetail.id,
+        !playlistDetail.isPrivate,
+        isAdminView
+      );
+      setPlaylistDetail((p) => (p ? { ...p, isPrivate: updated.isPrivate } : p));
       notify(updated.isPrivate ? 'Playlist set to private' : 'Playlist set to public', 'success');
     } catch (err: unknown) {
       notify(apiErrorMessage(err, 'Could not toggle visibility.'), 'error', 5000);
@@ -186,11 +215,11 @@ export default function PlaylistDetailPage() {
       mode: 'sequential' | 'random' = 'sequential',
       { throwErrors = false }: { throwErrors?: boolean } = {}
     ) => {
-      if (!playlist) return;
+      if (!playlistDetail) return;
       setPlayingSongId(songId);
       try {
         await startPlayback({
-          playlistId: playlist.id,
+          playlistId: playlistDetail.id,
           mode,
           loop: queueState.loopMode,
           startFromSongId: songId,
@@ -204,29 +233,29 @@ export default function PlaylistDetailPage() {
         setPlayingSongId(null);
       }
     },
-    [playlist, queueState.loopMode, notify]
+    [playlistDetail, queueState.loopMode, notify]
   );
 
   const handleAddPlaylistToQueue = useCallback(async () => {
-    if (!playlist) return;
+    if (!playlistDetail) return;
     try {
       await startPlayback({
-        playlistId: playlist.id,
+        playlistId: playlistDetail.id,
         mode: 'sequential',
         loop: queueState.loopMode,
       });
-      notify(`Added "${playlist.name}" to queue`, 'success');
+      notify(`Added "${playlistDetail.name}" to queue`, 'success');
     } catch (err: unknown) {
       notify(apiErrorMessage(err, 'Could not add to queue.'), 'error', 5000);
     }
-  }, [playlist, queueState.loopMode, notify]);
+  }, [playlistDetail, queueState.loopMode, notify]);
 
   const menuItems: MenuItem[] = [
     {
       id: 'add-to-queue',
       label: 'Add to Queue',
       icon: <PlusCircleIcon size={14} weight="duotone" />,
-      disabled: playlist?.songs.length === 0,
+      disabled: songs.length === 0,
       onClick: handleAddPlaylistToQueue,
     },
     ...(isOwner || isAdminView
@@ -247,8 +276,8 @@ export default function PlaylistDetailPage() {
           } as MenuItem,
           {
             id: 'toggle-visibility',
-            label: playlist?.isPrivate ? 'Make Public' : 'Make Private',
-            icon: playlist?.isPrivate ? (
+            label: playlistDetail?.isPrivate ? 'Make Public' : 'Make Private',
+            icon: playlistDetail?.isPrivate ? (
               <LockOpenIcon size={14} weight="duotone" />
             ) : (
               <LockIcon size={14} weight="duotone" />
@@ -272,8 +301,52 @@ export default function PlaylistDetailPage() {
       : []),
   ];
 
-  if (loading) return <DetailSkeleton />;
-  if (!playlist) return null;
+  const loadMore = useCallback(() => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    void loadPage(nextPage, false);
+  }, [currentPage, loadPage]);
+
+  const retry = useCallback(() => {
+    void loadPage(currentPage, false);
+  }, [currentPage, loadPage]);
+
+  // IntersectionObserver for infinite scroll
+  const sentinelRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+
+      if (!el) return;
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting && !isFetching && hasMore) {
+            loadMore();
+          }
+        },
+        { rootMargin: '300px' }
+      );
+
+      observerRef.current.observe(el);
+    },
+    [isFetching, hasMore, loadMore]
+  );
+
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, []);
+
+  if (isLoading) return <DetailSkeleton />;
+  if (!playlistDetail) return null;
+
+  // Extract plain songs from PlaylistDetailSong[]
+  const songItems: Song[] = songs.map((ps) => ps.song);
 
   return (
     <div className="p-4 md:p-8">
@@ -293,9 +366,9 @@ export default function PlaylistDetailPage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">
-              {playlist.name}
+              {playlistDetail.name}
             </h1>
-            {playlist.isPrivate && (
+            {playlistDetail.isPrivate && (
               <span className="text-muted text-sm" title="Private playlist">
                 <GhostIcon size={14} weight="duotone" className="inline mr-1" />
                 private
@@ -303,12 +376,11 @@ export default function PlaylistDetailPage() {
             )}
           </div>
           <p className="font-mono text-xs text-muted mt-1">
-            {pagination?.total ?? playlist.songs.length}{' '}
-            {playlist.songs.length === 1 ? 'track' : 'tracks'}
+            {songItems.length} {songItems.length === 1 ? 'track' : 'tracks'}
             {' • '}
             {isOwner
               ? 'Created by you'
-              : `Created by ${playlist.createdByDisplayName || playlist.createdBy}`}
+              : `Created by ${playlistDetail.createdByDisplayName || playlistDetail.createdBy}`}
           </p>
         </div>
 
@@ -317,7 +389,7 @@ export default function PlaylistDetailPage() {
             variant="primary"
             className={`text-xs flex items-center gap-1.5 ${showPlay ? 'pressed' : ''}`}
             onClick={() => setShowPlay(true)}
-            disabled={(pagination?.total ?? playlist.songs.length) === 0}
+            disabled={songItems.length === 0}
           >
             <PlayIcon size={14} weight="duotone" /> Play
           </Button>
@@ -338,7 +410,7 @@ export default function PlaylistDetailPage() {
       </div>
 
       {/* Song list */}
-      {playlist.songs.length === 0 ? (
+      {songItems.length === 0 && !isLoading ? (
         <EmptyState
           title="Empty Playlist"
           isAdmin={canEdit}
@@ -346,31 +418,35 @@ export default function PlaylistDetailPage() {
           addLabel="add some songs"
         />
       ) : (
-        <div className="flex flex-col gap-1">
-          {playlist.songs.map((ps) => (
-            <PlaylistSongRow
-              key={ps.id}
-              ps={ps}
-              canEdit={canEdit}
-              isAdminView={isAdminView}
-              playingSongId={playingSongId}
-              onPlayFromSong={handlePlayFromSong}
-              onAddToQueue={handleAddToQueue}
-              onRemoveSong={setRemoveId}
-            />
-          ))}
-        </div>
+        <VirtualSongList
+          items={songItems}
+          viewMode="list"
+          isAdmin={canEdit}
+          isAdminView={isAdminView}
+          playlists={[]}
+          isLoading={isLoading}
+          isFetching={isFetching}
+          isError={isError}
+          hasMore={hasMore}
+          playingId={playingSongId}
+          onRetry={retry}
+          sentinelRef={sentinelRef}
+          onDelete={(id) => {
+            const ps = songs.find((p) => p.songId === id);
+            if (ps) setRemoveId(ps.songId);
+          }}
+          onPlay={handlePlayFromSong}
+          onAddToQueue={handleAddToQueue}
+        />
       )}
-
-      {pagination && <Pagination pagination={pagination} onPageChange={setCurrentPage} />}
 
       {/* Modals */}
       {showAddSongs && (
         <AddSongsModal
-          playlist={playlist}
+          playlist={playlistDetail}
           onClose={() => setShowAddSongs(false)}
           onAdded={() => {
-            load(currentPage);
+            void loadPage(currentPage, false);
             setShowAddSongs(false);
           }}
         />
@@ -379,7 +455,7 @@ export default function PlaylistDetailPage() {
         <PlayModal
           onClose={() => setShowPlay(false)}
           onPlay={(mode) =>
-            handlePlayFromSong(playlist.songs[0]?.songId, mode, { throwErrors: true })
+            handlePlayFromSong(songs[0]?.songId, mode, { throwErrors: true })
           }
         />
       )}
@@ -393,7 +469,7 @@ export default function PlaylistDetailPage() {
             <>
               Remove{' '}
               <span className="text-fg font-semibold">
-                "{playlist.songs.find((ps) => ps.songId === removeId)?.song?.title}"
+                "{songs.find((ps) => ps.songId === removeId)?.song?.title}"
               </span>{' '}
               from this playlist? The song won't be deleted from the library.
             </>
@@ -418,38 +494,6 @@ export default function PlaylistDetailPage() {
     </div>
   );
 }
-
-/** Extracted sub-component to stabilize per-row callbacks for `SongRow.memo()`. */
-const PlaylistSongRow = memo(function PlaylistSongRow({
-  ps,
-  canEdit,
-  isAdminView,
-  playingSongId,
-  onPlayFromSong,
-  onAddToQueue,
-  onRemoveSong,
-}: {
-  ps: PlaylistDetail['songs'][number];
-  canEdit: boolean;
-  isAdminView: boolean;
-  playingSongId: string | null;
-  onPlayFromSong: (songId: string) => void;
-  onAddToQueue: (songId: string) => void;
-  onRemoveSong: (songId: string) => void;
-}) {
-  return (
-    <SongRow
-      song={ps.song}
-      isAdmin={canEdit}
-      isAdminView={isAdminView}
-      onRemove={() => onRemoveSong(ps.songId)}
-      removeLabel="Remove from playlist"
-      onPlay={() => onPlayFromSong(ps.songId)}
-      isPlaying={playingSongId === ps.songId}
-      onAddToQueue={() => onAddToQueue(ps.songId)}
-    />
-  );
-});
 
 // ---------------------------------------------------------------------------
 // Skeleton / empty state
