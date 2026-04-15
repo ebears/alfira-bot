@@ -30,6 +30,7 @@ export default function SettingsTabs({ activeTab, onTabChange }: SettingsTabsPro
         const Icon = tab.icon;
         return (
           <button
+            type="button"
             key={tab.id}
             role="tab"
             aria-selected={activeTab === tab.id}
