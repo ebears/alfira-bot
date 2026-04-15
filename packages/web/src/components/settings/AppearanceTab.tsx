@@ -28,7 +28,7 @@ export default function AppearanceTab() {
       {/* Color Theme Selector */}
       <div className="space-y-2">
         <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Color Theme</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {colorThemes.map((t) => (
             <Button
               key={t.name}
