@@ -1,14 +1,10 @@
-import { XIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../ui/Button';
 import AppearanceTab from './AppearanceTab';
 import ServerTab from './ServerTab';
 import SettingsTabs from './SettingsTabs';
 import TagsTab from './TagsTab';
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('appearance');
 
   const renderTab = () => {
@@ -27,17 +23,8 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-        <h1 className="font-display text-3xl text-fg tracking-wide">Settings</h1>
-        <Button
-          variant="inherit"
-          size="icon"
-          surface="base"
-          onClick={() => navigate(-1)}
-          aria-label="Close settings"
-        >
-          <XIcon size={20} weight="duotone" />
-        </Button>
+      <div className="px-6 pt-6 pb-4 shrink-0">
+        <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Settings</h1>
       </div>
 
       {/* Tabs */}
