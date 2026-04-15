@@ -83,7 +83,7 @@ export default function PlaylistDetailPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const loadPage = useCallback(
-    async (page: number, isInitial = false) => {
+    async (page: number, isInitial = false, isRefetch = false) => {
       if (!idRef.current) return;
 
       if (isInitial) {
@@ -101,8 +101,12 @@ export default function PlaylistDetailPage() {
           setPlaylistDetail(pl);
           setSongs(pl.songs);
           setRenameValue(pl.name);
+        } else if (isRefetch) {
+          // Socket-triggered refetch: replace songs so we don't accumulate duplicates.
+          setSongs(pl.songs);
+          setPlaylistDetail(pl);
         } else {
-          // Accumulate songs from subsequent pages
+          // User scroll: accumulate songs from the new page.
           setSongs((prev) => [...prev, ...pl.songs]);
           // Keep latest playlist metadata
           setPlaylistDetail(pl);
@@ -128,7 +132,7 @@ export default function PlaylistDetailPage() {
     const handlePlaylistUpdated = (updated: Playlist) => {
       if (updated.id !== idRef.current) return;
       // Refetch current page to get updated playlist + songs
-      void loadPage(currentPage, false);
+      void loadPage(currentPage, false, true);
     };
 
     const offUpdated = onSocketEvent('playlists:updated', handlePlaylistUpdated);
@@ -172,20 +176,21 @@ export default function PlaylistDetailPage() {
     if (!playlistDetail) return;
 
     const prevLength = songs.length;
-    await removeSongFromPlaylist(playlistDetail.id, songId);
+    try {
+      await removeSongFromPlaylist(playlistDetail.id, songId);
+      setSongs((prev) => prev.filter((ps) => ps.songId !== songId));
 
-    setSongs((prev) => prev.filter((ps) => ps.songId !== songId));
-
-    // Refill if we dropped below a page
-    if (prevLength === ITEMS_PER_PAGE && hasMore && idRef.current) {
-      getPlaylistPage(idRef.current, isAdminViewRef.current, currentPage + 1, ITEMS_PER_PAGE).then(
-        (pl) => {
-          setSongs((prev) => [...prev, ...pl.songs].slice(0, ITEMS_PER_PAGE * currentPage));
-        }
-      );
+      // Refill if we dropped below a page
+      if (prevLength === ITEMS_PER_PAGE && hasMore && idRef.current) {
+        getPlaylistPage(idRef.current, isAdminViewRef.current, currentPage + 1, ITEMS_PER_PAGE).then(
+          (pl) => {
+            setSongs((prev) => [...prev, ...pl.songs].slice(0, ITEMS_PER_PAGE * currentPage));
+          }
+        );
+      }
+    } finally {
+      setRemoveId(null);
     }
-
-    setRemoveId(null);
   };
 
   const handleDeletePlaylist = async () => {

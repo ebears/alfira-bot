@@ -107,6 +107,11 @@ async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unk
     throw new Error(`API error: ${response.status}`);
   }
 
+  // 204 No Content has no body to parse
+  if (response.status === 204) {
+    return null;
+  }
+
   return response.json();
 }
 
@@ -136,7 +141,11 @@ export const client = {
     return { data: result as T };
   },
   async delete<T>(url: string): Promise<{ data: T }> {
-    const result = await wrappedFetch(url, { method: 'DELETE' });
-    return { data: result as T };
+    const response = await wrappedFetch(url, { method: 'DELETE' });
+    // 204 No Content has no body to parse
+    if (response === null) {
+      return { data: undefined as T };
+    }
+    return { data: response as T };
   },
 };
