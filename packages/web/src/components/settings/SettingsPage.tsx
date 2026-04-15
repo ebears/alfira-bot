@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { XIcon } from '@phosphor-icons/react';
-import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
 import AppearanceTab from './AppearanceTab';
 import ServerTab from './ServerTab';
@@ -9,7 +8,6 @@ import SettingsTabs from './SettingsTabs';
 import TagsTab from './TagsTab';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('appearance');
 
