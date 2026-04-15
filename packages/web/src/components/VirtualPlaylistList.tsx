@@ -1,6 +1,5 @@
 import type { Playlist } from '@alfira-bot/server/shared';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import PlaylistRow from './PlaylistRow';
 
 interface VirtualPlaylistListProps {
@@ -12,8 +11,6 @@ interface VirtualPlaylistListProps {
   sentinelRef: (el: HTMLDivElement | null) => void;
   onRowClick: (e: React.MouseEvent) => void;
 }
-
-const ROW_ESTIMATE = 68;
 
 function SkeletonList() {
   return (
@@ -41,16 +38,6 @@ export const VirtualPlaylistList = memo(function VirtualPlaylistList({
   sentinelRef,
   onRowClick,
 }: VirtualPlaylistListProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_ESTIMATE,
-    overscan: 5,
-    measureElement: (el) => el.getBoundingClientRect().height,
-  });
-
   if (isLoading) {
     return <SkeletonList />;
   }
@@ -59,44 +46,18 @@ export const VirtualPlaylistList = memo(function VirtualPlaylistList({
     return null;
   }
 
-  const totalSize = rowVirtualizer.getTotalSize();
-  const virtualItems = rowVirtualizer.getVirtualItems();
-
   return (
     <div className="relative">
-      <div
-        ref={parentRef}
-        className="overflow-y-auto"
-        style={{ height: 'calc(100vh - 300px)' }}
-      >
-        <div style={{ height: `${totalSize}px`, position: 'relative' }}>
-          {virtualItems.map((virtualRow) => {
-            const playlist = items[virtualRow.index];
-            if (!playlist) return null;
-
-            return (
-              <div
-                key={playlist.id}
-                data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <PlaylistRow
-                  playlist={playlist}
-                  animationDelay="0ms"
-                  onClick={onRowClick}
-                  data-playlist-id={playlist.id}
-                />
-              </div>
-            );
-          })}
-        </div>
+      <div className="flex flex-col gap-3">
+        {items.map((playlist) => (
+          <PlaylistRow
+            key={playlist.id}
+            playlist={playlist}
+            animationDelay="0ms"
+            onClick={onRowClick}
+            data-playlist-id={playlist.id}
+          />
+        ))}
       </div>
 
       {/* Sentinel + loading/error states at bottom */}

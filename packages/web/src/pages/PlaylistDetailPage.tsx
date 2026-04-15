@@ -138,6 +138,21 @@ export default function PlaylistDetailPage() {
     };
   }, [currentPage, loadPage]);
 
+  // Socket: song edited — update in real-time
+  useEffect(() => {
+    const handleSongUpdated = (song: Song) => {
+      setSongs((prev) =>
+        prev.map((ps) => (ps.songId === song.id ? { ...ps, song } : ps))
+      );
+    };
+
+    const offSongUpdated = onSocketEvent('songs:updated', handleSongUpdated);
+
+    return () => {
+      offSongUpdated();
+    };
+  }, []);
+
   const handleRenameSave = async () => {
     if (!playlistDetail || !renameValue.trim() || renameValue.trim() === playlistDetail.name) {
       setRenameValue('');

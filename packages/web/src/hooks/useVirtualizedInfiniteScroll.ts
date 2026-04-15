@@ -13,6 +13,7 @@ export interface UseInfiniteScrollReturn<T> {
   isError: boolean;
   hasMore: boolean;
   prepend: (item: T) => void;
+  updateItem: (item: T) => void;
   reset: () => void;
   retry: () => void;
   sentinelRef: (el: HTMLDivElement | null) => void;
@@ -106,6 +107,12 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
     });
   }, []);
 
+  const updateItem = useCallback((item: T) => {
+    setItems((prev) =>
+      prev.map((i) => ((i as { id: string }).id === (item as { id: string }).id ? item : i))
+    );
+  }, []);
+
   const reset = useCallback(() => {
     setItems([]);
     pageRef.current = 1;
@@ -162,6 +169,7 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
     isError,
     hasMore,
     prepend,
+    updateItem,
     reset,
     retry,
     sentinelRef: setSentinelRef,

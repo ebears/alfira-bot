@@ -43,7 +43,7 @@ export default function SongsPage() {
   }, [isAdminView]);
 
   // Infinite scroll hook
-  const { items, isLoading, isFetching, isError, hasMore, prepend, reset, retry, sentinelRef } =
+  const { items, isLoading, isFetching, isError, hasMore, prepend, updateItem, reset, retry, sentinelRef } =
     useVirtualizedInfiniteScroll<Song, [string]>({
       fetchPage: async (page, limit, searchQuery) => {
         const result = await getSongsPage(page, limit, searchQuery);
@@ -64,12 +64,18 @@ export default function SongsPage() {
       prepend(song);
     };
 
+    const handleSongUpdated = (song: Song) => {
+      updateItem(song);
+    };
+
     const offAdded = onSocketEvent('songs:added', handleSongAdded);
+    const offUpdated = onSocketEvent('songs:updated', handleSongUpdated);
 
     return () => {
       offAdded();
+      offUpdated();
     };
-  }, [prepend]);
+  }, [prepend, updateItem]);
 
   const handleDelete = async (id: string) => {
     await deleteSong(id);

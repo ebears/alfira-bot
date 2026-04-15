@@ -1,6 +1,5 @@
 import type { Playlist, Song } from '@alfira-bot/server/shared';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import SongCard from './SongCard';
 import SongRow from './SongRow';
 
@@ -66,156 +65,6 @@ function SkeletonList() {
   );
 }
 
-// Grid view — normal CSS grid. Sentinel at bottom of grid triggers loads.
-function SongGrid({
-  items,
-  isAdmin,
-  isAdminView,
-  playlists,
-  playingId,
-  onDelete,
-  onPlay,
-  onAddToQueue,
-}: {
-  items: Song[];
-  isAdmin: boolean;
-  isAdminView: boolean;
-  playlists: Playlist[];
-  playingId: string | null;
-  onDelete: (id: string) => void;
-  onPlay: (id: string) => void;
-  onAddToQueue: (id: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4 items-start">
-      {items.map((song) => (
-        <SongCard
-          key={song.id}
-          song={song}
-          isAdmin={isAdmin}
-          isAdminView={isAdminView}
-          playlists={playlists}
-          onDelete={onDelete}
-          onPlay={onPlay}
-          isPlaying={playingId === song.id}
-          onAddToQueue={onAddToQueue}
-        />
-      ))}
-    </div>
-  );
-}
-
-// List view — virtualized with its own scroll container.
-function SongList({
-  items,
-  isAdmin,
-  isAdminView,
-  playlists,
-  playingId,
-  onDelete,
-  onPlay,
-  onAddToQueue,
-  sentinelRef,
-  isFetching,
-  isError,
-  hasMore,
-  onRetry,
-}: {
-  items: Song[];
-  isAdmin: boolean;
-  isAdminView: boolean;
-  playlists: Playlist[];
-  playingId: string | null;
-  onDelete: (id: string) => void;
-  onPlay: (id: string) => void;
-  onAddToQueue: (id: string) => void;
-  sentinelRef: (el: HTMLDivElement | null) => void;
-  isFetching: boolean;
-  isError: boolean;
-  hasMore: boolean;
-  onRetry: () => void;
-}) {
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 72,
-    overscan: 5,
-    measureElement: (el) => el.getBoundingClientRect().height,
-  });
-
-  const totalSize = rowVirtualizer.getTotalSize();
-  const virtualItems = rowVirtualizer.getVirtualItems();
-
-  return (
-    <div className="relative">
-      <div
-        ref={parentRef}
-        className="overflow-y-auto"
-        style={{ height: 'calc(100vh - 300px)' }}
-      >
-        <div style={{ height: `${totalSize}px`, position: 'relative' }}>
-          {virtualItems.map((virtualRow) => {
-            const song = items[virtualRow.index];
-            if (!song) return null;
-
-            return (
-              <div
-                key={song.id}
-                data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <SongRow
-                  song={song}
-                  isAdmin={isAdmin}
-                  isAdminView={isAdminView}
-                  playlists={playlists}
-                  onDelete={onDelete}
-                  onPlay={() => onPlay(song.id)}
-                  isPlaying={playingId === song.id}
-                  onAddToQueue={() => onAddToQueue(song.id)}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Sentinel + loading/error states at bottom */}
-      <div ref={sentinelRef}>
-        {isError && (
-          <div className="flex justify-center py-4">
-            <button
-              type="button"
-              onClick={onRetry}
-              className="font-mono text-xs text-muted hover:text-fg transition-colors underline"
-            >
-              Failed to load more. Retry
-            </button>
-          </div>
-        )}
-        {isFetching && !isError && (
-          <div className="flex justify-center py-4 gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static loading indicator
-              <div key={`loading-dot-${i}`} className="skeleton h-3 w-3 rounded-full animate-pulse" />
-            ))}
-          </div>
-        )}
-        {!isFetching && !isError && !hasMore && items.length > 0 && <div className="h-4" />}
-      </div>
-    </div>
-  );
-}
-
 export const VirtualSongList = memo(function VirtualSongList({
   items,
   viewMode,
@@ -244,17 +93,22 @@ export const VirtualSongList = memo(function VirtualSongList({
   if (viewMode === 'grid') {
     return (
       <div className="relative">
-        <SongGrid
-          items={items}
-          isAdmin={isAdmin}
-          isAdminView={isAdminView}
-          playlists={playlists}
-          playingId={playingId}
-          onDelete={onDelete}
-          onPlay={onPlay}
-          onAddToQueue={onAddToQueue}
-        />
-        {/* Sentinel at bottom of grid to trigger load more */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3 md:gap-4 items-start">
+          {items.map((song) => (
+            <SongCard
+              key={song.id}
+              song={song}
+              isAdmin={isAdmin}
+              isAdminView={isAdminView}
+              playlists={playlists}
+              onDelete={onDelete}
+              onPlay={onPlay}
+              isPlaying={playingId === song.id}
+              onAddToQueue={onAddToQueue}
+            />
+          ))}
+        </div>
+        {/* Sentinel at bottom to trigger load more */}
         <div ref={sentinelRef}>
           {isError && (
             <div className="flex justify-center py-4">
@@ -275,28 +129,54 @@ export const VirtualSongList = memo(function VirtualSongList({
               ))}
             </div>
           )}
+          {!isFetching && !isError && !hasMore && items.length > 0 && <div className="h-4" />}
         </div>
       </div>
     );
   }
 
-  // List view — its own scroll container
+  // List view — flex column with page scroll. Sentinel at bottom.
   return (
-    <SongList
-      items={items}
-      isAdmin={isAdmin}
-      isAdminView={isAdminView}
-      playlists={playlists}
-      playingId={playingId}
-      onDelete={onDelete}
-      onPlay={onPlay}
-      onAddToQueue={onAddToQueue}
-      sentinelRef={sentinelRef}
-      isFetching={isFetching}
-      isError={isError}
-      hasMore={hasMore}
-      onRetry={onRetry}
-    />
+    <div className="relative">
+      <div className="flex flex-col gap-1">
+        {items.map((song) => (
+          <SongRow
+            key={song.id}
+            song={song}
+            isAdmin={isAdmin}
+            isAdminView={isAdminView}
+            playlists={playlists}
+            onDelete={onDelete}
+            onPlay={() => onPlay(song.id)}
+            isPlaying={playingId === song.id}
+            onAddToQueue={() => onAddToQueue(song.id)}
+          />
+        ))}
+      </div>
+      {/* Sentinel at bottom to trigger load more */}
+      <div ref={sentinelRef}>
+        {isError && (
+          <div className="flex justify-center py-4">
+            <button
+              type="button"
+              onClick={onRetry}
+              className="font-mono text-xs text-muted hover:text-fg transition-colors underline"
+            >
+              Failed to load more. Retry
+            </button>
+          </div>
+        )}
+        {isFetching && !isError && (
+          <div className="flex justify-center py-4 gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static loading indicator
+              <div key={`loading-dot-${i}`} className="skeleton h-3 w-3 rounded-full animate-pulse" />
+            ))}
+          </div>
+        )}
+        {!isFetching && !isError && !hasMore && items.length > 0 && <div className="h-4" />}
+      </div>
+    </div>
   );
 });
 
