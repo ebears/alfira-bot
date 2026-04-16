@@ -62,27 +62,21 @@
    Then light/dark modes define surface colors
    ============================================ */
 
-/* ----- ARTIFICER: Orange, Ingenuity & Invention ----- */
 [data-color-theme="artificer"] {
-    --palette-accent: #f97316;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #2a2420;
-    --palette-foreground-muted: #1a1612;
+    --color-accent: #f97316;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #333333;
         --color-surface: #1e1e1e;
         --color-elevated: #282828;
         --color-border: #3a3a3a;
-        --color-accent: var(--palette-accent);
         --color-fg: #f5f5f5;
         --color-muted: #8a8a8a;
         --color-faint: #4a4a4a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #2a2420;
+        --color-foreground-muted: #1a1612;
     }
 
     &[data-mode="light"] {
@@ -90,40 +84,29 @@
         --color-surface: #ffffff;
         --color-elevated: #f0f0f0;
         --color-border: #d9d9d9;
-        --color-accent: var(--palette-accent);
         --color-fg: #1a1a1a;
         --color-muted: #5c5c5c;
         --color-faint: #9a9a9a;
-        --color-danger: #dc2626;
-        --palette-foreground: #f0e8e0;
-        --palette-foreground-muted: #d8cec0;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #f0e8e0;
+        --color-foreground-muted: #d8cec0;
     }
 }
 
-/* ----- BARBARIAN: Red, Rage & Fury ----- */
 [data-color-theme="barbarian"] {
-    --palette-accent: #dc2626;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #2a1818;
-    --palette-foreground-muted: #1a1010;
+    --color-accent: #dc2626;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #352a2a;
         --color-surface: #1e1a1a;
         --color-elevated: #282020;
         --color-border: #3a3030;
-        --color-accent: var(--palette-accent);
         --color-fg: #f5f0f0;
         --color-muted: #8a7a7a;
         --color-faint: #4a3a3a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #2a1818;
+        --color-foreground-muted: #1a1010;
     }
 
     &[data-mode="light"] {
@@ -131,40 +114,29 @@
         --color-surface: #ffffff;
         --color-elevated: #f5f0f0;
         --color-border: #e5d9d9;
-        --color-accent: var(--palette-accent);
         --color-fg: #1a1414;
         --color-muted: #5c5252;
         --color-faint: #9a8a8a;
-        --color-danger: #b91c1c;
-        --palette-foreground: #f8ecec;
-        --palette-foreground-muted: #e0ccc8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #f8ecec;
+        --color-foreground-muted: #e0ccc8;
     }
 }
 
-/* ----- BARD: Magenta/Pink, Performance & Charisma ----- */
 [data-color-theme="bard"] {
-    --palette-accent: #ec4899;
-    --palette-danger: #f43f5e;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #2a1e28;
-    --palette-foreground-muted: #1a1218;
+    --color-accent: #ec4899;
+    --color-danger: #f43f5e;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #35282d;
         --color-surface: #1e1618;
         --color-elevated: #281e22;
         --color-border: #3a2e34;
-        --color-accent: var(--palette-accent);
         --color-fg: #f5e8f0;
         --color-muted: #9a7a8a;
         --color-faint: #5a3a4a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #2a1e28;
+        --color-foreground-muted: #1a1218;
     }
 
     &[data-mode="light"] {
@@ -172,40 +144,29 @@
         --color-surface: #ffffff;
         --color-elevated: #f5e8f0;
         --color-border: #e8d0d8;
-        --color-accent: var(--palette-accent);
         --color-fg: #1a1014;
         --color-muted: #6a4a5a;
         --color-faint: #aa8a9a;
-        --color-danger: #e11d48;
-        --palette-foreground: #f5e8f2;
-        --palette-foreground-muted: #ddd0d8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #f5e8f2;
+        --color-foreground-muted: #ddd0d8;
     }
 }
 
-/* ----- CLERIC: Gold, Candlelit Devotion ----- */
 [data-color-theme="cleric"] {
-    --palette-accent: #eab308;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #2a2618;
-    --palette-foreground-muted: #1a1810;
+    --color-accent: #eab308;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #363121;
         --color-surface: #1e1a10;
         --color-elevated: #282418;
         --color-border: #3a3420;
-        --color-accent: var(--palette-accent);
         --color-fg: #f5f0d8;
         --color-muted: #8a8050;
         --color-faint: #4a4428;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #2a2618;
+        --color-foreground-muted: #1a1810;
     }
 
     &[data-mode="light"] {
@@ -213,40 +174,29 @@
         --color-surface: #ffffff;
         --color-elevated: #fef9c3;
         --color-border: #fde68a;
-        --color-accent: var(--palette-accent);
         --color-fg: #1a1708;
         --color-muted: #5c5428;
         --color-faint: #9a9060;
-        --color-danger: #dc2626;
-        --palette-foreground: #faf4e0;
-        --palette-foreground-muted: #e8dcc0;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #faf4e0;
+        --color-foreground-muted: #e8dcc0;
     }
 }
 
-/* ----- DRUID: Rose & Green, Nature in Full Bloom -----*/
 [data-color-theme="druid"] {
-    --palette-accent: #fb7185;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #1a2a1a;
-    --palette-foreground-muted: #101a10;
+    --color-accent: #fb7185;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #2a352a;
         --color-surface: #181e18;
         --color-elevated: #202820;
         --color-border: #2e3a2e;
-        --color-accent: var(--palette-accent);
         --color-fg: #e8f5e8;
         --color-muted: #7a9a7a;
         --color-faint: #3a5a3a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #1a2a1a;
+        --color-foreground-muted: #101a10;
     }
 
     &[data-mode="light"] {
@@ -254,40 +204,29 @@
         --color-surface: #ffffff;
         --color-elevated: #e8f5e8;
         --color-border: #c8e5c8;
-        --color-accent: var(--palette-accent);
         --color-fg: #141a14;
         --color-muted: #4a6a4a;
         --color-faint: #8aaa8a;
-        --color-danger: #dc2626;
-        --palette-foreground: #e8f5e8;
-        --palette-foreground-muted: #c8e0c8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #e8f5e8;
+        --color-foreground-muted: #c8e0c8;
     }
 }
 
-/* ----- FIGHTER: Slate Gray, Steel & Resolve ----- */
 [data-color-theme="fighter"] {
-    --palette-accent: #64748b;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #222228;
-    --palette-foreground-muted: #141418;
+    --color-accent: #64748b;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #2d2d34;
         --color-surface: #1a1a1e;
         --color-elevated: #222228;
         --color-border: #34343a;
-        --color-accent: var(--palette-accent);
         --color-fg: #e8e8f0;
         --color-muted: #7a7a8a;
         --color-faint: #3a3a4a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #222228;
+        --color-foreground-muted: #141418;
     }
 
     &[data-mode="light"] {
@@ -295,40 +234,29 @@
         --color-surface: #ffffff;
         --color-elevated: #e8e8f0;
         --color-border: #c8c8d8;
-        --color-accent: var(--palette-accent);
         --color-fg: #14141c;
         --color-muted: #4a4a5a;
         --color-faint: #9a9aaa;
-        --color-danger: #dc2626;
-        --palette-foreground: #eeeef2;
-        --palette-foreground-muted: #d8d8e0;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #eeeef2;
+        --color-foreground-muted: #d8d8e0;
     }
 }
 
-/* ----- MONK: Cyan/Teal, Discipline & Harmony ----- */
 [data-color-theme="monk"] {
-    --palette-accent: #14b8a6;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #182828;
-    --palette-foreground-muted: #101a1a;
+    --color-accent: #14b8a6;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #283535;
         --color-surface: #161e1e;
         --color-elevated: #1e2828;
         --color-border: #2c3a3a;
-        --color-accent: var(--palette-accent);
         --color-fg: #e0f0f0;
         --color-muted: #6a9a9a;
         --color-faint: #2a5a5a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #182828;
+        --color-foreground-muted: #101a1a;
     }
 
     &[data-mode="light"] {
@@ -336,40 +264,29 @@
         --color-surface: #ffffff;
         --color-elevated: #e0f5f5;
         --color-border: #c0e0e0;
-        --color-accent: var(--palette-accent);
         --color-fg: #0a1a1a;
         --color-muted: #3a6a6a;
         --color-faint: #7aaaaa;
-        --color-danger: #dc2626;
-        --palette-foreground: #e0f5f5;
-        --palette-foreground-muted: #c0e0e0;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #e0f5f5;
+        --color-foreground-muted: #c0e0e0;
     }
 }
 
-/* ----- PALADIN: Silver & White, Holy Warrior ----- */
 [data-color-theme="paladin"] {
-    --palette-accent: #cbd5e1;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #222630;
-    --palette-foreground-muted: #141820;
+    --color-accent: #cbd5e1;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #29313e;
         --color-surface: #181c22;
         --color-elevated: #202630;
         --color-border: #303a4a;
-        --color-accent: var(--palette-accent);
         --color-fg: #eef2f8;
         --color-muted: #7a8fa8;
         --color-faint: #3a4a60;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #222630;
+        --color-foreground-muted: #141820;
     }
 
     &[data-mode="light"] {
@@ -377,40 +294,29 @@
         --color-surface: #ffffff;
         --color-elevated: #eef2f8;
         --color-border: #d0dae8;
-        --color-accent: var(--palette-accent);
         --color-fg: #0d1520;
         --color-muted: #4a6080;
         --color-faint: #94a3b8;
-        --color-danger: #dc2626;
-        --palette-foreground: #eef2f8;
-        --palette-foreground-muted: #d8dce8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #eef2f8;
+        --color-foreground-muted: #d8dce8;
     }
 }
 
-/* ----- RANGER: Forest Green, Deep Wilderness -----*/
 [data-color-theme="ranger"] {
-    --palette-accent: #15803d;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #182a18;
-    --palette-foreground-muted: #101a10;
+    --color-accent: #15803d;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #283623;
         --color-surface: #161e14;
         --color-elevated: #1e281a;
         --color-border: #2a3828;
-        --color-accent: var(--palette-accent);
         --color-fg: #dff0dc;
         --color-muted: #5e8a5a;
         --color-faint: #284825;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #182a18;
+        --color-foreground-muted: #101a10;
     }
 
     &[data-mode="light"] {
@@ -418,40 +324,29 @@
         --color-surface: #ffffff;
         --color-elevated: #dceeda;
         --color-border: #b0d4ac;
-        --color-accent: var(--palette-accent);
         --color-fg: #0a1a09;
         --color-muted: #386034;
         --color-faint: #78a874;
-        --color-danger: #dc2626;
-        --palette-foreground: #e8f5e0;
-        --palette-foreground-muted: #c8e0c0;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #e8f5e0;
+        --color-foreground-muted: #c8e0c0;
     }
 }
 
-/* ----- ROGUE: Indigo, Shadows & Stealth ----- */
 [data-color-theme="rogue"] {
-    --palette-accent: #6366f1;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #1e1e28;
-    --palette-foreground-muted: #12121a;
+    --color-accent: #6366f1;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #2a2a35;
         --color-surface: #18181e;
         --color-elevated: #202028;
         --color-border: #2e2e38;
-        --color-accent: var(--palette-accent);
         --color-fg: #e8e8f5;
         --color-muted: #6a6a9a;
         --color-faint: #32324a;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #1e1e28;
+        --color-foreground-muted: #12121a;
     }
 
     &[data-mode="light"] {
@@ -459,40 +354,29 @@
         --color-surface: #ffffff;
         --color-elevated: #eaeaf2;
         --color-border: #d0d0e0;
-        --color-accent: var(--palette-accent);
         --color-fg: #0e0e1c;
         --color-muted: #484870;
         --color-faint: #9898b8;
-        --color-danger: #e11d48;
-        --palette-foreground: #eaeaf5;
-        --palette-foreground-muted: #d0d0e0;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #eaeaf5;
+        --color-foreground-muted: #d0d0e0;
     }
 }
 
-/* ----- SORCERER: Crimson, Volatile Innate Magic ----- */
 [data-color-theme="sorcerer"] {
-    --palette-accent: #e11d48;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #2a1418;
-    --palette-foreground-muted: #1a0e12;
+    --color-accent: #e11d48;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #35282d;
         --color-surface: #1e1618;
         --color-elevated: #281e22;
         --color-border: #3a2830;
-        --color-accent: var(--palette-accent);
         --color-fg: #f8e8ec;
         --color-muted: #905060;
         --color-faint: #502030;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #2a1418;
+        --color-foreground-muted: #1a0e12;
     }
 
     &[data-mode="light"] {
@@ -500,40 +384,29 @@
         --color-surface: #ffffff;
         --color-elevated: #fce4e8;
         --color-border: #f8c8d0;
-        --color-accent: var(--palette-accent);
         --color-fg: #1a080c;
         --color-muted: #6c2030;
         --color-faint: #b87080;
-        --color-danger: #dc2626;
-        --palette-foreground: #fce8ec;
-        --palette-foreground-muted: #e8d0d8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #fce8ec;
+        --color-foreground-muted: #e8d0d8;
     }
 }
 
-/* ----- WARLOCK: Dark Purple/Red, Eldritch Pact ----- */
 [data-color-theme="warlock"] {
-    --palette-accent: #a855f7;
-    --palette-danger: #dc2626;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #241828;
-    --palette-foreground-muted: #16101a;
+    --color-accent: #a855f7;
+    --color-danger: #dc2626;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #32273a;
         --color-surface: #1c1620;
         --color-elevated: #261e2c;
         --color-border: #382e40;
-        --color-accent: var(--palette-accent);
         --color-fg: #f0e8f4;
         --color-muted: #9070a0;
         --color-faint: #503060;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #241828;
+        --color-foreground-muted: #16101a;
     }
 
     &[data-mode="light"] {
@@ -541,40 +414,29 @@
         --color-surface: #ffffff;
         --color-elevated: #f4eef8;
         --color-border: #e0d4e8;
-        --color-accent: var(--palette-accent);
         --color-fg: #1a101e;
         --color-muted: #6a5080;
         --color-faint: #b0a0c0;
-        --color-danger: #b91c1c;
-        --palette-foreground: #f5e8f8;
-        --palette-foreground-muted: #e0d0e8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #f5e8f8;
+        --color-foreground-muted: #e0d0e8;
     }
 }
 
-/* ----- WIZARD: Deep Blue, Arcane Knowledge ----- */
 [data-color-theme="wizard"] {
-    --palette-accent: #3b82f6;
-    --palette-danger: #ef4444;
-    --palette-warning: #f59e0b;
-    --palette-foreground: #181e2a;
-    --palette-foreground-muted: #101420;
+    --color-accent: #3b82f6;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #272f3c;
         --color-surface: #161a22;
         --color-elevated: #1e242e;
         --color-border: #2c3444;
-        --color-accent: var(--palette-accent);
         --color-fg: #e0e8f5;
         --color-muted: #7080a0;
         --color-faint: #304060;
-        --color-danger: var(--palette-danger);
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #181e2a;
+        --color-foreground-muted: #101420;
     }
 
     &[data-mode="light"] {
@@ -582,16 +444,11 @@
         --color-surface: #ffffff;
         --color-elevated: #e8ecf5;
         --color-border: #c8d0e0;
-        --color-accent: var(--palette-accent);
         --color-fg: #101420;
         --color-muted: #506080;
         --color-faint: #90a0c0;
-        --color-danger: #dc2626;
-        --palette-foreground: #e8ecfa;
-        --palette-foreground-muted: #d0d8e8;
-        --color-warning: var(--palette-warning);
-        --color-foreground: var(--palette-foreground);
-        --color-foreground-muted: var(--palette-foreground-muted);
+        --color-foreground: #e8ecfa;
+        --color-foreground-muted: #d0d8e8;
     }
 }
 
