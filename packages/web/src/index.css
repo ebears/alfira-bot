@@ -3,11 +3,6 @@
 
 @import "tailwindcss";
 
-/* Custom utilities for Now Playing bar heights */
-@utility h-26 {
-    height: 5.5rem;
-}
-
 @keyframes fadeUp {
     0% {
         opacity: 0;
@@ -70,9 +65,6 @@
 /* ----- ARTIFICER: Orange, Ingenuity & Invention ----- */
 [data-color-theme="artificer"] {
     --palette-accent: #f97316;
-    --palette-accent-muted: #ea580c;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #2a2420;
@@ -84,9 +76,6 @@
         --color-elevated: #282828;
         --color-border: #3a3a3a;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #f5f5f5;
         --color-muted: #8a8a8a;
         --color-faint: #4a4a4a;
@@ -102,9 +91,6 @@
         --color-elevated: #f0f0f0;
         --color-border: #d9d9d9;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #1a1a1a;
         --color-muted: #5c5c5c;
         --color-faint: #9a9a9a;
@@ -120,9 +106,6 @@
 /* ----- BARBARIAN: Red, Rage & Fury ----- */
 [data-color-theme="barbarian"] {
     --palette-accent: #dc2626;
-    --palette-accent-muted: #b91c1c;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #2a1818;
@@ -134,9 +117,6 @@
         --color-elevated: #282020;
         --color-border: #3a3030;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #f5f0f0;
         --color-muted: #8a7a7a;
         --color-faint: #4a3a3a;
@@ -152,9 +132,6 @@
         --color-elevated: #f5f0f0;
         --color-border: #e5d9d9;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #1a1414;
         --color-muted: #5c5252;
         --color-faint: #9a8a8a;
@@ -170,9 +147,6 @@
 /* ----- BARD: Magenta/Pink, Performance & Charisma ----- */
 [data-color-theme="bard"] {
     --palette-accent: #ec4899;
-    --palette-accent-muted: #db2777;
-    --palette-member: #8b5cf6;
-    --palette-member-muted: #7c3aed;
     --palette-danger: #f43f5e;
     --palette-warning: #f59e0b;
     --palette-foreground: #2a1e28;
@@ -184,9 +158,6 @@
         --color-elevated: #281e22;
         --color-border: #3a2e34;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #f5e8f0;
         --color-muted: #9a7a8a;
         --color-faint: #5a3a4a;
@@ -202,9 +173,6 @@
         --color-elevated: #f5e8f0;
         --color-border: #e8d0d8;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #1a1014;
         --color-muted: #6a4a5a;
         --color-faint: #aa8a9a;
@@ -220,9 +188,6 @@
 /* ----- CLERIC: Gold, Candlelit Devotion ----- */
 [data-color-theme="cleric"] {
     --palette-accent: #eab308;
-    --palette-accent-muted: #ca8a04;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #2a2618;
@@ -234,9 +199,6 @@
         --color-elevated: #282418;
         --color-border: #3a3420;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #f5f0d8;
         --color-muted: #8a8050;
         --color-faint: #4a4428;
@@ -252,9 +214,6 @@
         --color-elevated: #fef9c3;
         --color-border: #fde68a;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #1a1708;
         --color-muted: #5c5428;
         --color-faint: #9a9060;
@@ -270,9 +229,6 @@
 /* ----- DRUID: Rose & Green, Nature in Full Bloom -----*/
 [data-color-theme="druid"] {
     --palette-accent: #fb7185;
-    --palette-accent-muted: #f43f5e;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #1a2a1a;
@@ -284,9 +240,6 @@
         --color-elevated: #202820;
         --color-border: #2e3a2e;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #e8f5e8;
         --color-muted: #7a9a7a;
         --color-faint: #3a5a3a;
@@ -302,9 +255,6 @@
         --color-elevated: #e8f5e8;
         --color-border: #c8e5c8;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #141a14;
         --color-muted: #4a6a4a;
         --color-faint: #8aaa8a;
@@ -320,9 +270,6 @@
 /* ----- FIGHTER: Slate Gray, Steel & Resolve ----- */
 [data-color-theme="fighter"] {
     --palette-accent: #64748b;
-    --palette-accent-muted: #475569;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #222228;
@@ -334,9 +281,6 @@
         --color-elevated: #222228;
         --color-border: #34343a;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #e8e8f0;
         --color-muted: #7a7a8a;
         --color-faint: #3a3a4a;
@@ -352,9 +296,6 @@
         --color-elevated: #e8e8f0;
         --color-border: #c8c8d8;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #14141c;
         --color-muted: #4a4a5a;
         --color-faint: #9a9aaa;
@@ -370,9 +311,6 @@
 /* ----- MONK: Cyan/Teal, Discipline & Harmony ----- */
 [data-color-theme="monk"] {
     --palette-accent: #14b8a6;
-    --palette-accent-muted: #0d9488;
-    --palette-member: #6366f1;
-    --palette-member-muted: #4f46e5;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #182828;
@@ -384,9 +322,6 @@
         --color-elevated: #1e2828;
         --color-border: #2c3a3a;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #e0f0f0;
         --color-muted: #6a9a9a;
         --color-faint: #2a5a5a;
@@ -402,9 +337,6 @@
         --color-elevated: #e0f5f5;
         --color-border: #c0e0e0;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #0a1a1a;
         --color-muted: #3a6a6a;
         --color-faint: #7aaaaa;
@@ -420,9 +352,6 @@
 /* ----- PALADIN: Silver & White, Holy Warrior ----- */
 [data-color-theme="paladin"] {
     --palette-accent: #cbd5e1;
-    --palette-accent-muted: #94a3b8;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #222630;
@@ -434,9 +363,6 @@
         --color-elevated: #202630;
         --color-border: #303a4a;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #eef2f8;
         --color-muted: #7a8fa8;
         --color-faint: #3a4a60;
@@ -452,9 +378,6 @@
         --color-elevated: #eef2f8;
         --color-border: #d0dae8;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #0d1520;
         --color-muted: #4a6080;
         --color-faint: #94a3b8;
@@ -470,9 +393,6 @@
 /* ----- RANGER: Forest Green, Deep Wilderness -----*/
 [data-color-theme="ranger"] {
     --palette-accent: #15803d;
-    --palette-accent-muted: #166534;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #182a18;
@@ -484,9 +404,6 @@
         --color-elevated: #1e281a;
         --color-border: #2a3828;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #dff0dc;
         --color-muted: #5e8a5a;
         --color-faint: #284825;
@@ -502,9 +419,6 @@
         --color-elevated: #dceeda;
         --color-border: #b0d4ac;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #0a1a09;
         --color-muted: #386034;
         --color-faint: #78a874;
@@ -520,9 +434,6 @@
 /* ----- ROGUE: Indigo, Shadows & Stealth ----- */
 [data-color-theme="rogue"] {
     --palette-accent: #6366f1;
-    --palette-accent-muted: #4f46e5;
-    --palette-member: #3b82f6;
-    --palette-member-muted: #2563eb;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #1e1e28;
@@ -534,9 +445,6 @@
         --color-elevated: #202028;
         --color-border: #2e2e38;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #e8e8f5;
         --color-muted: #6a6a9a;
         --color-faint: #32324a;
@@ -552,9 +460,6 @@
         --color-elevated: #eaeaf2;
         --color-border: #d0d0e0;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #0e0e1c;
         --color-muted: #484870;
         --color-faint: #9898b8;
@@ -570,9 +475,6 @@
 /* ----- SORCERER: Crimson, Volatile Innate Magic ----- */
 [data-color-theme="sorcerer"] {
     --palette-accent: #e11d48;
-    --palette-accent-muted: #be123c;
-    --palette-member: #8b5cf6;
-    --palette-member-muted: #7c3aed;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #2a1418;
@@ -584,9 +486,6 @@
         --color-elevated: #281e22;
         --color-border: #3a2830;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #f8e8ec;
         --color-muted: #905060;
         --color-faint: #502030;
@@ -602,9 +501,6 @@
         --color-elevated: #fce4e8;
         --color-border: #f8c8d0;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #1a080c;
         --color-muted: #6c2030;
         --color-faint: #b87080;
@@ -620,9 +516,6 @@
 /* ----- WARLOCK: Dark Purple/Red, Eldritch Pact ----- */
 [data-color-theme="warlock"] {
     --palette-accent: #a855f7;
-    --palette-accent-muted: #9333ea;
-    --palette-member: #f97316;
-    --palette-member-muted: #ea580c;
     --palette-danger: #dc2626;
     --palette-warning: #f59e0b;
     --palette-foreground: #241828;
@@ -634,9 +527,6 @@
         --color-elevated: #261e2c;
         --color-border: #382e40;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #f0e8f4;
         --color-muted: #9070a0;
         --color-faint: #503060;
@@ -652,9 +542,6 @@
         --color-elevated: #f4eef8;
         --color-border: #e0d4e8;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #1a101e;
         --color-muted: #6a5080;
         --color-faint: #b0a0c0;
@@ -670,9 +557,6 @@
 /* ----- WIZARD: Deep Blue, Arcane Knowledge ----- */
 [data-color-theme="wizard"] {
     --palette-accent: #3b82f6;
-    --palette-accent-muted: #2563eb;
-    --palette-member: #a855f7;
-    --palette-member-muted: #9333ea;
     --palette-danger: #ef4444;
     --palette-warning: #f59e0b;
     --palette-foreground: #181e2a;
@@ -684,9 +568,6 @@
         --color-elevated: #1e242e;
         --color-border: #2c3444;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #e0e8f5;
         --color-muted: #7080a0;
         --color-faint: #304060;
@@ -702,9 +583,6 @@
         --color-elevated: #e8ecf5;
         --color-border: #c8d0e0;
         --color-accent: var(--palette-accent);
-        --color-accent-muted: var(--palette-accent-muted);
-        --color-member: var(--palette-member);
-        --color-member-muted: var(--palette-member-muted);
         --color-fg: #101420;
         --color-muted: #506080;
         --color-faint: #90a0c0;
@@ -725,8 +603,6 @@
     --color-border: var(--color-border);
     --color-accent: var(--color-accent);
     --color-accent-muted: var(--color-accent-muted);
-    --color-member: var(--color-member);
-    --color-member-muted: var(--color-member-muted);
     --color-fg: var(--color-fg);
     --color-muted: var(--color-muted);
     --color-faint: var(--color-faint);
@@ -738,8 +614,7 @@
     --font-display: "Cherry Bomb One", regular;
     --font-body: "Chiron GoRound TC", regular;
     --font-mono: "JetBrains Mono", monospace;
-    --color-discord: #5865f2;
-    --color-discord-dark: #4752c4;
+    --color-discord: #5865F2;
     /* Animations */
     --animate-fade-up: fadeUp 0.3s ease forwards;
     --animate-slide-in-right: slideInRight 0.3s ease forwards;
@@ -881,7 +756,7 @@
         );
         box-shadow:
             0 3px 0 0
-                color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+                color-mix(in srgb, var(--color-accent) 100%, black 35%),
             0 4px 8px -2px rgba(0, 0, 0, 0.3),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -894,7 +769,7 @@
         );
         box-shadow:
             0 4px 0 0
-                color-mix(in srgb, var(--color-accent-muted) 100%, black 35%),
+                color-mix(in srgb, var(--color-accent) 100%, black 35%),
             0 6px 12px -2px rgba(0, 0, 0, 0.35),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1022,7 +897,7 @@
         );
         box-shadow:
             0 3px 0 0
-                color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
+                color-mix(in srgb, var(--color-discord) 100%, black 35%),
             0 4px 8px -2px rgba(0, 0, 0, 0.3),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1036,7 +911,7 @@
         );
         box-shadow:
             0 4px 0 0
-                color-mix(in srgb, var(--color-discord-dark) 100%, black 35%),
+                color-mix(in srgb, var(--color-discord) 100%, black 35%),
             0 6px 12px -2px rgba(0, 0, 0, 0.35),
             inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -1107,7 +982,7 @@
         --icon-btn-accent: var(--color-accent);
         --icon-btn-shadow: color-mix(
             in srgb,
-            var(--color-accent-muted) 100%,
+            var(--color-accent) 100%,
             black 35%
         );
     }
