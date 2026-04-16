@@ -64,8 +64,6 @@
 
 [data-color-theme="artificer"] {
     --color-accent: #f97316;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #333333;
@@ -94,8 +92,6 @@
 
 [data-color-theme="barbarian"] {
     --color-accent: #dc2626;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #352a2a;
@@ -124,8 +120,6 @@
 
 [data-color-theme="bard"] {
     --color-accent: #ec4899;
-    --color-danger: #f43f5e;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #35282d;
@@ -154,8 +148,6 @@
 
 [data-color-theme="cleric"] {
     --color-accent: #eab308;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #363121;
@@ -184,8 +176,6 @@
 
 [data-color-theme="druid"] {
     --color-accent: #fb7185;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #2a352a;
@@ -214,8 +204,6 @@
 
 [data-color-theme="fighter"] {
     --color-accent: #64748b;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #2d2d34;
@@ -244,8 +232,6 @@
 
 [data-color-theme="monk"] {
     --color-accent: #14b8a6;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #283535;
@@ -274,8 +260,6 @@
 
 [data-color-theme="paladin"] {
     --color-accent: #cbd5e1;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #29313e;
@@ -304,8 +288,6 @@
 
 [data-color-theme="ranger"] {
     --color-accent: #15803d;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #283623;
@@ -334,8 +316,6 @@
 
 [data-color-theme="rogue"] {
     --color-accent: #6366f1;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #2a2a35;
@@ -364,8 +344,6 @@
 
 [data-color-theme="sorcerer"] {
     --color-accent: #e11d48;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #35282d;
@@ -394,8 +372,6 @@
 
 [data-color-theme="warlock"] {
     --color-accent: #a855f7;
-    --color-danger: #dc2626;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #32273a;
@@ -424,8 +400,6 @@
 
 [data-color-theme="wizard"] {
     --color-accent: #3b82f6;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
 
     &[data-mode="dark"] {
         --color-base: #272f3c;
@@ -454,24 +428,24 @@
 
 @theme {
     /* Theme color tokens — values come from data-color-theme selectors above */
+    --color-accent: var(--color-accent);
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
+    --color-discord: #5865F2;
+
     --color-base: var(--color-base);
     --color-surface: var(--color-surface);
     --color-elevated: var(--color-elevated);
     --color-border: var(--color-border);
-    --color-accent: var(--color-accent);
-    --color-accent-muted: var(--color-accent-muted);
     --color-fg: var(--color-fg);
     --color-muted: var(--color-muted);
     --color-faint: var(--color-faint);
-    --color-danger: var(--color-danger);
-    --color-warning: var(--color-warning);
     --color-foreground: var(--color-foreground);
     --color-foreground-muted: var(--color-foreground-muted);
     /* Fonts */
     --font-display: "Cherry Bomb One", regular;
     --font-body: "Chiron GoRound TC", regular;
     --font-mono: "JetBrains Mono", monospace;
-    --color-discord: #5865F2;
     /* Animations */
     --animate-fade-up: fadeUp 0.3s ease forwards;
     --animate-slide-in-right: slideInRight 0.3s ease forwards;
