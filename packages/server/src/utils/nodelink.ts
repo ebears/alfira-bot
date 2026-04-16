@@ -106,6 +106,23 @@ export async function getMetadata(youtubeUrl: string): Promise<SongMetadata> {
   const response = await loadTrack(youtubeUrl);
 
   const data = response.data;
+
+  // If NodeLink returned a playlist response (URL has ?list=...), extract the
+  // first track so single-song URLs with playlist parameters still work.
+  if (!data?.encoded && !data?.info && data?.tracks?.length) {
+    const first = data.tracks[0];
+    if (!first?.info) throw new Error('NodeLink returned no track data');
+    const info = first.info;
+    const youtubeId = info.identifier ?? '';
+    const title = info.title ?? 'Unknown';
+    return {
+      title,
+      youtubeId,
+      duration: (info.length ?? 0) / 1000,
+      thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
+    };
+  }
+
   if (!data?.encoded || !data.info) {
     throw new Error('NodeLink returned no track data');
   }
@@ -128,6 +145,15 @@ export async function getStreamFormat(
   const response = await loadTrack(youtubeUrl);
 
   const data = response.data;
+
+  // If NodeLink returned a playlist response (because URL has ?list=...),
+  // extract the first track from the embedded tracks array.
+  if (!data?.encoded && data?.tracks?.length) {
+    const first = data.tracks[0];
+    if (!first?.encoded) throw new Error('NodeLink returned no track');
+    return { track: first.encoded, isWebmOpus: true };
+  }
+
   if (!data?.encoded) {
     throw new Error('NodeLink returned no track');
   }

@@ -108,8 +108,16 @@ export function fetchSongsPage(
   return get(`/api/songs?${params}`);
 }
 
-export function createSong(youtubeUrl: string, nickname?: string): Promise<Song> {
-  return post('/api/songs', { youtubeUrl, ...(nickname && { nickname }) });
+export function createSong(
+  youtubeUrl: string,
+  nickname?: string,
+  asPlaylist?: boolean
+): Promise<Song> {
+  return post('/api/songs', {
+    youtubeUrl,
+    ...(nickname && { nickname }),
+    ...(asPlaylist && { asPlaylist }),
+  });
 }
 
 export function deleteSong(id: string): Promise<void> {

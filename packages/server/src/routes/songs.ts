@@ -104,19 +104,36 @@ async function handlePostSong(ctx: RouteContext, request: Request): Promise<Resp
     return json({ error: 'Admin access required.' }, 403);
   }
 
-  let body: { youtubeUrl?: unknown; nickname?: unknown };
+  let body: { youtubeUrl?: unknown; nickname?: unknown; asPlaylist?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
     return json({ error: 'Invalid JSON body.' }, 400);
   }
 
+  const asPlaylist = body.asPlaylist === true;
   const nicknameResult = validateNickname(body.nickname);
   if (!nicknameResult.ok) return nicknameResult.response;
 
   const urlResult = validateYouTubeUrl(body.youtubeUrl);
   if (!urlResult.ok) return urlResult.response;
-  const url = urlResult.value;
+  let url = urlResult.value;
+
+  // If user wants to import as playlist, validate as playlist URL first.
+  if (asPlaylist) {
+    const playlistResult = validateYouTubePlaylistUrl(url);
+    if (!playlistResult.ok) return playlistResult.response;
+    url = playlistResult.value;
+  } else {
+    // Strip any ?list=... query param so a plain song URL always adds a single track.
+    try {
+      const parsed = new URL(url);
+      parsed.searchParams.delete('list');
+      url = parsed.toString();
+    } catch {
+      // leave URL unchanged
+    }
+  }
 
   const metadataResult = await fetchYouTubeMetadata(url);
   if (!metadataResult.ok) return metadataResult.response;
