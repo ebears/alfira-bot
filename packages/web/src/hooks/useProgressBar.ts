@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export function useProgressBar(state: QueueState, overrideElapsed?: number) {
   const [elapsed, setElapsed] = useState(0);
   const progressBars = useRef<Set<HTMLDivElement>>(new Set());
+  const rangeInputs = useRef<Set<HTMLInputElement>>(new Set());
   const rafIdRef = useRef(0);
   // biome-ignore lint/suspicious/noExplicitAny: setInterval return type differs across environments
   const intervalIdRef = useRef<any>(0);
@@ -30,6 +31,15 @@ export function useProgressBar(state: QueueState, overrideElapsed?: number) {
   const registerProgress = useCallback((ref: HTMLDivElement | null) => {
     if (ref) {
       progressBars.current.add(ref);
+    }
+  }, []);
+
+  // Register a <input type="range"> whose thumb position should track progress.
+  // Its value is updated in the rAF loop so the thumb glides smoothly instead
+  // of jumping once per second (which happens when driven by React state alone).
+  const registerRangeInput = useCallback((ref: HTMLInputElement | null) => {
+    if (ref) {
+      rangeInputs.current.add(ref);
     }
   }, []);
 
@@ -108,13 +118,19 @@ export function useProgressBar(state: QueueState, overrideElapsed?: number) {
 
     effectiveStartRef.current = effectiveStart;
 
-    // rAF loop — directly sets style.width on registered progress bars
+    // rAF loop — directly sets style.width on registered progress bars AND
+    // syncs range input values so the thumb glides at rAF speed, not 1-sec intervals.
     const tick = () => {
       const elapsedMs = Date.now() - effectiveStart;
       const pct = Math.min((elapsedMs / (duration * 1000)) * 100, 100);
       if (pct >= 100) return;
       for (const ref of progressBars.current) {
         ref.style.width = `${pct}%`;
+      }
+      // Update range input values so thumb position is smooth (not 1-sec jumps)
+      const sec = elapsedMs / 1000;
+      for (const input of rangeInputs.current) {
+        input.value = String(sec);
       }
       rafIdRef.current = requestAnimationFrame(tick);
     };
@@ -134,5 +150,5 @@ export function useProgressBar(state: QueueState, overrideElapsed?: number) {
     };
   }, [currentSongId, currentSongDuration, isPlaying, isPaused, trackStartedAt, overrideElapsed]);
 
-  return { elapsed, registerProgress };
+  return { elapsed, registerProgress, registerRangeInput };
 }

@@ -37,6 +37,8 @@ interface PlayerContextValue {
   elapsed: number;
   // Register a progress bar DOM element for direct rAF-driven updates.
   registerProgress: (ref: HTMLDivElement | null) => void;
+  // Register a range input whose thumb tracks progress at rAF speed.
+  registerRangeInput: (ref: HTMLInputElement | null) => void;
   // Override elapsed time (e.g. after a seek).
   setOverrideElapsed: (elapsed: number | undefined) => void;
   // Actions — each calls the API; state updates arrive via real-time events.
@@ -67,6 +69,9 @@ const PlayerElapsedContext = createContext<number>(0);
 const PlayerProgressContext = createContext<(ref: HTMLDivElement | null) => void>(() => {
   /* noop */
 });
+const PlayerRangeInputContext = createContext<(ref: HTMLInputElement | null) => void>(() => {
+  /* noop */
+});
 const PlayerOverrideContext = createContext<(elapsed: number | undefined) => void>(() => {
   /* noop */
 });
@@ -79,7 +84,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useSocket();
 
   // Use the progress bar hook (rAF + 1-sec interval)
-  const { elapsed, registerProgress } = useProgressBar(state, overrideElapsed);
+  const { elapsed, registerProgress, registerRangeInput } = useProgressBar(state, overrideElapsed);
 
   // ---------------------------------------------------------------------------
   // REST fetch — used for initial load and after actions where we want the
@@ -196,9 +201,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   return (
     <PlayerStateContext value={stateValue}>
       <PlayerProgressContext value={registerProgress}>
-        <PlayerOverrideContext.Provider value={setOverrideElapsed}>
-          <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
-        </PlayerOverrideContext.Provider>
+        <PlayerRangeInputContext value={registerRangeInput}>
+          <PlayerOverrideContext.Provider value={setOverrideElapsed}>
+            <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
+          </PlayerOverrideContext.Provider>
+        </PlayerRangeInputContext>
       </PlayerProgressContext>
     </PlayerStateContext>
   );
@@ -209,7 +216,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
  * ticks every second. Use this in pages (SongsPage, PlaylistsPage, etc.) that
  * need queue state (e.g. loopMode) but don't care about elapsed.
  */
-export function usePlayerState(): Omit<PlayerContextValue, 'elapsed' | 'registerProgress'> {
+export function usePlayerState(): Omit<PlayerContextValue, 'elapsed' | 'registerProgress' | 'registerRangeInput'> {
   const context = useContext(PlayerStateContext);
   if (!context) {
     throw new Error('usePlayerState must be used within a PlayerProvider');
@@ -226,9 +233,10 @@ export function usePlayer(): PlayerContextValue {
   const stateContext = useContext(PlayerStateContext);
   const elapsed = useContext(PlayerElapsedContext);
   const registerProgress = useContext(PlayerProgressContext);
+  const registerRangeInput = useContext(PlayerRangeInputContext);
   const setOverrideElapsed = useContext(PlayerOverrideContext);
   if (!stateContext) {
     throw new Error('usePlayer must be used within a PlayerProvider');
   }
-  return { ...stateContext, elapsed, registerProgress, setOverrideElapsed };
+  return { ...stateContext, elapsed, registerProgress, registerRangeInput, setOverrideElapsed };
 }
