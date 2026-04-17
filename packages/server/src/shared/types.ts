@@ -39,6 +39,7 @@ export interface Song {
 // ---------------------------------------------------------------------------
 export interface QueuedSong extends Song {
   requestedBy: string;
+  isSeekable?: boolean;
 }
 
 // ---------------------------------------------------------------------------
