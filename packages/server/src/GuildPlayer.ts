@@ -241,6 +241,30 @@ export class GuildPlayer {
     return this.paused;
   }
 
+  async seek(positionMs: number): Promise<void> {
+    if (!this.currentSong) return;
+
+    const player = this.hoshimiPlayer();
+    if (!player) return;
+
+    // Clamp to valid range
+    const durationSec = this.currentSong.duration;
+    const durationMs = durationSec * 1000;
+    const clampedMs = Math.max(0, Math.min(positionMs, durationMs));
+
+    await player.seek(clampedMs);
+
+    // Adjust trackStartedAt so elapsed time is consistent after seek.
+    // New trackStartedAt = now - seeked position
+    this.trackStartedAt = Date.now() - clampedMs;
+    // If we were paused, also update pausedAt so pause offset is preserved
+    if (this.paused && this.pausedAt !== null) {
+      this.pausedAt = Date.now() - clampedMs;
+    }
+
+    this.broadcast();
+  }
+
   getCurrentSong(): QueuedSong | null {
     return this.currentSong;
   }
@@ -334,6 +358,11 @@ export class GuildPlayer {
     }
 
     this.currentSong = next;
+    // Default isSeekable to true (YouTube tracks are virtually always seekable).
+    // NodeLink's actual TrackInfo.isSeekable is not captured from the play response.
+    if (this.currentSong) {
+      this.currentSong = { ...this.currentSong, isSeekable: true };
+    }
     this.queue.advance();
 
     await this.playSong(next);

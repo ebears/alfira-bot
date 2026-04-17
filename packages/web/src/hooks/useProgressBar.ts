@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Pause/resume is handled by tracking accumulated elapsed when pausing,
  * then computing a new effective start time on resume.
  */
-export function useProgressBar(state: QueueState) {
+export function useProgressBar(state: QueueState, overrideElapsed?: number) {
   const [elapsed, setElapsed] = useState(0);
   const progressBars = useRef<Set<HTMLDivElement>>(new Set());
   const rafIdRef = useRef(0);
@@ -40,6 +40,13 @@ export function useProgressBar(state: QueueState) {
   const trackStartedAt = state.trackStartedAt;
 
   useEffect(() => {
+    // When overrideElapsed is provided (after a seek), reset effectiveStart
+    // so the rAF loop picks up the new position immediately.
+    if (overrideElapsed !== undefined) {
+      accumulatedMsRef.current = overrideElapsed * 1000;
+      effectiveStartRef.current = Date.now() - overrideElapsed * 1000;
+    }
+
     const prevSongId = prevSongIdRef.current;
     const duration = currentSongDuration;
     const hasSong = currentSongId != null;
@@ -125,7 +132,7 @@ export function useProgressBar(state: QueueState) {
       rafIdRef.current = 0;
       intervalIdRef.current = 0;
     };
-  }, [currentSongId, currentSongDuration, isPlaying, isPaused, trackStartedAt]);
+  }, [currentSongId, currentSongDuration, isPlaying, isPaused, trackStartedAt, overrideElapsed]);
 
   return { elapsed, registerProgress };
 }

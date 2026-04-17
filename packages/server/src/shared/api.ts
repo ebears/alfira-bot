@@ -249,6 +249,10 @@ export function togglePause(): Promise<{ isPaused: boolean }> {
   return post('/api/player/pause-toggle');
 }
 
+export function seek(positionMs: number): Promise<void> {
+  return post('/api/player/seek', { position: positionMs });
+}
+
 export function quickAddToQueue(youtubeUrl: string): Promise<{
   message: string;
   song: { title: string; duration: number; thumbnailUrl: string; requestedBy: string };

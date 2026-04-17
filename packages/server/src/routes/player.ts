@@ -385,6 +385,37 @@ async function handlePauseToggle(ctx: RouteContext): Promise<Response> {
 }
 
 // ---------------------------------------------------------------------------
+// POST /api/player/seek — seek to position in current track
+// ---------------------------------------------------------------------------
+async function handleSeek(ctx: RouteContext, request: Request): Promise<Response> {
+  if (!ctx.user) {
+    return json({ error: 'Not authenticated. Please log in at /auth/login.' }, 401);
+  }
+
+  const inVoice = await requireUserInVoice(ctx.user.discordId ?? '');
+  if (inVoice instanceof Response) return inVoice;
+
+  let body: { position?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: 'Invalid JSON body.' }, 400);
+  }
+
+  const { position } = body;
+
+  if (typeof position !== 'number' || !Number.isFinite(position) || position < 0) {
+    return json({ error: 'position must be a non-negative number (milliseconds).' }, 400);
+  }
+
+  const playingResult = requirePlaying();
+  if (!playingResult.ok) return playingResult.response;
+
+  await playingResult.player.seek(position);
+  return json(playingResult.player.getQueueState());
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/player/clear — clear queue (admin only)
 // ---------------------------------------------------------------------------
 async function handleClear(ctx: RouteContext): Promise<Response> {
@@ -533,6 +564,7 @@ export async function handlePlayer(ctx: RouteContext, request: Request): Promise
   if (path === '/quick-add-playlist' && request.method === 'POST')
     return await handleQuickAddPlaylist(ctx, request);
   if (path === '/pause-toggle' && request.method === 'POST') return await handlePauseToggle(ctx);
+  if (path === '/seek' && request.method === 'POST') return await handleSeek(ctx, request);
   if (path === '/clear' && request.method === 'POST') return await handleClear(ctx);
   if (path === '/add-to-priority' && request.method === 'POST')
     return await handleAddToPriority(ctx, request);
