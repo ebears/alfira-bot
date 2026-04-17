@@ -2,6 +2,7 @@ import type { User } from '@alfira-bot/server/shared';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getMe, logout as logoutApi } from '../api/api';
+import { trySilentRefresh } from '../api/client';
 
 interface AuthContextValue {
   user: User | null;
@@ -21,6 +22,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const me = await getMe();
       setUser(me);
     } catch {
+      // Token might be expired - try a silent refresh once before giving up
+      const refreshed = await trySilentRefresh();
+      if (refreshed) {
+        // Refresh succeeded, retry getting user info
+        const me = await getMe();
+        setUser(me);
+        setLoading(false);
+        return;
+      }
       setUser(null);
     } finally {
       setLoading(false);

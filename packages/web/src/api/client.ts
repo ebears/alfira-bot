@@ -63,6 +63,30 @@ async function refreshToken(): Promise<boolean> {
   }
 }
 
+/**
+ * Attempts to refresh the access token. Returns true if refresh succeeded.
+ * This is exported so AuthContext can attempt refresh before showing login.
+ */
+export async function trySilentRefresh(): Promise<boolean> {
+  // If a refresh is already in progress, don't start another one
+  // The pending refresh will either succeed or fail - caller will handle
+  if (isRefreshing) {
+    return false;
+  }
+
+  isRefreshing = true;
+  const ok = await refreshToken();
+  isRefreshing = false;
+
+  if (ok) {
+    processQueue(null);
+  } else {
+    processQueue(new Error('Token refresh failed'));
+  }
+
+  return ok;
+}
+
 async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unknown> {
   const makeRequest = async (): Promise<Response> =>
     fetchWithTimeout(url, { ...options, credentials: 'include' });
