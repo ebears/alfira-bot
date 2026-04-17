@@ -292,7 +292,7 @@ const Scrubber = memo(function Scrubber({
       <div
         ref={thumbRef}
         className="scrubber-thumb absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-surface border-2 border-accent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
-        style={{ left: pctStr, transform: 'translateY(-50%)' }}
+        style={{ left: pctStr }}
       />
       {/* Invisible hit area for hovering */}
       <div className="absolute inset-0" />
