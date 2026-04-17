@@ -1054,6 +1054,7 @@
 .scrubber-range-input::-webkit-slider-runnable-track {
     appearance: none;
     height: 100%;
+    background: transparent;
 }
 
 .scrubber-range-input::-webkit-slider-thumb {
@@ -1074,6 +1075,7 @@
 .scrubber-range-input::-moz-range-track {
     appearance: none;
     height: 100%;
+    background: transparent;
 }
 
 .scrubber-range-input::-moz-range-thumb {
@@ -1085,4 +1087,11 @@
     border: 2px solid var(--color-accent);
     cursor: pointer;
     pointer-events: none;
+}
+
+/* Custom scrubber thumb — positioned via left % instead of native range input */
+.scrubber-thumb {
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
 }
