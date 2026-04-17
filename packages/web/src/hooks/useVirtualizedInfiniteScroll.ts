@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface UseInfiniteScrollOptions<T, A extends unknown[]> {
-  fetchPage: (page: number, limit: number, ...args: A) => Promise<{ items: T[]; hasMore: boolean }>;
+  fetchPage: (
+    page: number,
+    limit: number,
+    ...args: A
+  ) => Promise<{ items: T[]; hasMore: boolean; total?: number }>;
   limit?: number;
   deps?: A;
 }
@@ -12,6 +16,7 @@ export interface UseInfiniteScrollReturn<T> {
   isFetching: boolean;
   isError: boolean;
   hasMore: boolean;
+  total: number;
   prepend: (item: T) => void;
   updateItem: (item: T) => void;
   removeItem: (id: string) => void;
@@ -30,6 +35,7 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
   const [isFetching, setIsFetching] = useState(false);
   const [isError, setIsError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [total, setTotal] = useState(0);
 
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
@@ -68,6 +74,7 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
         if (isInitial) {
           setItems(result.items);
           setHasMore(result.hasMore);
+          if (result.total !== undefined) setTotal(result.total);
           pageRef.current = 1;
         } else {
           setItems((prev) => [...prev, ...result.items]);
@@ -173,6 +180,7 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
     isFetching,
     isError,
     hasMore,
+    total,
     prepend,
     updateItem,
     removeItem,
