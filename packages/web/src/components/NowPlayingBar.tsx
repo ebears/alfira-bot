@@ -216,7 +216,7 @@ const Scrubber = memo(function Scrubber({
   }
 
   return (
-    <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden cursor-pointer group">
+    <div className="w-full h-2 clay-inset rounded-full relative cursor-pointer group">
       <div
         ref={(ref) => {
           fillRef.current = ref;
@@ -234,7 +234,7 @@ const Scrubber = memo(function Scrubber({
           const seekSec = Number(e.target.value);
           onSeek(seekSec);
         }}
-        className="scrubber-range-input absolute inset-0 w-full opacity-0 cursor-pointer"
+        className={`scrubber-range-input absolute inset-0 w-full ${isSeekable ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'} cursor-pointer`}
       />
     </div>
   );
@@ -290,7 +290,7 @@ const ProgressBar = memo(function ProgressBar({
         <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
       </div>
       <Scrubber
-        isSeekable={currentSong?.isSeekable ?? true}
+        isSeekable={currentSong?.isSeekable ?? false}
         duration={currentSong?.duration ?? 0}
         elapsed={elapsed}
         registerProgress={registerProgress}
