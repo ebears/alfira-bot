@@ -1088,3 +1088,10 @@
     cursor: pointer;
     pointer-events: none;
 }
+
+/* Custom scrubber thumb — positioned via left % instead of native range input */
+.scrubber-thumb {
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+}
