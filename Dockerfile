@@ -44,11 +44,9 @@ COPY package.json bun.lock ./
 COPY packages ./packages
 
 RUN bun install
-# NOTE: NODE_ENV is not set here because bun build produces broken bundles
-# with NODE_ENV=production due to how React 19's JSX runtime is bundled.
 # NODE_ENV=production is set in the runtime stage instead.
 RUN bun run --filter @alfira-bot/server build && \
-    bun run --filter @alfira-bot/web build
+    NODE_ENV=production bun run --filter @alfira-bot/web build
 
 COPY packages/server/src/shared/db/migrations packages/server/dist/shared/db/migrations
 
