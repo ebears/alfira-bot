@@ -3,6 +3,7 @@ import {
   clearQueue,
   fetchQueueState,
   leaveVoice,
+  seek as seekTrack,
   setLoopMode,
   shuffleQueue,
   skipTrack,
@@ -36,6 +37,8 @@ interface PlayerContextValue {
   elapsed: number;
   // Register a progress bar DOM element for direct rAF-driven updates.
   registerProgress: (ref: HTMLDivElement | null) => void;
+  // Override elapsed time (e.g. after a seek).
+  setOverrideElapsed: (elapsed: number | undefined) => void;
   // Actions — each calls the API; state updates arrive via real-time events.
   skip: () => Promise<void>;
   /** Stop playback, clear the queue, and disconnect the bot from voice. */
@@ -45,6 +48,7 @@ interface PlayerContextValue {
   setLoop: (mode: LoopMode) => Promise<void>;
   shuffle: () => Promise<void>;
   unshuffle: () => Promise<void>;
+  seek: (positionMs: number) => Promise<void>;
   // Force an immediate REST refetch (e.g. after starting playback from QueuePage).
   refetch: () => Promise<void>;
 }
@@ -63,15 +67,19 @@ const PlayerElapsedContext = createContext<number>(0);
 const PlayerProgressContext = createContext<(ref: HTMLDivElement | null) => void>(() => {
   /* noop */
 });
+const PlayerOverrideContext = createContext<(elapsed: number | undefined) => void>(() => {
+  /* noop */
+});
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<QueueState>(EMPTY_STATE);
   const [loading, setLoading] = useState(true);
+  const [overrideElapsed, setOverrideElapsed] = useState<number | undefined>(undefined);
   // Initialize the WebSocket connection (singleton, safe to call on every render).
   useSocket();
 
   // Use the progress bar hook (rAF + 1-sec interval)
-  const { elapsed, registerProgress } = useProgressBar(state);
+  const { elapsed, registerProgress } = useProgressBar(state, overrideElapsed);
 
   // ---------------------------------------------------------------------------
   // REST fetch — used for initial load and after actions where we want the
@@ -163,15 +171,34 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await unshuffleQueue();
   }, []);
 
+  const seek = useCallback(async (positionMs: number) => {
+    await seekTrack(positionMs);
+  }, []);
+
   const stateValue: Omit<PlayerContextValue, 'elapsed' | 'registerProgress'> = useMemo(
-    () => ({ state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, refetch }),
-    [state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, refetch]
+    () => ({
+      state,
+      loading,
+      skip,
+      leave,
+      pause,
+      clear,
+      setLoop,
+      shuffle,
+      unshuffle,
+      seek,
+      refetch,
+      setOverrideElapsed,
+    }),
+    [state, loading, skip, leave, pause, clear, setLoop, shuffle, unshuffle, seek, refetch]
   );
 
   return (
     <PlayerStateContext value={stateValue}>
       <PlayerProgressContext value={registerProgress}>
-        <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
+        <PlayerOverrideContext.Provider value={setOverrideElapsed}>
+          <PlayerElapsedContext value={elapsed}>{children}</PlayerElapsedContext>
+        </PlayerOverrideContext.Provider>
       </PlayerProgressContext>
     </PlayerStateContext>
   );
@@ -199,8 +226,9 @@ export function usePlayer(): PlayerContextValue {
   const stateContext = useContext(PlayerStateContext);
   const elapsed = useContext(PlayerElapsedContext);
   const registerProgress = useContext(PlayerProgressContext);
+  const setOverrideElapsed = useContext(PlayerOverrideContext);
   if (!stateContext) {
     throw new Error('usePlayer must be used within a PlayerProvider');
   }
-  return { ...stateContext, elapsed, registerProgress };
+  return { ...stateContext, elapsed, registerProgress, setOverrideElapsed };
 }

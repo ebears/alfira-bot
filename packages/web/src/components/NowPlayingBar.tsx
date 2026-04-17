@@ -183,10 +183,68 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
   );
 });
 
+interface ScrubberProps {
+  isSeekable: boolean;
+  duration: number; // seconds
+  elapsed: number; // seconds
+  registerProgress: (ref: HTMLDivElement | null) => void;
+  onSeek: (seconds: number) => void;
+}
+
+const Scrubber = memo(function Scrubber({
+  isSeekable,
+  duration,
+  elapsed,
+  registerProgress,
+  onSeek,
+}: ScrubberProps) {
+  const fillRef = useRef<HTMLDivElement | null>(null);
+
+  const pct = duration > 0 ? elapsed / duration : 0;
+  const pctStr = `${pct * 100}%`;
+
+  if (!isSeekable) {
+    return (
+      <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden cursor-not-allowed opacity-50">
+        <div
+          ref={fillRef}
+          className="absolute inset-y-0 left-0 bg-accent rounded-full"
+          style={{ width: pctStr }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden cursor-pointer group">
+      <div
+        ref={(ref) => {
+          fillRef.current = ref;
+          registerProgress(ref);
+        }}
+        className="absolute inset-y-0 left-0 bg-accent rounded-full"
+        style={{ width: pctStr }}
+      />
+      <input
+        type="range"
+        min={0}
+        max={duration}
+        value={elapsed}
+        onChange={(e) => {
+          const seekSec = Number(e.target.value);
+          onSeek(seekSec);
+        }}
+        className="scrubber-range-input absolute inset-0 w-full opacity-0 cursor-pointer"
+      />
+    </div>
+  );
+});
+
 interface ProgressBarProps {
   currentSong: QueuedSong | null;
   elapsed: number;
   registerProgress: (ref: HTMLDivElement | null) => void;
+  onSeek?: (seconds: number) => void;
   variant: 'mobile' | 'desktop';
 }
 
@@ -194,6 +252,7 @@ const ProgressBar = memo(function ProgressBar({
   currentSong,
   elapsed,
   registerProgress,
+  onSeek,
   variant,
 }: ProgressBarProps) {
   // rAF-driven progress bar — width set directly by DOM, no React state
@@ -230,13 +289,13 @@ const ProgressBar = memo(function ProgressBar({
       <div className="absolute top-1/2 -translate-y-1/2 left-4">
         <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
       </div>
-      <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden">
-        <div
-          ref={currentSong != null ? registerProgress : null}
-          className="absolute inset-y-0 left-0 bg-accent rounded-full"
-          style={{ width: '0%' }}
-        />
-      </div>
+      <Scrubber
+        isSeekable={currentSong?.isSeekable ?? true}
+        duration={currentSong?.duration ?? 0}
+        elapsed={elapsed}
+        registerProgress={registerProgress}
+        onSeek={onSeek ?? (() => {})}
+      />
     </div>
   );
 });
@@ -277,8 +336,19 @@ const AlbumArt = memo(function AlbumArt({ currentSong, isPlaying, isPaused }: Al
  * --------------------------------------------------------------------------- */
 
 export function NowPlayingBar() {
-  const { state, elapsed, registerProgress, skip, leave, pause, setLoop, shuffle, unshuffle } =
-    usePlayer();
+  const {
+    state,
+    elapsed,
+    registerProgress,
+    skip,
+    leave,
+    pause,
+    setLoop,
+    shuffle,
+    unshuffle,
+    seek,
+    setOverrideElapsed,
+  } = usePlayer();
   const { currentSong, isPlaying, isPaused, isConnectedToVoice, loopMode, isShuffled } = state;
   const isStopped = !!currentSong && !isPlaying && !isPaused;
 
@@ -346,6 +416,19 @@ export function NowPlayingBar() {
     }
   }, [isShuffled, shuffle, unshuffle]);
 
+  const handleSeek = useCallback(
+    async (seconds: number) => {
+      const positionMs = seconds * 1000;
+      await seek(positionMs);
+      setOverrideElapsed(seconds);
+    },
+    [seek, setOverrideElapsed]
+  );
+
+  useEffect(() => {
+    setOverrideElapsed(undefined);
+  }, [setOverrideElapsed]);
+
   return (
     <div className="shrink-0 w-full bg-base fixed bottom-0 left-0 right-0 z-10">
       {/* Mobile: progress bar on top */}
@@ -378,6 +461,7 @@ export function NowPlayingBar() {
           currentSong={currentSong}
           registerProgress={registerProgress}
           elapsed={elapsed}
+          onSeek={handleSeek}
           variant="desktop"
         />
 
