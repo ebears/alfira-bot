@@ -183,6 +183,63 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
   );
 });
 
+interface ScrubberProps {
+  isSeekable: boolean;
+  duration: number; // seconds
+  elapsed: number; // seconds
+  registerProgress: (ref: HTMLDivElement | null) => void;
+  onSeek: (seconds: number) => void;
+}
+
+const Scrubber = memo(function Scrubber({
+  isSeekable,
+  duration,
+  elapsed,
+  registerProgress,
+  onSeek,
+}: ScrubberProps) {
+  const fillRef = useRef<HTMLDivElement | null>(null);
+
+  const pct = duration > 0 ? elapsed / duration : 0;
+  const pctStr = `${pct * 100}%`;
+
+  if (!isSeekable) {
+    return (
+      <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden cursor-not-allowed opacity-50">
+        <div
+          ref={fillRef}
+          className="absolute inset-y-0 left-0 bg-accent rounded-full"
+          style={{ width: pctStr }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-2 clay-inset rounded-full relative overflow-hidden cursor-pointer group">
+      <div
+        ref={(ref) => {
+          fillRef.current = ref;
+          registerProgress(ref);
+        }}
+        className="absolute inset-y-0 left-0 bg-accent rounded-full"
+        style={{ width: pctStr }}
+      />
+      <input
+        type="range"
+        min={0}
+        max={duration}
+        value={elapsed}
+        onChange={(e) => {
+          const seekSec = Number(e.target.value);
+          onSeek(seekSec);
+        }}
+        className="scrubber-range-input absolute inset-0 w-full opacity-0 cursor-pointer"
+      />
+    </div>
+  );
+});
+
 interface ProgressBarProps {
   currentSong: QueuedSong | null;
   elapsed: number;
@@ -232,26 +289,13 @@ const ProgressBar = memo(function ProgressBar({
       <div className="absolute top-1/2 -translate-y-1/2 left-4">
         <TimingDisplay elapsed={elapsed} duration={currentSong?.duration ?? 0} />
       </div>
-      <div className="w-full h-2 relative">
-        <div className="absolute inset-0 rounded-full overflow-hidden opacity-30 bg-border" />
-        <div
-          ref={currentSong != null ? registerProgress : null}
-          className="absolute inset-y-0 left-0 rounded-full bg-accent"
-          style={{ width: '0%' }}
-        />
-        <input
-          type="range"
-          min={0}
-          max={currentSong?.duration ?? 0}
-          value={elapsed}
-          onChange={(e) => {
-            if (onSeek) onSeek(Number(e.target.value));
-          }}
-          className="absolute inset-0 w-full h-full opacity-0"
-          style={{ cursor: currentSong?.isSeekable === false ? 'not-allowed' : 'pointer' }}
-          disabled={currentSong?.isSeekable === false}
-        />
-      </div>
+      <Scrubber
+        isSeekable={currentSong?.isSeekable ?? true}
+        duration={currentSong?.duration ?? 0}
+        elapsed={elapsed}
+        registerProgress={registerProgress}
+        onSeek={onSeek ?? (() => {})}
+      />
     </div>
   );
 });
