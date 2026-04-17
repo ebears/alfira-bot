@@ -183,12 +183,17 @@ const LoopShuffleControls = memo(function LoopShuffleControls({
   );
 });
 
+// Seek-on-release: update visual immediately during drag, but only commit the
+// seek API call when the user releases the thumb. This prevents flooding the
+// server with seek requests on every pixel of movement and eliminates audio glitches.
 interface ScrubberProps {
   isSeekable: boolean;
   duration: number; // seconds
   elapsed: number; // seconds
   registerProgress: (ref: HTMLDivElement | null) => void;
+  registerRangeInput: (ref: HTMLInputElement | null) => void;
   onSeek: (seconds: number) => void;
+  setOverrideElapsed: (seconds: number) => void;
 }
 
 const Scrubber = memo(function Scrubber({
@@ -196,9 +201,15 @@ const Scrubber = memo(function Scrubber({
   duration,
   elapsed,
   registerProgress,
+  registerRangeInput,
   onSeek,
+  setOverrideElapsed,
 }: ScrubberProps) {
   const fillRef = useRef<HTMLDivElement | null>(null);
+  // True while the user is dragging the thumb
+  const isDraggingRef = useRef(false);
+  // Last known slider value during drag (used to commit seek on pointer up)
+  const lastDragValueRef = useRef<number>(0);
 
   const pct = duration > 0 ? elapsed / duration : 0;
   const pctStr = `${pct * 100}%`;
@@ -230,9 +241,28 @@ const Scrubber = memo(function Scrubber({
         min={0}
         max={duration}
         value={elapsed}
+        onPointerDown={() => {
+          isDraggingRef.current = true;
+        }}
         onChange={(e) => {
           const seekSec = Number(e.target.value);
-          onSeek(seekSec);
+          lastDragValueRef.current = seekSec;
+          // Update visual immediately during drag — no API call until release
+          setOverrideElapsed(seekSec);
+        }}
+        onPointerUp={() => {
+          // Commit seek only when the user releases the thumb (also handles
+          // click-without-drag where onPointerDown fires but no drag events occur)
+          if (lastDragValueRef.current > 0 || duration > 0) {
+            onSeek(lastDragValueRef.current);
+          }
+          isDraggingRef.current = false;
+        }}
+        onPointerCancel={() => {
+          isDraggingRef.current = false;
+        }}
+        ref={(ref) => {
+          registerRangeInput(ref);
         }}
         className={`scrubber-range-input absolute inset-0 w-full ${isSeekable ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'} cursor-pointer`}
       />
@@ -244,7 +274,9 @@ interface ProgressBarProps {
   currentSong: QueuedSong | null;
   elapsed: number;
   registerProgress: (ref: HTMLDivElement | null) => void;
+  registerRangeInput: (ref: HTMLInputElement | null) => void;
   onSeek?: (seconds: number) => void;
+  setOverrideElapsed: (seconds: number) => void;
   variant: 'mobile' | 'desktop';
 }
 
@@ -252,7 +284,9 @@ const ProgressBar = memo(function ProgressBar({
   currentSong,
   elapsed,
   registerProgress,
+  registerRangeInput,
   onSeek,
+  setOverrideElapsed,
   variant,
 }: ProgressBarProps) {
   // rAF-driven progress bar — width set directly by DOM, no React state
@@ -294,7 +328,9 @@ const ProgressBar = memo(function ProgressBar({
         duration={currentSong?.duration ?? 0}
         elapsed={elapsed}
         registerProgress={registerProgress}
+        registerRangeInput={registerRangeInput}
         onSeek={onSeek ?? (() => {})}
+        setOverrideElapsed={setOverrideElapsed}
       />
     </div>
   );
@@ -340,6 +376,7 @@ export function NowPlayingBar() {
     state,
     elapsed,
     registerProgress,
+    registerRangeInput,
     skip,
     leave,
     pause,
@@ -435,7 +472,9 @@ export function NowPlayingBar() {
       <ProgressBar
         currentSong={currentSong}
         registerProgress={registerProgress}
+        registerRangeInput={registerRangeInput}
         elapsed={elapsed}
+        setOverrideElapsed={setOverrideElapsed}
         variant="mobile"
       />
 
@@ -460,8 +499,10 @@ export function NowPlayingBar() {
         <ProgressBar
           currentSong={currentSong}
           registerProgress={registerProgress}
+          registerRangeInput={registerRangeInput}
           elapsed={elapsed}
           onSeek={handleSeek}
+          setOverrideElapsed={setOverrideElapsed}
           variant="desktop"
         />
 
