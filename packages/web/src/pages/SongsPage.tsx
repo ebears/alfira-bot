@@ -49,6 +49,7 @@ export default function SongsPage() {
     isFetching,
     isError,
     hasMore,
+    total,
     prepend,
     updateItem,
     removeItem,
@@ -61,6 +62,7 @@ export default function SongsPage() {
       return {
         items: result.items,
         hasMore: result.pagination.page < result.pagination.totalPages,
+        total: result.pagination.total,
       };
     },
     limit: ITEMS_PER_PAGE,
@@ -135,7 +137,7 @@ export default function SongsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl text-fg tracking-wider">Songs</h1>
           <p className="font-mono text-xs text-muted mt-1">
-            {isLoading ? '—' : `${items.length} track${items.length !== 1 ? 's' : ''}`}
+            {isLoading ? '—' : `${total} track${total !== 1 ? 's' : ''}`}
           </p>
         </div>
         {isAdminView && (
