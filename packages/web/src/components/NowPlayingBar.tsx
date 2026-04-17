@@ -191,6 +191,7 @@ interface ScrubberProps {
   duration: number; // seconds
   elapsed: number; // seconds
   registerProgress: (ref: HTMLDivElement | null) => void;
+  registerRangeInput: (ref: HTMLInputElement | null) => void;
   onSeek: (seconds: number) => void;
   setOverrideElapsed: (seconds: number) => void;
 }
@@ -200,11 +201,12 @@ const Scrubber = memo(function Scrubber({
   duration,
   elapsed,
   registerProgress,
+  registerRangeInput,
   onSeek,
   setOverrideElapsed,
 }: ScrubberProps) {
   const fillRef = useRef<HTMLDivElement | null>(null);
-  const thumbRef = useRef<HTMLDivElement | null>(null);
+const thumbRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   // True while the user is dragging the thumb
   const isDraggingRef = useRef(false);
@@ -288,7 +290,7 @@ const Scrubber = memo(function Scrubber({
         className="absolute inset-y-0 left-0 bg-accent rounded-full"
         style={{ width: pctStr }}
       />
-      {/* Custom thumb — positioned manually via ref, not via native range input */}
+{/* Custom thumb — positioned manually via ref, not via native range input */}
       <div
         ref={thumbRef}
         className="scrubber-thumb absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-surface border-2 border-accent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
@@ -304,6 +306,7 @@ interface ProgressBarProps {
   currentSong: QueuedSong | null;
   elapsed: number;
   registerProgress: (ref: HTMLDivElement | null) => void;
+  registerRangeInput: (ref: HTMLInputElement | null) => void;
   onSeek?: (seconds: number) => void;
   setOverrideElapsed: (seconds: number) => void;
   variant: 'mobile' | 'desktop';
@@ -313,6 +316,7 @@ const ProgressBar = memo(function ProgressBar({
   currentSong,
   elapsed,
   registerProgress,
+  registerRangeInput,
   onSeek,
   setOverrideElapsed,
   variant,
@@ -356,6 +360,7 @@ const ProgressBar = memo(function ProgressBar({
         duration={currentSong?.duration ?? 0}
         elapsed={elapsed}
         registerProgress={registerProgress}
+        registerRangeInput={registerRangeInput}
         onSeek={onSeek ?? (() => {})}
         setOverrideElapsed={setOverrideElapsed}
       />
@@ -403,6 +408,7 @@ export function NowPlayingBar() {
     state,
     elapsed,
     registerProgress,
+    registerRangeInput,
     skip,
     leave,
     pause,
@@ -498,6 +504,7 @@ export function NowPlayingBar() {
       <ProgressBar
         currentSong={currentSong}
         registerProgress={registerProgress}
+        registerRangeInput={registerRangeInput}
         elapsed={elapsed}
         setOverrideElapsed={setOverrideElapsed}
         variant="mobile"
@@ -524,6 +531,7 @@ export function NowPlayingBar() {
         <ProgressBar
           currentSong={currentSong}
           registerProgress={registerProgress}
+          registerRangeInput={registerRangeInput}
           elapsed={elapsed}
           onSeek={handleSeek}
           setOverrideElapsed={setOverrideElapsed}
