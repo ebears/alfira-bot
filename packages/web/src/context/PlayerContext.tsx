@@ -84,7 +84,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useSocket();
 
   // Use the progress bar hook (rAF + 1-sec interval)
-  const { elapsed, registerProgress, registerRangeInput } = useProgressBar(state, overrideElapsed);
+  const { elapsed, registerProgress, registerRangeInput } = useProgressBar(
+    state,
+    overrideElapsed,
+    setOverrideElapsed
+  );
 
   // ---------------------------------------------------------------------------
   // REST fetch — used for initial load and after actions where we want the
