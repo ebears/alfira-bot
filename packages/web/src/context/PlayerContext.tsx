@@ -180,7 +180,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     await seekTrack(positionMs);
   }, []);
 
-  const stateValue: Omit<PlayerContextValue, 'elapsed' | 'registerProgress' | 'registerRangeInput'> = useMemo(
+  const stateValue: Omit<
+    PlayerContextValue,
+    'elapsed' | 'registerProgress' | 'registerRangeInput'
+  > = useMemo(
     () => ({
       state,
       loading,
@@ -216,7 +219,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
  * ticks every second. Use this in pages (SongsPage, PlaylistsPage, etc.) that
  * need queue state (e.g. loopMode) but don't care about elapsed.
  */
-export function usePlayerState(): Omit<PlayerContextValue, 'elapsed' | 'registerProgress' | 'registerRangeInput'> {
+export function usePlayerState(): Omit<
+  PlayerContextValue,
+  'elapsed' | 'registerProgress' | 'registerRangeInput'
+> {
   const context = useContext(PlayerStateContext);
   if (!context) {
     throw new Error('usePlayerState must be used within a PlayerProvider');

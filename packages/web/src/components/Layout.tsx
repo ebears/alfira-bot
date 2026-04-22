@@ -127,14 +127,20 @@ function LayoutContent() {
           <div className="px-3 pb-2">
             <div
               className={`flex items-center gap-2 text-sm font-mono px-2 py-1.5 rounded-lg ${
-                collapsed ? 'bg-warning/10 text-warning' : connectionStatus === 'reconnecting'
+                collapsed
                   ? 'bg-warning/10 text-warning'
-                  : 'bg-danger/10 text-danger'
+                  : connectionStatus === 'reconnecting'
+                    ? 'bg-warning/10 text-warning'
+                    : 'bg-danger/10 text-danger'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  collapsed ? 'bg-warning animate-pulse' : connectionStatus === 'reconnecting' ? 'bg-warning animate-pulse' : 'bg-danger'
+                  collapsed
+                    ? 'bg-warning animate-pulse'
+                    : connectionStatus === 'reconnecting'
+                      ? 'bg-warning animate-pulse'
+                      : 'bg-danger'
                 }`}
               />
               {collapsed

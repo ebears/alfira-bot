@@ -23,10 +23,7 @@ export default function SettingsTabs({ activeTab, onTabChange }: SettingsTabsPro
   const visibleTabs = TABS.filter((tab) => !tab.adminOnly || user?.isAdmin);
 
   return (
-    <div
-      role="tablist"
-      className="flex border-b border-border"
-    >
+    <div role="tablist" className="flex border-b border-border">
       {visibleTabs.map((tab) => (
         <button
           type="button"

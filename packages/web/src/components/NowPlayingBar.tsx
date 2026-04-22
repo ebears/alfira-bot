@@ -201,12 +201,12 @@ const Scrubber = memo(function Scrubber({
   duration,
   elapsed,
   registerProgress,
-  registerRangeInput,
+  registerRangeInput: _registerRangeInput,
   onSeek,
   setOverrideElapsed,
 }: ScrubberProps) {
   const fillRef = useRef<HTMLDivElement | null>(null);
-const thumbRef = useRef<HTMLDivElement | null>(null);
+  const thumbRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   // True while the user is dragging the thumb
   const isDraggingRef = useRef(false);
@@ -290,7 +290,7 @@ const thumbRef = useRef<HTMLDivElement | null>(null);
         className="absolute inset-y-0 left-0 bg-accent rounded-full"
         style={{ width: pctStr }}
       />
-{/* Custom thumb — positioned manually via ref, not via native range input */}
+      {/* Custom thumb — positioned manually via ref, not via native range input */}
       <div
         ref={thumbRef}
         className="scrubber-thumb absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-surface border-2 border-accent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
