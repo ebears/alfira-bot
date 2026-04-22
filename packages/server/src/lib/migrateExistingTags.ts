@@ -12,6 +12,8 @@ import { canonicalizeTags } from './tagCanonicalization';
 
 const { song: songTable } = tables;
 
+const normalizeTag = (t: string) => t.replace(/\s+/g, '-').trim();
+
 async function migrateExistingTags() {
   console.log('Starting tag normalization migration...');
 
@@ -29,7 +31,7 @@ async function migrateExistingTags() {
     if (!song.tags || !Array.isArray(song.tags) || song.tags.length === 0) continue;
 
     try {
-      const canonicalTags = await canonicalizeTags(song.tags);
+      const canonicalTags = await canonicalizeTags(song.tags.map(normalizeTag));
 
       if (JSON.stringify(canonicalTags) !== JSON.stringify(song.tags)) {
         await db
