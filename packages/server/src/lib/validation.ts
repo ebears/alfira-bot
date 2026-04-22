@@ -188,7 +188,7 @@ export function validateTags(value: unknown): ValidationResult<string[]> {
     return { ok: false, response: json({ error: 'tags must be an array.' }, 400) };
   const trimmed = value
     .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
-    .map((t) => t.trim());
+    .map((t) => t.replace(/\s+/g, '-').trim());
   return { ok: true, value: [...new Set(trimmed)] };
 }
 
