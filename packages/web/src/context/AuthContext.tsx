@@ -1,6 +1,14 @@
 import type { User } from '@alfira-bot/server/shared';
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { getMe, logout as logoutApi } from '../api/api';
 import { trySilentRefresh } from '../api/client';
 
@@ -16,24 +24,28 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isAuthChecking = useRef(false);
 
   const refetch = useCallback(async () => {
+    if (isAuthChecking.current) return;
+    isAuthChecking.current = true;
+
     try {
       const me = await getMe();
       setUser(me);
     } catch {
-      // Token might be expired - try a silent refresh once before giving up
       const refreshed = await trySilentRefresh();
       if (refreshed) {
-        // Refresh succeeded, retry getting user info
         const me = await getMe();
         setUser(me);
         setLoading(false);
+        isAuthChecking.current = false;
         return;
       }
       setUser(null);
     } finally {
       setLoading(false);
+      isAuthChecking.current = false;
     }
   }, []);
 

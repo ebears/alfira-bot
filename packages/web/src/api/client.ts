@@ -68,15 +68,21 @@ async function refreshToken(): Promise<boolean> {
  * This is exported so AuthContext can attempt refresh before showing login.
  */
 export async function trySilentRefresh(): Promise<boolean> {
-  // If a refresh is already in progress, don't start another one
-  // The pending refresh will either succeed or fail - caller will handle
   if (isRefreshing) {
-    return false;
+    return new Promise<boolean>((resolve) => {
+      failedQueue.push({
+        resolve: () => {
+          resolve(true);
+        },
+        reject: () => {
+          resolve(false);
+        },
+      });
+    });
   }
 
   isRefreshing = true;
   const ok = await refreshToken();
-  isRefreshing = false;
 
   if (ok) {
     processQueue(null);
@@ -84,6 +90,7 @@ export async function trySilentRefresh(): Promise<boolean> {
     processQueue(new Error('Token refresh failed'));
   }
 
+  isRefreshing = false;
   return ok;
 }
 

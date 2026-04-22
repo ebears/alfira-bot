@@ -31,18 +31,18 @@ function isAdminUser(memberRoles: string[]): boolean {
   return memberRoles.some((roleId) => ADMIN_ROLE_ID_SET.has(roleId));
 }
 
-// Access tokens are short-lived (1h). Refresh tokens are long-lived (7d default),
+// Access tokens are short-lived (1h). Refresh tokens are long-lived (30d default),
 // stored as SHA-256 hashes, and single-use.
 const ACCESS_TOKEN_EXPIRES_IN = '1h';
-const REFRESH_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN ?? '7d';
+const REFRESH_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN ?? '30d';
 const ACCESS_COOKIE_NAME = 'session';
 const REFRESH_COOKIE_NAME = 'refresh_token';
 
 const REFRESH_TOKEN_MAX_AGE = (() => {
   const match = REFRESH_TOKEN_EXPIRES_IN.match(/^(\d+)([dhms])$/);
   if (!match) {
-    logger.warn(`Invalid JWT_EXPIRES_IN format "${REFRESH_TOKEN_EXPIRES_IN}", defaulting to 7d`);
-    return 7 * 24 * 60 * 60 * 1000;
+    logger.warn(`Invalid JWT_EXPIRES_IN format "${REFRESH_TOKEN_EXPIRES_IN}", defaulting to 30d`);
+    return 30 * 24 * 60 * 60 * 1000;
   }
   const multipliers: Record<string, number> = { d: 86400000, h: 3600000, m: 60000, s: 1000 };
   return parseInt(match[1], 10) * (multipliers[match[2]] ?? 86400000);
