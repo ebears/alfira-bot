@@ -34,6 +34,7 @@ export const tables = {
   playlist: schema.playlist,
   playlistSong: schema.playlistSong,
   refreshToken: schema.refreshToken,
+  tag: schema.tag,
 };
 
 // ---------------------------------------------------------------------------
