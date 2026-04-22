@@ -13,7 +13,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Pause/resume is handled by tracking accumulated elapsed when pausing,
  * then computing a new effective start time on resume.
  */
-export function useProgressBar(state: QueueState, overrideElapsed?: number) {
+export function useProgressBar(
+  state: QueueState,
+  overrideElapsed: number | undefined,
+  setOverrideElapsed: (elapsed: number | undefined) => void
+) {
   const [elapsed, setElapsed] = useState(0);
   const progressBars = useRef<Set<HTMLDivElement>>(new Set());
   const rangeInputs = useRef<Set<HTMLInputElement>>(new Set());
@@ -67,6 +71,17 @@ export function useProgressBar(state: QueueState, overrideElapsed?: number) {
       prevSongIdRef.current = currentSongId;
     } else if (!hasSong) {
       prevSongIdRef.current = null;
+    } else if (overrideElapsed !== undefined) {
+      // Same song is playing but elapsedFromTrackStarted is far less than
+      // overrideElapsed — the song must have been restarted (e.g. play again
+      // after a seek). Clear the override so we seed from the fresh
+      // trackStartedAt instead.
+      const elapsedFromTrackStarted = trackStartedAt ? (Date.now() - trackStartedAt) / 1000 : 0;
+      if (elapsedFromTrackStarted < overrideElapsed / 2) {
+        accumulatedMsRef.current = 0;
+        effectiveStartRef.current = 0;
+        setOverrideElapsed(undefined);
+      }
     }
 
     if (!isPlaying) {
@@ -148,7 +163,15 @@ export function useProgressBar(state: QueueState, overrideElapsed?: number) {
       rafIdRef.current = 0;
       intervalIdRef.current = 0;
     };
-  }, [currentSongId, currentSongDuration, isPlaying, isPaused, trackStartedAt, overrideElapsed]);
+  }, [
+    currentSongId,
+    currentSongDuration,
+    isPlaying,
+    isPaused,
+    trackStartedAt,
+    overrideElapsed,
+    setOverrideElapsed,
+  ]);
 
   return { elapsed, registerProgress, registerRangeInput };
 }
