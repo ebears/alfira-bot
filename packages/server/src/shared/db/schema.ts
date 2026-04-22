@@ -65,3 +65,14 @@ export const refreshToken = sqliteTable(
   },
   (t) => [index('RefreshToken_discordId_idx').on(t.discordId)]
 );
+
+export const tag = sqliteTable('Tag', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  nameLower: text('nameLower').notNull().unique(),
+  canonicalName: text('canonicalName').notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

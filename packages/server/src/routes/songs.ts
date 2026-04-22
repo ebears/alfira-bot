@@ -4,6 +4,7 @@ import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
 import { formatSong } from '../lib/serialization';
 import { emitSongAdded, emitSongDeleted, emitSongUpdated } from '../lib/socket';
+import { canonicalizeTags } from '../lib/tagCanonicalization';
 import {
   clampMaxVideos,
   fetchPlaylistMetadata,
@@ -365,7 +366,7 @@ async function handlePatchSong(ctx: RouteContext, request: Request, id: string):
   if ('tags' in body) {
     const tagsResult = validateTags(body.tags);
     if (!tagsResult.ok) return tagsResult.response;
-    data.tags = tagsResult.value;
+    data.tags = await canonicalizeTags(tagsResult.value);
   }
 
   // Volume offset

@@ -31,6 +31,19 @@ export interface Song {
 }
 
 // ---------------------------------------------------------------------------
+// Tag
+//
+// Stores canonical tag spellings, keyed by lowercase name.
+// The first spelling introduced becomes the canonical form.
+// ---------------------------------------------------------------------------
+export interface Tag {
+  id: string;
+  nameLower: string;
+  canonicalName: string;
+  createdAt: string; // ISO 8601 string
+}
+
+// ---------------------------------------------------------------------------
 // QueuedSong
 //
 // A Song that has been placed into the GuildPlayer's queue. Extends Song with
