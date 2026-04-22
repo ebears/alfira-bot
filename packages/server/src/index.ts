@@ -12,6 +12,7 @@ import { handleAuth } from './routes/auth';
 import { handlePlayer } from './routes/player';
 import { handlePlaylists } from './routes/playlists';
 import { handleSongs } from './routes/songs';
+import { handleTags } from './routes/tags';
 import { $client, db } from './shared/db';
 import { destroyAllPlayers, startDiscord } from './startDiscord';
 
@@ -169,6 +170,9 @@ const server = Bun.serve({
     const ctx = createContext(request);
 
     // Route matching
+    if (url.pathname.startsWith('/api/tags')) {
+      return setSecurityHeaders(await handleTags(ctx, request));
+    }
     if (url.pathname.startsWith('/api/songs')) {
       return setSecurityHeaders(await handleSongs(ctx, request));
     }

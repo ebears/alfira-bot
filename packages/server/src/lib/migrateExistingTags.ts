@@ -7,7 +7,7 @@
  * Usage: bun run packages/server/src/lib/migrateExistingTags.ts
  */
 
-import { db, tables, sql } from '../shared/db';
+import { db, sql, tables } from '../shared/db';
 import { canonicalizeTags } from './tagCanonicalization';
 
 const { song: songTable } = tables;
@@ -34,10 +34,7 @@ async function migrateExistingTags() {
       const canonicalTags = await canonicalizeTags(song.tags.map(normalizeTag));
 
       if (JSON.stringify(canonicalTags) !== JSON.stringify(song.tags)) {
-        await db
-          .update(songTable)
-          .set({ tags: canonicalTags })
-          .where(sql`id = ${song.id}`);
+        await db.update(songTable).set({ tags: canonicalTags }).where(sql`id = ${song.id}`);
         normalized++;
       }
     } catch (err) {

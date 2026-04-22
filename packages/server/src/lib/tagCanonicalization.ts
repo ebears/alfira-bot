@@ -1,5 +1,5 @@
-import { db, tables, eq } from '../shared/db';
 import { randomUUID } from 'node:crypto';
+import { db, eq, tables } from '../shared/db';
 
 const { tag: tagTable } = tables;
 

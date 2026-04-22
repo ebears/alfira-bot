@@ -1,6 +1,7 @@
 import type { Song } from '@alfira-bot/server/shared';
-import type { SongUpdateData } from '@alfira-bot/server/shared/api';
-import { updateSong } from '@alfira-bot/server/shared/api';
+import type { SongUpdateData, TagItem } from '@alfira-bot/server/shared/api';
+import { fetchTags, updateSong } from '@alfira-bot/server/shared/api';
+import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getTagColorClasses } from '../utils/tagColors';
 
@@ -43,6 +44,10 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   const [volumeOffset, setVolumeOffset] = useState(
     songExtended.volumeOffset != null ? String(songExtended.volumeOffset) : ''
   );
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [availableTags, setAvailableTags] = useState<TagItem[]>([]);
+  const [fetchedTags, setFetchedTags] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
@@ -88,15 +93,41 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
 
   const handleTagKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      const filteredTags = availableTags.filter(
+        (t) =>
+          tagInput.trim() === '' ||
+          t.canonicalName.toLowerCase().includes(tagInput.toLowerCase()) ||
+          t.nameLower.includes(tagInput.toLowerCase())
+      );
       if (e.key === 'Enter') {
         e.preventDefault();
-        addTag();
+        if (showTagDropdown && highlightedIndex >= 0 && filteredTags[highlightedIndex]) {
+          const tag = filteredTags[highlightedIndex];
+          if (tags.includes(tag.canonicalName)) removeTag(tag.canonicalName);
+          else setTags((prev) => [...prev, tag.canonicalName]);
+          setTagInput('');
+          setHighlightedIndex(-1);
+        } else {
+          addTag();
+        }
+      }
+      if (e.key === 'ArrowDown' && showTagDropdown) {
+        e.preventDefault();
+        setHighlightedIndex((i) => Math.min(i + 1, filteredTags.length - 1));
+      }
+      if (e.key === 'ArrowUp' && showTagDropdown) {
+        e.preventDefault();
+        setHighlightedIndex((i) => Math.max(i - 1, 0));
+      }
+      if (e.key === 'Escape' && showTagDropdown) {
+        setShowTagDropdown(false);
+        setHighlightedIndex(-1);
       }
       if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
         removeTag(tags[tags.length - 1]);
       }
     },
-    [addTag, tagInput, tags, removeTag]
+    [addTag, availableTags, highlightedIndex, removeTag, showTagDropdown, tagInput, tags]
   );
 
   const doSave = useCallback(async () => {
@@ -227,8 +258,17 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
               Tags
             </label>
             <div
-              className="input text-sm flex flex-wrap gap-1.5 items-center min-h-9.5 cursor-text"
-              onClick={() => tagInputRef.current?.focus()}
+              className="input text-sm flex flex-wrap gap-1.5 items-center min-h-9.5 cursor-text relative"
+              onClick={() => {
+                tagInputRef.current?.focus();
+                if (!fetchedTags) {
+                  void fetchTags().then((t) => {
+                    setAvailableTags(t);
+                    setFetchedTags(true);
+                  });
+                }
+                setShowTagDropdown(true);
+              }}
             >
               {tags.map((tag) => {
                 const c = getTagColorClasses(tag);
@@ -257,6 +297,25 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
               />
+              {showTagDropdown && (
+                <TagDropdown
+                  availableTags={availableTags}
+                  tagInput={tagInput}
+                  tags={tags}
+                  highlightedIndex={highlightedIndex}
+                  onToggle={(tag) => {
+                    if (tags.includes(tag)) removeTag(tag);
+                    else setTags((prev) => [...prev, tag]);
+                  }}
+                  onHighlight={setHighlightedIndex}
+                  onClose={() => {
+                    setShowTagDropdown(false);
+                    setHighlightedIndex(-1);
+                  }}
+                  tagInputRef={tagInputRef}
+                  onTagInputChange={setTagInput}
+                />
+              )}
             </div>
           </div>
 
@@ -377,4 +436,148 @@ function Field({
       />
     </div>
   );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-green-400 inline-block"
+      role="img"
+      aria-label="Added"
+    >
+      <title>Added</title>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function CrossIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-muted inline-block"
+      role="img"
+      aria-label="Not added"
+    >
+      <title>Not added</title>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+interface TagDropdownProps {
+  availableTags: TagItem[];
+  tagInput: string;
+  tags: string[];
+  highlightedIndex: number;
+  onToggle: (tag: string) => void;
+  onHighlight: (index: number) => void;
+  onClose: () => void;
+  tagInputRef: React.RefObject<HTMLInputElement | null>;
+  onTagInputChange: (value: string) => void;
+}
+
+function TagDropdown({
+  availableTags,
+  tagInput,
+  tags,
+  highlightedIndex,
+  onToggle,
+  onHighlight,
+  onClose,
+  tagInputRef,
+  onTagInputChange,
+}: TagDropdownProps) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!dropdownRef.current) return;
+    const input = tagInputRef.current;
+    if (!input) return;
+    const rect = input.getBoundingClientRect();
+    dropdownRef.current.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    dropdownRef.current.style.left = `${rect.left + window.scrollX}px`;
+  }, [tagInputRef]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const tagWrapper = document.getElementById('panel-tag-input')?.parentElement;
+      const dropdown = dropdownRef.current;
+      if (
+        tagWrapper &&
+        !tagWrapper.contains(e.target as Node) &&
+        dropdown &&
+        !dropdown.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  const filtered = availableTags.filter(
+    (t) =>
+      tagInput.trim() === '' ||
+      t.canonicalName.toLowerCase().includes(tagInput.toLowerCase()) ||
+      t.nameLower.includes(tagInput.toLowerCase())
+  );
+
+  const dropdown = (
+    <div
+      ref={dropdownRef}
+      className="fixed z-50 min-w-[180px] bg-surface rounded-lg border border-border shadow-lg max-h-48 overflow-y-auto"
+      style={{ top: 0, left: 0 }}
+    >
+      {filtered.length === 0 ? (
+        <div className="px-3 py-2 text-xs text-muted cursor-default">
+          {availableTags.length === 0 ? 'No tags yet' : 'No matches'}
+        </div>
+      ) : (
+        filtered.map((tag, i) => {
+          const isAdded = tags.includes(tag.canonicalName);
+          const c = getTagColorClasses(tag.canonicalName);
+          return (
+            <div
+              key={tag.nameLower}
+              className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer ${
+                i === highlightedIndex ? 'bg-elevated' : 'hover:bg-elevated/70'
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggle(tag.canonicalName);
+                onTagInputChange('');
+                tagInputRef.current?.focus();
+              }}
+              onMouseEnter={() => onHighlight(i)}
+            >
+              <span className={`font-mono text-xs ${c.text}`}>{tag.canonicalName}</span>
+              <span className="ml-auto text-muted text-xs">
+                {isAdded ? <CheckIcon /> : <CrossIcon />}
+              </span>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+
+  return createPortal(dropdown, document.body);
 }
