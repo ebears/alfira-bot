@@ -1,11 +1,11 @@
-import { and, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
 import { canAccessPlaylist } from '../lib/playlistAccess';
 import { emitPlaylistUpdated } from '../lib/socket';
 import { validatePlaylistName } from '../lib/validation';
-import { db, tables } from '../shared/db';
+import { $client, db, tables } from '../shared/db';
 
 const { playlist: playlistTable, playlistSong: playlistSongTable } = tables;
 
@@ -169,6 +169,7 @@ async function handleGetPlaylist(
     Math.max(1, parseInt(url.searchParams.get('limit') ?? '30', 10) || 30)
   );
   const skip = (page - 1) * limit;
+  const search = url.searchParams.get('search')?.trim() ?? '';
 
   const playlist = await findPlaylistOr404(id, true);
   if (!playlist) {
@@ -180,26 +181,56 @@ async function handleGetPlaylist(
     return json({ error: accessResult.error }, 403);
   }
 
+  // Build list of song IDs to filter by when searching
+  let songIds: string[] = [];
+  if (search) {
+    const tagMatchingIds = (
+      $client.query(`SELECT id FROM "Song" WHERE lower(tags) LIKE lower(?)`).all(`%${search}%`) as {
+        id: string;
+      }[]
+    ).map((r) => r.id);
+    const where =
+      tagMatchingIds.length > 0
+        ? sql`(lower(title) LIKE lower(${`%${search}%`}) OR lower(nickname) LIKE lower(${`%${search}%`}) OR lower(artist) LIKE lower(${`%${search}%`}) OR lower(album) LIKE lower(${`%${search}%`}) OR id IN (${sql.join(
+            tagMatchingIds.map((id) => sql.raw(`'${id}'`)),
+            sql`,`
+          )}))`
+        : sql`(lower(title) LIKE lower(${`%${search}%`}) OR lower(nickname) LIKE lower(${`%${search}%`}) OR lower(artist) LIKE lower(${`%${search}%`}) OR lower(album) LIKE lower(${`%${search}%`}))`;
+    const matching = await db
+      .select({ id: tables.song.id })
+      .from(tables.song)
+      .where(where)
+      .limit(500);
+    songIds = matching.map((s) => s.id);
+  }
+
   // Fetch paginated songs
+  const whereCondition =
+    songIds.length > 0
+      ? and(eq(playlistSongTable.playlistId, id), inArray(playlistSongTable.songId, songIds))
+      : eq(playlistSongTable.playlistId, id);
+
+  const countCondition =
+    songIds.length > 0
+      ? and(eq(playlistSongTable.playlistId, id), inArray(playlistSongTable.songId, songIds))
+      : eq(playlistSongTable.playlistId, id);
+
   const [playlistSongs, [{ count: total }]] = await Promise.all([
     db
       .select()
       .from(playlistSongTable)
-      .where(eq(playlistSongTable.playlistId, id))
+      .where(whereCondition)
       .orderBy(playlistSongTable.position)
       .limit(limit)
       .offset(skip),
-    db
-      .select({ count: count() })
-      .from(playlistSongTable)
-      .where(eq(playlistSongTable.playlistId, id)),
+    db.select({ count: count() }).from(playlistSongTable).where(countCondition),
   ]);
 
   // Fetch the actual song data for each playlist entry
-  const songIds = playlistSongs.map((ps) => ps.songId);
+  const playlistSongIds = playlistSongs.map((ps) => ps.songId);
   const songs =
-    songIds.length > 0
-      ? await db.select().from(tables.song).where(inArray(tables.song.id, songIds))
+    playlistSongIds.length > 0
+      ? await db.select().from(tables.song).where(inArray(tables.song.id, playlistSongIds))
       : [];
   const songMap = new Map(songs.map((s) => [s.id, s]));
 

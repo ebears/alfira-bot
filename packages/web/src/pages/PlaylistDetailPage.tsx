@@ -5,6 +5,7 @@ import {
   GhostIcon,
   LockIcon,
   LockOpenIcon,
+  MagnifyingGlassIcon,
   PencilSimple,
   PlayCircleIcon,
   PlayIcon,
@@ -75,6 +76,13 @@ export default function PlaylistDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchRef = useRef(search);
+
+  // Keep searchRef in sync with search state
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
 
   // Accumulated songs from all pages
   const [songs, setSongs] = useState<PlaylistDetail['songs']>([]);
@@ -82,7 +90,7 @@ export default function PlaylistDetailPage() {
   // IntersectionObserver ref for sentinel
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const loadPage = useCallback(async (page: number, isInitial = false, isRefetch = false) => {
+  const loadPage = useCallback(async (page: number, isInitial = false, isRefetch = false, searchQuery?: string) => {
     if (!idRef.current) return;
 
     if (isInitial) {
@@ -94,7 +102,7 @@ export default function PlaylistDetailPage() {
     setIsError(false);
 
     try {
-      const pl = await getPlaylistPage(idRef.current, isAdminViewRef.current, page, ITEMS_PER_PAGE);
+      const pl = await getPlaylistPage(idRef.current, isAdminViewRef.current, page, ITEMS_PER_PAGE, searchQuery);
 
       if (isInitial) {
         setPlaylistDetail(pl);
@@ -307,11 +315,11 @@ export default function PlaylistDetailPage() {
   const loadMore = useCallback(() => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
-    void loadPage(nextPage, false);
+    void loadPage(nextPage, false, false, searchRef.current);
   }, [currentPage, loadPage]);
 
   const retry = useCallback(() => {
-    void loadPage(currentPage, false);
+    void loadPage(currentPage, false, false, searchRef.current);
   }, [currentPage, loadPage]);
 
   // IntersectionObserver for infinite scroll
@@ -409,6 +417,30 @@ export default function PlaylistDetailPage() {
               triggerRef={menuTriggerRef}
             />
           )}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-faint w-4 h-4 md:w-3.5 md:h-3.5"
+            weight="duotone"
+          />
+          <input
+            className="input pl-10"
+            placeholder="Search by title, nickname, artist, album, or tag..."
+            value={search}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearch(value);
+              setCurrentPage(1);
+              setSongs([]);
+              setIsFetching(true);
+              setIsError(false);
+              void loadPage(1, false, false, value);
+            }}
+          />
         </div>
       </div>
 
