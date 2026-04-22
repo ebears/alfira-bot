@@ -181,10 +181,12 @@ export function fetchPlaylistPage(
   id: string,
   adminView = false,
   page: number,
-  limit = 30
+  limit = 30,
+  search?: string
 ): Promise<PlaylistDetail & { pagination: PaginationMeta }> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (adminView) params.set('adminView', 'true');
+  if (search) params.set('search', search);
   return get(`/api/playlists/${id}?${params}`);
 }
 
