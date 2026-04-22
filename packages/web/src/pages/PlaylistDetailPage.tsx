@@ -139,18 +139,18 @@ export default function PlaylistDetailPage() {
     };
   }, [currentPage, loadPage]);
 
+  // Stable callback to update a single song in the list (mirrors useVirtualizedInfiniteScroll.updateItem)
+  const updateSong = useCallback((song: Song) => {
+    setSongs((prev) => prev.map((ps) => (ps.songId === song.id ? { ...ps, song } : ps)));
+  }, []);
+
   // Socket: song edited — update in real-time
   useEffect(() => {
-    const handleSongUpdated = (song: Song) => {
-      setSongs((prev) => prev.map((ps) => (ps.songId === song.id ? { ...ps, song } : ps)));
-    };
-
-    const offSongUpdated = onSocketEvent('songs:updated', handleSongUpdated);
-
+    const offSongUpdated = onSocketEvent('songs:updated', updateSong);
     return () => {
       offSongUpdated();
     };
-  }, []);
+  }, [updateSong]);
 
   const handleRenameSave = async () => {
     if (!playlistDetail || !renameValue.trim() || renameValue.trim() === playlistDetail.name) {
