@@ -143,6 +143,15 @@ export function updateSong(id: string, data: SongUpdateData): Promise<Song> {
   return patch(`/api/songs/${id}`, data);
 }
 
+export interface TagItem {
+  canonicalName: string;
+  nameLower: string;
+}
+
+export function fetchTags(): Promise<TagItem[]> {
+  return get<{ tags: TagItem[] }>('/api/tags').then((r) => r.tags);
+}
+
 // ---------------------------------------------------------------------------
 // Playlists API Functions
 // ---------------------------------------------------------------------------
