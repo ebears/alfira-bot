@@ -14,7 +14,13 @@ const { song: songTable } = tables;
 
 const normalizeTag = (t: string) => t.replace(/\s+/g, '-').trim();
 
-async function migrateExistingTags() {
+/**
+ * Normalizes existing tags on all songs. Creates Tag entries for any tags
+ * that only exist in Song.tags JSON arrays but not in the Tag table.
+ *
+ * Safe to call multiple times — already-migrated songs are skipped.
+ */
+export async function runTagMigration(): Promise<{ normalized: number; errors: number }> {
   console.log('Starting tag normalization migration...');
 
   const songs = await db
@@ -44,10 +50,13 @@ async function migrateExistingTags() {
   }
 
   console.log(`Migration complete: ${normalized} songs normalized, ${errors} errors`);
-  process.exit(errors > 0 ? 1 : 0);
+  return { normalized, errors };
 }
 
-migrateExistingTags().catch((err) => {
-  console.error('Migration failed:', err);
-  process.exit(1);
-});
+// Standalone entry point — run with: bun run packages/server/src/lib/migrateExistingTags.ts
+if (__filename.includes('migrateExistingTags')) {
+  runTagMigration().catch((err) => {
+    console.error('Migration failed:', err);
+    process.exit(1);
+  });
+}
