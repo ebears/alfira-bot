@@ -90,42 +90,51 @@ export default function PlaylistDetailPage() {
   // IntersectionObserver ref for sentinel
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const loadPage = useCallback(async (page: number, isInitial = false, isRefetch = false, searchQuery?: string) => {
-    if (!idRef.current) return;
-
-    if (isInitial) {
-      setIsLoading(true);
-      setSongs([]);
-    } else {
-      setIsFetching(true);
-    }
-    setIsError(false);
-
-    try {
-      const pl = await getPlaylistPage(idRef.current, isAdminViewRef.current, page, ITEMS_PER_PAGE, searchQuery);
+  const loadPage = useCallback(
+    async (page: number, isInitial = false, isRefetch = false, searchQuery?: string) => {
+      if (!idRef.current) return;
 
       if (isInitial) {
-        setPlaylistDetail(pl);
-        setSongs(pl.songs);
-        setRenameValue(pl.name);
-      } else if (isRefetch) {
-        // Socket-triggered refetch: replace songs so we don't accumulate duplicates.
-        setSongs(pl.songs);
-        setPlaylistDetail(pl);
+        setIsLoading(true);
+        setSongs([]);
       } else {
-        // User scroll: accumulate songs from the new page.
-        setSongs((prev) => [...prev, ...pl.songs]);
-        // Keep latest playlist metadata
-        setPlaylistDetail(pl);
+        setIsFetching(true);
       }
-      setHasMore(pl.songs.length === ITEMS_PER_PAGE);
-    } catch {
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-      setIsFetching(false);
-    }
-  }, []);
+      setIsError(false);
+
+      try {
+        const pl = await getPlaylistPage(
+          idRef.current,
+          isAdminViewRef.current,
+          page,
+          ITEMS_PER_PAGE,
+          searchQuery
+        );
+
+        if (isInitial) {
+          setPlaylistDetail(pl);
+          setSongs(pl.songs);
+          setRenameValue(pl.name);
+        } else if (isRefetch) {
+          // Socket-triggered refetch: replace songs so we don't accumulate duplicates.
+          setSongs(pl.songs);
+          setPlaylistDetail(pl);
+        } else {
+          // User scroll: accumulate songs from the new page.
+          setSongs((prev) => [...prev, ...pl.songs]);
+          // Keep latest playlist metadata
+          setPlaylistDetail(pl);
+        }
+        setHasMore(pl.songs.length === ITEMS_PER_PAGE);
+      } catch {
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
+        setIsFetching(false);
+      }
+    },
+    []
+  );
 
   // Initial load
   useEffect(() => {

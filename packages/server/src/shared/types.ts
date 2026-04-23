@@ -40,6 +40,7 @@ export interface Tag {
   id: string;
   nameLower: string;
   canonicalName: string;
+  color?: string | null;
   createdAt: string; // ISO 8601 string
 }
 

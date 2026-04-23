@@ -4,6 +4,7 @@ import { fetchTags, updateSong } from '@alfira-bot/server/shared/api';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getTagColorClasses } from '../utils/tagColors';
+import { useTagColors } from '../context/TagsContext';
 
 interface SongEditPanelProps {
   song: Song;
@@ -14,6 +15,7 @@ interface SongEditPanelProps {
 export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelProps) {
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
+  const { tagColorMap } = useTagColors();
 
   useLayoutEffect(() => {
     if (isOpen) {
@@ -271,7 +273,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
               }}
             >
               {tags.map((tag) => {
-                const c = getTagColorClasses(tag);
+                const c = getTagColorClasses(tag, tagColorMap[tag.toLowerCase()]);
                 return (
                   <span
                     key={tag}

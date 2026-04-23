@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { getTagColorClasses } from '../utils/tagColors';
+import { useTagColors } from '../context/TagsContext';
 
 interface TagTickerProps {
   tags: string[];
@@ -12,6 +13,7 @@ const TagTicker = memo(({ tags, isHovered: externalHovered }: TagTickerProps) =>
   const [shouldScroll, setShouldScroll] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [duration, setDuration] = useState(15);
+  const { tagColorMap } = useTagColors();
 
   useEffect(() => {
     if (outerRef.current && innerRef.current && outerRef.current.clientWidth > 0) {
@@ -28,7 +30,9 @@ const TagTicker = memo(({ tags, isHovered: externalHovered }: TagTickerProps) =>
   const renderTags = useCallback(
     (prefix: string) =>
       tags.map((tag) => {
-        const colors = getTagColorClasses(tag);
+        const tagKey = tag.toLowerCase();
+        const explicitColor = tagColorMap[tagKey];
+        const colors = getTagColorClasses(tag, explicitColor);
         return (
           <span
             key={`${prefix}-${tag}`}
@@ -38,7 +42,7 @@ const TagTicker = memo(({ tags, isHovered: externalHovered }: TagTickerProps) =>
           </span>
         );
       }),
-    [tags]
+    [tags, tagColorMap]
   );
 
   if (tags.length === 0) return null;
