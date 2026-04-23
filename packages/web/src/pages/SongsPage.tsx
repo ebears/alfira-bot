@@ -53,7 +53,6 @@ export default function SongsPage() {
     prepend,
     updateItem,
     removeItem,
-    reset,
     retry,
     sentinelRef,
   } = useVirtualizedInfiniteScroll<Song, [string]>({
@@ -163,10 +162,7 @@ export default function SongsPage() {
             placeholder="Search by title, nickname, artist, album, or tag..."
             value={search}
             onChange={(e) => {
-              startTransition(() => {
-                setSearch(e.target.value);
-                reset();
-              });
+              setSearch(e.target.value);
             }}
           />
         </div>
