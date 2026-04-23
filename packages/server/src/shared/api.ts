@@ -146,10 +146,26 @@ export function updateSong(id: string, data: SongUpdateData): Promise<Song> {
 export interface TagItem {
   canonicalName: string;
   nameLower: string;
+  color?: string | null;
 }
 
 export function fetchTags(): Promise<TagItem[]> {
   return get<{ tags: TagItem[] }>('/api/tags').then((r) => r.tags);
+}
+
+export function fetchTagSongs(nameLower: string): Promise<Song[]> {
+  return get<{ songs: Song[] }>(`/api/tags/${nameLower}/songs`).then((r) => r.songs);
+}
+
+export function updateTag(
+  nameLower: string,
+  data: { canonicalName?: string; color?: string | null }
+): Promise<{ tag: TagItem }> {
+  return patch(`/api/tags/${nameLower}`, data);
+}
+
+export function deleteTag(nameLower: string): Promise<{ success: boolean }> {
+  return remove(`/api/tags/${nameLower}`);
 }
 
 // ---------------------------------------------------------------------------

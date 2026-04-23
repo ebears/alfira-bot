@@ -72,6 +72,7 @@ export const tag = sqliteTable('Tag', {
     .$defaultFn(() => randomUUID()),
   nameLower: text('nameLower').notNull().unique(),
   canonicalName: text('canonicalName').notNull(),
+  color: text('color'),
   createdAt: integer('createdAt', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),
