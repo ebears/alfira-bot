@@ -2,7 +2,7 @@ import type { Song } from '@alfira-bot/server/shared';
 import type { SongUpdateData, TagItem } from '@alfira-bot/server/shared/api';
 import { fetchTags, updateSong } from '@alfira-bot/server/shared/api';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { useTagColors } from '../context/TagsContext';
 import { getTagColorClasses } from '../utils/tagColors';
 
@@ -307,7 +307,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
                   highlightedIndex={highlightedIndex}
                   onToggle={(tag) => {
                     if (tags.includes(tag)) removeTag(tag);
-                    else setTags((prev) => [...prev, tag]);
+                    else {
+                      flushSync(() => setTags((prev) => [...prev, tag]));
+                    }
                   }}
                   onHighlight={setHighlightedIndex}
                   onClose={() => {
