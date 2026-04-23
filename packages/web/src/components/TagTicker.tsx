@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { getTagColorClasses } from '../utils/tagColors';
 import { useTagColors } from '../context/TagsContext';
+import { getTagColorClasses } from '../utils/tagColors';
 
 interface TagTickerProps {
   tags: string[];

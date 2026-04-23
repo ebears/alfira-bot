@@ -1,15 +1,31 @@
 import { deleteTag, fetchTagSongs, fetchTags, updateTag } from '@alfira-bot/server/shared/api';
 import type { Song } from '@alfira-bot/server/shared/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import ConfirmModal from '../ConfirmModal';
 import { useTagColors } from '../../context/TagsContext';
+import ConfirmModal from '../ConfirmModal';
 
 const TAG_COLORS = [
-  { name: 'orange', bg: 'light:bg-orange-500/15 bg-orange-500/20', text: 'light:text-orange-600 text-orange-300' },
+  {
+    name: 'orange',
+    bg: 'light:bg-orange-500/15 bg-orange-500/20',
+    text: 'light:text-orange-600 text-orange-300',
+  },
   { name: 'sky', bg: 'light:bg-sky-500/15 bg-sky-500/20', text: 'light:text-sky-600 text-sky-300' },
-  { name: 'emerald', bg: 'light:bg-emerald-500/15 bg-emerald-500/20', text: 'light:text-emerald-600 text-emerald-300' },
-  { name: 'amber', bg: 'light:bg-amber-500/15 bg-amber-500/20', text: 'light:text-amber-700 text-amber-300' },
-  { name: 'violet', bg: 'light:bg-violet-500/15 bg-violet-500/20', text: 'light:text-violet-600 text-violet-300' },
+  {
+    name: 'emerald',
+    bg: 'light:bg-emerald-500/15 bg-emerald-500/20',
+    text: 'light:text-emerald-600 text-emerald-300',
+  },
+  {
+    name: 'amber',
+    bg: 'light:bg-amber-500/15 bg-amber-500/20',
+    text: 'light:text-amber-700 text-amber-300',
+  },
+  {
+    name: 'violet',
+    bg: 'light:bg-violet-500/15 bg-violet-500/20',
+    text: 'light:text-violet-600 text-violet-300',
+  },
 ] as const;
 const TAG_COLOR_NAMES = TAG_COLORS.map((c) => c.name);
 
@@ -185,7 +201,9 @@ export default function TagsTab() {
             <>
               {/* Header */}
               <div className="px-4 py-3 border-b border-border space-y-1">
-                <p className="text-xs font-medium text-fg uppercase tracking-wider">Canonical Name</p>
+                <p className="text-xs font-medium text-fg uppercase tracking-wider">
+                  Canonical Name
+                </p>
                 <input
                   type="text"
                   value={editingName}
@@ -205,7 +223,8 @@ export default function TagsTab() {
                 <p className="text-xs font-medium text-fg uppercase tracking-wider">Color</p>
                 <div className="flex gap-2">
                   {TAG_COLOR_NAMES.map((colorName) => {
-                    const colorClasses = TAG_COLORS.find((c) => c.name === colorName) ?? TAG_COLORS[0];
+                    const colorClasses =
+                      TAG_COLORS.find((c) => c.name === colorName) ?? TAG_COLORS[0];
                     const isSelected = selected.color != null && selected.color === colorName;
                     return (
                       <button
@@ -220,7 +239,12 @@ export default function TagsTab() {
                         } ${colorClasses.bg} ${colorClasses.text}`}
                       >
                         {isSelected ? (
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 12 12" aria-hidden="true">
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 12 12"
+                            aria-hidden="true"
+                          >
                             <path d="M10.28 2.28L4.5 8.06l-2.78-2.79a.5.5 0 0 0-.71.71l3.15 3.15a.5.5 0 0 0 .71 0l6.36-6.36a.5.5 0 0 0 0-.71.5.5.5 0 0 0-.71 0z" />
                           </svg>
                         ) : null}
@@ -233,11 +257,16 @@ export default function TagsTab() {
               {/* Song list */}
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
                 <p className="text-xs font-medium text-fg uppercase tracking-wider">
-                  {loadingSongs ? 'Loading…' : `${tagSongs.length} song${tagSongs.length !== 1 ? 's' : ''}`}
+                  {loadingSongs
+                    ? 'Loading…'
+                    : `${tagSongs.length} song${tagSongs.length !== 1 ? 's' : ''}`}
                 </p>
                 <div className="space-y-2">
                   {tagSongs.map((song) => (
-                    <div key={song.id} className="flex items-center gap-2 py-1 px-2 rounded bg-secondary hover:bg-tertiary transition-colors">
+                    <div
+                      key={song.id}
+                      className="flex items-center gap-2 py-1 px-2 rounded bg-secondary hover:bg-tertiary transition-colors"
+                    >
                       <span className="flex-1 truncate text-sm text-fg">{song.title}</span>
                       <button
                         type="button"
