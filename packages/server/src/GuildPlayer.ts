@@ -269,6 +269,25 @@ export class GuildPlayer {
     return this.currentSong;
   }
 
+  /**
+   * Update volume of the currently-playing track without restarting it.
+   * Does nothing if no track is currently playing.
+   */
+  public updateVolumeBoost(boost: number): void {
+    const hoshimi = getHoshimi();
+    if (!hoshimi) return;
+    const hoshimiPlayer = hoshimi.players.get(this.guildId);
+    if (!hoshimiPlayer || !this.currentSong) return;
+    // Use NodeLink REST API directly to bypass Hoshimi's volume filter
+    // NodeLink volume: 0-1000 where 100 = 100%. finalVolume = 100 + boost
+    const node = hoshimiPlayer.node;
+    if (!node) return;
+    node.rest.updatePlayer({
+      guildId: this.guildId,
+      playerOptions: { volume: 100 + boost },
+    });
+  }
+
   getQueue(): QueuedSong[] {
     return this.queue.toRemaining();
   }
@@ -409,10 +428,7 @@ export class GuildPlayer {
     }
 
     // Apply volume via NodeLink volume filter.
-    const volume =
-      next.volumeOffset != null && next.volumeOffset !== 0
-        ? 10 ** (next.volumeOffset / 20) * 100
-        : 100;
+    const volume = 100 + (next.volumeBoost ?? 0);
 
     await player.play({
       track: new Track(

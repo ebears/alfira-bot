@@ -137,3 +137,6 @@ DISCORD_REDIRECT_URI=https://alfira.example.com/auth/callback
 
 - [Installation Guide](installation.md) — Setting up Alfira
 - [Troubleshooting](troubleshooting.md) — Common issues and solutions
+
+---
+

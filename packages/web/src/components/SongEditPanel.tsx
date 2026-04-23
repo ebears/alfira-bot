@@ -43,8 +43,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   const [artwork, setArtwork] = useState(songExtended.artwork ?? '');
   const [tags, setTags] = useState<string[]>(songExtended.tags ?? []);
   const [tagInput, setTagInput] = useState('');
-  const [volumeOffset, setVolumeOffset] = useState(
-    songExtended.volumeOffset != null ? String(songExtended.volumeOffset) : ''
+  const [volumeBoost, setVolumeBoost] = useState(
+    songExtended.volumeBoost != null ? String(songExtended.volumeBoost) : ''
   );
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [availableTags, setAvailableTags] = useState<TagItem[]>([]);
@@ -57,8 +57,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   // Refs for save logic so we don't recreate handlers on every render
   const songIdRef = useRef(song.id);
   songIdRef.current = song.id;
-  const fieldsRef = useRef(() => ({ nickname, artist, album, artwork, tags, volumeOffset }));
-  fieldsRef.current = () => ({ nickname, artist, album, artwork, tags, volumeOffset });
+  const fieldsRef = useRef(() => ({ nickname, artist, album, artwork, tags, volumeBoost }));
+  fieldsRef.current = () => ({ nickname, artist, album, artwork, tags, volumeBoost });
   const originalNicknameRef = useRef<string | null>(songExtended.nickname ?? null);
   originalNicknameRef.current = songExtended.nickname ?? null;
   const originalArtistRef = useRef<string | null>(songExtended.artist ?? null);
@@ -69,8 +69,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
   originalArtworkRef.current = songExtended.artwork ?? null;
   const originalTagsRef = useRef<string[]>(songExtended.tags ?? []);
   originalTagsRef.current = songExtended.tags ?? [];
-  const originalVolumeOffsetRef = useRef<number | null>(songExtended.volumeOffset ?? null);
-  originalVolumeOffsetRef.current = songExtended.volumeOffset ?? null;
+  const originalVolumeBoostRef = useRef<number | null>(songExtended.volumeBoost ?? null);
+  originalVolumeBoostRef.current = songExtended.volumeBoost ?? null;
   const savingRef = useRef(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -142,9 +142,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
         album: al,
         artwork: aw,
         tags: t,
-        volumeOffset: vo,
+        volumeBoost: vo,
       } = fieldsRef.current();
-      const parsedOffset = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
+      const parsedBoost = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
 
       // Build a partial update — only include fields that actually changed.
       // This prevents concurrent edits from clobbering each other (last-write-wins).
@@ -154,8 +154,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
       if (al !== (originalAlbumRef.current ?? '')) data.album = al.trim() || null;
       if (aw !== (originalArtworkRef.current ?? '')) data.artwork = aw.trim() || null;
       if (JSON.stringify(t) !== JSON.stringify(originalTagsRef.current)) data.tags = t;
-      if (parsedOffset !== originalVolumeOffsetRef.current)
-        data.volumeOffset = Number.isNaN(parsedOffset) ? null : parsedOffset;
+      if (parsedBoost !== originalVolumeBoostRef.current)
+        data.volumeBoost = Number.isNaN(parsedBoost) ? null : parsedBoost;
 
       // Skip if nothing changed
       if (Object.keys(data).length === 0) {
@@ -179,9 +179,9 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
         album: al,
         artwork: aw,
         tags: t,
-        volumeOffset: vo,
+        volumeBoost: vo,
       } = fieldsRef.current();
-      const parsedOffset = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
+      const parsedBoost = vo.trim() === '' ? null : parseInt(vo.trim(), 10);
 
       const data: SongUpdateData = {};
       if (nk !== (originalNicknameRef.current ?? '')) data.nickname = nk.trim() || null;
@@ -189,8 +189,8 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
       if (al !== (originalAlbumRef.current ?? '')) data.album = al.trim() || null;
       if (aw !== (originalArtworkRef.current ?? '')) data.artwork = aw.trim() || null;
       if (JSON.stringify(t) !== JSON.stringify(originalTagsRef.current)) data.tags = t;
-      if (parsedOffset !== originalVolumeOffsetRef.current)
-        data.volumeOffset = Number.isNaN(parsedOffset) ? null : parsedOffset;
+      if (parsedBoost !== originalVolumeBoostRef.current)
+        data.volumeBoost = Number.isNaN(parsedBoost) ? null : parsedBoost;
 
       if (Object.keys(data).length > 0) {
         void doSave();
@@ -324,10 +324,10 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
           </div>
 
           <VolumeSlider
-            value={volumeOffset}
-            onChange={setVolumeOffset}
-            min={-12}
-            max={12}
+            value={volumeBoost}
+            onChange={setVolumeBoost}
+            min={0}
+            max={200}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void doSave();
             }}
@@ -356,16 +356,16 @@ function VolumeSlider({
 
   return (
     <div>
-      <span className="block font-mono text-[10px] text-muted uppercase mb-1">Volume Offset</span>
+      <span className="block font-mono text-[10px] text-muted uppercase mb-1">Volume Boost</span>
       <div className="flex items-center gap-3">
         <input
-          id="panel-volume-offset"
+          id="panel-volume-boost"
           className="input text-sm w-16 text-center"
           type="text"
           value={value}
           onChange={(e) => {
             const v = e.target.value;
-            if (v === '' || /^-?\d*$/.test(v)) onChange(v);
+            if (v === '' || /^\d*$/.test(v)) onChange(v);
           }}
           onKeyDown={onKeyDown}
           onBlur={() => {
@@ -379,7 +379,7 @@ function VolumeSlider({
             }
           }}
         />
-        <span className="text-xs text-muted font-mono w-8 text-left">dB</span>
+        <span className="text-xs text-muted font-mono w-8 text-left">%</span>
         <input
           type="range"
           min={min}

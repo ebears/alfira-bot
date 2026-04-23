@@ -193,13 +193,13 @@ export function validateTags(value: unknown): ValidationResult<string[]> {
 }
 
 /**
- * Validates an optional volume offset in dB.
+ * Validates an optional volume boost (0–200).
  * Returns `undefined` when absent (PATCH skips it),
  * `null` when explicitly cleared,
- * the integer when valid (-12 to +12),
+ * the integer when valid (0 to 100),
  * error Response when invalid.
  */
-export function validateVolumeOffset(
+export function validateVolumeBoost(
   value: unknown
 ): { ok: true; value: number | null | undefined } | { ok: false; response: Response } {
   if (value === undefined) return { ok: true, value: undefined };
@@ -207,13 +207,13 @@ export function validateVolumeOffset(
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     return {
       ok: false,
-      response: json({ error: 'volumeOffset must be an integer.' }, 400),
+      response: json({ error: 'volumeBoost must be an integer.' }, 400),
     };
   }
-  if (value < -12 || value > 12) {
+  if (value < 0 || value > 200) {
     return {
       ok: false,
-      response: json({ error: 'volumeOffset must be between -12 and +12.' }, 400),
+      response: json({ error: 'volumeBoost must be between 0 and 200.' }, 400),
     };
   }
   return { ok: true, value };
