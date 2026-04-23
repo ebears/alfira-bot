@@ -1,5 +1,6 @@
 import { eq, inArray, or, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
+import { GUILD_ID } from '../lib/config';
 import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
 import { formatSong } from '../lib/serialization';
@@ -13,12 +14,13 @@ import {
   validateNickname,
   validateOptionalString,
   validateTags,
-  validateVolumeOffset,
+  validateVolumeBoost,
   validateYouTubePlaylistUrl,
   validateYouTubeUrl,
   youTubeUrl,
 } from '../lib/validation';
 import { $client, db, tables } from '../shared/db';
+import { getPlayer } from '../startDiscord';
 
 const { song: songTable } = tables;
 
@@ -369,11 +371,11 @@ async function handlePatchSong(ctx: RouteContext, request: Request, id: string):
     data.tags = await canonicalizeTags(tagsResult.value);
   }
 
-  // Volume offset
-  if ('volumeOffset' in body) {
-    const volumeResult = validateVolumeOffset(body.volumeOffset);
+  // Volume boost
+  if ('volumeBoost' in body) {
+    const volumeResult = validateVolumeBoost(body.volumeBoost);
     if (!volumeResult.ok) return volumeResult.response;
-    data.volumeOffset = volumeResult.value;
+    data.volumeBoost = volumeResult.value;
   }
 
   const [updatedSong] = await db
@@ -383,6 +385,16 @@ async function handlePatchSong(ctx: RouteContext, request: Request, id: string):
     .returning();
 
   emitSongUpdated(formatSong(updatedSong));
+
+  // If this song is currently playing, update volume live without restarting
+  const player = getPlayer(GUILD_ID);
+  if (player && data.volumeBoost !== undefined) {
+    const currentSong = player.getCurrentSong();
+    if (currentSong?.id === id) {
+      player.updateVolumeBoost(data.volumeBoost as number);
+    }
+  }
+
   return json(formatSong(updatedSong));
 }
 

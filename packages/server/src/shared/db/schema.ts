@@ -16,7 +16,7 @@ export const song = sqliteTable('Song', {
   album: text('album'),
   artwork: text('artwork'),
   tags: text('tags', { mode: 'json' }).$type<string[]>().notNull().default([]),
-  volumeOffset: integer('volumeOffset'),
+  volumeBoost: integer('volumeBoost'),
   createdAt: integer('createdAt', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),

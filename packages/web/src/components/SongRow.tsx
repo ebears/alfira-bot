@@ -31,13 +31,9 @@ function MetaInfo({ song, isHovered }: MetaInfoProps) {
         {formatDuration(song.duration)}
         <ClockIcon size={11} weight="fill" className="shrink-0" />
       </span>
-      {song.volumeOffset != null && song.volumeOffset !== 0 && (
-        <span
-          className="flex items-center gap-0.5 text-xs"
-          style={{ color: song.volumeOffset > 0 ? '#22c55e' : '#eab308' }}
-        >
-          {song.volumeOffset > 0 ? '+' : '-'}
-          {Math.abs(song.volumeOffset)} dB
+      {song.volumeBoost != null && song.volumeBoost > 0 && (
+        <span className="flex items-center gap-0.5 text-xs" style={{ color: '#22c55e' }}>
+          +{song.volumeBoost}%
           <HeadphonesIcon size={11} weight="fill" className="shrink-0" />
         </span>
       )}
