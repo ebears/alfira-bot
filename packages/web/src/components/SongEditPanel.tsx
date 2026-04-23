@@ -3,8 +3,8 @@ import type { SongUpdateData, TagItem } from '@alfira-bot/server/shared/api';
 import { fetchTags, updateSong } from '@alfira-bot/server/shared/api';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { getTagColorClasses } from '../utils/tagColors';
 import { useTagColors } from '../context/TagsContext';
+import { getTagColorClasses } from '../utils/tagColors';
 
 interface SongEditPanelProps {
   song: Song;

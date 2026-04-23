@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { parse } from 'cookie';
 import { sql } from 'drizzle-orm';
 import { logger } from './lib/config';
+import { ensureTagsMigrated } from './lib/ensureTagsMigrated';
 import { json } from './lib/json';
 import { closeAllClients, registerClient, unregisterClient } from './lib/socket';
 import { verifySessionToken } from './middleware/requireAuth';
@@ -317,6 +318,13 @@ async function main(): Promise<void> {
     logger.info('Migrations complete');
   } catch (error) {
     logger.error(error, 'Migration failed (continuing anyway — database may already be set up)');
+  }
+
+  // 1.5. Migrate existing song tags to the Tag table if needed.
+  try {
+    await ensureTagsMigrated();
+  } catch (error) {
+    logger.error(error, 'Tag migration failed (tags may not appear in autocomplete)');
   }
 
   // 2. Verify database connectivity.

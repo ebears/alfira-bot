@@ -1,12 +1,5 @@
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
 import { fetchTags } from '@alfira-bot/server/shared/api';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 interface TagItem {
   canonicalName: string;
@@ -40,9 +33,7 @@ export function TagsProvider({ children }: { children: ReactNode }) {
   }, [refreshTags]);
 
   return (
-    <TagsContext.Provider value={{ tagColorMap, refreshTags }}>
-      {children}
-    </TagsContext.Provider>
+    <TagsContext.Provider value={{ tagColorMap, refreshTags }}>{children}</TagsContext.Provider>
   );
 }
 
