@@ -80,9 +80,9 @@ const SongCardInner = ({
           <span className="font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
             {formatDuration(song.duration)}
           </span>
-          {song.volumeBoost != null && song.volumeBoost > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px]" style={{ color: '#22c55e' }}>
-              +{song.volumeBoost}%
+          {song.volumeBoost != null && song.volumeBoost !== 0 && (
+            <span className="flex items-center gap-0.5 text-[10px]" style={{ color: song.volumeBoost > 0 ? '#22c55e' : '#eab308' }}>
+              {song.volumeBoost > 0 ? '+' : ''}{song.volumeBoost}%
               <HeadphonesIcon size={11} weight="fill" />
             </span>
           )}

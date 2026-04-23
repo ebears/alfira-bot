@@ -193,10 +193,10 @@ export function validateTags(value: unknown): ValidationResult<string[]> {
 }
 
 /**
- * Validates an optional volume boost (0–200).
+ * Validates an optional volume boost (-100 to +200).
  * Returns `undefined` when absent (PATCH skips it),
- * `null` when explicitly cleared,
- * the integer when valid (0 to 100),
+ * `null` when explicitly cleared (maps to 0 at playback),
+ * the integer when valid (-100 to +200),
  * error Response when invalid.
  */
 export function validateVolumeBoost(
@@ -210,10 +210,10 @@ export function validateVolumeBoost(
       response: json({ error: 'volumeBoost must be an integer.' }, 400),
     };
   }
-  if (value < 0 || value > 200) {
+  if (value < -100 || value > 200) {
     return {
       ok: false,
-      response: json({ error: 'volumeBoost must be between 0 and 200.' }, 400),
+      response: json({ error: 'volumeBoost must be between -100 and 200.' }, 400),
     };
   }
   return { ok: true, value };

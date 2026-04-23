@@ -326,7 +326,7 @@ export default function SongEditPanel({ song, isOpen, onClose }: SongEditPanelPr
           <VolumeSlider
             value={volumeBoost}
             onChange={setVolumeBoost}
-            min={0}
+            min={-100}
             max={200}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void doSave();
