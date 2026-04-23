@@ -20,7 +20,7 @@ export interface UseInfiniteScrollReturn<T> {
   prepend: (item: T) => void;
   updateItem: (item: T) => void;
   removeItem: (id: string) => void;
-  reset: () => void;
+  reset: (searchQuery?: string) => void;
   retry: () => void;
   sentinelRef: (el: HTMLDivElement | null) => void;
 }
@@ -56,7 +56,7 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally uses deps inside via fetchPageRef; deps changes trigger refetch via useEffect
   const loadPage = useCallback(
-    async (page: number, isInitial = false) => {
+    async (page: number, isInitial = false, searchOverride?: string) => {
       if (isFetchingRef.current) return;
       if (!isInitial && !hasMoreRef.current) return;
 
@@ -67,8 +67,10 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
       }
       setIsError(false);
 
+      const searchArgs = (searchOverride !== undefined ? [searchOverride] : deps) as A;
+
       try {
-        const result = await fetchPageRef.current(page, limit, ...deps);
+        const result = await fetchPageRef.current(page, limit, ...searchArgs);
         if (!isMountedRef.current) return;
 
         if (isInitial) {
@@ -125,24 +127,27 @@ export function useVirtualizedInfiniteScroll<T, A extends unknown[]>({
     setItems((prev) => prev.filter((i) => (i as { id: string }).id !== id));
   }, []);
 
-  const reset = useCallback(() => {
-    setItems([]);
-    pageRef.current = 1;
-    setHasMore(true);
-    setIsError(false);
-    void loadPage(1, true);
-  }, [loadPage]);
+  const reset = useCallback(
+    (searchQuery?: string) => {
+      setItems([]);
+      pageRef.current = 1;
+      setHasMore(true);
+      setIsError(false);
+      void loadPage(1, true, searchQuery);
+    },
+    [loadPage]
+  );
 
   // Initial load
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally depends on deps to refetch on search change; loadPage is stable via ref
   useEffect(() => {
     isMountedRef.current = true;
-    void loadPage(1, true);
+    void loadPage(1, true, deps[0] as string | undefined);
 
     return () => {
       isMountedRef.current = false;
     };
-  }, [...deps]);
+  }, [...deps, loadPage]);
 
   // IntersectionObserver — created once, reads fetchMore via ref so it never goes stale
   const setSentinelRef = useCallback((el: HTMLDivElement | null) => {
