@@ -200,7 +200,8 @@ export async function getPlaylistMetadataWithVideos(
 export async function preloadTrack(
   guildId: string,
   sessionId: string,
-  youtubeUrl: string
+  youtubeUrl: string,
+  currentEncoded?: string
 ): Promise<void> {
   try {
     const response = await restRequest<LoadTrackResponse>(
@@ -215,10 +216,16 @@ export async function preloadTrack(
     };
     if (NODELINK_AUTH) headers.Authorization = NODELINK_AUTH;
 
+    const body: Record<string, unknown> = { nextTrack: { encoded } };
+    // Include current track if provided so NodeLink associates this with the active player session
+    if (currentEncoded) {
+      body.track = { encoded: currentEncoded };
+    }
+
     await fetch(url, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ nextTrack: { encoded, userData: { context: 'preloaded' } } }),
+      body: JSON.stringify(body),
     });
   } catch {
     logger.warn({ guildId, youtubeUrl }, 'Gapless preload failed');

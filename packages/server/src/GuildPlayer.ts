@@ -484,16 +484,23 @@ export class GuildPlayer {
     this.broadcast();
 
     // Kick off gapless preload for the next track (fire-and-forget)
+    // Delay slightly to ensure current track is fully initialized in NodeLink
+    // before we attempt to preload the next track.
+    const currentEncoded = trackData.track;
     const nextTrack = this.peekNextTrack();
     if (nextTrack) {
       const player = this.hoshimiPlayer();
       const sessionId = player?.node?.sessionId;
       if (sessionId) {
-        import('./utils/nodelink').then(({ preloadTrack }) => {
-          preloadTrack(this.guildId, sessionId, nextTrack.youtubeUrl).catch(() => {
-            /* intentionally empty */
+        const guildId = this.guildId;
+        const youtubeUrl = nextTrack.youtubeUrl;
+        setTimeout(() => {
+          import('./utils/nodelink').then(({ preloadTrack }) => {
+            preloadTrack(guildId, sessionId, youtubeUrl, currentEncoded).catch(() => {
+              /* intentionally empty */
+            });
           });
-        });
+        }, 500);
       }
     }
   }
