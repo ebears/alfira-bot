@@ -41,6 +41,8 @@ export default function CompressorSection() {
       });
       if (res.ok) {
         setSavedValues(values);
+      } else {
+        console.error('Failed to save compressor settings:', res.status);
       }
     } finally {
       setSaving(false);
