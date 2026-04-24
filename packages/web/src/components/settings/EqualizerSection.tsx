@@ -27,15 +27,19 @@ export default function EqualizerSection() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isAdminView) return;
-    fetch('/api/settings/equalizer')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
+    async function load() {
+      try {
+        const res = await fetch('/api/settings/equalizer');
+        if (res.ok) {
+          const data = (await res.json()) as { bands: number[] };
           setBands(data.bands);
           setSavedBands(data.bands);
         }
-      });
+      } catch {
+        // silently fail
+      }
+    }
+    if (isAdminView) load();
   }, [isAdminView]);
 
   const hasChanges = JSON.stringify(bands) !== JSON.stringify(savedBands);
@@ -50,6 +54,8 @@ export default function EqualizerSection() {
       });
       if (res.ok) {
         setSavedBands(bands);
+      } else {
+        console.error('Failed to save equalizer settings:', res.status);
       }
     } finally {
       setSaving(false);
@@ -57,7 +63,7 @@ export default function EqualizerSection() {
   }
 
   function handleReset() {
-    setBands(DEFAULT_BANDS.slice());
+    setBands(DEFAULT_BANDS);
   }
 
   function updateBand(index: number, value: number) {
@@ -67,7 +73,7 @@ export default function EqualizerSection() {
   }
 
   function gainDisplay(value: number): string {
-    const gain = ((value - 50) / 100) * 100;
+    const gain = value - 50;
     if (gain === 0) return '0.0 dB';
     return `${gain > 0 ? '+' : ''}${gain.toFixed(1)} dB`;
   }
@@ -85,7 +91,7 @@ export default function EqualizerSection() {
                 max={100}
                 step={1}
                 value={value}
-                onChange={(e) => updateBand(i, parseInt(e.target.value))}
+                onChange={(e) => updateBand(i, parseInt(e.target.value, 10))}
                 className="accent-accent"
                 style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '80px' }}
               />
