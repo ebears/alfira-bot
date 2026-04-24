@@ -15,6 +15,8 @@ export interface PlaylistMetadata {
 const NODELINK_URL = 'http://localhost:2333';
 const NODELINK_AUTH = 'nodelink-internal';
 
+import { logger } from '../shared/logger';
+
 async function restRequest<T>(path: string): Promise<T> {
   const headers: { 'Content-Type': string; Authorization?: string } = {
     'Content-Type': 'application/json',
@@ -193,4 +195,32 @@ export async function getPlaylistMetadataWithVideos(
     videoCount: tracks.length,
     videos,
   };
+}
+
+export async function preloadTrack(
+  guildId: string,
+  sessionId: string,
+  youtubeUrl: string,
+): Promise<void> {
+  try {
+    const response = await restRequest<LoadTrackResponse>(
+      `/v4/loadtracks?identifier=${encodeURIComponent(youtubeUrl)}`
+    );
+    const encoded = response.data?.encoded;
+    if (!encoded) return; // Track couldn't be resolved
+
+    const url = `${NODELINK_URL}/v4/sessions/${sessionId}/players/${guildId}`;
+    const headers: { 'Content-Type': string; Authorization?: string } = {
+      'Content-Type': 'application/json',
+    };
+    if (NODELINK_AUTH) headers.Authorization = NODELINK_AUTH;
+
+    await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ nextTrack: { encoded, userData: { context: 'preloaded' } } }),
+    });
+  } catch {
+    logger.warn({ guildId, youtubeUrl }, 'Gapless preload failed');
+  }
 }
