@@ -546,30 +546,26 @@ export class GuildPlayer {
         ]
       : Array(15).fill(50);
 
-    const hasNonFlatEq = eqBands.some((b) => b !== 50);
-
-    if (hasNonFlatEq) {
-      const node = player.node;
-      if (node) {
-        try {
-          const equalizerFilter = eqBands.map((value, index) => ({
-            band: index,
-            gain: (value - 50) / 100,
-          }));
-          await node.rest.updatePlayer({
-            guildId: this.guildId,
-            playerOptions: {
-              filters: {
-                equalizer: equalizerFilter,
-              },
+    const node = player.node;
+    if (node && eqBands.some((b) => b !== 50)) {
+      try {
+        const equalizerFilter = eqBands.map((value, index) => ({
+          band: index,
+          gain: (value - 50) / 100,
+        }));
+        await node.rest.updatePlayer({
+          guildId: this.guildId,
+          playerOptions: {
+            filters: {
+              equalizer: equalizerFilter,
             },
-          } as Parameters<typeof node.rest.updatePlayer>[0]);
-        } catch (err) {
-          logger.error(
-            { err, guildId: this.guildId },
-            'Failed to apply equalizer filter on playback start'
-          );
-        }
+          },
+        } as Parameters<typeof node.rest.updatePlayer>[0]);
+      } catch (err) {
+        logger.error(
+          { err, guildId: this.guildId },
+          'Failed to apply equalizer filter on playback start'
+        );
       }
     }
 
