@@ -331,6 +331,33 @@ export class GuildPlayer {
     broadcastQueueUpdate(this.getQueueState());
   }
 
+  // biome-ignore-line: noUnusedPrivateClassMembers — peekNextTrack is used by getQueueState and playSong for gapless preloading
+  private peekNextTrack(): QueuedSong | null {
+    // Priority queue peek
+    if (this.priorityQueue.length > 0) {
+      return this.priorityQueue[0];
+    }
+
+    // At end of main queue
+    if (this.queue.isAtEnd) {
+      if (this.loopMode === 'queue' && !this.queue.isEmpty) {
+        // After reset(), readIndex=0 and current() returns buffer[0]
+        return this.queue.current() ?? null;
+      }
+      if (this.loopMode === 'song' && this.currentSong) {
+        return this.currentSong;
+      }
+      return null;
+    }
+
+    // Song loop
+    if (this.loopMode === 'song' && this.currentSong) {
+      return this.currentSong;
+    }
+
+    return this.queue.current();
+  }
+
   private async playNext(): Promise<void> {
     const player = this.hoshimiPlayer();
     if (player && !player.connected) {
