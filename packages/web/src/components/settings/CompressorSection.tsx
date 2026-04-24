@@ -90,6 +90,13 @@ export default function CompressorSection() {
         {SLIDERS.map(({ key, label, min, max, step, unit }) => (
           <div key={key} className="flex items-center gap-3">
             <span className="font-mono text-[11px] text-muted w-20 shrink-0">{label}</span>
+            <span className="font-mono text-[11px] text-fg w-16 shrink-0">
+              {key === 'ratio'
+                ? `${values[key].toFixed(1)}:1`
+                : key === 'gain'
+                  ? `+${values[key]} ${unit}`
+                  : `${values[key]} ${unit}`}
+            </span>
             <input
               type="range"
               min={min}
@@ -99,13 +106,6 @@ export default function CompressorSection() {
               onChange={(e) => updateValue(key, parseFloat(e.target.value))}
               className="flex-1 accent-accent"
             />
-            <span className="font-mono text-[11px] text-fg w-16 text-right shrink-0">
-              {key === 'ratio'
-                ? `${values[key].toFixed(1)}:1`
-                : key === 'gain'
-                  ? `+${values[key]} ${unit}`
-                  : `${values[key]} ${unit}`}
-            </span>
           </div>
         ))}
       </div>
