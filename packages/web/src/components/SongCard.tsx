@@ -75,6 +75,34 @@ const SongCardInner = ({
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
 
+        {/* Action buttons — bottom left */}
+        <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1">
+          <Button
+            variant="primary"
+            size="icon"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePlay();
+            }}
+            disabled={isPlaying}
+            className="shrink-0 disabled:cursor-default"
+            title="Play from this song"
+          >
+            {isPlaying ? (
+              <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
+            ) : (
+              <PlayIcon size={18} weight="duotone" />
+            )}
+          </Button>
+          <ContextMenuTrigger
+            ref={triggerRef}
+            onToggle={() => setMenuOpen((v) => !v)}
+            isOpen={menuOpen}
+            onMouseDown={(e) => e.preventDefault()}
+          />
+        </div>
+
         {/* Duration badge + volume indicator — bottom right */}
         <div className="absolute bottom-2 right-2 z-20 flex flex-col items-end gap-px">
           <span className="font-mono text-[10px] text-white/80 bg-black/50 px-1.5 py-0.5 rounded">
@@ -108,30 +136,6 @@ const SongCardInner = ({
           <p className="font-body font-semibold text-sm text-fg leading-tight line-clamp-2 min-w-0">
             {song.nickname || song.title}
           </p>
-          <div className="flex items-center gap-1 shrink-0 ml-auto">
-            <Button
-              variant="primary"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePlay();
-              }}
-              disabled={isPlaying}
-              className="shrink-0 disabled:cursor-default"
-              title="Play from this song"
-            >
-              {isPlaying ? (
-                <CircleNotchIcon size={18} weight="bold" className="animate-spin" />
-              ) : (
-                <PlayIcon size={18} weight="duotone" />
-              )}
-            </Button>
-            <ContextMenuTrigger
-              ref={triggerRef}
-              onToggle={() => setMenuOpen((v) => !v)}
-              isOpen={menuOpen}
-            />
-          </div>
         </div>
         {song.nickname && <p className="text-[11px] text-faint truncate">{song.title}</p>}
       </div>

@@ -40,6 +40,7 @@ export interface MenuItem {
     placeholder?: string;
   };
   info?: { label: string; icon?: ReactNode };
+  separatorBefore?: boolean;
 }
 
 interface ContextMenuProps {
@@ -58,12 +59,14 @@ export function ContextMenuTrigger({
   ref,
   className,
   surface,
+  onMouseDown,
 }: {
   onToggle: () => void;
   isOpen: boolean;
   ref: RefObject<HTMLButtonElement | null>;
   className?: string;
   surface?: 'base' | 'surface' | 'elevated';
+  onMouseDown?: (e: React.MouseEvent) => void;
 }) {
   return (
     <Button
@@ -74,6 +77,7 @@ export function ContextMenuTrigger({
       aria-expanded={isOpen}
       title="More actions"
       surface={surface ?? 'elevated'}
+      onMouseDown={onMouseDown}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
@@ -165,16 +169,6 @@ export function ContextMenu({
       setActiveSubmenu(null);
       setActiveEditItemId(null);
       setFocusedIndex(0);
-    }
-  }, [isOpen]);
-
-  // Focus first item on open
-  useEffect(() => {
-    if (isOpen && menuRef.current) {
-      const firstItem = menuRef.current.querySelector(
-        '[role="menuitem"]:not([disabled])'
-      ) as HTMLElement | null;
-      firstItem?.focus();
     }
   }, [isOpen]);
 
@@ -298,11 +292,18 @@ export function ContextMenu({
         ) : (
           items.map((item, index) => {
             if (item.info) {
-              return <InfoRow key={item.id} item={item} />;
+              return (
+                <div key={item.id}>
+                  {(index > 0 || item.separatorBefore) && (
+                    <div className="border-b border-muted/50" />
+                  )}
+                  <InfoRow item={item} />
+                </div>
+              );
             }
             return (
               <div key={item.id}>
-                {index > 0 && <div className="border-b border-border" />}
+                {index > 0 && <div className="border-b border-muted/50" />}
                 <MenuItemButton
                   item={item}
                   onClick={() => {

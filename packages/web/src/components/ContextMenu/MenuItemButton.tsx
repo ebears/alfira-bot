@@ -27,7 +27,7 @@ export function MenuItemButton({ item, onClick }: MenuItemButtonProps) {
 				flex items-center gap-2
 				transition-colors duration-100
 				disabled:opacity-50 disabled:cursor-not-allowed
-				${item.danger ? 'text-danger hover:bg-danger/10' : 'text-fg hover:bg-border/50'}
+				${item.danger ? 'text-danger hover:bg-danger/10' : 'text-fg hover:bg-muted/20'}
 			`}
     >
       {item.icon && <span className="shrink-0">{item.icon}</span>}

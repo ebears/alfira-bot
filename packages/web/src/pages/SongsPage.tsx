@@ -1,6 +1,6 @@
 import type { Playlist, Song } from '@alfira-bot/server/shared';
 import { ListIcon, MagnifyingGlassIcon, SquaresFourIcon } from '@phosphor-icons/react';
-import { startTransition, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { deleteSong, getPlaylistsPage, getSongsPage, startPlayback } from '../api/api';
 import AddSongModal from '../components/AddSongModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -173,10 +173,8 @@ export default function SongsPage() {
             surface="surface"
             size="icon"
             onClick={() => {
-              startTransition(() => {
-                setViewMode('grid');
-                localStorage.setItem('alfira-library-view', 'grid');
-              });
+              setViewMode('grid');
+              localStorage.setItem('alfira-library-view', 'grid');
             }}
             className={isGrid ? 'pressed text-accent' : ''}
             title="Grid view"
@@ -188,10 +186,8 @@ export default function SongsPage() {
             surface="surface"
             size="icon"
             onClick={() => {
-              startTransition(() => {
-                setViewMode('list');
-                localStorage.setItem('alfira-library-view', 'list');
-              });
+              setViewMode('list');
+              localStorage.setItem('alfira-library-view', 'list');
             }}
             className={isGrid ? '' : 'pressed text-accent'}
             title="List view"
