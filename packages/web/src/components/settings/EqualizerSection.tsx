@@ -101,7 +101,7 @@ export default function EqualizerSection() {
           </div>
         ))}
       </div>
-      <div className="flex gap-3 pt-1">
+      <div className="flex gap-3 pt-1 justify-end">
         <button
           type="button"
           onClick={handleSave}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAdminView } from '../../context/AdminViewContext';
 import SettingsToggle from './SettingsToggle';
 
@@ -28,6 +28,22 @@ export default function CompressorSection() {
   const [values, setValues] = useState<CompressorValues>(DEFAULTS);
   const [savedValues, setSavedValues] = useState<CompressorValues>(DEFAULTS);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/settings/compressor');
+        if (res.ok) {
+          const data = (await res.json()) as CompressorValues;
+          setValues(data);
+          setSavedValues(data);
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    if (isAdminView) load();
+  }, [isAdminView]);
 
   const hasChanges = JSON.stringify(values) !== JSON.stringify(savedValues);
 
@@ -94,7 +110,7 @@ export default function CompressorSection() {
         ))}
       </div>
 
-      <div className="flex gap-3 pt-1">
+      <div className="flex gap-3 pt-1 justify-end">
         <button
           type="button"
           onClick={handleSave}
