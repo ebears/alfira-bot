@@ -255,12 +255,17 @@ Expected: No type errors.
 
 - [ ] **Step 1: Add helper to read guild settings from DB**
 
-In `packages/server/src/lib/socket.ts`, add a function to read compressor settings:
+In `packages/server/src/lib/socket.ts`, add to the top imports:
 
 ```typescript
+import { eq } from 'drizzle-orm';
 import { db, tables } from '../shared/db';
 import type { CompressorSettings } from '../shared';
+```
 
+Add the helper function:
+
+```typescript
 export async function getCompressorSettings(): Promise<CompressorSettings | null> {
   const row = await db
     .select({
@@ -278,8 +283,6 @@ export async function getCompressorSettings(): Promise<CompressorSettings | null
   return { enabled: row.enabled, threshold: row.threshold, ratio: row.ratio, attack: row.attack, release: row.release, gain: row.gain };
 }
 ```
-
-**Note:** Add `import { eq } from 'drizzle-orm'` at the top.
 
 - [ ] **Step 2: Update `emitPlayerUpdate` to include compressor settings**
 
@@ -299,23 +302,15 @@ export async function emitPlayerUpdate(state: QueueState): Promise<void> {
 
 - [ ] **Step 3: Update `broadcast()` in `GuildPlayer.ts` to handle async**
 
-The `emitPlayerUpdate` → `broadcastQueueUpdate` chain is now async. In `GuildPlayer.ts`, the private `broadcast()` method is the only direct caller of `broadcastQueueUpdate`. Change it to async and `await`:
+`emitPlayerUpdate` is now async. The private `broadcast()` method in `GuildPlayer.ts` calls `broadcastQueueUpdate` and must handle the Promise without becoming async (many callers are in non-async methods). Use `void` to explicitly fire-and-forget:
 
 ```typescript
-private async broadcast(): Promise<void> {
-  await broadcastQueueUpdate(this.getQueueState());
+private broadcast(): void {
+  void broadcastQueueUpdate(this.getQueueState());
 }
 ```
 
-All internal call sites of `this.broadcast()` are inside `async` methods, so change each to `await this.broadcast()`:
-
-```typescript
-// In all methods that call this.broadcast(), change:
-this.broadcast();
-// To:
-await this.broadcast();
-// Affected lines (approximate): ~155, 193, 198, 203, 213, 240, 265, 327, 382, 399, 484
-```
+No changes needed to any existing `this.broadcast()` call sites — all remain unchanged and work correctly.
 
 - [ ] **Step 4: Verify types and build**
 
