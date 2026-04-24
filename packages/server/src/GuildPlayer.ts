@@ -485,6 +485,18 @@ export class GuildPlayer {
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
     this.broadcast();
+
+    // Kick off gapless preload for the next track (fire-and-forget)
+    const nextTrack = this.peekNextTrack();
+    if (nextTrack) {
+      const player = this.hoshimiPlayer();
+      const sessionId = player?.node?.sessionId;
+      if (sessionId) {
+        import('./utils/nodelink').then(({ preloadTrack }) => {
+          preloadTrack(this.guildId, sessionId, nextTrack.youtubeUrl).catch(() => {/* intentionally empty */});
+        });
+      }
+    }
   }
 
   private async fetchStreamWithRetry(
