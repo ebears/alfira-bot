@@ -1,6 +1,8 @@
+import { eq } from 'drizzle-orm';
 import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
 import { PlaybackCursor } from './PlaybackCursor';
 import type { LoopMode, QueuedSong, QueueState } from './shared';
+import { db, tables } from './shared/db';
 import { logger } from './shared/logger';
 import { broadcastQueueUpdate, getHoshimi } from './startDiscord';
 
@@ -329,7 +331,7 @@ export class GuildPlayer {
   }
 
   private broadcast(): void {
-    broadcastQueueUpdate(this.getQueueState());
+    void broadcastQueueUpdate(this.getQueueState());
   }
 
   private peekNextTrack(): QueuedSong | null {
@@ -477,6 +479,48 @@ export class GuildPlayer {
       ),
       volume,
     });
+
+    // Apply compressor filter if enabled
+    const settings = await db
+      .select({
+        enabled: tables.guildSettings.compressorEnabled,
+        threshold: tables.guildSettings.compressorThreshold,
+        ratio: tables.guildSettings.compressorRatio,
+        attack: tables.guildSettings.compressorAttack,
+        release: tables.guildSettings.compressorRelease,
+        gain: tables.guildSettings.compressorGain,
+      })
+      .from(tables.guildSettings)
+      .where(eq(tables.guildSettings.id, 1))
+      .get();
+
+    if (settings?.enabled) {
+      const node = player.node;
+      if (node) {
+        try {
+          await node.rest.updatePlayer({
+            guildId: this.guildId,
+            playerOptions: {
+              filters: {
+                compressor: {
+                  threshold: settings.threshold,
+                  ratio: settings.ratio,
+                  attack: settings.attack,
+                  release: settings.release,
+                  gain: settings.gain,
+                },
+              },
+            },
+          } as Parameters<typeof node.rest.updatePlayer>[0]);
+        } catch (err) {
+          // Don't fail playback — log and continue
+          logger.error(
+            { err, guildId: this.guildId },
+            'Failed to apply compressor filter on playback start'
+          );
+        }
+      }
+    }
 
     this.consecutiveFailures = 0;
     this.trackStartedAt = Date.now();

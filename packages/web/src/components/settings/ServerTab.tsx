@@ -1,5 +1,6 @@
 import { useAdminView } from '../../context/AdminViewContext';
 import { useAuth } from '../../context/AuthContext';
+import CompressorSection from './CompressorSection';
 import SettingsToggle from './SettingsToggle';
 
 export default function ServerTab() {
@@ -17,6 +18,7 @@ export default function ServerTab() {
             checked={isAdminView}
             onChange={toggleAdminView}
           />
+          <CompressorSection />
         </div>
       )}
     </div>

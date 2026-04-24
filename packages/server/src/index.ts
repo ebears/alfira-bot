@@ -11,6 +11,7 @@ import { closeAllClients, registerClient, unregisterClient } from './lib/socket'
 import { verifySessionToken } from './middleware/requireAuth';
 import { handleAuth } from './routes/auth';
 import { handlePlayer } from './routes/player';
+import { handleCompressor } from './routes/compressor';
 import { handlePlaylists } from './routes/playlists';
 import { handleSongs } from './routes/songs';
 import { handleTags } from './routes/tags';
@@ -182,6 +183,9 @@ const server = Bun.serve({
     }
     if (url.pathname.startsWith('/api/player')) {
       return setSecurityHeaders(await handlePlayer(ctx, request));
+    }
+    if (url.pathname.startsWith('/api/settings/compressor')) {
+      return setSecurityHeaders(await handleCompressor(ctx, request));
     }
     if (url.pathname.startsWith('/auth')) {
       return setSecurityHeaders(await handleAuth(ctx, request));

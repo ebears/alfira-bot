@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { index, integer, real, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 
 export const song = sqliteTable('Song', {
   id: text('id')
@@ -76,4 +76,14 @@ export const tag = sqliteTable('Tag', {
   createdAt: integer('createdAt', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),
+});
+
+export const guildSettings = sqliteTable('guildSettings', {
+  id: integer('id').primaryKey(),                                   // always 1 — single guild row
+  compressorEnabled: integer('compressorEnabled', { mode: 'boolean' }).notNull().default(false),
+  compressorThreshold: integer('compressorThreshold').notNull().default(-6),  // dB, -60 to 0
+  compressorRatio: real('compressorRatio').notNull().default(4.0),            // 1.0 to 20.0
+  compressorAttack: integer('compressorAttack').notNull().default(5),           // ms, 0 to 100
+  compressorRelease: integer('compressorRelease').notNull().default(50),        // ms, 10 to 1000
+  compressorGain: integer('compressorGain').notNull().default(3),              // dB, 0 to 24
 });

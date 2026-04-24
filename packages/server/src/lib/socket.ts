@@ -1,3 +1,6 @@
+import { eq } from 'drizzle-orm';
+import { db, tables } from '../shared/db';
+import type { CompressorSettings } from '../shared';
 import type { Playlist, QueueState, Song, User } from '../shared';
 import { logger } from './config';
 
@@ -14,6 +17,23 @@ type SerializedPlaylist = Omit<Playlist, 'createdAt'> & { createdAt: string | Da
 
 // biome-ignore lint/suspicious/noExplicitAny: Bun's WebSocket type is incompatible with global WebSocket
 const clients = new Set<any>();
+
+export async function getCompressorSettings(): Promise<CompressorSettings | null> {
+  const row = await db
+    .select({
+      enabled: tables.guildSettings.compressorEnabled,
+      threshold: tables.guildSettings.compressorThreshold,
+      ratio: tables.guildSettings.compressorRatio,
+      attack: tables.guildSettings.compressorAttack,
+      release: tables.guildSettings.compressorRelease,
+      gain: tables.guildSettings.compressorGain,
+    })
+    .from(tables.guildSettings)
+    .where(eq(tables.guildSettings.id, 1))
+    .get();
+  if (!row) return null;
+  return { enabled: row.enabled, threshold: row.threshold, ratio: row.ratio, attack: row.attack, release: row.release, gain: row.gain };
+}
 
 /**
  * Registers a newly connected WebSocket client after auth in fetch().
@@ -45,8 +65,9 @@ export function unregisterClient(
 /**
  * Emit the full queue state to all connected clients.
  */
-export function emitPlayerUpdate(state: QueueState): void {
-  const message = JSON.stringify({ event: 'player:update', data: state });
+export async function emitPlayerUpdate(state: QueueState): Promise<void> {
+  const compressor = await getCompressorSettings();
+  const message = JSON.stringify({ event: 'player:update', data: { ...state, compressorSettings: compressor } });
   for (const client of clients) {
     client.send(message);
   }
