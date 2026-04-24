@@ -167,6 +167,7 @@ export const SongRow = memo(
           <Button
             variant="primary"
             size="icon"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
               e.stopPropagation();
               onPlay();
@@ -185,6 +186,7 @@ export const SongRow = memo(
             ref={triggerRef}
             onToggle={() => setMenuOpen((v) => !v)}
             isOpen={menuOpen}
+            onMouseDown={(e) => e.preventDefault()}
           />
           {menuOpen && (
             <ContextMenu

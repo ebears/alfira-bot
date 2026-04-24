@@ -459,16 +459,20 @@
     /* Clay elevation tokens — 4 deliberate depth levels */
     --clay-shadow-resting:
         0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        inset 0 2px 3px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.04);
     --clay-shadow-lifted:
         0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        inset 0 2px 3px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.04);
     --clay-shadow-raised:
         0 4px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        inset 0 2px 3px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.04);
     --clay-shadow-floating:
         0 7px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        inset 0 2px 3px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.04);
     --clay-shadow-flat:
         inset 0 1px 3px 0 rgba(0, 0, 0, 0.15),
         inset 0 1px 1px 0 rgba(0, 0, 0, 0.1);
@@ -485,19 +489,19 @@
     --clay-shadow-resting:
         0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
         0 3px 6px -2px rgba(0, 0, 0, 0.12),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        0 -4px 8px -4px rgba(0, 0, 0, 0.14);
     --clay-shadow-lifted:
         0 3px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
         0 4px 10px -2px rgba(0, 0, 0, 0.14),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        0 -5px 10px -4px rgba(0, 0, 0, 0.16);
     --clay-shadow-raised:
         0 4px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
         0 5px 12px -2px rgba(0, 0, 0, 0.16),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        0 -6px 14px -4px rgba(0, 0, 0, 0.18);
     --clay-shadow-floating:
         0 7px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
         0 8px 16px -4px rgba(0, 0, 0, 0.2),
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.12);
+        0 -9px 18px -6px rgba(0, 0, 0, 0.20);
     --clay-shadow-sidebar: 4px 0 16px -4px rgba(0, 0, 0, 0.2);
     --clay-shadow-player: 0 -4px 16px -4px rgba(0, 0, 0, 0.2);
 }
@@ -654,11 +658,15 @@
     .light .btn-inherit {
         background: var(--btn-surface);
         border: 1px solid color-mix(in srgb, var(--btn-surface) 80%, white);
-        box-shadow: var(--clay-shadow-resting);
+        box-shadow:
+            0 3px 6px -2px rgba(0, 0, 0, 0.12),
+            0 -4px 8px -4px rgba(0, 0, 0, 0.15);
     }
     .light .btn-inherit:hover {
         border-color: color-mix(in srgb, var(--btn-surface) 70%, white);
-        box-shadow: var(--clay-shadow-raised);
+        box-shadow:
+            0 4px 8px -2px rgba(0, 0, 0, 0.14),
+            0 -5px 10px -4px rgba(0, 0, 0, 0.18);
     }
     .light .btn-inherit:active {
         border-color: transparent;
@@ -861,7 +869,8 @@
         box-shadow:
             0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+            inset 0 1px 1px 0 rgba(0, 0, 0, 0.15),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.04);
     }
     .btn-icon-inherit:hover {
         transform: var(--btn-transform-hover);
@@ -869,7 +878,8 @@
         box-shadow:
             0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 3px 6px -1px rgba(0, 0, 0, 0.25),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+            inset 0 2px 3px 0 rgba(0, 0, 0, 0.20),
+            inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
     }
     .btn-icon-inherit:active {
         transform: var(--btn-transform-active-sm);
@@ -881,39 +891,38 @@
     }
     .btn-icon-inherit.pressed {
         transform: var(--btn-transform-active-sm);
-        background: var(--btn-surface);
+        background: color-mix(in srgb, var(--btn-surface) 80%, black);
         box-shadow:
             0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
     /* Light mode: distinguish via shadow + border */
-    .light .btn-icon-inherit {
+    [data-mode="light"] .btn-icon-inherit {
         background: var(--btn-surface);
         border: 1px solid color-mix(in srgb, var(--btn-surface) 80%, white);
         box-shadow:
-            0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 2px 4px -1px rgba(0, 0, 0, 0.2),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+            0 -3px 6px -2px rgba(0, 0, 0, 0.15);
     }
-    .light .btn-icon-inherit:hover {
+    [data-mode="light"] .btn-icon-inherit:hover {
         border-color: color-mix(in srgb, var(--btn-surface) 70%, white);
         box-shadow:
-            0 2px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
             0 3px 6px -1px rgba(0, 0, 0, 0.25),
-            inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+            0 -4px 8px -2px rgba(0, 0, 0, 0.18);
     }
-    .light .btn-icon-inherit:active {
+    [data-mode="light"] .btn-icon-inherit:active {
         border-color: transparent;
         box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+            0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2);
     }
-    .light .btn-icon-inherit.pressed {
+    [data-mode="light"] .btn-icon-inherit.pressed {
+        background: color-mix(in srgb, var(--btn-surface) 85%, black);
         border-color: transparent;
         box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+            0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2);
     }
 
     .btn-icon-danger {

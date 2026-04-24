@@ -33,8 +33,7 @@ export default function AppearanceTab() {
         <div className="flex gap-2">
           <Button
             variant="inherit"
-            surface="base"
-            className={`flex-1 flex items-center gap-2 ${mode === 'auto' ? 'pressed' : ''}`}
+            className={`flex-1 flex justify-center gap-2 ${mode === 'auto' ? 'pressed' : ''}`}
             onClick={() => setMode('auto')}
           >
             <DesktopIcon size={16} weight="duotone" />
@@ -42,8 +41,7 @@ export default function AppearanceTab() {
           </Button>
           <Button
             variant="inherit"
-            surface="base"
-            className={`flex-1 flex items-center gap-2 ${mode === 'light' ? 'pressed' : ''}`}
+            className={`flex-1 flex justify-center gap-2 ${mode === 'light' ? 'pressed' : ''}`}
             onClick={() => setMode('light')}
           >
             <SunIcon size={16} weight="duotone" />
@@ -51,8 +49,7 @@ export default function AppearanceTab() {
           </Button>
           <Button
             variant="inherit"
-            surface="base"
-            className={`flex-1 flex items-center gap-2 ${mode === 'dark' ? 'pressed' : ''}`}
+            className={`flex-1 flex justify-center gap-2 ${mode === 'dark' ? 'pressed' : ''}`}
             onClick={() => setMode('dark')}
           >
             <MoonIcon size={16} weight="duotone" />

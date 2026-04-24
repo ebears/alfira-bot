@@ -119,6 +119,7 @@ export function useSongActions({
                       label: song.addedByDisplayName || song.addedBy || '',
                       icon: <UserIcon size={14} weight="duotone" />,
                     },
+                    separatorBefore: true,
                   },
                 ]
               : []),
