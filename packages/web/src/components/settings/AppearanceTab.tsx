@@ -13,15 +13,18 @@ export default function AppearanceTab() {
   return (
     <div className="space-y-6">
       {user?.isAdmin && (
-        <div className="space-y-2">
-          <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Admin</h3>
-          <SettingsToggle
-            label="Admin View"
-            description="Enable administrative features and controls"
-            checked={isAdminView}
-            onChange={toggleAdminView}
-          />
-        </div>
+        <>
+          <div className="space-y-2">
+            <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Admin</h3>
+            <SettingsToggle
+              label="Admin View"
+              description="Enable administrative features and controls"
+              checked={isAdminView}
+              onChange={toggleAdminView}
+            />
+          </div>
+          <div className="border-t border-muted/20 my-4" />
+        </>
       )}
 
       {/* Appearance: Auto / Light / Dark */}
@@ -80,7 +83,12 @@ export default function AppearanceTab() {
                   style={{ backgroundColor: t.accentColor }}
                 >
                   {isSelected ? (
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 12 12" aria-hidden="true">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 12 12"
+                      aria-hidden="true"
+                    >
                       <path d="M10.28 2.28L4.5 8.06l-2.78-2.79a.5.5 0 0 0-.71.71l3.15 3.15a.5.5 0 0 0 .71 0l6.36-6.36a.5.5 0 0 0 0-.71.5.5 0 0 0-.71 0z" />
                     </svg>
                   ) : null}
