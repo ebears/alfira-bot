@@ -352,7 +352,7 @@ export class GuildPlayer {
       return null;
     }
 
-    return this.queue.current();
+    return this.queue.current() ?? null;
   }
 
   private async playNext(): Promise<void> {
