@@ -96,7 +96,7 @@ export default function EqualizerSection() {
                 style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '80px' }}
               />
               <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
-              <span className="font-mono text-[10px] text-fg">{gainDisplay(value)}</span>
+              <span className="font-mono text-[10px] text-fg min-w-[3.5em] text-right">{gainDisplay(value)}</span>
             </div>
           ))}
         </div>
