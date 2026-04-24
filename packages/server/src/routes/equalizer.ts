@@ -11,7 +11,6 @@ interface EqualizerPayload {
 
 // Build NodeLink equalizer filter array from band values (0-100)
 // Maps: 0→-0.5, 50→0.0 (neutral/flat), 100→0.5
-// NodeLink gain range is -0.25 to 1.0, but 50=neutral means 0 gain
 function buildEqualizerFilter(bands: number[]) {
   return bands.map((value, index) => ({
     band: index,
@@ -135,7 +134,9 @@ export async function handleEqualizerPatch(ctx: RouteContext, request: Request):
 
   // Apply to live NodeLink player if connected
   const guildId = process.env.GUILD_ID ?? '';
-  if (guildId) {
+  if (!guildId) {
+    logger.warn('GUILD_ID not set, skipping NodeLink equalizer filter update');
+  } else {
     const hoshimi = getHoshimi();
     if (hoshimi) {
       const player = hoshimi.players.get(guildId);
