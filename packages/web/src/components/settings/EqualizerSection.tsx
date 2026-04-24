@@ -81,8 +81,7 @@ export default function EqualizerSection() {
   return (
     <div className={`space-y-3 ${!isAdminView ? 'opacity-40 pointer-events-none' : ''}`}>
       <h4 className="font-mono text-[11px] text-muted uppercase tracking-wider">Equalizer</h4>
-      <div className="overflow-x-auto pb-2">
-        <div className="flex gap-2 md:flex-nowrap flex-wrap min-w-[700px] md:min-w-0">
+      <div className="flex flex-wrap justify-center gap-2 md:flex-nowrap">
           {bands.map((value, i) => (
             <div key={i} className="flex flex-col items-center gap-1 shrink-0">
               <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
