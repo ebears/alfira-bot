@@ -338,21 +338,18 @@ export class GuildPlayer {
       return this.priorityQueue[0];
     }
 
+    // Song loop: always replay current song (checked before isAtEnd to handle
+    // end-of-queue correctly — playNext() replays currentSong even at end)
+    if (this.loopMode === 'song' && this.currentSong) {
+      return this.currentSong;
+    }
+
     // At end of main queue
     if (this.queue.isAtEnd) {
       if (this.loopMode === 'queue' && !this.queue.isEmpty) {
-        // After reset(), readIndex=0 and current() returns buffer[0]
         return this.queue.current() ?? null;
       }
-      if (this.loopMode === 'song' && this.currentSong) {
-        return this.currentSong;
-      }
       return null;
-    }
-
-    // Song loop
-    if (this.loopMode === 'song' && this.currentSong) {
-      return this.currentSong;
     }
 
     return this.queue.current();
