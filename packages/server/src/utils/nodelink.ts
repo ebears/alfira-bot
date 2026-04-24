@@ -200,7 +200,7 @@ export async function getPlaylistMetadataWithVideos(
 export async function preloadTrack(
   guildId: string,
   sessionId: string,
-  youtubeUrl: string,
+  youtubeUrl: string
 ): Promise<void> {
   try {
     const response = await restRequest<LoadTrackResponse>(

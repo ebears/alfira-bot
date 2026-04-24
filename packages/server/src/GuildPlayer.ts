@@ -493,7 +493,9 @@ export class GuildPlayer {
       const sessionId = player?.node?.sessionId;
       if (sessionId) {
         import('./utils/nodelink').then(({ preloadTrack }) => {
-          preloadTrack(this.guildId, sessionId, nextTrack.youtubeUrl).catch(() => {/* intentionally empty */});
+          preloadTrack(this.guildId, sessionId, nextTrack.youtubeUrl).catch(() => {
+            /* intentionally empty */
+          });
         });
       }
     }
