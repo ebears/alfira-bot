@@ -1,6 +1,6 @@
 <h1 align="center">Alfira</h1>
 <p align="center">
-  <a href="https://github.com/ebears/alfira"><img width="299" height="299" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/logo.png" alt="Alfira Logo"></a>
+  <img width="299" height="299" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/logo.png" alt="Alfira Logo">
   <br>
   <a href="https://github.com/ebears/alfira"><img src="https://img.shields.io/badge/status-experimental%20%7C%20pre--release-orange" alt="Status: Experimental | Pre-release"></a>
   <br>
@@ -19,7 +19,7 @@
   <a href="https://github.com/Ganyu-Studios/Hoshimi"><img src="https://img.shields.io/badge/Hoshimi%20-353139?logo=typescript&logoColor=white" alt="Hoshimi"></a>
 </p>
 
-> **Status:** This project is actively maintained but considered **experimental** and **pre-release**. Expect rough edges and potential breaking changes.
+> **Status:** This project is actively maintained but considered **experimental** and **pre-release**.
 
 ## Features
 
@@ -39,29 +39,23 @@
   <img width="256" src="https://raw.githubusercontent.com/ebears/alfira/main/.github/icon.png">
 </p>
 
-<h2 align="center">Quick Start</h2>
-
-Setup mostly just requires Docker:
-
-### 1. Copy and Configure Required Files
-
-- Copy `docker-compose.prod.yml` and `.env.example` from this repo to the folder you want the bot to live.
-- Rename `docker-compose.prod.yml` to `docker-compose.yml` and `.env.example` to `.env`.
-- Configure `.env` - [Configuration Reference](docs/configuration.md).
-
-### 2. Start the Stack
-
-From that same folder:
+<h2 align="center">Quick Start with Docker</h2>
 
 ```bash
+# 1. Copy docker-compose.prod.yml and .env.example from this repo to the folder you want the bot to live.
+curl -o docker-compose.prod.yml https://raw.githubusercontent.com/ebears/alfira/main/docker-compose.prod.yml
+curl -o .env.example https://raw.githubusercontent.com/ebears/alfira/main/.env.example
+
+# 2. Rename docker-compose.prod.yml to docker-compose.yml and .env.example to .env.
+cp docker-compose.prod.yml docker-compose.yml
+cp .env.example .env
+
+# 3. Configure the .env.
+nano .env  # or micro, zed, code, vim, etc.
+
+# 4. Start the stack - web UI at http://localhost:8180
 docker compose up -d
 ```
-
-This starts NodeLink and Alfira (with SQLite database).
-
-### 3. Access the Web UI
-
-The bot should now be online. The web UI can be accessed at `http://localhost:3001`.
 
 For public deployment with a reverse proxy and HTTPS, see the **[Full Installation Guide](docs/installation.md)**.
 
