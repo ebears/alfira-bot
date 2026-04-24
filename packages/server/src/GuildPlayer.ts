@@ -316,6 +316,7 @@ export class GuildPlayer {
       priorityQueue: this.priorityQueue,
       queue: this.queue.toRemaining(),
       trackStartedAt: this.trackStartedAt,
+      nextTrack: this.peekNextTrack(),
     };
   }
 
@@ -329,6 +330,29 @@ export class GuildPlayer {
 
   private broadcast(): void {
     broadcastQueueUpdate(this.getQueueState());
+  }
+
+  private peekNextTrack(): QueuedSong | null {
+    // Priority queue peek
+    if (this.priorityQueue.length > 0) {
+      return this.priorityQueue[0];
+    }
+
+    // Song loop: always replay current song (checked before isAtEnd to handle
+    // end-of-queue correctly — playNext() replays currentSong even at end)
+    if (this.loopMode === 'song' && this.currentSong) {
+      return this.currentSong;
+    }
+
+    // At end of main queue
+    if (this.queue.isAtEnd) {
+      if (this.loopMode === 'queue' && !this.queue.isEmpty) {
+        return this.queue.current() ?? null;
+      }
+      return null;
+    }
+
+    return this.queue.current() ?? null;
   }
 
   private async playNext(): Promise<void> {
@@ -458,6 +482,27 @@ export class GuildPlayer {
     this.trackStartedAt = Date.now();
     this.pausedAt = null;
     this.broadcast();
+
+    // Kick off gapless preload for the next track (fire-and-forget)
+    // Delay slightly to ensure current track is fully initialized in NodeLink
+    // before we attempt to preload the next track.
+    const currentEncoded = trackData.track;
+    const nextTrack = this.peekNextTrack();
+    if (nextTrack) {
+      const player = this.hoshimiPlayer();
+      const sessionId = player?.node?.sessionId;
+      if (sessionId) {
+        const guildId = this.guildId;
+        const youtubeUrl = nextTrack.youtubeUrl;
+        setTimeout(() => {
+          import('./utils/nodelink').then(({ preloadTrack }) => {
+            preloadTrack(guildId, sessionId, youtubeUrl, currentEncoded).catch(() => {
+              /* intentionally empty */
+            });
+          });
+        }, 500);
+      }
+    }
   }
 
   private async fetchStreamWithRetry(

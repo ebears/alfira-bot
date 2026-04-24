@@ -81,6 +81,7 @@ export interface QueueState {
   priorityQueue: QueuedSong[]; // Songs added via Quick Add or "Add to Queue" - play before regular queue
   queue: QueuedSong[];
   trackStartedAt: number | null; // Unix ms timestamp, null when not playing
+  nextTrack: QueuedSong | null; // The next track being preloaded for gapless playback
 }
 
 // ---------------------------------------------------------------------------

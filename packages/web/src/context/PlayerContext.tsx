@@ -28,6 +28,7 @@ const EMPTY_STATE: QueueState = {
   priorityQueue: [],
   queue: [],
   trackStartedAt: null,
+  nextTrack: null,
 };
 
 interface PlayerContextValue {
