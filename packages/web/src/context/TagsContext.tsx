@@ -12,7 +12,7 @@ const TagsContext = createContext<{
   refreshTags: () => void;
 }>({
   tagColorMap: {},
-  refreshTags: () => {},
+  refreshTags: () => undefined,
 });
 
 export function TagsProvider({ children }: { children: ReactNode }) {
