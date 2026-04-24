@@ -56,11 +56,17 @@ function formatPlaylist(pl: typeof playlistTable.$inferSelect, songCount?: numbe
 
 function formatPlaylistSongWithSong(
   ps: typeof playlistSongTable.$inferSelect,
-  song: typeof tables.song.$inferSelect
+  song: typeof tables.song.$inferSelect,
+  addedByDisplayName?: string
 ) {
   return {
     ...ps,
-    song: { ...song, createdAt: song.createdAt.toISOString(), tags: song.tags ?? [] },
+    song: {
+      ...song,
+      createdAt: song.createdAt.toISOString(),
+      tags: song.tags ?? [],
+      addedByDisplayName,
+    },
   };
 }
 
@@ -234,6 +240,15 @@ async function handleGetPlaylist(
       : [];
   const songMap = new Map(songs.map((s) => [s.id, s]));
 
+  // Resolve Discord display names for unique addedBy IDs
+  const uniqueIds = [...new Set(songs.map((s) => s.addedBy))];
+  const nameMap = new Map<string, string>();
+  await Promise.all(
+    uniqueIds.map(async (id) => {
+      nameMap.set(id, await getUserDisplayName(id));
+    })
+  );
+
   return json({
     ...playlist,
     createdAt:
@@ -241,7 +256,8 @@ async function handleGetPlaylist(
     songs: playlistSongs
       .map((ps) => {
         const song = songMap.get(ps.songId);
-        return song ? formatPlaylistSongWithSong(ps, song) : null;
+        if (!song) return null;
+        return formatPlaylistSongWithSong(ps, song, nameMap.get(song.addedBy) ?? song.addedBy);
       })
       .filter((x): x is NonNullable<typeof x> => x !== null),
     createdByDisplayName: await getUserDisplayName(playlist.createdBy),
