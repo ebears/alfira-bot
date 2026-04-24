@@ -9,7 +9,9 @@ interface EqualizerPayload {
   bands: number[]; // length 15, each 0-100
 }
 
-// Build NodeLink equalizer filter array from band values (0-100 → -0.25 to 1.0)
+// Build NodeLink equalizer filter array from band values (0-100)
+// Maps: 0→-0.5, 50→0.0 (neutral/flat), 100→0.5
+// NodeLink gain range is -0.25 to 1.0, but 50=neutral means 0 gain
 function buildEqualizerFilter(bands: number[]) {
   return bands.map((value, index) => ({
     band: index,
