@@ -73,9 +73,9 @@ export default function EqualizerSection() {
   }
 
   function gainDisplay(value: number): string {
-    const gain = value - 50;
-    if (gain === 0) return '0 dB';
-    return `${gain > 0 ? '+' : ''}${gain} dB`;
+    const offset = value - 50;
+    if (offset === 0) return '0';
+    return `${offset > 0 ? '+' : ''}${offset}`;
   }
 
   return (
@@ -96,7 +96,7 @@ export default function EqualizerSection() {
                 className="accent-accent"
                 style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '80px' }}
               />
-              <span className="font-mono text-[10px] text-fg min-w-[3.5em] text-right">{gainDisplay(value)}</span>
+              <span className="font-mono text-[10px] text-fg min-w-[2em] text-right">{gainDisplay(value)}</span>
             </div>
           ))}
         </div>
