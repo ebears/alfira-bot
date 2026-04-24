@@ -18,6 +18,7 @@
 | `packages/server/src/shared/db/migrations/0051_add_guild_settings.sql` | SQL migration |
 | `packages/server/src/shared/db/index.ts` | Export `guildSettings` table |
 | `packages/server/src/shared/types.ts` | Add `CompressorSettings` type; extend `QueueState` |
+| `packages/server/src/shared/index.ts` | Re-export `CompressorSettings` for route/WebSocket consumers |
 | `packages/server/src/routes/compressor.ts` | New `PATCH /api/settings/compressor` route |
 | `packages/server/src/index.ts` | Register compressor route |
 | `packages/server/src/lib/socket.ts` | Read compressor settings for broadcast |
@@ -56,7 +57,14 @@ export const guildSettings = sqliteTable('guildSettings', {
 Open the file and add `guildSettings` to the `tables` export object:
 
 ```typescript
-export const tables = { song, playlist, playlistSong, refreshToken, tag, guildSettings };
+export const tables = {
+  song: schema.song,
+  playlist: schema.playlist,
+  playlistSong: schema.playlistSong,
+  refreshToken: schema.refreshToken,
+  tag: schema.tag,
+  guildSettings: schema.guildSettings,
+};
 ```
 
 - [ ] **Step 3: Create SQL migration file**
@@ -111,7 +119,18 @@ export interface QueueState {
 }
 ```
 
-- [ ] **Step 2: Verify types compile**
+- [ ] **Step 2: Re-export from `packages/server/src/shared/index.ts`**
+
+Open `packages/server/src/shared/index.ts` and add `CompressorSettings` to the type export block:
+
+```typescript
+export type {
+  // ... existing types ...
+  CompressorSettings,
+} from './types';
+```
+
+- [ ] **Step 3: Verify types compile**
 
 Run: `cd packages/server && bun run check` (or `bun tsc --noEmit`)
 Expected: No type errors.
@@ -232,7 +251,7 @@ Expected: No type errors.
 
 **Files:**
 - Modify: `packages/server/src/lib/socket.ts`
-- Modify: `packages/server/src/startDiscord.ts`
+- Modify: `packages/server/src/GuildPlayer.ts`
 
 - [ ] **Step 1: Add helper to read guild settings from DB**
 
@@ -278,19 +297,25 @@ export async function emitPlayerUpdate(state: QueueState): Promise<void> {
 
 **Note:** `emitPlayerUpdate` becomes `async`. All callers must be updated.
 
-- [ ] **Step 3: Update `broadcastQueueUpdate` in `startDiscord.ts`**
+- [ ] **Step 3: Update `broadcast()` in `GuildPlayer.ts` to handle async**
 
-Open `packages/server/src/startDiscord.ts` and find `broadcastQueueUpdate`. Change it to `async` and `await emitPlayerUpdate(state)`:
+The `emitPlayerUpdate` → `broadcastQueueUpdate` chain is now async. In `GuildPlayer.ts`, the private `broadcast()` method is the only direct caller of `broadcastQueueUpdate`. Change it to async and `await`:
 
 ```typescript
-export async function broadcastQueueUpdate(state: QueueState): Promise<void> {
-  await emitPlayerUpdate(state);
+private async broadcast(): Promise<void> {
+  await broadcastQueueUpdate(this.getQueueState());
 }
 ```
 
-Find all places that call `broadcastQueueUpdate` (in `GuildPlayer.ts`) — they will need to be `await`ed since `broadcastQueueUpdate` is now async. Search for `broadcastQueueUpdate(` in the codebase.
+All internal call sites of `this.broadcast()` are inside `async` methods, so change each to `await this.broadcast()`:
 
-**In `GuildPlayer.ts`**, change all calls from `broadcastQueueUpdate(...)` to `await broadcastQueueUpdate(...)`. The calls are inside `async` methods so no other signature changes needed.
+```typescript
+// In all methods that call this.broadcast(), change:
+this.broadcast();
+// To:
+await this.broadcast();
+// Affected lines (approximate): ~155, 193, 198, 203, 213, 240, 265, 327, 382, 399, 484
+```
 
 - [ ] **Step 4: Verify types and build**
 
