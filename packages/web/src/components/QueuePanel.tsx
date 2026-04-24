@@ -481,6 +481,7 @@ const PanelHeader = memo(function PanelHeader({
           aria-haspopup="true"
           aria-expanded={menuOpen}
           title="More actions"
+          surface="elevated"
           className={`${menuOpen ? 'pressed text-accent' : ''}`}
           onClick={onToggleMenu}
         >
