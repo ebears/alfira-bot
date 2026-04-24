@@ -82,23 +82,24 @@ export default function EqualizerSection() {
     <div className={`space-y-3 ${!isAdminView ? 'opacity-40 pointer-events-none' : ''}`}>
       <h4 className="font-mono text-[11px] text-muted uppercase tracking-wider">Equalizer</h4>
       <div className="flex flex-wrap justify-center gap-2 md:flex-nowrap">
-          {bands.map((value, i) => (
-            <div key={i} className="flex flex-col items-center gap-1 shrink-0">
-              <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={value}
-                onChange={(e) => updateBand(i, parseInt(e.target.value, 10))}
-                className="accent-accent"
-                style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '120px' }}
-              />
-              <span className="font-mono text-[10px] text-fg min-w-[2em] text-right">{gainDisplay(value)}</span>
-            </div>
-          ))}
-        </div>
+        {bands.map((value, i) => (
+          <div key={i} className="flex flex-col items-center gap-1 shrink-0">
+            <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={value}
+              onChange={(e) => updateBand(i, parseInt(e.target.value, 10))}
+              className="accent-accent"
+              style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '120px' }}
+            />
+            <span className="font-mono text-[10px] text-fg min-w-[2em] text-right">
+              {gainDisplay(value)}
+            </span>
+          </div>
+        ))}
       </div>
       <div className="flex gap-3 pt-1">
         <button
