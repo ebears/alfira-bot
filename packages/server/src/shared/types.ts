@@ -66,6 +66,20 @@ export interface QueuedSong extends Song {
 export type LoopMode = 'off' | 'song' | 'queue';
 
 // ---------------------------------------------------------------------------
+// CompressorSettings
+//
+// Guild-level audio compressor configuration. Applied to NodeLink on playback.
+// ---------------------------------------------------------------------------
+export interface CompressorSettings {
+  enabled: boolean;
+  threshold: number;
+  ratio: number;
+  attack: number;
+  release: number;
+  gain: number;
+}
+
+// ---------------------------------------------------------------------------
 // QueueState
 //
 // A snapshot of the GuildPlayer's current state. This is the payload for
@@ -82,6 +96,7 @@ export interface QueueState {
   queue: QueuedSong[];
   trackStartedAt: number | null; // Unix ms timestamp, null when not playing
   nextTrack: QueuedSong | null; // The next track being preloaded for gapless playback
+  compressorSettings: CompressorSettings | null;
 }
 
 // ---------------------------------------------------------------------------
