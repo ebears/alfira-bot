@@ -85,6 +85,7 @@ export default function EqualizerSection() {
         <div className="flex gap-2 md:flex-nowrap flex-wrap min-w-[700px] md:min-w-0">
           {bands.map((value, i) => (
             <div key={i} className="flex flex-col items-center gap-1 shrink-0">
+              <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
               <input
                 type="range"
                 min={0}
@@ -95,7 +96,6 @@ export default function EqualizerSection() {
                 className="accent-accent"
                 style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '80px' }}
               />
-              <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
               <span className="font-mono text-[10px] text-fg min-w-[3.5em] text-right">{gainDisplay(value)}</span>
             </div>
           ))}
