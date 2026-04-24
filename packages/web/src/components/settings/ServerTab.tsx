@@ -8,7 +8,12 @@ export default function ServerTab() {
   return (
     <div className="space-y-2">
       {user?.isAdmin && <EqualizerSection />}
-      {user?.isAdmin && <CompressorSection />}
+      {user?.isAdmin && (
+        <>
+          <div className="border-t border-muted/20 my-4" />
+          <CompressorSection />
+        </>
+      )}
     </div>
   );
 }
