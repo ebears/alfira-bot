@@ -35,6 +35,7 @@ export const tables = {
   playlistSong: schema.playlistSong,
   refreshToken: schema.refreshToken,
   tag: schema.tag,
+  guildSettings: schema.guildSettings,
 };
 
 // ---------------------------------------------------------------------------

@@ -22,6 +22,13 @@
       "when": 1776910196229,
       "tag": "0002_cooing_madame_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1776912000000,
+      "tag": "0051_add_guild_settings",
+      "breakpoints": true
     }
   ]
 }
