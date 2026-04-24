@@ -30,9 +30,12 @@ async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Respon
 // ---------------------------------------------------------------------------
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
+  resolve: () => void;
   reject: (error: unknown) => void;
 }> = [];
+
+// Separate flag so trySilentRefresh doesn't interfere with wrappedFetch's refresh
+let isSilentRefreshing = false;
 
 function processQueue(error: Error | null): void {
   failedQueue.forEach((prom) => {
@@ -63,34 +66,32 @@ async function refreshToken(): Promise<boolean> {
   }
 }
 
-/**
- * Attempts to refresh the access token. Returns true if refresh succeeded.
- * This is exported so AuthContext can attempt refresh before showing login.
- */
 export async function trySilentRefresh(): Promise<boolean> {
   if (isRefreshing) {
-    return new Promise<boolean>((resolve) => {
+    // wrappedFetch is already doing a refresh — queue and wait for it
+    return new Promise<boolean>((resolve, _reject) => {
       failedQueue.push({
-        resolve: () => {
-          resolve(true);
-        },
-        reject: () => {
-          resolve(false);
-        },
+        resolve: () => resolve(true),
+        reject: () => resolve(false),
       });
     });
   }
 
+  if (isSilentRefreshing) {
+    return false;
+  }
+
+  isSilentRefreshing = true;
+  // Set isRefreshing so wrappedFetch queues instead of starting concurrent refresh
   isRefreshing = true;
   const ok = await refreshToken();
-
   if (ok) {
     processQueue(null);
   } else {
     processQueue(new Error('Token refresh failed'));
   }
-
   isRefreshing = false;
+  isSilentRefreshing = false;
   return ok;
 }
 
@@ -111,7 +112,7 @@ async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unk
     // If already refreshing, queue this request
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
+        failedQueue.push({ resolve: resolve as () => void, reject });
       }).then(() => makeRequest());
     }
 
