@@ -11,7 +11,7 @@ export default function SettingsPage() {
     switch (activeTab) {
       case 'appearance':
         return <AppearanceTab />;
-      case 'server':
+      case 'audio':
         return <ServerTab />;
       case 'tags':
         return <TagsTab />;

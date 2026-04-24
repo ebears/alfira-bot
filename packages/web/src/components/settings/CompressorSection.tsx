@@ -12,7 +12,7 @@ const SLIDERS = [
   { key: 'gain', label: 'Gain', min: 0, max: 24, step: 1, unit: 'dB' },
 ] as const;
 
-type SliderKey = typeof SLIDERS[number]['key'];
+type SliderKey = (typeof SLIDERS)[number]['key'];
 
 interface CompressorValues {
   enabled: boolean;
@@ -54,7 +54,7 @@ export default function CompressorSection() {
   }
 
   function updateValue(key: SliderKey, value: number) {
-    setValues(v => ({ ...v, [key]: value }));
+    setValues((v) => ({ ...v, [key]: value }));
   }
 
   const dimmed = !isAdminView;
@@ -66,7 +66,7 @@ export default function CompressorSection() {
         <SettingsToggle
           label=""
           checked={values.enabled}
-          onChange={(enabled) => setValues(v => ({ ...v, enabled }))}
+          onChange={(enabled) => setValues((v) => ({ ...v, enabled }))}
         />
       </div>
 
@@ -84,9 +84,11 @@ export default function CompressorSection() {
               className="flex-1 accent-accent"
             />
             <span className="font-mono text-[11px] text-fg w-16 text-right shrink-0">
-              {key === 'ratio' ? `${values[key].toFixed(1)}:1` :
-               key === 'gain' ? `+${values[key]} ${unit}` :
-               `${values[key]} ${unit}`}
+              {key === 'ratio'
+                ? `${values[key].toFixed(1)}:1`
+                : key === 'gain'
+                  ? `+${values[key]} ${unit}`
+                  : `${values[key]} ${unit}`}
             </span>
           </div>
         ))}

@@ -8,8 +8,8 @@ interface TabItem {
 
 const TABS: TabItem[] = [
   { id: 'appearance', label: 'Appearance' },
-  { id: 'server', label: 'Server', adminOnly: true },
-  { id: 'tags', label: 'Tags', adminOnly: true },
+  { id: 'audio', label: 'Audio', adminOnly: true },
+  { id: 'tags', label: 'Tag Editor', adminOnly: true },
 ];
 
 interface SettingsTabsProps {

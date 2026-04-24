@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm';
+import type { CompressorSettings, Playlist, QueueState, Song, User } from '../shared';
 import { db, tables } from '../shared/db';
-import type { CompressorSettings } from '../shared';
-import type { Playlist, QueueState, Song, User } from '../shared';
 import { logger } from './config';
 
 import { formatSong } from './serialization';
@@ -32,7 +31,14 @@ export async function getCompressorSettings(): Promise<CompressorSettings | null
     .where(eq(tables.guildSettings.id, 1))
     .get();
   if (!row) return null;
-  return { enabled: row.enabled, threshold: row.threshold, ratio: row.ratio, attack: row.attack, release: row.release, gain: row.gain };
+  return {
+    enabled: row.enabled,
+    threshold: row.threshold,
+    ratio: row.ratio,
+    attack: row.attack,
+    release: row.release,
+    gain: row.gain,
+  };
 }
 
 /**
@@ -67,7 +73,10 @@ export function unregisterClient(
  */
 export async function emitPlayerUpdate(state: QueueState): Promise<void> {
   const compressor = await getCompressorSettings();
-  const message = JSON.stringify({ event: 'player:update', data: { ...state, compressorSettings: compressor } });
+  const message = JSON.stringify({
+    event: 'player:update',
+    data: { ...state, compressorSettings: compressor },
+  });
   for (const client of clients) {
     client.send(message);
   }
