@@ -316,6 +316,7 @@ export class GuildPlayer {
       priorityQueue: this.priorityQueue,
       queue: this.queue.toRemaining(),
       trackStartedAt: this.trackStartedAt,
+      nextTrack: this.peekNextTrack(),
     };
   }
 
