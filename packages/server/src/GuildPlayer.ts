@@ -331,7 +331,6 @@ export class GuildPlayer {
     broadcastQueueUpdate(this.getQueueState());
   }
 
-  // biome-ignore-line: noUnusedPrivateClassMembers — peekNextTrack is used by getQueueState and playSong for gapless preloading
   private peekNextTrack(): QueuedSong | null {
     // Priority queue peek
     if (this.priorityQueue.length > 0) {
