@@ -329,7 +329,7 @@ export class GuildPlayer {
   }
 
   private broadcast(): void {
-    broadcastQueueUpdate(this.getQueueState());
+    void broadcastQueueUpdate(this.getQueueState());
   }
 
   private peekNextTrack(): QueuedSong | null {

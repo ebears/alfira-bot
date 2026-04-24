@@ -30,7 +30,7 @@ export async function handleCompressor(ctx: RouteContext, request: Request): Pro
 
   let body: CompressorPayload;
   try {
-    body = await request.json();
+    body = (await request.json()) as CompressorPayload;
   } catch {
     return json({ error: 'Invalid JSON' }, 400);
   }

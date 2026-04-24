@@ -96,7 +96,7 @@ export interface QueueState {
   queue: QueuedSong[];
   trackStartedAt: number | null; // Unix ms timestamp, null when not playing
   nextTrack: QueuedSong | null; // The next track being preloaded for gapless playback
-  compressorSettings: CompressorSettings | null;
+  compressorSettings?: CompressorSettings | null;
 }
 
 // ---------------------------------------------------------------------------
