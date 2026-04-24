@@ -83,6 +83,7 @@ export default function EqualizerSection() {
       <h4 className="font-mono text-[11px] text-muted uppercase tracking-wider">Equalizer</h4>
       <div className="flex flex-wrap justify-center gap-2 md:flex-nowrap">
         {bands.map((value, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static UI elements with stable order
           <div key={i} className="flex flex-col items-center gap-1 shrink-0">
             <span className="font-mono text-[10px] text-muted">{FREQ_LABELS[i]}</span>
             <input

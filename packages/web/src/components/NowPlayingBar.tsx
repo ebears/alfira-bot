@@ -361,7 +361,7 @@ const ProgressBar = memo(function ProgressBar({
         elapsed={elapsed}
         registerProgress={registerProgress}
         registerRangeInput={registerRangeInput}
-        onSeek={onSeek ?? (() => {})}
+        onSeek={onSeek ?? (() => undefined)}
         setOverrideElapsed={setOverrideElapsed}
       />
     </div>

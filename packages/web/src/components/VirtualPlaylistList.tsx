@@ -76,8 +76,8 @@ export const VirtualPlaylistList = memo(function VirtualPlaylistList({
         {isFetching && !isError && (
           <div className="flex justify-center py-4 gap-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static loading indicator
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: static loading indicator, order never changes
                 key={`loading-dot-${i}`}
                 className="skeleton h-3 w-3 rounded-full animate-pulse"
               />

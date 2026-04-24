@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { RouteContext } from '../index';
 import { getUserDisplayName } from '../lib/displayName';
 import { json } from '../lib/json';
