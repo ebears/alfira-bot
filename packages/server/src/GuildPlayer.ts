@@ -1,10 +1,10 @@
+import { eq } from 'drizzle-orm';
 import { DestroyReasons, type Player, SourceNames, Track, type TrackEndEvent } from 'hoshimi';
 import { PlaybackCursor } from './PlaybackCursor';
 import type { LoopMode, QueuedSong, QueueState } from './shared';
+import { db, tables } from './shared/db';
 import { logger } from './shared/logger';
 import { broadcastQueueUpdate, getHoshimi } from './startDiscord';
-import { db, tables } from './shared/db';
-import { eq } from 'drizzle-orm';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
@@ -511,10 +511,13 @@ export class GuildPlayer {
                 },
               },
             },
-          });
+          } as Parameters<typeof node.rest.updatePlayer>[0]);
         } catch (err) {
           // Don't fail playback — log and continue
-          logger.error({ err, guildId: this.guildId }, 'Failed to apply compressor filter on playback start');
+          logger.error(
+            { err, guildId: this.guildId },
+            'Failed to apply compressor filter on playback start'
+          );
         }
       }
     }
