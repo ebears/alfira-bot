@@ -22,7 +22,6 @@ export type ColorMode = 'light' | 'dark' | 'auto';
 export interface ColorTheme {
   name: ColorThemeName;
   displayName: string;
-  description: string;
   accentColor: string; // Preview color for UI
 }
 
@@ -30,79 +29,66 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'artificer',
     displayName: 'Artificer',
-    description: 'Ingenuity and invention',
     accentColor: '#f97316', // Orange
   },
   {
     name: 'barbarian',
     displayName: 'Barbarian',
-    description: 'Rage and fury',
     accentColor: '#dc2626', // Red
   },
   {
     name: 'bard',
     displayName: 'Bard',
-    description: 'Performance and charisma',
     accentColor: '#ec4899', // Magenta/Pink
   },
   {
     name: 'cleric',
     displayName: 'Cleric',
-    description: 'Divine light',
     accentColor: '#eab308', // Gold/Yellow
   },
   {
     name: 'druid',
     displayName: 'Druid',
-    description: 'Nature and wilderness',
     accentColor: '#fb7185', // Rose
   },
   {
     name: 'fighter',
     displayName: 'Fighter',
-    description: 'Steel and resolve',
     accentColor: '#64748b', // Slate
   },
   {
     name: 'monk',
     displayName: 'Monk',
-    description: 'Discipline and harmony',
     accentColor: '#14b8a6', // Cyan/Teal
   },
   {
     name: 'paladin',
     displayName: 'Paladin',
-    description: 'Holy warrior',
     accentColor: '#cbd5e1', // Silver
   },
   {
     name: 'ranger',
     displayName: 'Ranger',
-    description: 'Wilderness tracker',
     accentColor: '#15803d', // Forest Green
   },
   {
     name: 'rogue',
     displayName: 'Rogue',
-    description: 'Shadows and stealth',
     accentColor: '#6366f1', // Indigo
   },
   {
     name: 'sorcerer',
     displayName: 'Sorcerer',
-    description: 'Innate magic',
     accentColor: '#e11d48', // Crimson
   },
   {
     name: 'warlock',
     displayName: 'Warlock',
-    description: 'Eldritch pact',
     accentColor: '#a855f7', // Dark Purple
   },
   {
     name: 'wizard',
     displayName: 'Wizard',
-    description: 'Arcane knowledge',
     accentColor: '#3b82f6', // Deep Blue
   },
 ];
