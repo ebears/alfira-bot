@@ -3,6 +3,8 @@ import { PlaybackCursor } from './PlaybackCursor';
 import type { LoopMode, QueuedSong, QueueState } from './shared';
 import { logger } from './shared/logger';
 import { broadcastQueueUpdate, getHoshimi } from './startDiscord';
+import { db, tables } from './shared/db';
+import { eq } from 'drizzle-orm';
 
 export class GuildPlayer {
   private static readonly MAX_CONSECUTIVE_FAILURES = 3;
@@ -477,6 +479,40 @@ export class GuildPlayer {
       ),
       volume,
     });
+
+    // Apply compressor filter if enabled
+    const settings = await db
+      .select({
+        enabled: tables.guildSettings.compressorEnabled,
+        threshold: tables.guildSettings.compressorThreshold,
+        ratio: tables.guildSettings.compressorRatio,
+        attack: tables.guildSettings.compressorAttack,
+        release: tables.guildSettings.compressorRelease,
+        gain: tables.guildSettings.compressorGain,
+      })
+      .from(tables.guildSettings)
+      .where(eq(tables.guildSettings.id, 1))
+      .get();
+
+    if (settings?.enabled) {
+      const node = player.node;
+      if (node) {
+        await node.rest.updatePlayer({
+          guildId: this.guildId,
+          playerOptions: {
+            filters: {
+              compressor: {
+                threshold: settings.threshold,
+                ratio: settings.ratio,
+                attack: settings.attack,
+                release: settings.release,
+                gain: settings.gain,
+              },
+            },
+          },
+        } as Parameters<typeof node.rest.updatePlayer>[0]);
+      }
+    }
 
     this.consecutiveFailures = 0;
     this.trackStartedAt = Date.now();
