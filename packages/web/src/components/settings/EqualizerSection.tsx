@@ -74,8 +74,8 @@ export default function EqualizerSection() {
 
   function gainDisplay(value: number): string {
     const gain = value - 50;
-    if (gain === 0) return '0.0 dB';
-    return `${gain > 0 ? '+' : ''}${gain.toFixed(1)} dB`;
+    if (gain === 0) return '0 dB';
+    return `${gain > 0 ? '+' : ''}${gain} dB`;
   }
 
   return (
