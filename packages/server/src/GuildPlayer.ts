@@ -497,20 +497,25 @@ export class GuildPlayer {
     if (settings?.enabled) {
       const node = player.node;
       if (node) {
-        await node.rest.updatePlayer({
-          guildId: this.guildId,
-          playerOptions: {
-            filters: {
-              compressor: {
-                threshold: settings.threshold,
-                ratio: settings.ratio,
-                attack: settings.attack,
-                release: settings.release,
-                gain: settings.gain,
+        try {
+          await node.rest.updatePlayer({
+            guildId: this.guildId,
+            playerOptions: {
+              filters: {
+                compressor: {
+                  threshold: settings.threshold,
+                  ratio: settings.ratio,
+                  attack: settings.attack,
+                  release: settings.release,
+                  gain: settings.gain,
+                },
               },
             },
-          },
-        } as Parameters<typeof node.rest.updatePlayer>[0]);
+          });
+        } catch (err) {
+          // Don't fail playback — log and continue
+          logger.error({ err, guildId: this.guildId }, 'Failed to apply compressor filter on playback start');
+        }
       }
     }
 
