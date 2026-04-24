@@ -8,8 +8,8 @@ export default function ServerTab() {
   return (
     <div className="space-y-2">
       <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Audio Settings</h3>
-      {user?.isAdmin && <CompressorSection />}
       {user?.isAdmin && <EqualizerSection />}
+      {user?.isAdmin && <CompressorSection />}
     </div>
   );
 }
