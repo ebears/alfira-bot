@@ -94,7 +94,7 @@ export default function EqualizerSection() {
                 value={value}
                 onChange={(e) => updateBand(i, parseInt(e.target.value, 10))}
                 className="accent-accent"
-                style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '80px' }}
+                style={{ writingMode: 'vertical-lr', direction: 'rtl', height: '120px' }}
               />
               <span className="font-mono text-[10px] text-fg min-w-[2em] text-right">{gainDisplay(value)}</span>
             </div>
