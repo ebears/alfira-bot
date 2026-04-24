@@ -61,6 +61,8 @@ export default function AppearanceTab() {
         </div>
       </div>
 
+      <div className="border-t border-muted/20 my-4" />
+
       {/* Color Theme Selector */}
       <div className="space-y-2">
         <h3 className="font-mono text-[11px] text-muted uppercase tracking-wider">Color Theme</h3>
