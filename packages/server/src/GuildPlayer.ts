@@ -540,9 +540,21 @@ export class GuildPlayer {
     // Apply equalizer filter if any band is non-neutral
     const eqBands = settings
       ? [
-          settings.eqBand0, settings.eqBand1, settings.eqBand2, settings.eqBand3, settings.eqBand4,
-          settings.eqBand5, settings.eqBand6, settings.eqBand7, settings.eqBand8, settings.eqBand9,
-          settings.eqBand10, settings.eqBand11, settings.eqBand12, settings.eqBand13, settings.eqBand14,
+          settings.eqBand0,
+          settings.eqBand1,
+          settings.eqBand2,
+          settings.eqBand3,
+          settings.eqBand4,
+          settings.eqBand5,
+          settings.eqBand6,
+          settings.eqBand7,
+          settings.eqBand8,
+          settings.eqBand9,
+          settings.eqBand10,
+          settings.eqBand11,
+          settings.eqBand12,
+          settings.eqBand13,
+          settings.eqBand14,
         ]
       : Array(15).fill(50);
 
