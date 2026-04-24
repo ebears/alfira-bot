@@ -489,6 +489,21 @@ export class GuildPlayer {
         attack: tables.guildSettings.compressorAttack,
         release: tables.guildSettings.compressorRelease,
         gain: tables.guildSettings.compressorGain,
+        eqBand0: tables.guildSettings.eqBand0,
+        eqBand1: tables.guildSettings.eqBand1,
+        eqBand2: tables.guildSettings.eqBand2,
+        eqBand3: tables.guildSettings.eqBand3,
+        eqBand4: tables.guildSettings.eqBand4,
+        eqBand5: tables.guildSettings.eqBand5,
+        eqBand6: tables.guildSettings.eqBand6,
+        eqBand7: tables.guildSettings.eqBand7,
+        eqBand8: tables.guildSettings.eqBand8,
+        eqBand9: tables.guildSettings.eqBand9,
+        eqBand10: tables.guildSettings.eqBand10,
+        eqBand11: tables.guildSettings.eqBand11,
+        eqBand12: tables.guildSettings.eqBand12,
+        eqBand13: tables.guildSettings.eqBand13,
+        eqBand14: tables.guildSettings.eqBand14,
       })
       .from(tables.guildSettings)
       .where(eq(tables.guildSettings.id, 1))
@@ -519,6 +534,50 @@ export class GuildPlayer {
             'Failed to apply compressor filter on playback start'
           );
         }
+      }
+    }
+
+    // Apply equalizer filter if any band is non-neutral
+    const eqBands = settings
+      ? [
+          settings.eqBand0,
+          settings.eqBand1,
+          settings.eqBand2,
+          settings.eqBand3,
+          settings.eqBand4,
+          settings.eqBand5,
+          settings.eqBand6,
+          settings.eqBand7,
+          settings.eqBand8,
+          settings.eqBand9,
+          settings.eqBand10,
+          settings.eqBand11,
+          settings.eqBand12,
+          settings.eqBand13,
+          settings.eqBand14,
+        ]
+      : Array(15).fill(50);
+
+    const node = player.node;
+    if (node && eqBands.some((b) => b !== 50)) {
+      try {
+        const equalizerFilter = eqBands.map((value, index) => ({
+          band: index,
+          gain: (value - 50) / 100,
+        }));
+        await node.rest.updatePlayer({
+          guildId: this.guildId,
+          playerOptions: {
+            filters: {
+              equalizer: equalizerFilter,
+            },
+          },
+        } as Parameters<typeof node.rest.updatePlayer>[0]);
+      } catch (err) {
+        logger.error(
+          { err, guildId: this.guildId },
+          'Failed to apply equalizer filter on playback start'
+        );
       }
     }
 

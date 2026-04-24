@@ -1,0 +1,15 @@
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand0" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand1" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand2" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand3" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand4" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand5" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand6" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand7" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand8" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand9" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand10" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand11" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand12" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand13" integer NOT NULL DEFAULT 50;
+ALTER TABLE "guildSettings" ADD COLUMN "eqBand14" integer NOT NULL DEFAULT 50;

@@ -80,6 +80,15 @@ export interface CompressorSettings {
 }
 
 // ---------------------------------------------------------------------------
+// EqualizerSettings
+//
+// Guild-level 15-band equalizer configuration. Applied to NodeLink on playback.
+// ---------------------------------------------------------------------------
+export interface EqualizerSettings {
+  bands: number[]; // length 15, values 0–100, 50 = neutral (0 dB)
+}
+
+// ---------------------------------------------------------------------------
 // QueueState
 //
 // A snapshot of the GuildPlayer's current state. This is the payload for
