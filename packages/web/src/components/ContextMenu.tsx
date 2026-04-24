@@ -73,7 +73,7 @@ export function ContextMenuTrigger({
       aria-haspopup="true"
       aria-expanded={isOpen}
       title="More actions"
-      surface={surface ?? 'surface'}
+      surface={surface ?? 'elevated'}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
