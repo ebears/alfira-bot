@@ -34,15 +34,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const me = await getMe();
       setUser(me);
     } catch {
+      // First attempt failed (network error, expired token, etc.).
+      // trySilentRefresh refreshes the token. If it succeeds, retry getMe
+      // once. wrappedFetch handles any further 401s transparently.
       const refreshed = await trySilentRefresh();
       if (refreshed) {
-        const me = await getMe();
-        setUser(me);
-        setLoading(false);
-        isAuthChecking.current = false;
-        return;
+        try {
+          const me = await getMe();
+          setUser(me);
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
-      setUser(null);
     } finally {
       setLoading(false);
       isAuthChecking.current = false;

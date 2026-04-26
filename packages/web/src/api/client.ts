@@ -95,7 +95,11 @@ export async function trySilentRefresh(): Promise<boolean> {
   return ok;
 }
 
-async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unknown> {
+async function wrappedFetch(
+  url: string,
+  options: RequestInit = {},
+  retryCount = 0
+): Promise<unknown> {
   const makeRequest = async (): Promise<Response> =>
     fetchWithTimeout(url, { ...options, credentials: 'include' });
 
@@ -109,11 +113,16 @@ async function wrappedFetch(url: string, options: RequestInit = {}): Promise<unk
       throw new Error('Unauthorized');
     }
 
+    // Prevent infinite refresh loops — only retry once per call chain
+    if (retryCount >= 1) {
+      throw new Error('Unauthorized');
+    }
+
     // If already refreshing, queue this request
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve: resolve as () => void, reject });
-      }).then(() => makeRequest());
+      }).then(() => wrappedFetch(url, options, retryCount + 1));
     }
 
     // Start refreshing
