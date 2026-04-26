@@ -39,17 +39,17 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'bard',
     displayName: 'Bard',
-    accentColor: '#ec4899', // Magenta/Pink
+    accentColor: '#db2777', // Pink-600
   },
   {
     name: 'cleric',
     displayName: 'Cleric',
-    accentColor: '#eab308', // Gold/Yellow
+    accentColor: '#ca8a04', // Yellow-600
   },
   {
     name: 'druid',
     displayName: 'Druid',
-    accentColor: '#fb7185', // Rose
+    accentColor: '#f43f5e', // Rose-500
   },
   {
     name: 'fighter',
@@ -64,7 +64,7 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'paladin',
     displayName: 'Paladin',
-    accentColor: '#cbd5e1', // Silver
+    accentColor: '#94a3b8', // Slate-400
   },
   {
     name: 'ranger',
@@ -84,7 +84,7 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     name: 'warlock',
     displayName: 'Warlock',
-    accentColor: '#a855f7', // Dark Purple
+    accentColor: '#9333ea', // Purple-600
   },
   {
     name: 'wizard',

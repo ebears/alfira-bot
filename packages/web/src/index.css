@@ -119,7 +119,7 @@
 }
 
 [data-color-theme="bard"] {
-    --color-accent: #ec4899;
+    --color-accent: #db2777;
 
     &[data-mode="dark"] {
         --color-surface: #1e1618;
@@ -147,7 +147,7 @@
 }
 
 [data-color-theme="cleric"] {
-    --color-accent: #eab308;
+    --color-accent: #ca8a04;
 
     &[data-mode="dark"] {
         --color-surface: #1e1a10;
@@ -175,7 +175,7 @@
 }
 
 [data-color-theme="druid"] {
-    --color-accent: #fb7185;
+    --color-accent: #f43f5e;
 
     &[data-mode="dark"] {
         --color-surface: #181e18;
@@ -192,7 +192,7 @@
     &[data-mode="light"] {
         --color-surface: #ffffff;
         --color-base: #cfeacf;
-        --color-elevated: #e8f5e8;
+        --color-elevated: #f0f8f0;
         --color-border: #c8e5c8;
         --color-fg: #141a14;
         --color-muted: #4a6a4a;
@@ -259,7 +259,7 @@
 }
 
 [data-color-theme="paladin"] {
-    --color-accent: #cbd5e1;
+    --color-accent: #94a3b8;
 
     &[data-mode="dark"] {
         --color-surface: #181c22;
@@ -360,7 +360,7 @@
     &[data-mode="light"] {
         --color-surface: #ffffff;
         --color-base: #f8c4cd;
-        --color-elevated: #fce4e8;
+        --color-elevated: #fff0f4;
         --color-border: #f8c8d0;
         --color-fg: #1a080c;
         --color-muted: #6c2030;
@@ -371,7 +371,7 @@
 }
 
 [data-color-theme="warlock"] {
-    --color-accent: #a855f7;
+    --color-accent: #9333ea;
 
     &[data-mode="dark"] {
         --color-surface: #1c1620;
@@ -429,6 +429,8 @@
 @theme {
     /* Theme color tokens — values come from data-color-theme selectors above */
     --color-accent: var(--color-accent);
+    --color-accent-muted: color-mix(in srgb, var(--color-accent) 55%, var(--color-muted));
+    --color-accent-foreground: color-mix(in srgb, var(--color-accent) 70%, var(--color-foreground));
     --color-danger: #ef4444;
     --color-warning: #f59e0b;
     --color-discord: #5865F2;
@@ -615,9 +617,7 @@
     .btn-primary.pressed {
         transform: var(--btn-transform-active);
         scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
     }
 
     .btn-inherit {
@@ -648,9 +648,7 @@
         transform: var(--btn-transform-active-md);
         scale: var(--btn-scale-active);
         background: color-mix(in srgb, var(--btn-surface) 75%, black);
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
         color: var(--color-accent);
     }
 
@@ -674,9 +672,7 @@
     }
     .light .btn-inherit.pressed {
         border-color: transparent;
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
         color: var(--color-accent);
     }
 
@@ -716,9 +712,7 @@
     .btn-danger.pressed {
         transform: var(--btn-transform-active);
         scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
     }
     [data-mode="light"] .btn-danger {
         color: #1a1a1a;
@@ -839,9 +833,7 @@
     .btn-icon-primary:active {
         transform: var(--btn-transform-active-sm);
         scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
     .btn-icon-primary.pressed {
         transform: var(--btn-transform-active-sm);
@@ -850,9 +842,7 @@
             var(--icon-btn-accent) 0%,
             color-mix(in srgb, var(--icon-btn-accent) 85%, black) 100%
         );
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
     .btn-icon-inherit {
@@ -885,16 +875,12 @@
         transform: var(--btn-transform-active-sm);
         scale: var(--btn-scale-active);
         background: var(--btn-surface);
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
     .btn-icon-inherit.pressed {
         transform: var(--btn-transform-active-sm);
         background: color-mix(in srgb, var(--btn-surface) 80%, black);
-        box-shadow:
-            0 0 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
     /* Light mode: distinguish via shadow + border */
@@ -913,16 +899,12 @@
     }
     [data-mode="light"] .btn-icon-inherit:active {
         border-color: transparent;
-        box-shadow:
-            0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
     [data-mode="light"] .btn-icon-inherit.pressed {
         background: color-mix(in srgb, var(--btn-surface) 85%, black);
         border-color: transparent;
-        box-shadow:
-            0 1px 0 0 color-mix(in srgb, var(--color-surface) 60%, black),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
     .btn-icon-danger {
@@ -957,16 +939,12 @@
     .btn-icon-danger:active {
         transform: var(--btn-transform-active-sm);
         scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
     .btn-icon-danger.pressed {
         transform: var(--btn-transform-active-sm);
         scale: var(--btn-scale-active);
-        box-shadow:
-            0 0 0 0 var(--icon-btn-shadow),
-            inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: inset 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     }
 
 }
