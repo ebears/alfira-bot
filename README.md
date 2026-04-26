@@ -67,11 +67,27 @@
 
 ## Screenshots
 
-![Login Page Preview](.github/screenshots/login.png)
-![Library Page Preview 1](.github/screenshots/library1.png)
-![Library Page Preview 2](.github/screenshots/library2.png)
-![Playlists Page Preview](.github/screenshots/playlists.png)
-![Queue Preview](.github/screenshots/queue.png)
+<p align="center">
+  <img src=".github/screenshots/songs-page.png" width="900" alt="Songs page">
+</p>
+
+<details>
+  <summary>Click to see more screenshots</summary>
+  <p align="center">
+    <img src=".github/screenshots/playlists-page.png" width="450" alt="Playlists page">
+    <img src=".github/screenshots/playlist-details.png" width="450" alt="Playlist details">
+    <br>
+    <img src=".github/screenshots/login.png" width="450" alt="Login">
+    <img src=".github/screenshots/settings-page.png" width="450" alt="Settings page">
+    <br>
+    <img src=".github/screenshots/theme-example-1.png" width="300" alt="Theme example 1">
+    <img src=".github/screenshots/theme-example-2.png" width="300" alt="Theme example 2">
+    <img src=".github/screenshots/theme-example-3.png" width="300" alt="Theme example 3">
+    <img src=".github/screenshots/theme-example-4.png" width="300" alt="Theme example 4">
+    <img src=".github/screenshots/theme-example-5.png" width="300" alt="Theme example 5">
+    <img src=".github/screenshots/theme-example-6.png" width="300" alt="Theme example 6">
+  </p>
+</details>
 
 ---
 
