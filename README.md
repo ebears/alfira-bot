@@ -25,6 +25,53 @@
 
 **Alfira** is a self-hosted Discord music bot with a web UI for library management and real-time playback control. The intended scope of the bot is a single small to medium-sized Discord server.
 
+### Music Library
+
+- **Song management** — Add songs and YouTube playlists to a persistent library with duplicate detection
+- **Search & filter** — Search by title, artist, album, or tags
+- **Custom nicknames** — Assign custom names to songs for easier identification
+- **Manual metadata** — Set artist, album, and custom artwork per song
+- **Tag system** — Organize songs with tags; color-code and canonicalize tag names
+
+### Playback
+
+- **Queue management** — Play songs from the full library or any playlist, skip, pause/resume, and clear
+- **Priority queue** — Add songs to "Up Next" to play immediately after the current track
+- **Quick add** — Paste a YouTube URL directly into the queue without saving to the library
+- **Override** — Instantly replace the queue with a YouTube URL and start playing
+- **Loop modes** — Off, song, or queue
+- **Shuffle / unshuffle** — Randomize queue order, with the ability to restore the original order
+- **Seek** — Jump to any position within the current track
+- **Per-song volume boost** — Adjust playback volume for individual songs
+- **15-band equalizer** — Fine-tune audio with a graphical EQ
+- **Compressor / dynamics** — Threshold, ratio, attack, release, and makeup gain controls
+
+### Playlists
+
+- **Create & manage** — Build named playlists from the library
+- **Private playlists** — Toggle visibility so only the creator and admins can access
+- **Playlist playback** — Play entire playlists, optionally in sequential or random order
+- **Reorder** — Add and remove songs from playlists at any position
+
+### Authentication & Authorization
+
+- **Discord OAuth2** — Log in with your Discord account; guild membership required
+- **Admin roles** — Configurable admin role IDs control access to library management and queue operations
+- **Secure sessions** — Short-lived access tokens with single-use refresh tokens stored as SHA-256 hashes
+
+### Real-Time Updates
+
+- **WebSocket sync** — Queue state, now playing, and elapsed time update across all clients in real time
+- **Live song events** — Songs added, updated, or deleted propagate instantly to all connected users
+- **Playlist events** — Playlist changes broadcast to all clients
+
+### Web UI
+
+- **Responsive layout** — Works on desktop and mobile
+- **Different themes** — User-toggleable appearances
+- **Virtual scrolling** — Efficient rendering for large libraries
+- **Now playing bar** — Persistent playback controls with progress bar and seek
+
 ## Screenshots
 
 ![Login Page Preview](.github/screenshots/login.png)
