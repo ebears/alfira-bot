@@ -68,17 +68,17 @@
 ## Screenshots
 
 <p align="center">
-  <img src=".github/screenshots/songs-page.png" width="800" alt="Songs page">
+  <img src=".github/screenshots/songs-page.png" width="900" alt="Songs page">
 </p>
 
 <details>
   <summary>Click to see more screenshots</summary>
   <p align="center">
-    <img src=".github/screenshots/playlists-page.png" width="400" alt="Playlists page">
-    <img src=".github/screenshots/playlist-details.png" width="400" alt="Playlist details">
+    <img src=".github/screenshots/playlists-page.png" width="450" alt="Playlists page">
+    <img src=".github/screenshots/playlist-details.png" width="450" alt="Playlist details">
     <br>
-    <img src=".github/screenshots/login.png" width="400" alt="Login">
-    <img src=".github/screenshots/settings-page.png" width="400" alt="Settings page">
+    <img src=".github/screenshots/login.png" width="450" alt="Login">
+    <img src=".github/screenshots/settings-page.png" width="450" alt="Settings page">
     <br>
     <img src=".github/screenshots/theme-example-1.png" width="300" alt="Theme example 1">
     <img src=".github/screenshots/theme-example-2.png" width="300" alt="Theme example 2">
