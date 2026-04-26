@@ -25,6 +25,46 @@
 
 **Alfira** is a self-hosted Discord music bot with a web UI for library management and real-time playback control. The intended scope of the bot is a single small to medium-sized Discord server.
 
+### Web UI
+
+- **Responsive layout** — Works on desktop and mobile
+- **Different themes** — User-selectable auto/light/dark mode and color themes
+- **Virtual scrolling** — Efficient rendering for large libraries
+- **Now playing bar** — Persistent playback controls with progress bar and seek
+
+### Music Library
+
+- **Song management** — Add songs via YouTube links (playlist support included) to a persistent, shared library with duplicate detection
+- **Edit metadata** — Set custom title, artist, album, and artwork per song
+- **Tag system** — Organize songs with tags; color-code and canonicalize tag names
+- **Playlists** — Create & manage private or public playlists from the library
+- **Search & filter** — Search by title, artist, album, or tags
+
+### Playback
+
+- **Discord voice** — Play, pause, seek, and skip songs from the library or any playlist in a Discord call
+- **Loop modes** — Off, song, or queue
+- **Shuffle / unshuffle** — Randomize queue order, with the ability to restore the original order
+- **Per-song volume offset** — Adjust playback volume for individual songs
+- **Audio filters** — Fine-tune audio with a graphical equalizer and compressor
+
+### Queue Management
+
+- **Priority queue** — Add songs to "Up Next" to play immediately after the current track
+- **Quick add** — Paste a YouTube URL directly into the queue without saving to the library
+- **Override** — Instantly replace the queue with a YouTube URL and start playing
+
+### Authentication & Authorization
+
+- **Discord OAuth2** — Log in with your Discord account; guild membership required
+- **Admin roles** — Use Discord role IDs to control access to admin access
+
+### Real-Time Updates
+
+- **WebSocket sync** — Queue state, now playing, and elapsed time update across all clients in real time
+- **Live song events** — Songs added, updated, or deleted propagate instantly to all connected users
+- **Playlist events** — Playlist changes broadcast to all clients
+
 ## Screenshots
 
 ![Login Page Preview](.github/screenshots/login.png)
